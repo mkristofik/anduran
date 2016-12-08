@@ -12,6 +12,10 @@
 */
 #include "RandomMap.h"
 
+#include "rapidjson/document.h"
+#include "rapidjson/ostreamwrapper.h"
+#include "rapidjson/prettywriter.h"
+
 #include <algorithm>
 #include <ctime>
 #include <fstream>
@@ -83,32 +87,22 @@ RandomMap::RandomMap(int width)
 
 void RandomMap::writeFile(const char *filename) const
 {
-    // Approximation of what the tile regions will look like.
-    std::ofstream file(filename);
-    for (int i = 0; i < width_; ++i) {
-        for (int j = 0; j < width_; ++j) {
-            file << tileRegions_[i * width_ + j] << ' ';
-        }
-        file << '\n';
-    }
+    using namespace rapidjson;
+    Document doc(kObjectType);
+    Document::AllocatorType &alloc = doc.GetAllocator();
 
-    // What are the neighbors of tile 0?
-    file << "\n\n";
-    auto iterPair = equal_range(std::begin(tileNeighbors_),
-                                std::end(tileNeighbors_),
-                                0);
-    for (auto i = iterPair.first; i != iterPair.second; ++i) {
-        file << i->neighbor << ' ';
+    Value tiles(kArrayType);
+    tiles.Reserve(tileRegions_.size(), alloc);
+    for (const auto &reg : tileRegions_) {
+        tiles.PushBack(reg, alloc);
     }
+    doc.AddMember("tile-regions", tiles, alloc);
 
-    // What are the neighbors of region 0?
-    file << "\n\n";
-    iterPair = equal_range(std::begin(regionNeighbors_),
-                           std::end(regionNeighbors_),
-                           0);
-    for (auto i = iterPair.first; i != iterPair.second; ++i) {
-        file << i->neighbor << ' ';
-    }
+    std::ofstream jsonFile(filename);
+    OStreamWrapper osw(jsonFile);
+    PrettyWriter<OStreamWrapper> writer(osw);
+    writer.SetFormatOptions(kFormatSingleLineArray);
+    doc.Accept(writer);
 }
 
 void RandomMap::generateRegions()

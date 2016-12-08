@@ -9,9 +9,10 @@
 # 
 #    See the COPYING.txt file for more details.
 
-CXX = g++
-CPPFLAGS = -g -Wall -Wextra
-CXXFLAGS = -std=c++1z
+CPPFLAGS = -Ic:/libraries
+CXXFLAGS = -g -Wall -Wextra -std=c++1z
+#LDFLAGS = -L dirs
+#LDLIBS = -l library
 
 BUILD_DIR = build
 SRC_DIR = src
@@ -37,7 +38,7 @@ $(RMAPGEN) : $(RMAPGEN_OBJS)
 #     $< = path to the .cpp file
 $(BUILD_DIR)/%.d : $(SRC_DIR)/%.cpp
 	@if not exist $(BUILD_DIR)/NUL mkdir $(BUILD_DIR)
-	$(CXX) -MM -MT $(patsubst %.d,%.o,$@) -MT $@ $< > $@
+	$(CXX) -MM -MT $(patsubst %.d,%.o,$@) -MT $@ $(CPPFLAGS) $< > $@
 
 # Modify the standard implicit rule for building cpp files so the .o files land
 # in our build directory.

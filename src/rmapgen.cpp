@@ -16,6 +16,6 @@
 int main()
 {
     RandomMap map(36);
-    map.writeFile("test.txt");
+    map.writeFile("test.json");
     return EXIT_SUCCESS;
 }
