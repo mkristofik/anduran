@@ -17,6 +17,7 @@
 #include "rapidjson/prettywriter.h"
 
 #include <algorithm>
+#include <cassert>
 #include <ctime>
 #include <fstream>
 #include <random>
@@ -26,6 +27,7 @@
 namespace
 {
     const int REGION_SIZE = 64;
+    const int MAX_ALTITUDE = 3;
     std::default_random_engine g_randEng(static_cast<unsigned int>(std::time(nullptr)));
 
     void sortAndPrune(std::vector<NeighborPair> &vec)
@@ -33,6 +35,15 @@ namespace
         sort(std::begin(vec), std::end(vec));
         vec.erase(unique(std::begin(vec), std::end(vec)),
                   std::end(vec));
+    }
+
+    // This is slated for C++17.  Stole this from
+    // http://en.cppreference.com/w/cpp/algorithm/clamp
+    template<typename T>
+    constexpr const T& clamp(const T& v, const T& lo, const T& hi)
+    {
+        return assert(lo <= hi),
+            (v < lo) ? lo : (v > hi) ? hi : v;
     }
 }
 
@@ -77,12 +88,15 @@ bool operator==(const NeighborPair &lhs, const NeighborPair &rhs)
 RandomMap::RandomMap(int width)
     : width_(width),
     size_(width_ * width_),
+    numRegions_(0),
     tileRegions_(size_, -1),
     tileNeighbors_(),
-    regionNeighbors_()
+    regionNeighbors_(),
+    regionTerrain_()
 {
     generateRegions();
     buildNeighborGraphs();
+    assignTerrain();
 }
 
 void RandomMap::writeFile(const char *filename) const
@@ -98,6 +112,13 @@ void RandomMap::writeFile(const char *filename) const
     }
     doc.AddMember("tile-regions", tiles, alloc);
 
+    Value terrain(kArrayType);
+    terrain.Reserve(numRegions_, alloc);
+    for (const auto &t : regionTerrain_) {
+        terrain.PushBack(static_cast<int>(t), alloc);
+    }
+    doc.AddMember("region-terrain", terrain, alloc);
+
     std::ofstream jsonFile(filename);
     OStreamWrapper osw(jsonFile);
     PrettyWriter<OStreamWrapper> writer(osw);
@@ -108,8 +129,8 @@ void RandomMap::writeFile(const char *filename) const
 void RandomMap::generateRegions()
 {
     // Start with a set of random hexes.  Don't worry if there are duplicates.
-    const int numRegions = size_ / REGION_SIZE;
-    std::vector<Hex> centers(numRegions);
+    numRegions_ = size_ / REGION_SIZE;
+    std::vector<Hex> centers(numRegions_);
     generate(std::begin(centers), std::end(centers), RandomHex(width_));
      
     // Find the closest center to each hex on the map.  The set of hexes
@@ -118,6 +139,7 @@ void RandomMap::generateRegions()
     for (int i = 0; i < 4; ++i) {
         assignRegions(centers);
         centers = voronoi();
+        numRegions_ = static_cast<int>(centers.size());
     }
 
     // Assign each hex to its final region.
@@ -153,6 +175,30 @@ void RandomMap::buildNeighborGraphs()
     sortAndPrune(regionNeighbors_);
 }
 
+void RandomMap::assignTerrain()
+{
+    std::uniform_int_distribution<int> d2(0, 1);
+    std::uniform_int_distribution<int> d3(0, 2);
+
+    const Terrain lowAlt[] = {Terrain::WATER, Terrain::DESERT, Terrain::SWAMP};
+    const Terrain medAlt[] = {Terrain::GRASS, Terrain::DIRT};
+    const Terrain highAlt[] = {Terrain::SNOW, Terrain::DIRT};
+
+    regionTerrain_.resize(numRegions_);
+    const auto altitude = randomAltitudes();
+    for (int i = 0; i < numRegions_; ++i) {
+        if (altitude[i] == 0) {
+            regionTerrain_[i] = lowAlt[d3(g_randEng)];
+        }
+        else if (altitude[i] == MAX_ALTITUDE) {
+            regionTerrain_[i] = highAlt[d2(g_randEng)];
+        }
+        else {
+            regionTerrain_[i] = medAlt[d2(g_randEng)];
+        }
+    }
+}
+
 void RandomMap::assignRegions(const std::vector<Hex> &centers)
 {
     for (int i = 0; i < size_; ++i) {
@@ -164,15 +210,11 @@ std::vector<Hex> RandomMap::voronoi() const
 {
     // Note: repeated runs of the Voronoi algorithm sometimes causes small
     // regions to be absorbed by their neighbors.  
-
-    // How many regions are there currently?
-    const auto maxReg = max_element(std::begin(tileRegions_), std::end(tileRegions_));
-    const auto numRegions = *maxReg + 1;
-    std::vector<Hex> centers(numRegions);
+    std::vector<Hex> centers(numRegions_);
 
     // Count all the hexes assigned to each region, sum their coordinates.
-    std::vector<Hex> hexSums(numRegions, {0, 0});
-    std::vector<int> hexCount(numRegions, 0);
+    std::vector<Hex> hexSums(numRegions_, {0, 0});
+    std::vector<int> hexCount(numRegions_, 0);
     for (int i = 0; i < size_; ++i) {
         auto reg = tileRegions_[i];
         hexSums[reg] += hexFromInt(i);
@@ -180,7 +222,7 @@ std::vector<Hex> RandomMap::voronoi() const
     }
 
     // Find the average hex for each region.
-    for (int r = 0; r < numRegions; ++r) {
+    for (int r = 0; r < numRegions_; ++r) {
         // Dividing by a hex count of 0 yields an invalid hex, meaning the region
         // is empty.
         centers[r] = hexSums[r] / hexCount[r];
@@ -191,6 +233,43 @@ std::vector<Hex> RandomMap::voronoi() const
                   std::end(centers));
 
     return centers;
+}
+
+std::vector<int> RandomMap::randomAltitudes() const
+{
+    std::vector<int> altitude(numRegions_, -1);
+    std::uniform_int_distribution<int> step(-1, 1);
+
+    // Start with an initial altitude for region 0, push it onto the stack.
+    altitude[0] = 1;
+    std::vector<int> regionStack(1, 0);
+
+    while (!regionStack.empty()) {
+        const auto curRegion = regionStack.back();
+        regionStack.pop_back();
+
+        // Each neighbor region has altitude -1, +0, or +1 from the current
+        // region.
+        const auto neighbors = equal_range(std::begin(regionNeighbors_),
+                                           std::end(regionNeighbors_),
+                                           curRegion);
+        for (auto i = neighbors.first; i != neighbors.second; ++i) {
+            const int nbrRegion = i->neighbor;
+            if (altitude[nbrRegion] >= 0) {
+                continue;  // already visited
+            }
+
+            const auto newAlt = altitude[curRegion] + step(g_randEng);
+            altitude[nbrRegion] = clamp(newAlt, 0, MAX_ALTITUDE);
+            regionStack.push_back(nbrRegion);
+        }
+    }
+
+    assert(static_cast<int>(altitude.size()) == numRegions_);
+    assert(none_of(std::begin(altitude), std::end(altitude), [] (int elem) {
+                       return elem == -1;
+                   }));
+    return altitude;
 }
 
 Hex RandomMap::hexFromInt(int index) const

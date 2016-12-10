@@ -30,13 +30,20 @@
 
 #include <type_traits>
 #define ITERABLE_ENUM_CLASS(T) \
-    inline T operator++(T &t) \
+    constexpr T operator++(T &t) \
     { \
         using U = std::underlying_type<T>::type; \
         return t = static_cast<T>(U(t) + 1); \
     } \
-    inline T operator*(T t) { return t; } \
-    inline T begin(T) { return T::_first; } \
-    inline T end(T) { return T::_last; }
+    constexpr T operator*(T t) { return t; } \
+    constexpr T begin(T) { return T::_first; } \
+    constexpr T end(T) { return T::_last; }
+
+template <typename T>
+constexpr int enum_size()
+{
+    using U = typename std::underlying_type<T>::type;
+    return U(T::_last) - U(T::_first);
+}
 
 #endif

@@ -14,6 +14,7 @@
 #define RANDOM_MAP_H
 
 #include "hex_utils.h"
+#include "iterable_enum_class.h"
 #include <vector>
 
 struct NeighborPair
@@ -28,6 +29,10 @@ bool operator<(int lhs, const NeighborPair &rhs);
 bool operator==(const NeighborPair &lhs, const NeighborPair &rhs);
 
 
+enum class Terrain {WATER, DESERT, SWAMP, GRASS, DIRT, SNOW, _last, _first = WATER};
+ITERABLE_ENUM_CLASS(Terrain);
+
+
 class RandomMap
 {
 public:
@@ -37,12 +42,17 @@ public:
 private:
     void generateRegions();
     void buildNeighborGraphs();
+    void assignTerrain();
 
     // Assign each tile to the region indicated by the nearest center.
     void assignRegions(const std::vector<Hex> &centers);
 
     // Compute the "center of mass" of each region.
     std::vector<Hex> voronoi() const;
+
+    // Randomly assign an altitude to each region, to be used when assigning
+    // terrain.
+    std::vector<int> randomAltitudes() const;
 
     // Convert between integer and Hex representations of a tile location.
     Hex hexFromInt(int index) const;
@@ -54,9 +64,11 @@ private:
 
     int width_;
     int size_;
+    int numRegions_;
     std::vector<int> tileRegions_;  // index of region each tile belongs to
     std::vector<NeighborPair> tileNeighbors_;
     std::vector<NeighborPair> regionNeighbors_;
+    std::vector<Terrain> regionTerrain_;
 };
 
 #endif
