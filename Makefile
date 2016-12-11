@@ -14,24 +14,22 @@ CFLAGS = -Wall -Wextra -O3
 CPPFLAGS = -Ic:/libraries
 CXXFLAGS = -g -Wall -Wextra -std=c++1z
 #LDFLAGS = -L dirs
-#LDLIBS = -l libs
+#LDLIBS = -l library
 
 BUILD_DIR = build
 SRC_DIR = src
 
 RMAPGEN = rmapgen.exe
 RMAPGEN_SRC = RandomMap.cpp hex_utils.cpp rmapgen.cpp
-RMAPGEN_OBJS = $(RMAPGEN_SRC:%.cpp=$(BUILD_DIR)/%.o)
-#RMAPGEN_DEPS = $(RMAPGEN_SRC:%.cpp=$(BUILD_DIR)/%.d)
+RMAPGEN_OBJS = $(RMAPGEN_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-noise.o
 RMAPGEN_DEPS = $(RMAPGEN_OBJS:%.o=%.d)
+# note: don't want to list open-simplex-noise.c here. We only list the cpp
+# files so that we can substitute .o to get the object files to build. Listing
+# the noise object file directly is good enough because the implicit rules
+# below will find open-simplex-noise.c.
 
-# note: don't need to spell out anything beyond these two things. The implicit
-# rules below will find the corresponding .c file and build it.
-NOISE = $(BUILD_DIR)/open-simplex-noise.o
-NOISE_DEPS = $(BUILD_DIR)/open-simplex-noise.d
-
-$(RMAPGEN) : $(RMAPGEN_OBJS) $(NOISE)
-	$(CXX) $(RMAPGEN_OBJS) $(NOISE) -o $@
+$(RMAPGEN) : $(RMAPGEN_OBJS)
+	$(CXX) $(RMAPGEN_OBJS) -o $@
 
 # Auto-generate a dependency file for each cpp file. We first create a build
 # directory to house all intermediate files. See example under "Automatic
@@ -66,7 +64,6 @@ $(BUILD_DIR)/%.o : $(SRC_DIR)/%.c
 # an already clean build will create those files only to delete them again.
 ifneq ($(MAKECMDGOALS),clean)
 include $(RMAPGEN_DEPS)
-include $(NOISE_DEPS)
 endif
 
 # Remove intermediate build files and the executables.  Leading '-' means ignore
