@@ -43,6 +43,7 @@ private:
     void generateRegions();
     void buildNeighborGraphs();
     void assignTerrain();
+    void assignObstacles();
 
     // Assign each tile to the region indicated by the nearest center.
     void assignRegions(const std::vector<Hex> &centers);
@@ -67,6 +68,7 @@ private:
     int numRegions_;
     std::vector<int> tileRegions_;  // index of region each tile belongs to
     std::vector<NeighborPair> tileNeighbors_;
+    std::vector<int> tileObstacles_;
     std::vector<NeighborPair> regionNeighbors_;
     std::vector<Terrain> regionTerrain_;
 };

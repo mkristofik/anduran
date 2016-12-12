@@ -11,6 +11,7 @@
     See the COPYING.txt file for more details.
 */
 #include "RandomMap.h"
+#include "open-simplex-noise.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/ostreamwrapper.h"
@@ -20,6 +21,7 @@
 #include <cassert>
 #include <ctime>
 #include <fstream>
+#include <memory>
 #include <random>
 #include <tuple>
 
@@ -28,6 +30,8 @@ namespace
 {
     const int REGION_SIZE = 64;
     const int MAX_ALTITUDE = 3;
+    const double NOISE_FEATURE_SIZE = 12.0;
+    const double OBSTACLE_LEVEL = 0.2;
     std::default_random_engine g_randEng(static_cast<unsigned int>(std::time(nullptr)));
 
     void sortAndPrune(std::vector<NeighborPair> &vec)
@@ -64,6 +68,37 @@ struct RandomHex
 };
 
 
+// RAII wrapper around the Open Simplex Noise library in C.
+class Noise
+{
+public:
+    Noise();
+
+    // Generate a value in the range [-1.0, 1.0] for the given coordinates.
+    double get(int x, int y);
+private:
+    std::shared_ptr<osn_context> ctx_;
+};
+
+Noise::Noise()
+    : ctx_()
+{
+    osn_context *tmp = nullptr;
+    open_simplex_noise(std::time(nullptr), &tmp);
+    ctx_.reset(tmp, open_simplex_noise_free);
+}
+
+double Noise::get(int x, int y)
+{
+    // Stole the feature size concept from open-simplex-noise-test.c. I don't
+    // know what it means but it seems to smooth out the noise values over a
+    // range of coordinates.
+    return open_simplex_noise2(ctx_.get(),
+                               x / NOISE_FEATURE_SIZE,
+                               y / NOISE_FEATURE_SIZE);
+}
+
+
 bool operator<(const NeighborPair &lhs, const NeighborPair &rhs)
 {
     return std::tie(lhs.nodeId, lhs.neighbor) < std::tie(rhs.nodeId, rhs.neighbor);
@@ -91,12 +126,14 @@ RandomMap::RandomMap(int width)
     numRegions_(0),
     tileRegions_(size_, -1),
     tileNeighbors_(),
+    tileObstacles_(size_, -1),
     regionNeighbors_(),
     regionTerrain_()
 {
     generateRegions();
     buildNeighborGraphs();
     assignTerrain();
+    assignObstacles();
 }
 
 void RandomMap::writeFile(const char *filename) const
@@ -106,7 +143,7 @@ void RandomMap::writeFile(const char *filename) const
     Document::AllocatorType &alloc = doc.GetAllocator();
 
     Value tiles(kArrayType);
-    tiles.Reserve(tileRegions_.size(), alloc);
+    tiles.Reserve(size_, alloc);
     for (const auto &reg : tileRegions_) {
         tiles.PushBack(reg, alloc);
     }
@@ -118,6 +155,13 @@ void RandomMap::writeFile(const char *filename) const
         terrain.PushBack(static_cast<int>(t), alloc);
     }
     doc.AddMember("region-terrain", terrain, alloc);
+
+    Value obstacles(kArrayType);
+    obstacles.Reserve(size_, alloc);
+    for (const auto &o : tileObstacles_) {
+        obstacles.PushBack(o, alloc);
+    }
+    doc.AddMember("tile-obstacles", obstacles, alloc);
 
     std::ofstream jsonFile(filename);
     OStreamWrapper osw(jsonFile);
@@ -177,8 +221,8 @@ void RandomMap::buildNeighborGraphs()
 
 void RandomMap::assignTerrain()
 {
-    std::uniform_int_distribution<int> d2(0, 1);
-    std::uniform_int_distribution<int> d3(0, 2);
+    std::uniform_int_distribution<int> dist2(0, 1);
+    std::uniform_int_distribution<int> dist3(0, 2);
 
     const Terrain lowAlt[] = {Terrain::WATER, Terrain::DESERT, Terrain::SWAMP};
     const Terrain medAlt[] = {Terrain::GRASS, Terrain::DIRT};
@@ -188,13 +232,35 @@ void RandomMap::assignTerrain()
     const auto altitude = randomAltitudes();
     for (int i = 0; i < numRegions_; ++i) {
         if (altitude[i] == 0) {
-            regionTerrain_[i] = lowAlt[d3(g_randEng)];
+            regionTerrain_[i] = lowAlt[dist3(g_randEng)];
         }
         else if (altitude[i] == MAX_ALTITUDE) {
-            regionTerrain_[i] = highAlt[d2(g_randEng)];
+            regionTerrain_[i] = highAlt[dist2(g_randEng)];
         }
         else {
-            regionTerrain_[i] = medAlt[d2(g_randEng)];
+            regionTerrain_[i] = medAlt[dist2(g_randEng)];
+        }
+    }
+}
+
+void RandomMap::assignObstacles()
+{
+    Noise noise;
+
+    // Assign each tile a random noise value.
+    std::vector<double> values;
+    values.reserve(size_);
+    for (int y = 0; y < width_; ++y) {
+        for (int x = 0; x < width_; ++x) {
+            values.push_back(noise.get(x, y));
+        }
+    }
+
+    // Any value above the threshold gets a random obstacle.
+    std::uniform_int_distribution<int> dist3(0, 2);
+    for (int i = 0; i < size_; ++i) {
+        if (values[i] > OBSTACLE_LEVEL) {
+            tileObstacles_[i] = dist3(g_randEng);
         }
     }
 }
