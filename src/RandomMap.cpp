@@ -49,6 +49,25 @@ namespace
         return assert(lo <= hi),
             (v < lo) ? lo : (v > hi) ? hi : v;
     }
+
+    template <typename T, size_t N, typename C>
+    void addJsonArray(rapidjson::Document &doc, const char (&name)[N], const C &cont)
+    {
+        using namespace rapidjson;
+        using std::size;
+
+        Value aryName;
+        aryName.SetString(name, N);
+
+        Value ary(kArrayType);
+        Document::AllocatorType &alloc = doc.GetAllocator();
+        ary.Reserve(size(cont), alloc);
+        for (const auto &val : cont) {
+            ary.PushBack(static_cast<T>(val), alloc);
+        }
+
+        doc.AddMember(aryName, ary, alloc);
+    }
 }
 
 
@@ -57,7 +76,7 @@ struct RandomHex
     std::uniform_int_distribution<int> dist_;
 
     explicit RandomHex(int mapWidth)
-        : dist_{0, mapWidth - 1}
+        : dist_(0, mapWidth - 1)
     {
     }
 
@@ -140,28 +159,10 @@ void RandomMap::writeFile(const char *filename) const
 {
     using namespace rapidjson;
     Document doc(kObjectType);
-    Document::AllocatorType &alloc = doc.GetAllocator();
 
-    Value tiles(kArrayType);
-    tiles.Reserve(size_, alloc);
-    for (const auto &reg : tileRegions_) {
-        tiles.PushBack(reg, alloc);
-    }
-    doc.AddMember("tile-regions", tiles, alloc);
-
-    Value terrain(kArrayType);
-    terrain.Reserve(numRegions_, alloc);
-    for (const auto &t : regionTerrain_) {
-        terrain.PushBack(static_cast<int>(t), alloc);
-    }
-    doc.AddMember("region-terrain", terrain, alloc);
-
-    Value obstacles(kArrayType);
-    obstacles.Reserve(size_, alloc);
-    for (const auto &o : tileObstacles_) {
-        obstacles.PushBack(o, alloc);
-    }
-    doc.AddMember("tile-obstacles", obstacles, alloc);
+    addJsonArray<int>(doc, "tile-regions", tileRegions_);
+    addJsonArray<int>(doc, "region-terrain", regionTerrain_);
+    addJsonArray<int>(doc, "tile-obstacles", tileObstacles_);
 
     std::ofstream jsonFile(filename);
     OStreamWrapper osw(jsonFile);
