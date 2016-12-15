@@ -32,7 +32,7 @@
 #define ITERABLE_ENUM_CLASS(T) \
     constexpr T operator++(T &t) \
     { \
-        using U = std::underlying_type<T>::type; \
+        using U = std::underlying_type_t<T>; \
         return t = static_cast<T>(U(t) + 1); \
     } \
     constexpr T operator*(T t) { return t; } \
@@ -42,7 +42,7 @@
 template <typename T>
 constexpr int enum_size()
 {
-    using U = typename std::underlying_type<T>::type;
+    using U = typename std::underlying_type_t<T>;
     return U(T::_last) - U(T::_first);
 }
 

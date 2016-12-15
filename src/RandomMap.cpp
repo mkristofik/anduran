@@ -39,6 +39,7 @@ namespace
         sort(std::begin(vec), std::end(vec));
         vec.erase(unique(std::begin(vec), std::end(vec)),
                   std::end(vec));
+        vec.shrink_to_fit();
     }
 
     // This is slated for C++17.  Stole this from
@@ -57,7 +58,7 @@ namespace
         using std::size;
 
         Value aryName;
-        aryName.SetString(name, N);
+        aryName.SetString(name);
 
         Value ary(kArrayType);
         Document::AllocatorType &alloc = doc.GetAllocator();
@@ -195,7 +196,7 @@ void RandomMap::buildNeighborGraphs()
 {
     // Estimate how many nodes we'll need.
     tileNeighbors_.reserve(size_ * 6);
-    regionNeighbors_.reserve(size_ * 3 / REGION_SIZE);
+    regionNeighbors_.reserve(size_);
 
     // Save every tile and region neighbor, don't worry about duplicates.
     for (int i = 0; i < size_; ++i) {
