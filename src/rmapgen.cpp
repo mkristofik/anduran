@@ -17,5 +17,22 @@ int main()
 {
     RandomMap map(36);
     map.writeFile("test.json");
+
+    /* TODO: turn this into a unit test?
+    FlatMultimap<int, int> test;
+    test.reserve(20);
+    test.insert(2, 4);
+    test.insert(1, 2);
+    test.insert(1, 1);
+    test.insert(1, 3);
+    test.shrink_to_fit();
+    for (const auto &v : test.find(1)) {
+        std::cout << v << '\n';
+    }
+    const auto range = test.find(1);
+    for (auto i = range.first; i != range.second; ++i) {
+        std::cout << *i << '\n';
+    }
+    */
     return EXIT_SUCCESS;
 }

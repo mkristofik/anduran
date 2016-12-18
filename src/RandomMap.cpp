@@ -34,14 +34,6 @@ namespace
     const double OBSTACLE_LEVEL = 0.2;
     std::default_random_engine g_randEng(static_cast<unsigned int>(std::time(nullptr)));
 
-    void sortAndPrune(std::vector<NeighborPair> &vec)
-    {
-        sort(std::begin(vec), std::end(vec));
-        vec.erase(unique(std::begin(vec), std::end(vec)),
-                  std::end(vec));
-        vec.shrink_to_fit();
-    }
-
     // This is slated for C++17.  Stole this from
     // http://en.cppreference.com/w/cpp/algorithm/clamp
     template<typename T>
@@ -119,27 +111,6 @@ double Noise::get(int x, int y)
 }
 
 
-bool operator<(const NeighborPair &lhs, const NeighborPair &rhs)
-{
-    return std::tie(lhs.nodeId, lhs.neighbor) < std::tie(rhs.nodeId, rhs.neighbor);
-}
-
-bool operator<(const NeighborPair &lhs, int rhs)
-{
-    return lhs.nodeId < rhs;
-}
-
-bool operator<(int lhs, const NeighborPair &rhs)
-{
-    return lhs < rhs.nodeId;
-}
-
-bool operator==(const NeighborPair &lhs, const NeighborPair &rhs)
-{
-    return lhs.nodeId == rhs.nodeId && lhs.neighbor == rhs.neighbor;
-}
-
-
 RandomMap::RandomMap(int width)
     : width_(width),
     size_(width_ * width_),
@@ -156,7 +127,7 @@ RandomMap::RandomMap(int width)
     assignObstacles();
 }
 
-void RandomMap::writeFile(const char *filename) const
+void RandomMap::writeFile(const char *filename)
 {
     using namespace rapidjson;
     Document doc(kObjectType);
@@ -198,27 +169,28 @@ void RandomMap::buildNeighborGraphs()
     tileNeighbors_.reserve(size_ * 6);
     regionNeighbors_.reserve(size_);
 
-    // Save every tile and region neighbor, don't worry about duplicates.
+    // Save every tile and region neighbor, don't worry about duplicates (the
+    // multimap will take care of them).
     for (int i = 0; i < size_; ++i) {
         for (auto dir : HexDir()) {
             const int nbrTile = intFromHex(hexAdjacent(hexFromInt(i), dir));
             if (offGrid(nbrTile)) {
                 continue;
             }
-            tileNeighbors_.push_back(NeighborPair{i, nbrTile});
+            tileNeighbors_.insert(i, nbrTile);
 
             const int region = tileRegions_[i];
             const int nbrRegion = tileRegions_[nbrTile];
             if (region == nbrRegion) {
                 continue;
             }
-            regionNeighbors_.push_back(NeighborPair{region, nbrRegion});
+            regionNeighbors_.insert(region, nbrRegion);
         }
     }
 
-    // Now remove duplicates and make O(log n) lookups possible.
-    sortAndPrune(tileNeighbors_);
-    sortAndPrune(regionNeighbors_);
+    // Won't be inserting any new elements after this.
+    tileNeighbors_.shrink_to_fit();
+    regionNeighbors_.shrink_to_fit();
 }
 
 void RandomMap::assignTerrain()
@@ -265,6 +237,9 @@ void RandomMap::assignObstacles()
             tileObstacles_[i] = dist3(g_randEng);
         }
     }
+
+    avoidIsolatedRegions();
+    avoidIsolatedTiles();
 }
 
 void RandomMap::assignRegions(const std::vector<Hex> &centers)
@@ -274,10 +249,8 @@ void RandomMap::assignRegions(const std::vector<Hex> &centers)
     }
 }
 
-std::vector<Hex> RandomMap::voronoi() const
+std::vector<Hex> RandomMap::voronoi()
 {
-    // Note: repeated runs of the Voronoi algorithm sometimes causes small
-    // regions to be absorbed by their neighbors.  
     std::vector<Hex> centers(numRegions_);
 
     // Count all the hexes assigned to each region, sum their coordinates.
@@ -296,14 +269,15 @@ std::vector<Hex> RandomMap::voronoi() const
         centers[r] = hexSums[r] / hexCount[r];
     }
 
-    // Erase any empty regions.
+    // Erase any empty regions.  Repeated runs of the Voronoi algorithm sometimes
+    // causes small regions to be absorbed by their neighbors.
     centers.erase(remove(std::begin(centers), std::end(centers), Hex::invalid()),
                   std::end(centers));
 
     return centers;
 }
 
-std::vector<int> RandomMap::randomAltitudes() const
+std::vector<int> RandomMap::randomAltitudes()
 {
     std::vector<int> altitude(numRegions_, -1);
     std::uniform_int_distribution<int> step(-1, 1);
@@ -318,11 +292,7 @@ std::vector<int> RandomMap::randomAltitudes() const
 
         // Each neighbor region has altitude -1, +0, or +1 from the current
         // region.
-        const auto neighbors = equal_range(std::begin(regionNeighbors_),
-                                           std::end(regionNeighbors_),
-                                           curRegion);
-        for (auto i = neighbors.first; i != neighbors.second; ++i) {
-            const int nbrRegion = i->neighbor;
+        for (const auto &nbrRegion : regionNeighbors_.find(curRegion)) {
             if (altitude[nbrRegion] >= 0) {
                 continue;  // already visited
             }
@@ -338,6 +308,34 @@ std::vector<int> RandomMap::randomAltitudes() const
                        return elem == -1;
                    }));
     return altitude;
+}
+
+void RandomMap::avoidIsolatedRegions()
+{
+    std::vector<char> regionVisited(numRegions_, 0);
+
+    // Clear obstacles from the first pair of hexes we see from each pair of
+    // adjacent regions.
+    for (int i = 0; i < size_; ++i) {
+        for (const auto &nbr : tileNeighbors_.find(i)) {
+            const auto region = tileRegions_[i];
+            const auto nbrRegion = tileRegions_[nbr];
+            if ((region == nbrRegion) ||
+                (regionVisited[region] && regionVisited[nbrRegion]))
+            {
+                continue;
+            }
+
+            tileObstacles_[i] = -1;
+            tileObstacles_[nbr] = -1;
+            regionVisited[region] = 1;
+            regionVisited[nbrRegion] = 1;
+        }
+    }
+}
+
+void RandomMap::avoidIsolatedTiles()
+{
 }
 
 Hex RandomMap::hexFromInt(int index) const
