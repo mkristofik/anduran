@@ -49,6 +49,8 @@ private:
     // tile within that region.
     void avoidIsolatedRegions();
     void avoidIsolatedTiles();
+    void exploreWalkableTiles(int startTile, std::vector<char> &visited);
+    void connectIsolatedTiles(int startTile, const std::vector<char> &visited);
 
     // Convert between integer and Hex representations of a tile location.
     Hex hexFromInt(int index) const;
@@ -63,7 +65,7 @@ private:
     int numRegions_;
     std::vector<int> tileRegions_;  // index of region each tile belongs to
     FlatMultimap<int, int> tileNeighbors_;
-    std::vector<int> tileObstacles_;
+    std::vector<int> tileObstacles_;  // -1 = no obstacle, 0+ = chosen obstacle
     FlatMultimap<int, int> regionNeighbors_;
     std::vector<Terrain> regionTerrain_;
 };

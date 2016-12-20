@@ -13,6 +13,7 @@
 #include "RandomMap.h"
 #include "open-simplex-noise.h"
 
+#include "boost/container/flat_map.hpp"
 #include "rapidjson/document.h"
 #include "rapidjson/ostreamwrapper.h"
 #include "rapidjson/prettywriter.h"
@@ -22,6 +23,7 @@
 #include <ctime>
 #include <fstream>
 #include <memory>
+#include <queue>
 #include <random>
 #include <tuple>
 
@@ -304,7 +306,7 @@ std::vector<int> RandomMap::randomAltitudes()
     }
 
     assert(static_cast<int>(altitude.size()) == numRegions_);
-    assert(none_of(std::begin(altitude), std::end(altitude), [] (int elem) {
+    assert(none_of(std::cbegin(altitude), std::cend(altitude), [] (int elem) {
                        return elem == -1;
                    }));
     return altitude;
@@ -336,6 +338,96 @@ void RandomMap::avoidIsolatedRegions()
 
 void RandomMap::avoidIsolatedTiles()
 {
+    std::vector<char> tileVisited(size_, 0);
+    std::vector<char> regionVisited(numRegions_, 0);
+
+    for (int i = 0; i < size_; ++i) {
+        if (tileObstacles_[i] >= 0) {
+            continue;
+        }
+
+        const int reg = tileRegions_[i];
+        if (!regionVisited[reg]) {
+            exploreWalkableTiles(i, tileVisited);
+            regionVisited[reg] = 1;
+        }
+        else if (!tileVisited[i]) {
+            // We've found an unreachable tile within a region that was already
+            // visited.
+            connectIsolatedTiles(i, tileVisited);
+            exploreWalkableTiles(i, tileVisited);
+        }
+    }
+}
+
+void RandomMap::exploreWalkableTiles(int startTile, std::vector<char> &visited)
+{
+    const int region = tileRegions_[startTile];
+    std::queue<int> bfsQ;
+
+    // Breadth-first-search from starting tile to try to find every walkable tile
+    // in same region.
+    bfsQ.push(startTile);
+    while (!bfsQ.empty()) {
+        const int tile = bfsQ.front();
+        visited[tile] = 1;
+        bfsQ.pop();
+
+        for (const auto &nbr : tileNeighbors_.find(tile)) {
+            if (tileRegions_[nbr] == region &&
+                !visited[nbr] &&
+                tileObstacles_[nbr] < 0)
+            {
+                bfsQ.push(nbr);
+            }
+        }
+    }
+}
+
+void RandomMap::connectIsolatedTiles(int startTile, const std::vector<char> &visited)
+{
+    const int region = tileRegions_[startTile];
+    std::queue<int> bfsQ;
+    boost::container::flat_map<int, int> cameFrom;
+    int pathStart = -1;
+
+    // Search for the nearest visited walkable tile in the same region.  Clear a
+    // path of obstacles to get there.
+    bfsQ.push(startTile);
+    cameFrom.emplace(startTile, -1);
+    while (pathStart == -1 && !bfsQ.empty()) {
+        const int tile = bfsQ.front();
+        bfsQ.pop();
+
+        for (const auto &nbr : tileNeighbors_.find(tile)) {
+            if (tileRegions_[nbr] != region) {
+                continue;
+            }
+            else if (visited[nbr] && tileObstacles_[nbr] < 0) {
+                // Goal node, stop.
+                cameFrom.emplace(nbr, tile);
+                pathStart = nbr;
+                break;
+            }
+            else if (cameFrom.find(nbr) == std::cend(cameFrom)) {
+                // Haven't visited this tile yet.
+                bfsQ.push(nbr);
+                cameFrom.emplace(nbr, tile);
+            }
+        }
+    }
+
+    // We should always find a valid path to a previously visited walkable tile.
+    // Otherwise, why did we get in here?
+    assert(!offGrid(pathStart));
+
+    // Clear obstacles along the path.
+    int t = pathStart;
+    while (!offGrid(t)) {
+        tileObstacles_[t] = -1;
+        assert(cameFrom.find(t) != std::cend(cameFrom));
+        t = cameFrom[t];
+    }
 }
 
 Hex RandomMap::hexFromInt(int index) const

@@ -11,7 +11,7 @@
 
 CC = gcc
 CFLAGS = -Wall -Wextra -O3
-CPPFLAGS = -Ic:/libraries
+CPPFLAGS = -Ic:/libraries -Ic:/MinGW/include
 CXXFLAGS = -g -Wall -Wextra -std=c++1z
 #LDFLAGS = -L dirs
 #LDLIBS = -l library
