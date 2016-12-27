@@ -21,7 +21,7 @@
 class SdlTexture
 {
 public:
-    SdlTexture(const SdlSurface &surf, SdlWindow &win);
+    SdlTexture(const SdlSurface &src, SdlWindow &win);
 
     int width() const;
     int height() const;
@@ -46,7 +46,7 @@ public:
     void drawFlippedH(const SDL_Point &p, const SDL_Rect *srcRect = nullptr);
 
     explicit operator bool() const;
-    SDL_Texture * get();
+    SDL_Texture * get() const;
 
 private:
     // Return the bounding box for drawing the texture at (px,py).

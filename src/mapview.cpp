@@ -11,7 +11,7 @@
     See the COPYING.txt file for more details.
 */
 #include "SdlSurface.h"
-#include "SdlTexture.h"
+#include "SdlTextureAtlas.h"
 #include "SdlWindow.h"
 
 #include "SDL.h"
@@ -22,10 +22,10 @@ void real_main()
 {
     SdlWindow win(1280, 720, "Anduran Map Viewer");
     SdlSurface surf("img/tiles-grass.png");
-    SdlTexture tex(surf, win);
+    SdlTextureAtlas tex(surf, win, 1, 3);
 
     win.clear();
-    tex.draw(100, 100);
+    tex.drawFrame(0, 0, SDL_Point{100, 100});
     win.update();
 
     bool isDone = false;

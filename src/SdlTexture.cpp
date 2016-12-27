@@ -14,22 +14,22 @@
 #include <cassert>
 #include <cmath>
 
-SdlTexture::SdlTexture(const SdlSurface &surf, SdlWindow &win)
+SdlTexture::SdlTexture(const SdlSurface &src, SdlWindow &win)
     : texture_(),
     renderer_(win.renderer()),
     width_(0),
     height_(0)
 {
-    assert(surf && renderer_);
+    assert(src && renderer_);
 
-    auto img = SDL_CreateTextureFromSurface(renderer_, surf.get());
+    auto img = SDL_CreateTextureFromSurface(renderer_, src.get());
     if (!img) {
         SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO, "Error creating texture: %s", SDL_GetError());
         return;
     }
 
-    width_ = surf->w;
-    height_ = surf->h;
+    width_ = src->w;
+    height_ = src->h;
     texture_.reset(img, SDL_DestroyTexture);
 }
 
@@ -120,7 +120,7 @@ SdlTexture::operator bool() const
     return static_cast<bool>(texture_);
 }
 
-SDL_Texture * SdlTexture::get()
+SDL_Texture * SdlTexture::get() const
 {
     return texture_.get();
 }
