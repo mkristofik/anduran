@@ -11,10 +11,15 @@
 
 CC = gcc
 CFLAGS = -Wall -Wextra -O3
-CPPFLAGS = -Ic:/libraries -Ic:/MinGW/include
+CPPFLAGS = -Ic:/libraries \
+	-Ic:/MinGW/include \
+	-Ic:/libraries/SDL2-2.0.5/x86_64-w64-mingw32/include/SDL2 \
+	-Ic:/libraries/SDL2_image-2.0.1/x86_64-w64-mingw32/include/SDL2
 CXXFLAGS = -g -Wall -Wextra -std=c++1z
-#LDFLAGS = -L dirs
-#LDLIBS = -l library
+LDFLAGS = -Lc:/libraries/SDL2-2.0.5/x86_64-w64-mingw32/lib \
+	-Lc:/libraries/SDL2_image-2.0.1/x86_64-w64-mingw32/lib
+
+LDLIBS = -lmingw32 -lSDL2main -lSDL2 -lSDL2_image
 
 BUILD_DIR = build
 SRC_DIR = src
@@ -28,8 +33,20 @@ RMAPGEN_DEPS = $(RMAPGEN_OBJS:%.o=%.d)
 # the noise object file directly is good enough because the implicit rules
 # below will find open-simplex-noise.c.
 
+MAPVIEW = mapview.exe
+MAPVIEW_SRC = SdlSurface.cpp SdlTexture.cpp SdlWindow.cpp mapview.cpp
+MAPVIEW_OBJS = $(MAPVIEW_SRC:%.cpp=$(BUILD_DIR)/%.o)
+MAPVIEW_DEPS = $(MAPVIEW_OBJS:%.o=%.d)
+
+.PHONY : all clean
+
+all : $(RMAPGEN) $(MAPVIEW)
+
 $(RMAPGEN) : $(RMAPGEN_OBJS)
 	$(CXX) $(RMAPGEN_OBJS) -o $@
+
+$(MAPVIEW) : $(MAPVIEW_OBJS)
+	$(CXX) $(MAPVIEW_OBJS) $(LDFLAGS) $(LDLIBS) -o $@
 
 # Auto-generate a dependency file for each cpp file. We first create a build
 # directory to house all intermediate files. See example under "Automatic
@@ -68,7 +85,6 @@ endif
 
 # Remove intermediate build files and the executables.  Leading '-' means ignore
 # errors (e.g., if any files are already deleted).
-.PHONY : clean
 clean :
 	-rmdir /q /s $(BUILD_DIR)
-	-del rmapgen.exe
+	-del $(RMAPGEN) $(MAPVIEW)
