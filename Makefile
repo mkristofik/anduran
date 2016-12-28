@@ -34,8 +34,9 @@ RMAPGEN_DEPS = $(RMAPGEN_OBJS:%.o=%.d)
 # below will find open-simplex-noise.c.
 
 MAPVIEW = mapview.exe
-MAPVIEW_SRC = SdlSurface.cpp SdlTexture.cpp SdlTextureAtlas.cpp SdlWindow.cpp mapview.cpp
-MAPVIEW_OBJS = $(MAPVIEW_SRC:%.cpp=$(BUILD_DIR)/%.o)
+MAPVIEW_SRC = RandomMap.cpp SdlSurface.cpp SdlTexture.cpp SdlTextureAtlas.cpp \
+	SdlWindow.cpp hex_utils.cpp mapview.cpp
+MAPVIEW_OBJS = $(MAPVIEW_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-noise.o
 MAPVIEW_DEPS = $(MAPVIEW_OBJS:%.o=%.d)
 
 .PHONY : all clean

@@ -15,13 +15,15 @@
 
 #include "boost/container/flat_map.hpp"
 #include "rapidjson/document.h"
-#include "rapidjson/ostreamwrapper.h"
+#include "rapidjson/filereadstream.h"
+#include "rapidjson/filewritestream.h"
 #include "rapidjson/prettywriter.h"
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
+#include <cstdio>
 #include <ctime>
-#include <fstream>
 #include <memory>
 #include <queue>
 #include <random>
@@ -34,6 +36,7 @@ namespace
     const int MAX_ALTITUDE = 3;
     const double NOISE_FEATURE_SIZE = 12.0;
     const double OBSTACLE_LEVEL = 0.2;
+    const int JSON_BUFFER_SIZE = 65536;
     std::default_random_engine g_randEng(static_cast<unsigned int>(std::time(nullptr)));
 
     // This is slated for C++17.  Stole this from
@@ -129,6 +132,54 @@ RandomMap::RandomMap(int width)
     assignObstacles();
 }
 
+RandomMap::RandomMap(const char *filename)
+    : width_(0),
+    size_(0),
+    numRegions_(0),
+    tileRegions_(),
+    tileNeighbors_(),
+    tileObstacles_(),
+    regionNeighbors_(),
+    regionTerrain_()
+{
+    using namespace rapidjson;
+
+    char buf[JSON_BUFFER_SIZE];
+    std::shared_ptr<FILE> jsonFile(fopen(filename, "rb"), fclose);
+    FileReadStream istr(jsonFile.get(), buf, sizeof(buf));
+    Document doc;
+    doc.ParseStream(istr);
+
+    if (doc.HasMember("tile-regions")) {
+        const Value &jsonRegions = doc["tile-regions"];
+        tileRegions_.reserve(jsonRegions.Size());
+        for (const auto &r : jsonRegions.GetArray()) {
+            tileRegions_.push_back(r.GetInt());
+        }
+    }
+
+    if (doc.HasMember("region-terrain")) {
+        const Value &jsonTerrain = doc["region-terrain"];
+        regionTerrain_.reserve(jsonTerrain.Size());
+        for (const auto &t : jsonTerrain.GetArray()) {
+            regionTerrain_.push_back(static_cast<Terrain>(t.GetInt()));
+        }
+    }
+
+    if (doc.HasMember("tile-obstacles")) {
+        const Value &jsonObstacles = doc["tile-obstacles"];
+        tileObstacles_.reserve(jsonObstacles.Size());
+        for (const auto &o : jsonObstacles.GetArray()) {
+            tileObstacles_.push_back(o.GetInt());
+        }
+    }
+
+    size_ = tileRegions_.size();
+    width_ = std::sqrt(size_);
+
+    buildNeighborGraphs();
+}
+
 void RandomMap::writeFile(const char *filename)
 {
     using namespace rapidjson;
@@ -138,9 +189,10 @@ void RandomMap::writeFile(const char *filename)
     addJsonArray<int>(doc, "region-terrain", regionTerrain_);
     addJsonArray<int>(doc, "tile-obstacles", tileObstacles_);
 
-    std::ofstream jsonFile(filename);
-    OStreamWrapper osw(jsonFile);
-    PrettyWriter<OStreamWrapper> writer(osw);
+    char buf[JSON_BUFFER_SIZE];
+    std::shared_ptr<FILE> jsonFile(fopen(filename, "wb"), fclose);
+    FileWriteStream ostr(jsonFile.get(), buf, sizeof(buf));
+    PrettyWriter<FileWriteStream> writer(ostr);
     writer.SetFormatOptions(kFormatSingleLineArray);
     doc.Accept(writer);
 }

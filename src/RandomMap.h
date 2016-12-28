@@ -26,6 +26,7 @@ class RandomMap
 {
 public:
     explicit RandomMap(int width);
+    explicit RandomMap(const char *filename);
     void writeFile(const char *filename);
 
 private:
