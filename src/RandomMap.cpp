@@ -48,8 +48,25 @@ namespace
             (v < lo) ? lo : (v > hi) ? hi : v;
     }
 
+    template <typename T, size_t N>
+    std::vector<T> getJsonArray(rapidjson::Document &doc, const char (&name)[N])
+    {
+        using namespace rapidjson;
+
+        std::vector<T> ret;
+        if (doc.HasMember(name)) {
+            const Value &jsonArray = doc[name];
+            ret.reserve(jsonArray.Size());
+            for (const auto &v : jsonArray.GetArray()) {
+                ret.push_back(static_cast<T>(v.GetInt()));
+            }
+        }
+
+        return ret;
+    }
+
     template <typename T, size_t N, typename C>
-    void addJsonArray(rapidjson::Document &doc, const char (&name)[N], const C &cont)
+    void setJsonArray(rapidjson::Document &doc, const char (&name)[N], const C &cont)
     {
         using namespace rapidjson;
         using std::size;
@@ -150,30 +167,10 @@ RandomMap::RandomMap(const char *filename)
     Document doc;
     doc.ParseStream(istr);
 
-    if (doc.HasMember("tile-regions")) {
-        const Value &jsonRegions = doc["tile-regions"];
-        tileRegions_.reserve(jsonRegions.Size());
-        for (const auto &r : jsonRegions.GetArray()) {
-            tileRegions_.push_back(r.GetInt());
-        }
-    }
-
-    if (doc.HasMember("region-terrain")) {
-        const Value &jsonTerrain = doc["region-terrain"];
-        regionTerrain_.reserve(jsonTerrain.Size());
-        for (const auto &t : jsonTerrain.GetArray()) {
-            regionTerrain_.push_back(static_cast<Terrain>(t.GetInt()));
-        }
-    }
-
-    if (doc.HasMember("tile-obstacles")) {
-        const Value &jsonObstacles = doc["tile-obstacles"];
-        tileObstacles_.reserve(jsonObstacles.Size());
-        for (const auto &o : jsonObstacles.GetArray()) {
-            tileObstacles_.push_back(o.GetInt());
-        }
-    }
-
+    // TODO: report errors if this ever fails?
+    tileRegions_ = getJsonArray<int>(doc, "tile-regions");
+    regionTerrain_ = getJsonArray<Terrain>(doc, "region-terrain");
+    tileObstacles_ = getJsonArray<int>(doc, "tile-obstacles");
     size_ = tileRegions_.size();
     width_ = std::sqrt(size_);
 
@@ -185,9 +182,9 @@ void RandomMap::writeFile(const char *filename)
     using namespace rapidjson;
     Document doc(kObjectType);
 
-    addJsonArray<int>(doc, "tile-regions", tileRegions_);
-    addJsonArray<int>(doc, "region-terrain", regionTerrain_);
-    addJsonArray<int>(doc, "tile-obstacles", tileObstacles_);
+    setJsonArray<int>(doc, "tile-regions", tileRegions_);
+    setJsonArray<int>(doc, "region-terrain", regionTerrain_);
+    setJsonArray<int>(doc, "tile-obstacles", tileObstacles_);
 
     char buf[JSON_BUFFER_SIZE];
     std::shared_ptr<FILE> jsonFile(fopen(filename, "wb"), fclose);
