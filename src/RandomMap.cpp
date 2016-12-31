@@ -194,6 +194,42 @@ void RandomMap::writeFile(const char *filename)
     doc.Accept(writer);
 }
 
+int RandomMap::size() const
+{
+    return size_;
+}
+
+int RandomMap::width() const
+{
+    return width_;
+}
+
+Terrain RandomMap::getTerrain(const Hex &hex)
+{
+    assert(!offGrid(hex));
+
+    const int region = tileRegions_[intFromHex(hex)];
+    return regionTerrain_[region];
+}
+
+Hex RandomMap::hexFromInt(int index) const
+{
+    if (offGrid(index)) {
+        return Hex::invalid();
+    }
+
+    return {index % width_, index / width_};
+}
+
+int RandomMap::intFromHex(const Hex &hex) const
+{
+    if (offGrid(hex)) {
+        return -1;
+    }
+
+    return hex.y * width_ + hex.x;
+}
+
 void RandomMap::generateRegions()
 {
     // Start with a set of random hexes.  Don't worry if there are duplicates.
@@ -477,24 +513,6 @@ void RandomMap::connectIsolatedTiles(int startTile, const std::vector<char> &vis
         assert(cameFrom.find(t) != std::cend(cameFrom));
         t = cameFrom[t];
     }
-}
-
-Hex RandomMap::hexFromInt(int index) const
-{
-    if (offGrid(index)) {
-        return Hex::invalid();
-    }
-
-    return {index % width_, index / width_};
-}
-
-int RandomMap::intFromHex(const Hex &hex) const
-{
-    if (offGrid(hex)) {
-        return -1;
-    }
-
-    return hex.y * width_ + hex.x;
 }
 
 bool RandomMap::offGrid(int index) const

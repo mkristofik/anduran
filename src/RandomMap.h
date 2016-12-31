@@ -27,7 +27,17 @@ class RandomMap
 public:
     explicit RandomMap(int width);
     explicit RandomMap(const char *filename);
+
     void writeFile(const char *filename);
+
+    int size() const;
+    int width() const;
+
+    Terrain getTerrain(const Hex &hex);
+
+    // Convert between integer and Hex representations of a tile location.
+    Hex hexFromInt(int index) const;
+    int intFromHex(const Hex &hex) const;
 
 private:
     void generateRegions();
@@ -52,10 +62,6 @@ private:
     void avoidIsolatedTiles();
     void exploreWalkableTiles(int startTile, std::vector<char> &visited);
     void connectIsolatedTiles(int startTile, const std::vector<char> &visited);
-
-    // Convert between integer and Hex representations of a tile location.
-    Hex hexFromInt(int index) const;
-    int intFromHex(const Hex &hex) const;
 
     // Return true if the tile location is outside the map boundary.
     bool offGrid(int index) const;

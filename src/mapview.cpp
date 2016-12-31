@@ -10,6 +10,7 @@
  
     See the COPYING.txt file for more details.
 */
+#include "MapDisplay.h"
 #include "RandomMap.h"
 #include "SdlSurface.h"
 #include "SdlTextureAtlas.h"
@@ -22,12 +23,14 @@
 void real_main()
 {
     SdlWindow win(1280, 720, "Anduran Map Viewer");
-    SdlSurface surf("img/tiles-grass.png");
-    SdlTextureAtlas tex(surf, win, 1, 3);
+    //SdlSurface surf("img/tiles-grass.png");
+    //SdlTextureAtlas tex(surf, win, 1, 3);
 
     RandomMap rmap("test.json");
+    MapDisplay rmapView(win, rmap);
     win.clear();
-    tex.drawFrame(0, 0, SDL_Point{100, 100});
+    //tex.drawFrame(0, 0, SDL_Point{100, 100});
+    rmapView.draw();
     win.update();
 
     bool isDone = false;
