@@ -37,7 +37,6 @@ namespace
     const double NOISE_FEATURE_SIZE = 12.0;
     const double OBSTACLE_LEVEL = 0.2;
     const int JSON_BUFFER_SIZE = 65536;
-    std::default_random_engine g_randEng(static_cast<unsigned int>(std::time(nullptr)));
 
     // This is slated for C++17.  Stole this from
     // http://en.cppreference.com/w/cpp/algorithm/clamp
@@ -97,7 +96,7 @@ struct RandomHex
 
     Hex operator()()
     {
-        return {dist_(g_randEng), dist_(g_randEng)};
+        return {dist_(RandomMap::engine), dist_(RandomMap::engine)};
     }
 };
 
@@ -132,6 +131,8 @@ double Noise::get(int x, int y)
                                y / NOISE_FEATURE_SIZE);
 }
 
+
+std::default_random_engine RandomMap::engine(static_cast<unsigned int>(std::time(nullptr)));
 
 RandomMap::RandomMap(int width)
     : width_(width),
@@ -204,12 +205,18 @@ int RandomMap::width() const
     return width_;
 }
 
+Terrain RandomMap::getTerrain(int index)
+{
+    assert(!offGrid(index));
+
+    const int region = tileRegions_[index];
+    return regionTerrain_[region];
+}
+
 Terrain RandomMap::getTerrain(const Hex &hex)
 {
     assert(!offGrid(hex));
-
-    const int region = tileRegions_[intFromHex(hex)];
-    return regionTerrain_[region];
+    return getTerrain(intFromHex(hex));
 }
 
 Hex RandomMap::hexFromInt(int index) const
@@ -293,13 +300,13 @@ void RandomMap::assignTerrain()
     const auto altitude = randomAltitudes();
     for (int i = 0; i < numRegions_; ++i) {
         if (altitude[i] == 0) {
-            regionTerrain_[i] = lowAlt[dist3(g_randEng)];
+            regionTerrain_[i] = lowAlt[dist3(engine)];
         }
         else if (altitude[i] == MAX_ALTITUDE) {
-            regionTerrain_[i] = highAlt[dist2(g_randEng)];
+            regionTerrain_[i] = highAlt[dist2(engine)];
         }
         else {
-            regionTerrain_[i] = medAlt[dist2(g_randEng)];
+            regionTerrain_[i] = medAlt[dist2(engine)];
         }
     }
 }
@@ -321,7 +328,7 @@ void RandomMap::assignObstacles()
     std::uniform_int_distribution<int> dist3(0, 2);
     for (int i = 0; i < size_; ++i) {
         if (values[i] > OBSTACLE_LEVEL) {
-            tileObstacles_[i] = dist3(g_randEng);
+            tileObstacles_[i] = dist3(engine);
         }
     }
 
@@ -384,7 +391,7 @@ std::vector<int> RandomMap::randomAltitudes()
                 continue;  // already visited
             }
 
-            const auto newAlt = altitude[curRegion] + step(g_randEng);
+            const auto newAlt = altitude[curRegion] + step(engine);
             altitude[nbrRegion] = clamp(newAlt, 0, MAX_ALTITUDE);
             regionStack.push_back(nbrRegion);
         }

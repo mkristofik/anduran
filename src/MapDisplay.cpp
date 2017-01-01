@@ -65,6 +65,12 @@ namespace
 }
 
 
+SDL_Point operator+(const SDL_Point &lhs, const SDL_Point &rhs)
+{
+    return {lhs.x + rhs.x, lhs.y + rhs.y};
+}
+
+
 TileDisplay::TileDisplay()
     : hex(),
     pixel{-HEX_SIZE, -HEX_SIZE},
@@ -82,10 +88,13 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap)
     tiles_(map_.size()),
     displayArea_(getWindowBounds(window_))
 {
+    std::uniform_int_distribution<int> dist3(0, 2);
+
     for (int i = 0; i < map_.size(); ++i) {
         tiles_[i].hex = map_.hexFromInt(i);
         tiles_[i].pixel = pixelFromHex(tiles_[i].hex);
-        tiles_[i].terrain = static_cast<int>(map_.getTerrain(tiles_[i].hex));
+        tiles_[i].terrain = static_cast<int>(map_.getTerrain(i));
+        tiles_[i].frame = dist3(RandomMap::engine);
     }
 }
 
@@ -96,14 +105,14 @@ void MapDisplay::draw()
         if (!t.visible) {
             continue;
         }
-        tileImg_[t.terrain].drawFrame(0, 0, t.pixel);
+        tileImg_[t.terrain].drawFrame(0, t.frame, t.pixel);
     }
 }
 
 void MapDisplay::setTileVisibility()
 {
     for (auto &t : tiles_) {
-        const SDL_Point lowerRight = {t.pixel.x + HEX_SIZE, t.pixel.y + HEX_SIZE};
+        const SDL_Point lowerRight = t.pixel + SDL_Point{HEX_SIZE, HEX_SIZE};
         if (SDL_PointInRect(&t.pixel, &displayArea_) == SDL_TRUE ||
             SDL_PointInRect(&lowerRight, &displayArea_) == SDL_TRUE)
         {

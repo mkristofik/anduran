@@ -16,6 +16,7 @@
 #include "FlatMultimap.h"
 #include "hex_utils.h"
 #include "iterable_enum_class.h"
+#include <random>
 #include <vector>
 
 enum class Terrain {WATER, DESERT, SWAMP, GRASS, DIRT, SNOW, _last, _first = WATER};
@@ -33,11 +34,14 @@ public:
     int size() const;
     int width() const;
 
+    Terrain getTerrain(int index);
     Terrain getTerrain(const Hex &hex);
 
     // Convert between integer and Hex representations of a tile location.
     Hex hexFromInt(int index) const;
     int intFromHex(const Hex &hex) const;
+
+    static std::default_random_engine engine;
 
 private:
     void generateRegions();
