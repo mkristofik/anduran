@@ -15,6 +15,8 @@
 namespace
 {
     const int HEX_SIZE = 72;
+    const int SCROLL_PX_SEC = 500;  // map scroll rate in pixels per second
+    const int BORDER_WIDTH = 20;
 
     const char * tileFilename(Terrain t)
     {
@@ -65,15 +67,16 @@ namespace
 }
 
 
-SDL_Point operator+(const SDL_Point &lhs, const SDL_Point &rhs)
+SDL_Point operator-(const SDL_Point &lhs, const PartialPoint &rhs)
 {
-    return {lhs.x + rhs.x, lhs.y + rhs.y};
+    return {static_cast<int>(lhs.x - rhs.x), static_cast<int>(lhs.y - rhs.y)};
 }
 
 
 TileDisplay::TileDisplay()
     : hex(),
-    pixel{-HEX_SIZE, -HEX_SIZE},
+    basePixel{-HEX_SIZE, -HEX_SIZE},
+    curPixel{-HEX_SIZE, -HEX_SIZE},
     terrain(0),
     frame(0),
     visible(false)
@@ -86,13 +89,15 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap)
     map_(rmap),
     tileImg_(loadTileImages(window_)),
     tiles_(map_.size()),
-    displayArea_(getWindowBounds(window_))
+    displayArea_(getWindowBounds(window_)),
+    displayOffset_{0.0, 0.0}
 {
     std::uniform_int_distribution<int> dist3(0, 2);
 
     for (int i = 0; i < map_.size(); ++i) {
         tiles_[i].hex = map_.hexFromInt(i);
-        tiles_[i].pixel = pixelFromHex(tiles_[i].hex);
+        tiles_[i].basePixel = pixelFromHex(tiles_[i].hex);
+        tiles_[i].curPixel = tiles_[i].basePixel;
         tiles_[i].terrain = static_cast<int>(map_.getTerrain(i));
         tiles_[i].frame = dist3(RandomMap::engine);
     }
@@ -105,16 +110,58 @@ void MapDisplay::draw()
         if (!t.visible) {
             continue;
         }
-        tileImg_[t.terrain].drawFrame(0, t.frame, t.pixel);
+        tileImg_[t.terrain].drawFrame(0, t.frame, t.curPixel);
     }
+}
+
+void MapDisplay::handleMousePosition(Uint32 elapsed_ms)
+{
+    // Is the mouse near the boundary?
+    static const SDL_Rect insideBoundary = {displayArea_.x + BORDER_WIDTH,
+                                            displayArea_.y + BORDER_WIDTH,
+                                            displayArea_.w - BORDER_WIDTH * 2,
+                                            displayArea_.h - BORDER_WIDTH * 2};
+    SDL_Point mouse;
+    SDL_GetMouseState(&mouse.x, &mouse.y);
+    if (SDL_PointInRect(&mouse, &insideBoundary) == SDL_TRUE) {
+        return;
+    }
+
+    auto scrollX = 0.0;
+    auto scrollY = 0.0;
+    const auto scrollDist = SCROLL_PX_SEC * elapsed_ms / 1000.0;
+
+    if (mouse.x - displayArea_.x < BORDER_WIDTH) {
+        scrollX = -scrollDist;
+    }
+    else if (displayArea_.x + displayArea_.w - mouse.x < BORDER_WIDTH) {
+        scrollX = scrollDist;
+    }
+    if (mouse.y - displayArea_.y < BORDER_WIDTH) {
+        scrollY = -scrollDist;
+    }
+    else if (displayArea_.y + displayArea_.h - mouse.y < BORDER_WIDTH) {
+        scrollY = scrollDist;
+    }
+
+    // Stop scrolling when the lower right hex is just inside the window.
+    static const auto lowerRight = pixelFromHex(Hex{map_.width() - 1, map_.width() - 1});
+    static const auto pMaxX = lowerRight.x - displayArea_.w + HEX_SIZE;
+    static const auto pMaxY = lowerRight.y - displayArea_.h + HEX_SIZE;
+
+    displayOffset_.x = clamp<double>(displayOffset_.x + scrollX, 0, pMaxX);
+    displayOffset_.y = clamp<double>(displayOffset_.y + scrollY, 0, pMaxY);
 }
 
 void MapDisplay::setTileVisibility()
 {
     for (auto &t : tiles_) {
-        const SDL_Point lowerRight = t.pixel + SDL_Point{HEX_SIZE, HEX_SIZE};
-        if (SDL_PointInRect(&t.pixel, &displayArea_) == SDL_TRUE ||
-            SDL_PointInRect(&lowerRight, &displayArea_) == SDL_TRUE)
+        t.curPixel = t.basePixel - displayOffset_;
+
+        if (t.curPixel.x > displayArea_.x - HEX_SIZE &&
+            t.curPixel.x < displayArea_.x + displayArea_.w &&
+            t.curPixel.y > displayArea_.y - HEX_SIZE &&
+            t.curPixel.y < displayArea_.y + displayArea_.h)
         {
             t.visible = true;
         }

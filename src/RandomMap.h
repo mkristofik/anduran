@@ -16,6 +16,7 @@
 #include "FlatMultimap.h"
 #include "hex_utils.h"
 #include "iterable_enum_class.h"
+#include <cassert>
 #include <random>
 #include <vector>
 
@@ -80,5 +81,15 @@ private:
     FlatMultimap<int, int> regionNeighbors_;
     std::vector<Terrain> regionTerrain_;
 };
+
+
+// This is slated for C++17.  Stole this from
+// http://en.cppreference.com/w/cpp/algorithm/clamp
+template<typename T>
+constexpr const T& clamp(const T& v, const T& lo, const T& hi)
+{
+    return assert(lo <= hi),
+        (v < lo) ? lo : (v > hi) ? hi : v;
+}
 
 #endif

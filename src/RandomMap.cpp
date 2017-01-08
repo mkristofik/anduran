@@ -20,7 +20,6 @@
 #include "rapidjson/prettywriter.h"
 
 #include <algorithm>
-#include <cassert>
 #include <cmath>
 #include <cstdio>
 #include <ctime>
@@ -37,15 +36,6 @@ namespace
     const double NOISE_FEATURE_SIZE = 12.0;
     const double OBSTACLE_LEVEL = 0.2;
     const int JSON_BUFFER_SIZE = 65536;
-
-    // This is slated for C++17.  Stole this from
-    // http://en.cppreference.com/w/cpp/algorithm/clamp
-    template<typename T>
-    constexpr const T& clamp(const T& v, const T& lo, const T& hi)
-    {
-        return assert(lo <= hi),
-            (v < lo) ? lo : (v > hi) ? hi : v;
-    }
 
     template <typename T, size_t N>
     std::vector<T> getJsonArray(rapidjson::Document &doc, const char (&name)[N])

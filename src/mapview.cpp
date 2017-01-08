@@ -32,7 +32,13 @@ void real_main()
 
     bool isDone = false;
     SDL_Event event;
+    auto prevFrameTime_ms = SDL_GetTicks();
+
     while (!isDone) {
+        const auto curTime_ms = SDL_GetTicks();
+        const auto elapsed_ms = curTime_ms - prevFrameTime_ms;
+        prevFrameTime_ms = curTime_ms;
+
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
                 case SDL_QUIT:
@@ -41,6 +47,11 @@ void real_main()
             }
         }
 
+        rmapView.handleMousePosition(elapsed_ms);
+
+        win.clear();
+        rmapView.draw();
+        win.update();
         SDL_Delay(1);
     }
 }

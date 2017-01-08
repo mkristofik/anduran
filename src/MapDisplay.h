@@ -24,12 +24,20 @@
 struct TileDisplay
 {
     Hex hex;
-    SDL_Point pixel;
+    SDL_Point basePixel;
+    SDL_Point curPixel;
     int terrain;
     int frame;
     bool visible;
 
     TileDisplay();
+};
+
+
+struct PartialPoint
+{
+    double x;
+    double y;
 };
 
 
@@ -47,6 +55,8 @@ public:
 
     void draw();
 
+    void handleMousePosition(Uint32 elapsed_ms);
+
 private:
     void setTileVisibility();
 
@@ -55,6 +65,7 @@ private:
     std::vector<SdlTextureAtlas> tileImg_;
     std::vector<TileDisplay> tiles_;
     SDL_Rect displayArea_;
+    PartialPoint displayOffset_;
 };
 
 #endif
