@@ -40,12 +40,44 @@ namespace
         }
     }
 
+    const char * obstacleFilename(Terrain t)
+    {
+        switch(t) {
+            case Terrain::WATER:
+                return "img/obstacles-water.png";
+            case Terrain::DESERT:
+                return "img/obstacles-desert.png";
+            case Terrain::SWAMP:
+                return "img/obstacles-swamp.png";
+            case Terrain::GRASS:
+                return "img/obstacles-grass.png";
+            case Terrain::DIRT:
+                return "img/obstacles-dirt.png";
+            case Terrain::SNOW:
+                return "img/obstacles-snow.png";
+            default:
+                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Unrecognized terrain %d",
+                            static_cast<int>(t));
+                return "img/obstacles-water.png";
+        }
+    }
+
     auto loadTileImages(SdlWindow &win)
     {
         std::vector<SdlTextureAtlas> images;
         for (auto t : Terrain()) {
             const SdlSurface surf(tileFilename(t));
             images.emplace_back(surf, win, 1, 3);
+        }
+        return images;
+    }
+
+    auto loadObstacleImages(SdlWindow &win)
+    {
+        std::vector<SdlTextureAtlas> images;
+        for (auto t : Terrain()) {
+            const SdlSurface surf(obstacleFilename(t));
+            images.emplace_back(surf, win, 1, 4);
         }
         return images;
     }
@@ -67,6 +99,11 @@ namespace
 }
 
 
+SDL_Point operator+(const SDL_Point &lhs, const SDL_Point &rhs)
+{
+    return {lhs.x + rhs.x, lhs.y + rhs.y};
+}
+
 SDL_Point operator-(const SDL_Point &lhs, const PartialPoint &rhs)
 {
     return {static_cast<int>(lhs.x - rhs.x), static_cast<int>(lhs.y - rhs.y)};
@@ -79,6 +116,7 @@ TileDisplay::TileDisplay()
     curPixel{-HEX_SIZE, -HEX_SIZE},
     terrain(0),
     frame(0),
+    obstacle(-1),
     visible(false)
 {
 }
@@ -88,6 +126,7 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap)
     : window_(win),
     map_(rmap),
     tileImg_(loadTileImages(window_)),
+    obstacleImg_(loadObstacleImages(window_)),
     tiles_(map_.size()),
     displayArea_(getWindowBounds(window_)),
     displayOffset_{0.0, 0.0}
@@ -100,17 +139,27 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap)
         tiles_[i].curPixel = tiles_[i].basePixel;
         tiles_[i].terrain = static_cast<int>(map_.getTerrain(i));
         tiles_[i].frame = dist3(RandomMap::engine);
+        tiles_[i].obstacle = map_.getObstacle(i);
     }
 }
 
 void MapDisplay::draw()
 {
     setTileVisibility();
+
+    // Draw terrain tiles.
     for (const auto &t : tiles_) {
-        if (!t.visible) {
-            continue;
+        if (t.visible) {
+            tileImg_[t.terrain].drawFrame(0, t.frame, t.curPixel);
         }
-        tileImg_[t.terrain].drawFrame(0, t.frame, t.curPixel);
+    }
+
+    // Now draw obstacles so the terrain doesn't overlap them.
+    for (const auto &t : tiles_) {
+        if (t.visible && t.obstacle >= 0) {
+            const auto hexCenter = t.curPixel + SDL_Point{HEX_SIZE / 2, HEX_SIZE / 2};
+            obstacleImg_[t.terrain].drawFrameCentered(0, t.obstacle, hexCenter);
+        }
     }
 }
 

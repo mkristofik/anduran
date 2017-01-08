@@ -38,6 +38,9 @@ public:
     Terrain getTerrain(int index);
     Terrain getTerrain(const Hex &hex);
 
+    // -1 = no obstacle, 0+ = obstacle frame to use
+    int getObstacle(int index);
+
     // Convert between integer and Hex representations of a tile location.
     Hex hexFromInt(int index) const;
     int intFromHex(const Hex &hex) const;

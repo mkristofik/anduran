@@ -33,6 +33,7 @@ RMAPGEN_DEPS = $(RMAPGEN_OBJS:%.o=%.d)
 # the noise object file directly is good enough because the implicit rules
 # below will find open-simplex-noise.c.
 
+# TODO: why isn't this generating .d files for everything?  Only rmapgen got them.
 MAPVIEW = mapview.exe
 MAPVIEW_SRC = MapDisplay.cpp RandomMap.cpp SdlSurface.cpp SdlTexture.cpp \
 	SdlTextureAtlas.cpp SdlWindow.cpp hex_utils.cpp mapview.cpp

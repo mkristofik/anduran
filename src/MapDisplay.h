@@ -28,6 +28,7 @@ struct TileDisplay
     SDL_Point curPixel;
     int terrain;
     int frame;
+    int obstacle;
     bool visible;
 
     TileDisplay();
@@ -63,6 +64,7 @@ private:
     SdlWindow &window_;
     RandomMap &map_;
     std::vector<SdlTextureAtlas> tileImg_;
+    std::vector<SdlTextureAtlas> obstacleImg_;
     std::vector<TileDisplay> tiles_;
     SDL_Rect displayArea_;
     PartialPoint displayOffset_;

@@ -33,7 +33,7 @@ namespace
 {
     const int REGION_SIZE = 64;
     const int MAX_ALTITUDE = 3;
-    const double NOISE_FEATURE_SIZE = 12.0;
+    const double NOISE_FEATURE_SIZE = 2.0;
     const double OBSTACLE_LEVEL = 0.2;
     const int JSON_BUFFER_SIZE = 65536;
 
@@ -209,6 +209,12 @@ Terrain RandomMap::getTerrain(const Hex &hex)
     return getTerrain(intFromHex(hex));
 }
 
+int RandomMap::getObstacle(int index)
+{
+    assert(!offGrid(index));
+    return tileObstacles_[index];
+}
+
 Hex RandomMap::hexFromInt(int index) const
 {
     if (offGrid(index)) {
@@ -315,10 +321,10 @@ void RandomMap::assignObstacles()
     }
 
     // Any value above the threshold gets a random obstacle.
-    std::uniform_int_distribution<int> dist3(0, 2);
+    std::uniform_int_distribution<int> dist4(0, 3);
     for (int i = 0; i < size_; ++i) {
         if (values[i] > OBSTACLE_LEVEL) {
-            tileObstacles_[i] = dist3(engine);
+            tileObstacles_[i] = dist4(engine);
         }
     }
 
