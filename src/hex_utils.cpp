@@ -41,6 +41,58 @@ Hex & Hex::operator+=(const Hex &rhs)
     return *this;
 }
 
+Hex Hex::getNeighbor(HexDir d) const
+{
+    const bool evenCol = (x % 2 == 0);
+
+    switch (d) {
+        case HexDir::N:
+            return *this + Hex(0, -1);
+        case HexDir::NE:
+            if (evenCol) {
+                return *this + Hex(1, -1);
+            }
+            else {
+                return *this + Hex(1, 0);
+            }
+        case HexDir::SE:
+            if (evenCol) {
+                return *this + Hex(1, 0);
+            }
+            else {
+                return *this + Hex(1, 1);
+            }
+        case HexDir::S:
+            return *this + Hex(0, 1);
+        case HexDir::SW:
+            if (evenCol) {
+                return *this + Hex(-1, 0);
+            }
+            else {
+                return *this + Hex(-1, 1);
+            }
+        case HexDir::NW:
+            if (evenCol) {
+                return *this + Hex(-1, -1);
+            }
+            else {
+                return *this + Hex(-1, 0);
+            }
+        default:
+            return Hex::invalid();
+    }
+}
+
+Neighbors<Hex> Hex::getAllNeighbors() const
+{
+    Neighbors<Hex> nbrs;
+
+    for (auto d : HexDir()) {
+        nbrs[static_cast<int>(d)] = getNeighbor(d);
+    }
+    return nbrs;
+}
+
 Hex operator+(Hex lhs, const Hex &rhs)
 {
     lhs += rhs;
@@ -86,48 +138,6 @@ int hexDistance(const Hex &h1, const Hex &h2)
     }
 
     return std::max(dx, dy + vPenalty + dx / 2);
-}
-
-Hex hexAdjacent(const Hex &hSrc, HexDir d)
-{
-    const bool evenCol = (hSrc.x % 2 == 0);
-
-    switch (d) {
-        case HexDir::N:
-            return hSrc + Hex(0, -1);
-        case HexDir::NE:
-            if (evenCol) {
-                return hSrc + Hex(1, -1);
-            }
-            else {
-                return hSrc + Hex(1, 0);
-            }
-        case HexDir::SE:
-            if (evenCol) {
-                return hSrc + Hex(1, 0);
-            }
-            else {
-                return hSrc + Hex(1, 1);
-            }
-        case HexDir::S:
-            return hSrc + Hex(0, 1);
-        case HexDir::SW:
-            if (evenCol) {
-                return hSrc + Hex(-1, 0);
-            }
-            else {
-                return hSrc + Hex(-1, 1);
-            }
-        case HexDir::NW:
-            if (evenCol) {
-                return hSrc + Hex(-1, -1);
-            }
-            else {
-                return hSrc + Hex(-1, 0);
-            }
-        default:
-            return Hex::invalid();
-    }
 }
 
 int hexClosestIdx(const Hex &hSrc, const std::vector<Hex> &hexes)

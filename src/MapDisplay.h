@@ -29,16 +29,10 @@ struct TileDisplay
     int terrain;
     int frame;
     int obstacle;
+    Neighbors<int> edges;
     bool visible;
 
     TileDisplay();
-};
-
-
-struct PartialPoint
-{
-    double x;
-    double y;
 };
 
 
@@ -59,15 +53,17 @@ public:
     void handleMousePosition(Uint32 elapsed_ms);
 
 private:
+    void computeTileEdges();
     void setTileVisibility();
 
     SdlWindow &window_;
     RandomMap &map_;
     std::vector<SdlTextureAtlas> tileImg_;
     std::vector<SdlTextureAtlas> obstacleImg_;
+    std::vector<SdlTextureAtlas> edgeImg_;
     std::vector<TileDisplay> tiles_;
     SDL_Rect displayArea_;
-    PartialPoint displayOffset_;
+    std::pair<double, double> displayOffset_;
 };
 
 #endif

@@ -62,6 +62,28 @@ namespace
         }
     }
 
+    const char * edgeFilename(Terrain t)
+    {
+        switch(t) {
+            case Terrain::WATER:
+                return "img/edges-water.png";
+            case Terrain::DESERT:
+                return "img/edges-desert.png";
+            case Terrain::SWAMP:
+                return "img/edges-swamp.png";
+            case Terrain::GRASS:
+                return "img/edges-grass.png";
+            case Terrain::DIRT:
+                return "img/edges-dirt.png";
+            case Terrain::SNOW:
+                return "img/edges-snow.png";
+            default:
+                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Unrecognized terrain %d",
+                            static_cast<int>(t));
+                return "img/edges-water.png";
+        }
+    }
+
     auto loadTileImages(SdlWindow &win)
     {
         std::vector<SdlTextureAtlas> images;
@@ -78,6 +100,16 @@ namespace
         for (auto t : Terrain()) {
             const SdlSurface surf(obstacleFilename(t));
             images.emplace_back(surf, win, 1, 4);
+        }
+        return images;
+    }
+
+    auto loadEdgeImages(SdlWindow &win)
+    {
+        std::vector<SdlTextureAtlas> images;
+        for (auto t : Terrain()) {
+            const SdlSurface surf(edgeFilename(t));
+            images.emplace_back(surf, win, 1, 6);
         }
         return images;
     }
@@ -104,9 +136,9 @@ SDL_Point operator+(const SDL_Point &lhs, const SDL_Point &rhs)
     return {lhs.x + rhs.x, lhs.y + rhs.y};
 }
 
-SDL_Point operator-(const SDL_Point &lhs, const PartialPoint &rhs)
+SDL_Point operator-(const SDL_Point &lhs, const std::pair<double, double> &rhs)
 {
-    return {static_cast<int>(lhs.x - rhs.x), static_cast<int>(lhs.y - rhs.y)};
+    return {static_cast<int>(lhs.x - rhs.first), static_cast<int>(lhs.y - rhs.second)};
 }
 
 
@@ -117,8 +149,10 @@ TileDisplay::TileDisplay()
     terrain(0),
     frame(0),
     obstacle(-1),
+    edges(),
     visible(false)
 {
+    edges.fill(-1);
 }
 
 
@@ -127,6 +161,7 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap)
     map_(rmap),
     tileImg_(loadTileImages(window_)),
     obstacleImg_(loadObstacleImages(window_)),
+    edgeImg_(loadEdgeImages(window_)),
     tiles_(map_.size()),
     displayArea_(getWindowBounds(window_)),
     displayOffset_{0.0, 0.0}
@@ -141,6 +176,54 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap)
         tiles_[i].frame = dist3(RandomMap::engine);
         tiles_[i].obstacle = map_.getObstacle(i);
     }
+
+    computeTileEdges();
+}
+
+void MapDisplay::computeTileEdges()
+{
+    for (int i = 0; i < map_.size(); ++i) {
+        const Hex myHex = map_.hexFromInt(i);
+        const Terrain myTerrain = static_cast<Terrain>(tiles_[i].terrain);
+        if (myTerrain == Terrain::GRASS) {
+            continue;
+        }
+
+        for (auto d : HexDir()) {
+            const Hex nbr = myHex.getNeighbor(d);
+            if (map_.offGrid(nbr)) {
+                continue;
+            }
+
+            const Terrain nbrTerrain = map_.getTerrain(nbr);
+            if (myTerrain == nbrTerrain) {
+                continue;
+            }
+
+            // Set the edge of the tile to the terrain of the neighboring tile
+            // if the neighboring terrain overlaps this one.
+            const auto dirIndex = static_cast<int>(d);
+            if (nbrTerrain == Terrain::GRASS || nbrTerrain == Terrain::SNOW) {
+                tiles_[i].edges[dirIndex] = static_cast<int>(nbrTerrain);
+            }
+            else if ((myTerrain == Terrain::DIRT || myTerrain == Terrain::DESERT) &&
+                     nbrTerrain == Terrain::SWAMP)
+            {
+                tiles_[i].edges[dirIndex] = static_cast<int>(Terrain::SWAMP);
+            }
+            else if ((myTerrain == Terrain::SWAMP || myTerrain == Terrain::DESERT) &&
+                     nbrTerrain == Terrain::WATER)
+            {
+                tiles_[i].edges[dirIndex] = static_cast<int>(Terrain::WATER);
+            }
+            else if (myTerrain == Terrain::WATER && nbrTerrain == Terrain::DIRT) {
+                tiles_[i].edges[dirIndex] = static_cast<int>(Terrain::DIRT);
+            }
+            else if (myTerrain == Terrain::DIRT && nbrTerrain == Terrain::DESERT) {
+                tiles_[i].edges[dirIndex] = static_cast<int>(Terrain::DESERT);
+            }
+        }
+    }
 }
 
 void MapDisplay::draw()
@@ -151,6 +234,19 @@ void MapDisplay::draw()
     for (const auto &t : tiles_) {
         if (t.visible) {
             tileImg_[t.terrain].drawFrame(0, t.frame, t.curPixel);
+        }
+    }
+
+    // Draw terrain edges.
+    for (const auto &t : tiles_) {
+        if (!t.visible) {
+            continue;
+        }
+        for (int d = 0; d < enum_size<HexDir>(); ++d) {
+            if (t.edges[d] != -1) {
+                const auto nbrTerrain = t.edges[d];
+                edgeImg_[nbrTerrain].drawFrame(0, d, t.curPixel);
+            }
         }
     }
 
@@ -198,8 +294,10 @@ void MapDisplay::handleMousePosition(Uint32 elapsed_ms)
     static const auto pMaxX = lowerRight.x - displayArea_.w + HEX_SIZE;
     static const auto pMaxY = lowerRight.y - displayArea_.h + HEX_SIZE;
 
-    displayOffset_.x = clamp<double>(displayOffset_.x + scrollX, 0, pMaxX);
-    displayOffset_.y = clamp<double>(displayOffset_.y + scrollY, 0, pMaxY);
+    // Using doubles here because this might scroll by less than one pixel if the
+    // computer is fast enough.
+    displayOffset_.first = clamp<double>(displayOffset_.first + scrollX, 0, pMaxX);
+    displayOffset_.second = clamp<double>(displayOffset_.second + scrollY, 0, pMaxY);
 }
 
 void MapDisplay::setTileVisibility()

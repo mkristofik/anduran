@@ -14,7 +14,17 @@
 #define HEX_UTILS_H
 
 #include "iterable_enum_class.h"
+#include <array>
 #include <vector>
+
+enum class HexDir {N, NE, SE, S, SW, NW, _last, _first = N};
+ITERABLE_ENUM_CLASS(HexDir);
+
+
+// Convenience type for all neighbors of a hex, in HexDir order.
+template <typename T>
+using Neighbors = std::array<T, 6>;
+
 
 struct Hex
 {
@@ -27,6 +37,13 @@ struct Hex
 
     // note: math on invalid hexes works like NaN: once invalid, always invalid
     Hex & operator+=(const Hex &rhs);
+
+    // Return the hex adjacent to the source hex in the given direction. No bounds
+    // checking.
+    Hex getNeighbor(HexDir d) const;
+
+    // Return all the hexes adjacent to the source hex. No bounds checking.
+    Neighbors<Hex> getAllNeighbors() const;
 };
 
 Hex operator+(Hex lhs, const Hex &rhs);
@@ -34,15 +51,8 @@ Hex operator/(const Hex &lhs, int rhs);
 bool operator==(const Hex &lhs, const Hex &rhs);
 bool operator!=(const Hex &lhs, const Hex &rhs);
 
-enum class HexDir {N, NE, SE, S, SW, NW, _last, _first = N};
-ITERABLE_ENUM_CLASS(HexDir);
-
 // Distance between hexes, one step per tile.
 int hexDistance(const Hex &h1, const Hex &h2);
-
-// Return the hex adjancent to the source hex in the given direction.  No
-// bounds checking.
-Hex hexAdjacent(const Hex &hSrc, HexDir d);
 
 // Given a list of hexes, return the index of the hex closest to the source.
 int hexClosestIdx(const Hex &hSrc, const std::vector<Hex> &hexes);

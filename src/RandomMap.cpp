@@ -233,6 +233,16 @@ int RandomMap::intFromHex(const Hex &hex) const
     return hex.y * width_ + hex.x;
 }
 
+bool RandomMap::offGrid(int index) const
+{
+    return index < 0 || index >= size_;
+}
+
+bool RandomMap::offGrid(const Hex &hex) const
+{
+    return hex.x < 0 || hex.y < 0 || hex.x >= width_ || hex.y >= width_;
+}
+
 void RandomMap::generateRegions()
 {
     // Start with a set of random hexes.  Don't worry if there are duplicates.
@@ -263,7 +273,7 @@ void RandomMap::buildNeighborGraphs()
     // multimap will take care of them).
     for (int i = 0; i < size_; ++i) {
         for (auto dir : HexDir()) {
-            const int nbrTile = intFromHex(hexAdjacent(hexFromInt(i), dir));
+            const int nbrTile = intFromHex(hexFromInt(i).getNeighbor(dir));
             if (offGrid(nbrTile)) {
                 continue;
             }
@@ -516,14 +526,4 @@ void RandomMap::connectIsolatedTiles(int startTile, const std::vector<char> &vis
         assert(cameFrom.find(t) != std::cend(cameFrom));
         t = cameFrom[t];
     }
-}
-
-bool RandomMap::offGrid(int index) const
-{
-    return index < 0 || index >= size_;
-}
-
-bool RandomMap::offGrid(const Hex &hex) const
-{
-    return hex.x < 0 || hex.y < 0 || hex.x >= width_ || hex.y >= width_;
 }

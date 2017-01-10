@@ -45,6 +45,10 @@ public:
     Hex hexFromInt(int index) const;
     int intFromHex(const Hex &hex) const;
 
+    // Return true if the tile location is outside the map boundary.
+    bool offGrid(int index) const;
+    bool offGrid(const Hex &hex) const;
+
     static std::default_random_engine engine;
 
 private:
@@ -70,10 +74,6 @@ private:
     void avoidIsolatedTiles();
     void exploreWalkableTiles(int startTile, std::vector<char> &visited);
     void connectIsolatedTiles(int startTile, const std::vector<char> &visited);
-
-    // Return true if the tile location is outside the map boundary.
-    bool offGrid(int index) const;
-    bool offGrid(const Hex &hex) const;
 
     int width_;
     int size_;
