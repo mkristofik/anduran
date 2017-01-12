@@ -11,6 +11,7 @@
     See the COPYING.txt file for more details.
 */
 #include "MapDisplay.h"
+#include "boost/container/flat_map.hpp"
 
 namespace
 {
@@ -178,10 +179,11 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap)
         tiles_[i].terrain = static_cast<int>(map_.getTerrain(i));
         tiles_[i].frame = dist3(RandomMap::engine);
         tiles_[i].obstacle = map_.getObstacle(i);
+        tiles_[i].region = map_.getRegion(i);
     }
 
-    computeTileEdges();
     addBorderTiles();
+    computeTileEdges();
 }
 
 void MapDisplay::draw()
@@ -260,25 +262,35 @@ void MapDisplay::handleMousePosition(Uint32 elapsed_ms)
 
 void MapDisplay::computeTileEdges()
 {
-    for (int i = 0; i < map_.size(); ++i) {
-        auto &tile = tiles_[i];
+    // Map all hexes, including those on the outside border, to their location in
+    // the tile list.
+    boost::container::flat_map<Hex, int> hexmap;
+    for (int i = 0; i < static_cast<int>(tiles_.size()); ++i) {
+        hexmap.emplace(tiles_[i].hex, i);
+    }
+
+    for (auto &tile : tiles_) {
         const auto myTerrain = static_cast<Terrain>(tile.terrain);
         if (myTerrain == Terrain::GRASS) {
             continue;
         }
 
         for (auto d : HexDir()) {
+            // We can look up logical neighbors to every tile, even those on the
+            // border outside the map grid.
             const auto dirIndex = static_cast<int>(d);
             const auto nbr = tile.hex.getNeighbor(d);
-            if (map_.offGrid(nbr)) {
+            const auto nbrIter = hexmap.find(nbr);
+            if (nbrIter == std::cend(hexmap)) {
                 continue;
             }
 
-            const auto nbrTerrain = map_.getTerrain(nbr);
+            const auto &nbrTile = tiles_[nbrIter->second];
+            const auto nbrTerrain = static_cast<Terrain>(nbrTile.terrain);
             if (myTerrain == nbrTerrain) {
                 // Special transition between neighboring regions with the same
                 // terrain type.
-                if (map_.getRegion(tile.hex) != map_.getRegion(nbr)) {
+                if (tile.region != nbrTile.region) {
                     tile.edges[dirIndex] = edgeImg_.size() - 1;
                 }
                 continue;
@@ -287,23 +299,23 @@ void MapDisplay::computeTileEdges()
             // Set the edge of the tile to the terrain of the neighboring tile
             // if the neighboring terrain overlaps this one.
             if (nbrTerrain == Terrain::GRASS || nbrTerrain == Terrain::SNOW) {
-                tile.edges[dirIndex] = static_cast<int>(nbrTerrain);
+                tile.edges[dirIndex] = nbrTile.terrain;
             }
             else if ((myTerrain == Terrain::DIRT || myTerrain == Terrain::DESERT) &&
                      nbrTerrain == Terrain::SWAMP)
             {
-                tile.edges[dirIndex] = static_cast<int>(Terrain::SWAMP);
+                tile.edges[dirIndex] = nbrTile.terrain;
             }
             else if ((myTerrain == Terrain::SWAMP || myTerrain == Terrain::DESERT) &&
                      nbrTerrain == Terrain::WATER)
             {
-                tile.edges[dirIndex] = static_cast<int>(Terrain::WATER);
+                tile.edges[dirIndex] = nbrTile.terrain;
             }
             else if (myTerrain == Terrain::WATER && nbrTerrain == Terrain::DIRT) {
-                tile.edges[dirIndex] = static_cast<int>(Terrain::DIRT);
+                tile.edges[dirIndex] = nbrTile.terrain;
             }
             else if (myTerrain == Terrain::DIRT && nbrTerrain == Terrain::DESERT) {
-                tile.edges[dirIndex] = static_cast<int>(Terrain::DESERT);
+                tile.edges[dirIndex] = nbrTile.terrain;
             }
         }
     }

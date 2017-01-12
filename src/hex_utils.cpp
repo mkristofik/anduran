@@ -13,6 +13,7 @@
 #include "hex_utils.h"
 #include <algorithm>
 #include <limits>
+#include <tuple>
 
 Hex::Hex()
     : x(std::numeric_limits<int>::min()),
@@ -116,6 +117,26 @@ bool operator==(const Hex &lhs, const Hex &rhs)
 bool operator!=(const Hex &lhs, const Hex &rhs)
 {
     return !(lhs == rhs);
+}
+
+bool operator<(const Hex &lhs, const Hex &rhs)
+{
+    return std::tie(lhs.x, lhs.y) < std::tie(rhs.x, rhs.y);
+}
+
+bool operator>(const Hex &lhs, const Hex &rhs)
+{
+    return rhs < lhs;
+}
+
+bool operator<=(const Hex &lhs, const Hex &rhs)
+{
+    return !(lhs > rhs);
+}
+
+bool operator>=(const Hex &lhs, const Hex &rhs)
+{
+    return !(lhs < rhs);
 }
 
 // source: Battle for Wesnoth, distance_between() in map_location.cpp.

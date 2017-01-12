@@ -30,6 +30,7 @@ struct TileDisplay
     int frame;
     int obstacle;
     Neighbors<int> edges;
+    int region;
     bool visible;
 
     TileDisplay();
