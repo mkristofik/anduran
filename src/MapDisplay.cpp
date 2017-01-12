@@ -416,11 +416,8 @@ void MapDisplay::setTileVisibility()
     for (auto &t : tiles_) {
         t.curPixel = t.basePixel - displayOffset_;
 
-        if (t.curPixel.x > displayArea_.x - HEX_SIZE &&
-            t.curPixel.x < displayArea_.x + displayArea_.w &&
-            t.curPixel.y > displayArea_.y - HEX_SIZE &&
-            t.curPixel.y < displayArea_.y + displayArea_.h)
-        {
+        const SDL_Rect tileRect = {t.curPixel.x, t.curPixel.y, HEX_SIZE, HEX_SIZE};
+        if (SDL_HasIntersection(&tileRect, &displayArea_) == SDL_TRUE) {
             t.visible = true;
         }
         else {
