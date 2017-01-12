@@ -54,6 +54,10 @@ public:
 
 private:
     void computeTileEdges();
+
+    // Add duplicate tiles around the map border so there aren't jagged edges.
+    void addBorderTiles();
+
     void setTileVisibility();
 
     SdlWindow &window_;

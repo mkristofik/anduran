@@ -178,52 +178,7 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap)
     }
 
     computeTileEdges();
-}
-
-void MapDisplay::computeTileEdges()
-{
-    for (int i = 0; i < map_.size(); ++i) {
-        const Hex myHex = map_.hexFromInt(i);
-        const Terrain myTerrain = static_cast<Terrain>(tiles_[i].terrain);
-        if (myTerrain == Terrain::GRASS) {
-            continue;
-        }
-
-        for (auto d : HexDir()) {
-            const Hex nbr = myHex.getNeighbor(d);
-            if (map_.offGrid(nbr)) {
-                continue;
-            }
-
-            const Terrain nbrTerrain = map_.getTerrain(nbr);
-            if (myTerrain == nbrTerrain) {
-                continue;
-            }
-
-            // Set the edge of the tile to the terrain of the neighboring tile
-            // if the neighboring terrain overlaps this one.
-            const auto dirIndex = static_cast<int>(d);
-            if (nbrTerrain == Terrain::GRASS || nbrTerrain == Terrain::SNOW) {
-                tiles_[i].edges[dirIndex] = static_cast<int>(nbrTerrain);
-            }
-            else if ((myTerrain == Terrain::DIRT || myTerrain == Terrain::DESERT) &&
-                     nbrTerrain == Terrain::SWAMP)
-            {
-                tiles_[i].edges[dirIndex] = static_cast<int>(Terrain::SWAMP);
-            }
-            else if ((myTerrain == Terrain::SWAMP || myTerrain == Terrain::DESERT) &&
-                     nbrTerrain == Terrain::WATER)
-            {
-                tiles_[i].edges[dirIndex] = static_cast<int>(Terrain::WATER);
-            }
-            else if (myTerrain == Terrain::WATER && nbrTerrain == Terrain::DIRT) {
-                tiles_[i].edges[dirIndex] = static_cast<int>(Terrain::DIRT);
-            }
-            else if (myTerrain == Terrain::DIRT && nbrTerrain == Terrain::DESERT) {
-                tiles_[i].edges[dirIndex] = static_cast<int>(Terrain::DESERT);
-            }
-        }
-    }
+    addBorderTiles();
 }
 
 void MapDisplay::draw()
@@ -298,6 +253,142 @@ void MapDisplay::handleMousePosition(Uint32 elapsed_ms)
     // computer is fast enough.
     displayOffset_.first = clamp<double>(displayOffset_.first + scrollX, 0, pMaxX);
     displayOffset_.second = clamp<double>(displayOffset_.second + scrollY, 0, pMaxY);
+}
+
+void MapDisplay::computeTileEdges()
+{
+    for (int i = 0; i < map_.size(); ++i) {
+        const Hex myHex = map_.hexFromInt(i);
+        const Terrain myTerrain = static_cast<Terrain>(tiles_[i].terrain);
+        if (myTerrain == Terrain::GRASS) {
+            continue;
+        }
+
+        for (auto d : HexDir()) {
+            const Hex nbr = myHex.getNeighbor(d);
+            if (map_.offGrid(nbr)) {
+                continue;
+            }
+
+            const Terrain nbrTerrain = map_.getTerrain(nbr);
+            if (myTerrain == nbrTerrain) {
+                continue;
+            }
+
+            // Set the edge of the tile to the terrain of the neighboring tile
+            // if the neighboring terrain overlaps this one.
+            const auto dirIndex = static_cast<int>(d);
+            if (nbrTerrain == Terrain::GRASS || nbrTerrain == Terrain::SNOW) {
+                tiles_[i].edges[dirIndex] = static_cast<int>(nbrTerrain);
+            }
+            else if ((myTerrain == Terrain::DIRT || myTerrain == Terrain::DESERT) &&
+                     nbrTerrain == Terrain::SWAMP)
+            {
+                tiles_[i].edges[dirIndex] = static_cast<int>(Terrain::SWAMP);
+            }
+            else if ((myTerrain == Terrain::SWAMP || myTerrain == Terrain::DESERT) &&
+                     nbrTerrain == Terrain::WATER)
+            {
+                tiles_[i].edges[dirIndex] = static_cast<int>(Terrain::WATER);
+            }
+            else if (myTerrain == Terrain::WATER && nbrTerrain == Terrain::DIRT) {
+                tiles_[i].edges[dirIndex] = static_cast<int>(Terrain::DIRT);
+            }
+            else if (myTerrain == Terrain::DIRT && nbrTerrain == Terrain::DESERT) {
+                tiles_[i].edges[dirIndex] = static_cast<int>(Terrain::DESERT);
+            }
+        }
+    }
+}
+
+void MapDisplay::addBorderTiles()
+{
+    // Left edge
+    for (int y = 0; y < map_.width(); ++y) {
+        const Hex pairedHex = {0, y};
+        const auto pairedIndex = map_.intFromHex(pairedHex);
+        assert(!map_.offGrid(pairedIndex));
+
+        // Start with a copy of the paired tile.
+        auto newTile = tiles_[pairedIndex];
+        // Move it to the correct position outside the map grid.
+        --newTile.hex.x;
+        newTile.basePixel = pixelFromHex(newTile.hex);
+        // Clear any edge transitions.
+        newTile.edges.fill(-1);
+
+        tiles_.push_back(newTile);
+    }
+
+    // Right edge
+    for (int y = 0; y < map_.width(); ++y) {
+        const Hex pairedHex = {map_.width() - 1, y};
+        const auto pairedIndex = map_.intFromHex(pairedHex);
+        assert(!map_.offGrid(pairedIndex));
+
+        auto newTile = tiles_[pairedIndex];
+        ++newTile.hex.x;
+        newTile.basePixel = pixelFromHex(newTile.hex);
+        newTile.edges.fill(-1);
+
+        tiles_.push_back(newTile);
+    }
+
+    // Top edge
+    for (int x = 0; x < map_.width(); ++x) {
+        const Hex pairedHex = {x, 0};
+        const auto pairedIndex = map_.intFromHex(pairedHex);
+        assert(!map_.offGrid(pairedIndex));
+
+        auto newTile = tiles_[pairedIndex];
+        --newTile.hex.y;
+        newTile.basePixel = pixelFromHex(newTile.hex);
+        newTile.edges.fill(-1);
+
+        tiles_.push_back(newTile);
+    }
+
+    // Bottom edge
+    for (int x = 0; x < map_.width(); ++x) {
+        const Hex pairedHex = {x, map_.width() - 1};
+        const auto pairedIndex = map_.intFromHex(pairedHex);
+        assert(!map_.offGrid(pairedIndex));
+
+        auto newTile = tiles_[pairedIndex];
+        ++newTile.hex.y;
+        newTile.basePixel = pixelFromHex(newTile.hex);
+        newTile.edges.fill(-1);
+
+        tiles_.push_back(newTile);
+    }
+
+    // Top-left corner
+    auto newTile = tiles_[map_.intFromHex(Hex{0, 0})];
+    newTile.hex += Hex{-1, -1};
+    newTile.basePixel = pixelFromHex(newTile.hex);
+    newTile.edges.fill(-1);
+    tiles_.push_back(newTile);
+
+    // Top-right corner
+    newTile = tiles_[map_.intFromHex(Hex{map_.width() - 1, 0})];
+    newTile.hex += Hex{1, -1};
+    newTile.basePixel = pixelFromHex(newTile.hex);
+    newTile.edges.fill(-1);
+    tiles_.push_back(newTile);
+
+    // Bottom-right corner
+    newTile = tiles_[map_.intFromHex(Hex{map_.width() - 1, map_.width() - 1})];
+    newTile.hex += Hex{1, 1};
+    newTile.basePixel = pixelFromHex(newTile.hex);
+    newTile.edges.fill(-1);
+    tiles_.push_back(newTile);
+
+    // Bottom-left corner
+    newTile = tiles_[map_.intFromHex(Hex{0, map_.width() - 1})];
+    newTile.hex += Hex{-1, 1};
+    newTile.basePixel = pixelFromHex(newTile.hex);
+    newTile.edges.fill(-1);
+    tiles_.push_back(newTile);
 }
 
 void MapDisplay::setTileVisibility()

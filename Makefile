@@ -18,7 +18,6 @@ CPPFLAGS = -Ic:/libraries \
 CXXFLAGS = -g -Wall -Wextra -std=c++1z
 LDFLAGS = -Lc:/libraries/SDL2-2.0.5/x86_64-w64-mingw32/lib \
 	-Lc:/libraries/SDL2_image-2.0.1/x86_64-w64-mingw32/lib
-
 LDLIBS = -lmingw32 -lSDL2main -lSDL2 -lSDL2_image
 
 BUILD_DIR = build
@@ -33,7 +32,6 @@ RMAPGEN_DEPS = $(RMAPGEN_OBJS:%.o=%.d)
 # the noise object file directly is good enough because the implicit rules
 # below will find open-simplex-noise.c.
 
-# TODO: why isn't this generating .d files for everything?  Only rmapgen got them.
 MAPVIEW = mapview.exe
 MAPVIEW_SRC = MapDisplay.cpp RandomMap.cpp SdlSurface.cpp SdlTexture.cpp \
 	SdlTextureAtlas.cpp SdlWindow.cpp hex_utils.cpp mapview.cpp
@@ -83,6 +81,7 @@ $(BUILD_DIR)/%.o : $(SRC_DIR)/%.c
 # an already clean build will create those files only to delete them again.
 ifneq ($(MAKECMDGOALS),clean)
 include $(RMAPGEN_DEPS)
+include $(MAPVIEW_DEPS)
 endif
 
 # Remove intermediate build files and the executables.  Leading '-' means ignore
