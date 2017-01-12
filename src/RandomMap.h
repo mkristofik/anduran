@@ -35,11 +35,14 @@ public:
     int size() const;
     int width() const;
 
+    int getRegion(int index);
+    int getRegion(const Hex &hex);
     Terrain getTerrain(int index);
     Terrain getTerrain(const Hex &hex);
 
     // -1 = no obstacle, 0+ = obstacle frame to use
     int getObstacle(int index);
+    int getObstacle(const Hex &hex);
 
     // Convert between integer and Hex representations of a tile location.
     Hex hexFromInt(int index) const;

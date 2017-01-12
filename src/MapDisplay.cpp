@@ -111,6 +111,9 @@ namespace
             const SdlSurface surf(edgeFilename(t));
             images.emplace_back(surf, win, 1, 6);
         }
+
+        const SdlSurface surf("img/edges-same-terrain.png");
+        images.emplace_back(surf, win, 1, 6);
         return images;
     }
 
@@ -199,8 +202,8 @@ void MapDisplay::draw()
         }
         for (int d = 0; d < enum_size<HexDir>(); ++d) {
             if (t.edges[d] != -1) {
-                const auto nbrTerrain = t.edges[d];
-                edgeImg_[nbrTerrain].drawFrame(0, d, t.curPixel);
+                const auto edgeIndex = t.edges[d];
+                edgeImg_[edgeIndex].drawFrame(0, d, t.curPixel);
             }
         }
     }
@@ -258,44 +261,49 @@ void MapDisplay::handleMousePosition(Uint32 elapsed_ms)
 void MapDisplay::computeTileEdges()
 {
     for (int i = 0; i < map_.size(); ++i) {
-        const Hex myHex = map_.hexFromInt(i);
-        const Terrain myTerrain = static_cast<Terrain>(tiles_[i].terrain);
+        auto &tile = tiles_[i];
+        const auto myTerrain = static_cast<Terrain>(tile.terrain);
         if (myTerrain == Terrain::GRASS) {
             continue;
         }
 
         for (auto d : HexDir()) {
-            const Hex nbr = myHex.getNeighbor(d);
+            const auto dirIndex = static_cast<int>(d);
+            const auto nbr = tile.hex.getNeighbor(d);
             if (map_.offGrid(nbr)) {
                 continue;
             }
 
-            const Terrain nbrTerrain = map_.getTerrain(nbr);
+            const auto nbrTerrain = map_.getTerrain(nbr);
             if (myTerrain == nbrTerrain) {
+                // Special transition between neighboring regions with the same
+                // terrain type.
+                if (map_.getRegion(tile.hex) != map_.getRegion(nbr)) {
+                    tile.edges[dirIndex] = edgeImg_.size() - 1;
+                }
                 continue;
             }
 
             // Set the edge of the tile to the terrain of the neighboring tile
             // if the neighboring terrain overlaps this one.
-            const auto dirIndex = static_cast<int>(d);
             if (nbrTerrain == Terrain::GRASS || nbrTerrain == Terrain::SNOW) {
-                tiles_[i].edges[dirIndex] = static_cast<int>(nbrTerrain);
+                tile.edges[dirIndex] = static_cast<int>(nbrTerrain);
             }
             else if ((myTerrain == Terrain::DIRT || myTerrain == Terrain::DESERT) &&
                      nbrTerrain == Terrain::SWAMP)
             {
-                tiles_[i].edges[dirIndex] = static_cast<int>(Terrain::SWAMP);
+                tile.edges[dirIndex] = static_cast<int>(Terrain::SWAMP);
             }
             else if ((myTerrain == Terrain::SWAMP || myTerrain == Terrain::DESERT) &&
                      nbrTerrain == Terrain::WATER)
             {
-                tiles_[i].edges[dirIndex] = static_cast<int>(Terrain::WATER);
+                tile.edges[dirIndex] = static_cast<int>(Terrain::WATER);
             }
             else if (myTerrain == Terrain::WATER && nbrTerrain == Terrain::DIRT) {
-                tiles_[i].edges[dirIndex] = static_cast<int>(Terrain::DIRT);
+                tile.edges[dirIndex] = static_cast<int>(Terrain::DIRT);
             }
             else if (myTerrain == Terrain::DIRT && nbrTerrain == Terrain::DESERT) {
-                tiles_[i].edges[dirIndex] = static_cast<int>(Terrain::DESERT);
+                tile.edges[dirIndex] = static_cast<int>(Terrain::DESERT);
             }
         }
     }

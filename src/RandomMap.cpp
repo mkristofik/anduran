@@ -195,12 +195,22 @@ int RandomMap::width() const
     return width_;
 }
 
+int RandomMap::getRegion(int index)
+{
+    assert(!offGrid(index));
+    return tileRegions_[index];
+}
+
+int RandomMap::getRegion(const Hex &hex)
+{
+    assert(!offGrid(hex));
+    return getRegion(intFromHex(hex));
+}
+
 Terrain RandomMap::getTerrain(int index)
 {
     assert(!offGrid(index));
-
-    const int region = tileRegions_[index];
-    return regionTerrain_[region];
+    return regionTerrain_[getRegion(index)];
 }
 
 Terrain RandomMap::getTerrain(const Hex &hex)
@@ -213,6 +223,12 @@ int RandomMap::getObstacle(int index)
 {
     assert(!offGrid(index));
     return tileObstacles_[index];
+}
+
+int RandomMap::getObstacle(const Hex &hex)
+{
+    assert(!offGrid(hex));
+    return getObstacle(intFromHex(hex));
 }
 
 Hex RandomMap::hexFromInt(int index) const
