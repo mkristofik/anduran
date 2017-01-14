@@ -295,10 +295,6 @@ void MapDisplay::computeTileEdges()
 
     for (auto &tile : tiles_) {
         const auto myTerrain = static_cast<Terrain>(tile.terrain);
-        if (myTerrain == Terrain::GRASS) {
-            continue;
-        }
-
         for (auto d : HexDir()) {
             // We can look up logical neighbors to every tile, even those on the
             // border outside the map grid.
@@ -317,6 +313,11 @@ void MapDisplay::computeTileEdges()
                 if (tile.region != nbrTile.region) {
                     tile.edges[dirIndex] = edgeImg_.size() - 1;
                 }
+                continue;
+            }
+
+            // Grass always overlaps everything else.
+            if (myTerrain == Terrain::GRASS) {
                 continue;
             }
 
