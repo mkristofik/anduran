@@ -40,9 +40,8 @@ public:
     Terrain getTerrain(int index);
     Terrain getTerrain(const Hex &hex);
 
-    // -1 = no obstacle, 0+ = obstacle frame to use
-    int getObstacle(int index);
-    int getObstacle(const Hex &hex);
+    bool getObstacle(int index);
+    bool getObstacle(const Hex &hex);
 
     // Return a list of tiles at the center of each castle.
     std::vector<Hex> getCastleTiles();
@@ -73,6 +72,9 @@ private:
     // terrain.
     std::vector<int> randomAltitudes();
 
+    void setObstacle(int index);
+    void clearObstacle(int index);
+
     // Clear obstacles so each region can reach at least one other region. Also,
     // ensure that every open tile within each region can reach every other open
     // tile within that region.
@@ -91,7 +93,7 @@ private:
     int numRegions_;
     std::vector<int> tileRegions_;  // index of region each tile belongs to
     FlatMultimap<int, int> tileNeighbors_;
-    std::vector<int> tileObstacles_;  // -1 = no obstacle, 0+ = chosen obstacle
+    std::vector<char> tileObstacles_;
     std::vector<char> tileOccupied_;
     std::vector<char> tileWalkable_;
     FlatMultimap<int, int> regionNeighbors_;

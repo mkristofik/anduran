@@ -180,6 +180,7 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap)
     displayOffset_{0.0, 0.0}
 {
     std::uniform_int_distribution<int> dist3(0, 2);
+    std::uniform_int_distribution<int> dist4(0, 3);
 
     for (int i = 0; i < map_.size(); ++i) {
         tiles_[i].hex = map_.hexFromInt(i);
@@ -187,7 +188,9 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap)
         tiles_[i].curPixel = tiles_[i].basePixel;
         tiles_[i].terrain = static_cast<int>(map_.getTerrain(i));
         tiles_[i].frame = dist3(RandomMap::engine);
-        tiles_[i].obstacle = map_.getObstacle(i);
+        if (map_.getObstacle(i)) {
+            tiles_[i].obstacle = dist4(RandomMap::engine);
+        }
         tiles_[i].region = map_.getRegion(i);
     }
 

@@ -158,7 +158,7 @@ RandomMap::RandomMap(int width)
     numRegions_(0),
     tileRegions_(size_, -1),
     tileNeighbors_(),
-    tileObstacles_(size_, -1),
+    tileObstacles_(size_, 0),
     tileOccupied_(size_, 0),
     tileWalkable_(size_, 1),
     regionNeighbors_(),
@@ -196,7 +196,7 @@ RandomMap::RandomMap(const char *filename)
     // TODO: report errors if this ever fails?
     tileRegions_ = getJsonArray<int>(doc, "tile-regions");
     regionTerrain_ = getJsonArray<Terrain>(doc, "region-terrain");
-    tileObstacles_ = getJsonArray<int>(doc, "tile-obstacles");
+    tileObstacles_ = getJsonArray<char>(doc, "tile-obstacles");
     castles_ = getJsonArray<int>(doc, "castles");
     size_ = tileRegions_.size();
     width_ = std::sqrt(size_);
@@ -256,13 +256,13 @@ Terrain RandomMap::getTerrain(const Hex &hex)
     return getTerrain(intFromHex(hex));
 }
 
-int RandomMap::getObstacle(int index)
+bool RandomMap::getObstacle(int index)
 {
     assert(!offGrid(index));
-    return tileObstacles_[index];
+    return tileObstacles_[index] > 0;
 }
 
-int RandomMap::getObstacle(const Hex &hex)
+bool RandomMap::getObstacle(const Hex &hex)
 {
     assert(!offGrid(hex));
     return getObstacle(intFromHex(hex));
@@ -393,13 +393,11 @@ void RandomMap::assignObstacles()
         }
     }
 
-    // Any value above the threshold gets a random obstacle.
+    // Any value above the threshold gets an obstacle.
     std::uniform_int_distribution<int> dist4(0, 3);
     for (int i = 0; i < size_; ++i) {
         if (values[i] > OBSTACLE_LEVEL && !tileOccupied_[i]) {
-            tileObstacles_[i] = dist4(engine);
-            tileOccupied_[i] = 1;
-            tileWalkable_[i] = 0;
+            setObstacle(i);
         }
     }
 
@@ -475,6 +473,22 @@ std::vector<int> RandomMap::randomAltitudes()
     return altitude;
 }
 
+void RandomMap::setObstacle(int index)
+{
+    assert(!offGrid(index));
+    tileObstacles_[index] = 1;
+    tileOccupied_[index] = 1;
+    tileWalkable_[index] = 0;
+}
+
+void RandomMap::clearObstacle(int index)
+{
+    assert(!offGrid(index));
+    tileObstacles_[index] = 0;
+    tileOccupied_[index] = 0;
+    tileWalkable_[index] = 1;
+}
+
 void RandomMap::avoidIsolatedRegions()
 {
     std::vector<char> regionVisited(numRegions_, 0);
@@ -498,15 +512,11 @@ void RandomMap::avoidIsolatedRegions()
             }
             // If obstacles on both sides, clear them. Also clear this side only if
             // the neighbor tile is walkable.
-            else if (tileObstacles_[i] >= 0 &&
+            else if (tileObstacles_[i] &&
                      (tileObstacles_[nbr] >= 0 || tileWalkable_[nbr]))
             {
-                tileObstacles_[i] = -1;
-                tileOccupied_[i] = 0;
-                tileWalkable_[i] = 1;
-                tileObstacles_[nbr] = -1;
-                tileOccupied_[nbr] = 0;
-                tileWalkable_[nbr] = 1;
+                clearObstacle(i);
+                clearObstacle(nbr);
                 regionVisited[region] = 1;
                 regionVisited[nbrRegion] = 1;
             }
@@ -590,7 +600,7 @@ void RandomMap::connectIsolatedTiles(int startTile, const std::vector<char> &vis
             else if (cameFrom.find(nbr) == std::cend(cameFrom)) {
                 // Haven't visited this tile yet. Make sure the path doesn't
                 // include a castle tile or other object.
-                if (tileWalkable_[nbr] || tileObstacles_[nbr] >= 0) {
+                if (tileWalkable_[nbr] || tileObstacles_[nbr]) {
                     bfsQ.push(nbr);
                     cameFrom.emplace(nbr, tile);
                 }
@@ -605,9 +615,7 @@ void RandomMap::connectIsolatedTiles(int startTile, const std::vector<char> &vis
     // Clear obstacles along the path.
     int t = pathStart;
     while (!offGrid(t)) {
-        tileObstacles_[t] = -1;
-        tileOccupied_[t] = 0;
-        tileWalkable_[t] = 1;
+        clearObstacle(t);
         assert(cameFrom.find(t) != std::cend(cameFrom));
         t = cameFrom[t];
     }
