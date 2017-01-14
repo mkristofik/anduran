@@ -87,6 +87,19 @@ namespace
 
         return castle;
     }
+
+    auto getUnwalkableCastleHexes(const Hex &startHex)
+    {
+        // Return the non-keep tiles of the castle.
+        std::array<Hex, 5> hexes;
+        hexes[0] = startHex.getNeighbor(HexDir::N);
+        hexes[1] = startHex.getNeighbor(HexDir::NE);
+        hexes[2] = startHex.getNeighbor(HexDir::SE);
+        hexes[3] = startHex.getNeighbor(HexDir::SW);
+        hexes[4] = startHex.getNeighbor(HexDir::NW);
+
+        return hexes;
+    }
 }
 
 
@@ -147,6 +160,7 @@ RandomMap::RandomMap(int width)
     tileNeighbors_(),
     tileObstacles_(size_, -1),
     tileOccupied_(size_, 0),
+    tileWalkable_(size_, 1),
     regionNeighbors_(),
     regionTerrain_(),
     castles_()
@@ -166,6 +180,7 @@ RandomMap::RandomMap(const char *filename)
     tileNeighbors_(),
     tileObstacles_(),
     tileOccupied_(),
+    tileWalkable_(),
     regionNeighbors_(),
     regionTerrain_(),
     castles_()
@@ -381,8 +396,10 @@ void RandomMap::assignObstacles()
     // Any value above the threshold gets a random obstacle.
     std::uniform_int_distribution<int> dist4(0, 3);
     for (int i = 0; i < size_; ++i) {
-        if (values[i] > OBSTACLE_LEVEL) {
+        if (values[i] > OBSTACLE_LEVEL && !tileOccupied_[i]) {
             tileObstacles_[i] = dist4(engine);
+            tileOccupied_[i] = 1;
+            tileWalkable_[i] = 0;
         }
     }
 
@@ -452,7 +469,7 @@ std::vector<int> RandomMap::randomAltitudes()
     }
 
     assert(static_cast<int>(altitude.size()) == numRegions_);
-    assert(none_of(std::cbegin(altitude), std::cend(altitude), [] (int elem) {
+    assert(none_of(std::cbegin(altitude), std::cend(altitude), [] (auto elem) {
                        return elem == -1;
                    }));
     return altitude;
@@ -474,10 +491,25 @@ void RandomMap::avoidIsolatedRegions()
                 continue;
             }
 
-            tileObstacles_[i] = -1;
-            tileObstacles_[nbr] = -1;
-            regionVisited[region] = 1;
-            regionVisited[nbrRegion] = 1;
+            // If we can already reach the neighbor region, stop.
+            if (tileWalkable_[i] && tileWalkable_[nbr]) {
+                regionVisited[region] = 1;
+                regionVisited[nbrRegion] = 1;
+            }
+            // If obstacles on both sides, clear them. Also clear this side only if
+            // the neighbor tile is walkable.
+            else if (tileObstacles_[i] >= 0 &&
+                     (tileObstacles_[nbr] >= 0 || tileWalkable_[nbr]))
+            {
+                tileObstacles_[i] = -1;
+                tileOccupied_[i] = 0;
+                tileWalkable_[i] = 1;
+                tileObstacles_[nbr] = -1;
+                tileOccupied_[nbr] = 0;
+                tileWalkable_[nbr] = 1;
+                regionVisited[region] = 1;
+                regionVisited[nbrRegion] = 1;
+            }
         }
     }
 }
@@ -488,7 +520,7 @@ void RandomMap::avoidIsolatedTiles()
     std::vector<char> regionVisited(numRegions_, 0);
 
     for (int i = 0; i < size_; ++i) {
-        if (tileObstacles_[i] >= 0) {
+        if (!tileWalkable_[i]) {
             continue;
         }
 
@@ -522,7 +554,7 @@ void RandomMap::exploreWalkableTiles(int startTile, std::vector<char> &visited)
         for (const auto &nbr : tileNeighbors_.find(tile)) {
             if (tileRegions_[nbr] == region &&
                 !visited[nbr] &&
-                tileObstacles_[nbr] < 0)
+                tileWalkable_[nbr])
             {
                 bfsQ.push(nbr);
             }
@@ -549,16 +581,19 @@ void RandomMap::connectIsolatedTiles(int startTile, const std::vector<char> &vis
             if (tileRegions_[nbr] != region) {
                 continue;
             }
-            else if (visited[nbr] && tileObstacles_[nbr] < 0) {
+            else if (visited[nbr] && tileWalkable_[nbr]) {
                 // Goal node, stop.
                 cameFrom.emplace(nbr, tile);
                 pathStart = nbr;
                 break;
             }
             else if (cameFrom.find(nbr) == std::cend(cameFrom)) {
-                // Haven't visited this tile yet.
-                bfsQ.push(nbr);
-                cameFrom.emplace(nbr, tile);
+                // Haven't visited this tile yet. Make sure the path doesn't
+                // include a castle tile or other object.
+                if (tileWalkable_[nbr] || tileObstacles_[nbr] >= 0) {
+                    bfsQ.push(nbr);
+                    cameFrom.emplace(nbr, tile);
+                }
             }
         }
     }
@@ -571,6 +606,8 @@ void RandomMap::connectIsolatedTiles(int startTile, const std::vector<char> &vis
     int t = pathStart;
     while (!offGrid(t)) {
         tileObstacles_[t] = -1;
+        tileOccupied_[t] = 0;
+        tileWalkable_[t] = 1;
         assert(cameFrom.find(t) != std::cend(cameFrom));
         t = cameFrom[t];
     }
@@ -590,10 +627,17 @@ void RandomMap::placeCastles()
     castles_.push_back(findCastleSpot(intFromHex(upperRight)));
     castles_.push_back(findCastleSpot(intFromHex(lowerLeft)));
     castles_.push_back(findCastleSpot(intFromHex(lowerRight)));
-    assert(none_of(std::begin(castles_), std::end(castles_),
-                   [] (auto elem) {
-                       return elem == -1;
-                   }));
+
+    for (auto c : castles_) {
+        assert(!offGrid(c));
+
+        for (const auto &hex : getCastleHexes(hexFromInt(c))) {
+            tileOccupied_[intFromHex(hex)] = 1;
+        }
+        for (const auto &hex : getUnwalkableCastleHexes(hexFromInt(c))) {
+            tileWalkable_[intFromHex(hex)] = 0;
+        }
+    }
 }
 
 int RandomMap::findCastleSpot(int startTile)
@@ -612,16 +656,22 @@ int RandomMap::findCastleSpot(int startTile)
         // all tiles must be in the same region
         // if so, return that tile
         // if not, push the neighbors onto the queue
-        bool validSpot = true;
         const auto curRegion = tileRegions_[tile];
-        for (const auto &hex : getCastleHexes(hexFromInt(tile))) {
-            if (offGrid(hex) || tileRegions_[intFromHex(hex)] != curRegion) {
-                validSpot = false;
-                break;
+        if (regionTerrain_[curRegion] != Terrain::WATER) {
+            bool validSpot = true;
+            for (const auto &hex : getCastleHexes(hexFromInt(tile))) {
+                const auto index = intFromHex(hex);
+                if (offGrid(hex) ||
+                    tileRegions_[index] != curRegion ||
+                    tileOccupied_[index])
+                {
+                    validSpot = false;
+                    break;
+                }
             }
-        }
-        if (validSpot) {
-            return tile;
+            if (validSpot) {
+                return tile;
+            }
         }
 
         for (const auto &nbr : tileNeighbors_.find(tile)) {

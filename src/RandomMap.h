@@ -93,6 +93,7 @@ private:
     FlatMultimap<int, int> tileNeighbors_;
     std::vector<int> tileObstacles_;  // -1 = no obstacle, 0+ = chosen obstacle
     std::vector<char> tileOccupied_;
+    std::vector<char> tileWalkable_;
     FlatMultimap<int, int> regionNeighbors_;
     std::vector<Terrain> regionTerrain_;
     std::vector<int> castles_;  // index of the center tile of each castle
