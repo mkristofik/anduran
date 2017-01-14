@@ -13,6 +13,18 @@
 #include "MapDisplay.h"
 #include "boost/container/flat_map.hpp"
 
+
+SDL_Point operator+(const SDL_Point &lhs, const SDL_Point &rhs)
+{
+    return {lhs.x + rhs.x, lhs.y + rhs.y};
+}
+
+SDL_Point operator-(const SDL_Point &lhs, const std::pair<double, double> &rhs)
+{
+    return {static_cast<int>(lhs.x - rhs.first), static_cast<int>(lhs.y - rhs.second)};
+}
+
+
 namespace
 {
     const int HEX_SIZE = 72;
@@ -132,17 +144,13 @@ namespace
         const int py = (hex.y + 0.5 * abs(hex.x % 2)) * HEX_SIZE;
         return {px, py};
     }
-}
 
-
-SDL_Point operator+(const SDL_Point &lhs, const SDL_Point &rhs)
-{
-    return {lhs.x + rhs.x, lhs.y + rhs.y};
-}
-
-SDL_Point operator-(const SDL_Point &lhs, const std::pair<double, double> &rhs)
-{
-    return {static_cast<int>(lhs.x - rhs.first), static_cast<int>(lhs.y - rhs.second)};
+    /*
+    SDL_Point pixelCenter(const Hex &hex)
+    {
+        return pixelFromHex(hex) + SDL_Point{HEX_SIZE / 2, HEX_SIZE / 2};
+    }
+    */
 }
 
 
@@ -166,6 +174,7 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap)
     tileImg_(loadTileImages(window_)),
     obstacleImg_(loadObstacleImages(window_)),
     edgeImg_(loadEdgeImages(window_)),
+    castleImg_(SdlSurface("img/castle.png"), window_),
     tiles_(map_.size()),
     displayArea_(getWindowBounds(window_)),
     displayOffset_{0.0, 0.0}
@@ -215,6 +224,18 @@ void MapDisplay::draw()
         if (t.visible && t.obstacle >= 0) {
             const auto hexCenter = t.curPixel + SDL_Point{HEX_SIZE / 2, HEX_SIZE / 2};
             obstacleImg_[t.terrain].drawFrameCentered(0, t.obstacle, hexCenter);
+        }
+    }
+
+    // Finally, draw castles.  TODO: make these into entities?
+    for (const auto &hex : map_.getCastleTiles()) {
+        auto basePixel = pixelFromHex(hex);
+        basePixel.x += HEX_SIZE / 2 - castleImg_.width() / 2;
+        basePixel.y += HEX_SIZE / 2 - castleImg_.height() / 2;
+        const auto curPixel = basePixel - displayOffset_;
+        const SDL_Rect rect{curPixel.x, curPixel.y, castleImg_.height(), castleImg_.width()};
+        if (SDL_HasIntersection(&rect, &displayArea_) == SDL_TRUE) {
+            castleImg_.draw(curPixel);
         }
     }
 }
@@ -416,12 +437,7 @@ void MapDisplay::setTileVisibility()
     for (auto &t : tiles_) {
         t.curPixel = t.basePixel - displayOffset_;
 
-        const SDL_Rect tileRect = {t.curPixel.x, t.curPixel.y, HEX_SIZE, HEX_SIZE};
-        if (SDL_HasIntersection(&tileRect, &displayArea_) == SDL_TRUE) {
-            t.visible = true;
-        }
-        else {
-            t.visible = false;
-        }
+        const SDL_Rect tileRect{t.curPixel.x, t.curPixel.y, HEX_SIZE, HEX_SIZE};
+        t.visible = (SDL_HasIntersection(&tileRect, &displayArea_) == SDL_TRUE);
     }
 }

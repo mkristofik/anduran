@@ -72,6 +72,21 @@ namespace
 
         doc.AddMember(aryName, ary, alloc);
     }
+
+    auto getCastleHexes(const Hex &startHex)
+    {
+        std::array<Hex, 9> castle;
+
+        // Return the castle tiles themselves and three hexes to the south to
+        // ensure the main entrance is walkable.
+        const auto nbrs = startHex.getAllNeighbors();
+        std::copy(std::begin(nbrs), std::end(nbrs), std::begin(castle));
+        castle[6] = startHex;
+        castle[7] = startHex.getNeighbor(HexDir::SE).getNeighbor(HexDir::S);
+        castle[8] = startHex.getNeighbor(HexDir::SW).getNeighbor(HexDir::S);
+
+        return castle;
+    }
 }
 
 
@@ -131,12 +146,15 @@ RandomMap::RandomMap(int width)
     tileRegions_(size_, -1),
     tileNeighbors_(),
     tileObstacles_(size_, -1),
+    tileOccupied_(size_, 0),
     regionNeighbors_(),
-    regionTerrain_()
+    regionTerrain_(),
+    castles_()
 {
     generateRegions();
     buildNeighborGraphs();
     assignTerrain();
+    placeCastles();
     assignObstacles();
 }
 
@@ -147,8 +165,10 @@ RandomMap::RandomMap(const char *filename)
     tileRegions_(),
     tileNeighbors_(),
     tileObstacles_(),
+    tileOccupied_(),
     regionNeighbors_(),
-    regionTerrain_()
+    regionTerrain_(),
+    castles_()
 {
     using namespace rapidjson;
 
@@ -162,6 +182,7 @@ RandomMap::RandomMap(const char *filename)
     tileRegions_ = getJsonArray<int>(doc, "tile-regions");
     regionTerrain_ = getJsonArray<Terrain>(doc, "region-terrain");
     tileObstacles_ = getJsonArray<int>(doc, "tile-obstacles");
+    castles_ = getJsonArray<int>(doc, "castles");
     size_ = tileRegions_.size();
     width_ = std::sqrt(size_);
 
@@ -176,6 +197,7 @@ void RandomMap::writeFile(const char *filename)
     setJsonArray<int>(doc, "tile-regions", tileRegions_);
     setJsonArray<int>(doc, "region-terrain", regionTerrain_);
     setJsonArray<int>(doc, "tile-obstacles", tileObstacles_);
+    setJsonArray<int>(doc, "castles", castles_);
 
     char buf[JSON_BUFFER_SIZE];
     std::shared_ptr<FILE> jsonFile(fopen(filename, "wb"), fclose);
@@ -229,6 +251,16 @@ int RandomMap::getObstacle(const Hex &hex)
 {
     assert(!offGrid(hex));
     return getObstacle(intFromHex(hex));
+}
+
+std::vector<Hex> RandomMap::getCastleTiles()
+{
+    std::vector<Hex> hexes;
+    for (auto i : castles_) {
+        hexes.push_back(hexFromInt(i));
+    }
+
+    return hexes;
 }
 
 Hex RandomMap::hexFromInt(int index) const
@@ -542,4 +574,62 @@ void RandomMap::connectIsolatedTiles(int startTile, const std::vector<char> &vis
         assert(cameFrom.find(t) != std::cend(cameFrom));
         t = cameFrom[t];
     }
+}
+
+void RandomMap::placeCastles()
+{
+    // Start with a random hex in each of the four corners of the map.
+    RandomHex rhex(width_ / 4);
+    auto upperLeft = rhex();
+    auto upperRight = Hex{width_ - 1, width_ / 4} - rhex();
+    auto lowerLeft = Hex{width_ / 4, width_ - 1} - rhex();
+    auto lowerRight = Hex{width_ - 1, width_ - 1} - rhex();
+
+    // Breadth-first search to find a suitable location for each castle.
+    castles_.push_back(findCastleSpot(intFromHex(upperLeft)));
+    castles_.push_back(findCastleSpot(intFromHex(upperRight)));
+    castles_.push_back(findCastleSpot(intFromHex(lowerLeft)));
+    castles_.push_back(findCastleSpot(intFromHex(lowerRight)));
+    assert(none_of(std::begin(castles_), std::end(castles_),
+                   [] (auto elem) {
+                       return elem == -1;
+                   }));
+}
+
+int RandomMap::findCastleSpot(int startTile)
+{
+    assert(!offGrid(startTile));
+
+    std::queue<int> bfsQ;
+    std::vector<char> visited(size_, 0);
+
+    bfsQ.push(startTile);
+    while (!bfsQ.empty()) {
+        const auto tile = bfsQ.front();
+        visited[tile] = 1;
+        bfsQ.pop();
+
+        // all tiles must be in the same region
+        // if so, return that tile
+        // if not, push the neighbors onto the queue
+        bool validSpot = true;
+        const auto curRegion = tileRegions_[tile];
+        for (const auto &hex : getCastleHexes(hexFromInt(tile))) {
+            if (offGrid(hex) || tileRegions_[intFromHex(hex)] != curRegion) {
+                validSpot = false;
+                break;
+            }
+        }
+        if (validSpot) {
+            return tile;
+        }
+
+        for (const auto &nbr : tileNeighbors_.find(tile)) {
+            if (!visited[nbr]) {
+                bfsQ.push(nbr);
+            }
+        }
+    }
+
+    return -1;
 }

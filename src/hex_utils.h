@@ -37,6 +37,7 @@ struct Hex
 
     // note: math on invalid hexes works like NaN: once invalid, always invalid
     Hex & operator+=(const Hex &rhs);
+    Hex & operator-=(const Hex &rhs);
 
     // Return the hex adjacent to the source hex in the given direction. No bounds
     // checking.
@@ -47,6 +48,7 @@ struct Hex
 };
 
 Hex operator+(Hex lhs, const Hex &rhs);
+Hex operator-(Hex lhs, const Hex &rhs);
 Hex operator/(const Hex &lhs, int rhs);
 bool operator==(const Hex &lhs, const Hex &rhs);
 bool operator!=(const Hex &lhs, const Hex &rhs);

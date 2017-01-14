@@ -66,6 +66,7 @@ private:
     std::vector<SdlTextureAtlas> tileImg_;
     std::vector<SdlTextureAtlas> obstacleImg_;
     std::vector<SdlTextureAtlas> edgeImg_;
+    SdlTexture castleImg_;
     std::vector<TileDisplay> tiles_;
     SDL_Rect displayArea_;
     std::pair<double, double> displayOffset_;

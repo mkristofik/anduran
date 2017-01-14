@@ -44,6 +44,9 @@ public:
     int getObstacle(int index);
     int getObstacle(const Hex &hex);
 
+    // Return a list of tiles at the center of each castle.
+    std::vector<Hex> getCastleTiles();
+
     // Convert between integer and Hex representations of a tile location.
     Hex hexFromInt(int index) const;
     int intFromHex(const Hex &hex) const;
@@ -78,14 +81,21 @@ private:
     void exploreWalkableTiles(int startTile, std::vector<char> &visited);
     void connectIsolatedTiles(int startTile, const std::vector<char> &visited);
 
+    // Randomly place castles on the map, trying to be as far apart as possible.
+    // Ensure the castle entrances are walkable.
+    void placeCastles();
+    int findCastleSpot(int startTile);
+
     int width_;
     int size_;
     int numRegions_;
     std::vector<int> tileRegions_;  // index of region each tile belongs to
     FlatMultimap<int, int> tileNeighbors_;
     std::vector<int> tileObstacles_;  // -1 = no obstacle, 0+ = chosen obstacle
+    std::vector<char> tileOccupied_;
     FlatMultimap<int, int> regionNeighbors_;
     std::vector<Terrain> regionTerrain_;
+    std::vector<int> castles_;  // index of the center tile of each castle
 };
 
 

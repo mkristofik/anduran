@@ -42,6 +42,15 @@ Hex & Hex::operator+=(const Hex &rhs)
     return *this;
 }
 
+Hex & Hex::operator-=(const Hex &rhs)
+{
+    if (*this != invalid() && rhs != invalid()) {
+        x -= rhs.x;
+        y -= rhs.y;
+    }
+    return *this;
+}
+
 Hex Hex::getNeighbor(HexDir d) const
 {
     const bool evenCol = (x % 2 == 0);
@@ -97,6 +106,12 @@ Neighbors<Hex> Hex::getAllNeighbors() const
 Hex operator+(Hex lhs, const Hex &rhs)
 {
     lhs += rhs;
+    return lhs;
+}
+
+Hex operator-(Hex lhs, const Hex &rhs)
+{
+    lhs -= rhs;
     return lhs;
 }
 
