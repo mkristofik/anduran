@@ -86,7 +86,7 @@ private:
     // Randomly place castles on the map, trying to be as far apart as possible.
     // Ensure the castle entrances are walkable.
     void placeCastles();
-    int findCastleSpot(int startTile);
+    Hex findCastleSpot(int startTile);
 
     int width_;
     int size_;
@@ -98,7 +98,7 @@ private:
     std::vector<char> tileWalkable_;
     FlatMultimap<int, int> regionNeighbors_;
     std::vector<Terrain> regionTerrain_;
-    std::vector<int> castles_;  // index of the center tile of each castle
+    std::vector<Hex> castles_;  // center tile of each castle
 };
 
 

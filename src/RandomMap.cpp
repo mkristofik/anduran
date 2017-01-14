@@ -197,9 +197,13 @@ RandomMap::RandomMap(const char *filename)
     tileRegions_ = getJsonArray<int>(doc, "tile-regions");
     regionTerrain_ = getJsonArray<Terrain>(doc, "region-terrain");
     tileObstacles_ = getJsonArray<char>(doc, "tile-obstacles");
-    castles_ = getJsonArray<int>(doc, "castles");
     size_ = tileRegions_.size();
     width_ = std::sqrt(size_);
+
+    const auto serialCastles = getJsonArray<int>(doc, "castles");
+    for (auto i : serialCastles) {
+        castles_.push_back(hexFromInt(i));
+    }
 
     buildNeighborGraphs();
 }
@@ -212,7 +216,12 @@ void RandomMap::writeFile(const char *filename)
     setJsonArray<int>(doc, "tile-regions", tileRegions_);
     setJsonArray<int>(doc, "region-terrain", regionTerrain_);
     setJsonArray<int>(doc, "tile-obstacles", tileObstacles_);
-    setJsonArray<int>(doc, "castles", castles_);
+
+    std::vector<int> serialCastles;
+    for (const auto &hex : castles_) {
+        serialCastles.push_back(intFromHex(hex));
+    }
+    setJsonArray<int>(doc, "castles", serialCastles);
 
     char buf[JSON_BUFFER_SIZE];
     std::shared_ptr<FILE> jsonFile(fopen(filename, "wb"), fclose);
@@ -270,12 +279,7 @@ bool RandomMap::getObstacle(const Hex &hex)
 
 std::vector<Hex> RandomMap::getCastleTiles()
 {
-    std::vector<Hex> hexes;
-    for (auto i : castles_) {
-        hexes.push_back(hexFromInt(i));
-    }
-
-    return hexes;
+    return castles_;
 }
 
 Hex RandomMap::hexFromInt(int index) const
@@ -636,19 +640,21 @@ void RandomMap::placeCastles()
     castles_.push_back(findCastleSpot(intFromHex(lowerLeft)));
     castles_.push_back(findCastleSpot(intFromHex(lowerRight)));
 
-    for (auto c : castles_) {
-        assert(!offGrid(c));
+    // Mark all the castle tiles occupied so other objects don't overlap them.
+    // Also set the castle interior as unwalkable.
+    for (const auto &centerHex : castles_) {
+        assert(!offGrid(centerHex));
 
-        for (const auto &hex : getCastleHexes(hexFromInt(c))) {
+        for (const auto &hex : getCastleHexes(centerHex)) {
             tileOccupied_[intFromHex(hex)] = 1;
         }
-        for (const auto &hex : getUnwalkableCastleHexes(hexFromInt(c))) {
+        for (const auto &hex : getUnwalkableCastleHexes(centerHex)) {
             tileWalkable_[intFromHex(hex)] = 0;
         }
     }
 }
 
-int RandomMap::findCastleSpot(int startTile)
+Hex RandomMap::findCastleSpot(int startTile)
 {
     assert(!offGrid(startTile));
 
@@ -678,7 +684,7 @@ int RandomMap::findCastleSpot(int startTile)
                 }
             }
             if (validSpot) {
-                return tile;
+                return hexFromInt(tile);
             }
         }
 
@@ -689,5 +695,6 @@ int RandomMap::findCastleSpot(int startTile)
         }
     }
 
-    return -1;
+    // Couldn't find a valid spot on the entire map, this is an error.
+    return {};
 }
