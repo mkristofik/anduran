@@ -45,14 +45,14 @@ public:
     void drawFlippedH(int px, int py, const SDL_Rect *srcRect = nullptr);
     void drawFlippedH(const SDL_Point &p, const SDL_Rect *srcRect = nullptr);
 
+    // Return the bounding box for drawing the texture at (px,py).
+    SDL_Rect getDestRect(int px, int py, const SDL_Rect *srcRect = nullptr) const;
+    SDL_Rect getDestRect(const SDL_Point &p, const SDL_Rect *srcRect = nullptr) const;
+
     explicit operator bool() const;
     SDL_Texture * get() const;
 
 private:
-    // Return the bounding box for drawing the texture at (px,py).
-    SDL_Rect getDestRect(int px, int py,
-                         const SDL_Rect *srcRect = nullptr) const;
-
     std::shared_ptr<SDL_Texture> texture_;
     SDL_Renderer *renderer_;
     int width_;

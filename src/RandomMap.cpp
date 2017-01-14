@@ -630,8 +630,8 @@ void RandomMap::placeCastles()
     // Start with a random hex in each of the four corners of the map.
     RandomHex rhex(width_ / 4);
     auto upperLeft = rhex();
-    auto upperRight = Hex{width_ - 1, width_ / 4} - rhex();
-    auto lowerLeft = Hex{width_ / 4, width_ - 1} - rhex();
+    auto upperRight = Hex{width_ - 1, width_ / 4 - 1} - rhex();
+    auto lowerLeft = Hex{width_ / 4 - 1, width_ - 1} - rhex();
     auto lowerRight = Hex{width_ - 1, width_ - 1} - rhex();
 
     // Breadth-first search to find a suitable location for each castle.

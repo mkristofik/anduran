@@ -21,13 +21,20 @@
 #include "SDL.h"
 #include <vector>
 
+struct PartialPixel
+{
+    double x = 0.0;
+    double y = 0.0;
+};
+
+
 struct TileDisplay
 {
     Hex hex;
     SDL_Point basePixel;
     SDL_Point curPixel;
     int terrain;
-    int frame;
+    int terrainFrame;
     int obstacle;
     Neighbors<int> edges;
     int region;
@@ -69,7 +76,7 @@ private:
     SdlTexture castleImg_;
     std::vector<TileDisplay> tiles_;
     SDL_Rect displayArea_;
-    std::pair<double, double> displayOffset_;
+    PartialPixel displayOffset_;
 };
 
 #endif

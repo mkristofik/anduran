@@ -115,6 +115,20 @@ void SdlTexture::drawFlippedH(const SDL_Point &p, const SDL_Rect *srcRect)
     drawFlippedH(p.x, p.y, srcRect);
 }
 
+SDL_Rect SdlTexture::getDestRect(int px, int py, const SDL_Rect *srcRect) const
+{
+    if (srcRect == nullptr) {
+        return {px, py, width_, height_};  // by default draw the entire image
+    }
+
+    return {px, py, srcRect->w, srcRect->h};
+}
+
+SDL_Rect SdlTexture::getDestRect(const SDL_Point &p, const SDL_Rect *srcRect) const
+{
+    return getDestRect(p.x, p.y, srcRect);
+}
+
 SdlTexture::operator bool() const
 {
     return static_cast<bool>(texture_);
@@ -123,13 +137,4 @@ SdlTexture::operator bool() const
 SDL_Texture * SdlTexture::get() const
 {
     return texture_.get();
-}
-
-SDL_Rect SdlTexture::getDestRect(int px, int py, const SDL_Rect *srcRect) const
-{
-    if (srcRect == nullptr) {
-        return {px, py, width_, height_};  // by default draw the entire image
-    }
-
-    return {px, py, srcRect->w, srcRect->h};
 }

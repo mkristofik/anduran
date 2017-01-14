@@ -19,9 +19,9 @@ SDL_Point operator+(const SDL_Point &lhs, const SDL_Point &rhs)
     return {lhs.x + rhs.x, lhs.y + rhs.y};
 }
 
-SDL_Point operator-(const SDL_Point &lhs, const std::pair<double, double> &rhs)
+SDL_Point operator-(const SDL_Point &lhs, const PartialPixel &rhs)
 {
-    return {static_cast<int>(lhs.x - rhs.first), static_cast<int>(lhs.y - rhs.second)};
+    return {static_cast<int>(lhs.x - rhs.x), static_cast<int>(lhs.y - rhs.y)};
 }
 
 
@@ -159,7 +159,7 @@ TileDisplay::TileDisplay()
     basePixel{-HEX_SIZE, -HEX_SIZE},
     curPixel{-HEX_SIZE, -HEX_SIZE},
     terrain(0),
-    frame(0),
+    terrainFrame(0),
     obstacle(-1),
     edges(),
     visible(false)
@@ -177,7 +177,7 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap)
     castleImg_(SdlSurface("img/castle.png"), window_),
     tiles_(map_.size()),
     displayArea_(getWindowBounds(window_)),
-    displayOffset_{0.0, 0.0}
+    displayOffset_()
 {
     std::uniform_int_distribution<int> dist3(0, 2);
     std::uniform_int_distribution<int> dist4(0, 3);
@@ -187,7 +187,7 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap)
         tiles_[i].basePixel = pixelFromHex(tiles_[i].hex);
         tiles_[i].curPixel = tiles_[i].basePixel;
         tiles_[i].terrain = static_cast<int>(map_.getTerrain(i));
-        tiles_[i].frame = dist3(RandomMap::engine);
+        tiles_[i].terrainFrame = dist3(RandomMap::engine);
         if (map_.getObstacle(i)) {
             tiles_[i].obstacle = dist4(RandomMap::engine);
         }
@@ -205,7 +205,7 @@ void MapDisplay::draw()
     // Draw terrain tiles.
     for (const auto &t : tiles_) {
         if (t.visible) {
-            tileImg_[t.terrain].drawFrame(0, t.frame, t.curPixel);
+            tileImg_[t.terrain].drawFrame(0, t.terrainFrame, t.curPixel);
         }
     }
 
@@ -230,14 +230,14 @@ void MapDisplay::draw()
         }
     }
 
-    // Finally, draw castles.  TODO: make these into entities?
+    // Draw castles.  TODO: make these into entities?
     for (const auto &hex : map_.getCastleTiles()) {
         auto basePixel = pixelFromHex(hex);
         basePixel.x += HEX_SIZE / 2 - castleImg_.width() / 2;
         basePixel.y += HEX_SIZE / 2 - castleImg_.height() / 2;
         const auto curPixel = basePixel - displayOffset_;
-        const SDL_Rect rect{curPixel.x, curPixel.y, castleImg_.height(), castleImg_.width()};
-        if (SDL_HasIntersection(&rect, &displayArea_) == SDL_TRUE) {
+        const SDL_Rect dest = castleImg_.getDestRect(curPixel);
+        if (SDL_HasIntersection(&dest, &displayArea_) == SDL_TRUE) {
             castleImg_.draw(curPixel);
         }
     }
@@ -280,8 +280,8 @@ void MapDisplay::handleMousePosition(Uint32 elapsed_ms)
 
     // Using doubles here because this might scroll by less than one pixel if the
     // computer is fast enough.
-    displayOffset_.first = clamp<double>(displayOffset_.first + scrollX, 0, pMaxX);
-    displayOffset_.second = clamp<double>(displayOffset_.second + scrollY, 0, pMaxY);
+    displayOffset_.x = clamp<double>(displayOffset_.x + scrollX, 0, pMaxX);
+    displayOffset_.y = clamp<double>(displayOffset_.y + scrollY, 0, pMaxY);
 }
 
 void MapDisplay::computeTileEdges()
@@ -348,6 +348,8 @@ void MapDisplay::computeTileEdges()
 
 void MapDisplay::addBorderTiles()
 {
+    // Each border tile is a copy of another tile within the map grid.
+
     // Left edge
     for (int y = 0; y < map_.width(); ++y) {
         const Hex pairedHex = {0, y};
@@ -359,8 +361,6 @@ void MapDisplay::addBorderTiles()
         // Move it to the correct position outside the map grid.
         --newTile.hex.x;
         newTile.basePixel = pixelFromHex(newTile.hex);
-        // Clear any edge transitions.
-        newTile.edges.fill(-1);
 
         tiles_.push_back(newTile);
     }
@@ -374,8 +374,6 @@ void MapDisplay::addBorderTiles()
         auto newTile = tiles_[pairedIndex];
         ++newTile.hex.x;
         newTile.basePixel = pixelFromHex(newTile.hex);
-        newTile.edges.fill(-1);
-
         tiles_.push_back(newTile);
     }
 
@@ -388,8 +386,6 @@ void MapDisplay::addBorderTiles()
         auto newTile = tiles_[pairedIndex];
         --newTile.hex.y;
         newTile.basePixel = pixelFromHex(newTile.hex);
-        newTile.edges.fill(-1);
-
         tiles_.push_back(newTile);
     }
 
@@ -402,8 +398,6 @@ void MapDisplay::addBorderTiles()
         auto newTile = tiles_[pairedIndex];
         ++newTile.hex.y;
         newTile.basePixel = pixelFromHex(newTile.hex);
-        newTile.edges.fill(-1);
-
         tiles_.push_back(newTile);
     }
 
@@ -411,28 +405,24 @@ void MapDisplay::addBorderTiles()
     auto newTile = tiles_[map_.intFromHex(Hex{0, 0})];
     newTile.hex += Hex{-1, -1};
     newTile.basePixel = pixelFromHex(newTile.hex);
-    newTile.edges.fill(-1);
     tiles_.push_back(newTile);
 
     // Top-right corner
     newTile = tiles_[map_.intFromHex(Hex{map_.width() - 1, 0})];
     newTile.hex += Hex{1, -1};
     newTile.basePixel = pixelFromHex(newTile.hex);
-    newTile.edges.fill(-1);
     tiles_.push_back(newTile);
 
     // Bottom-right corner
     newTile = tiles_[map_.intFromHex(Hex{map_.width() - 1, map_.width() - 1})];
     newTile.hex += Hex{1, 1};
     newTile.basePixel = pixelFromHex(newTile.hex);
-    newTile.edges.fill(-1);
     tiles_.push_back(newTile);
 
     // Bottom-left corner
     newTile = tiles_[map_.intFromHex(Hex{0, map_.width() - 1})];
     newTile.hex += Hex{-1, 1};
     newTile.basePixel = pixelFromHex(newTile.hex);
-    newTile.edges.fill(-1);
     tiles_.push_back(newTile);
 }
 
