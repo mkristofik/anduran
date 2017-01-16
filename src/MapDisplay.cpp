@@ -19,6 +19,11 @@ SDL_Point operator+(const SDL_Point &lhs, const SDL_Point &rhs)
     return {lhs.x + rhs.x, lhs.y + rhs.y};
 }
 
+SDL_Point operator+(const SDL_Point &lhs, const PartialPixel &rhs)
+{
+    return {static_cast<int>(lhs.x + rhs.x), static_cast<int>(lhs.y + rhs.y)};
+}
+
 SDL_Point operator-(const SDL_Point &lhs, const PartialPixel &rhs)
 {
     return {static_cast<int>(lhs.x - rhs.x), static_cast<int>(lhs.y - rhs.y)};
@@ -168,16 +173,26 @@ TileDisplay::TileDisplay()
 }
 
 
+MapEntity::MapEntity()
+    : offset(),
+    hex(),
+    id(-1),
+    visible(true)
+{
+}
+
+
 MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap)
     : window_(win),
     map_(rmap),
     tileImg_(loadTileImages(window_)),
     obstacleImg_(loadObstacleImages(window_)),
     edgeImg_(loadEdgeImages(window_)),
-    castleImg_(SdlSurface("img/castle.png"), window_),
     tiles_(map_.size()),
     displayArea_(getWindowBounds(window_)),
-    displayOffset_()
+    displayOffset_(),
+    entities_(),
+    entityImg_()
 {
     std::uniform_int_distribution<int> dist3(0, 2);
     std::uniform_int_distribution<int> dist4(0, 3);
@@ -230,17 +245,34 @@ void MapDisplay::draw()
         }
     }
 
-    // Draw castles.  TODO: make these into entities?
-    for (const auto &hex : map_.getCastleTiles()) {
-        auto basePixel = pixelFromHex(hex);
-        basePixel.x += HEX_SIZE / 2 - castleImg_.width() / 2;
-        basePixel.y += HEX_SIZE / 2 - castleImg_.height() / 2;
-        const auto curPixel = basePixel - displayOffset_;
-        const SDL_Rect dest = castleImg_.getDestRect(curPixel);
-        if (SDL_HasIntersection(&dest, &displayArea_) == SDL_TRUE) {
-            castleImg_.draw(curPixel);
-        }
-    }
+    drawEntities();
+}
+
+int MapDisplay::addEntity(SdlTexture img, Hex hex)
+{
+    const int id = entities_.size();
+
+    MapEntity e;
+    e.offset.x = HEX_SIZE / 2 - img.width() / 2.0;
+    e.offset.y = HEX_SIZE / 2 - img.height() / 2.0;
+    e.hex = std::move(hex);
+    e.id = id;
+    entities_.push_back(std::move(e));
+    entityImg_.push_back(std::move(img));
+
+    return id;
+}
+
+MapEntity MapDisplay::getEntity(int id)
+{
+    assert(id >= 0 && id < static_cast<int>(entities_.size()));
+    return entities_[id];
+}
+
+void MapDisplay::updateEntity(int id, MapEntity newState)
+{
+    assert(id >= 0 && id < static_cast<int>(entities_.size()));
+    entities_[id] = std::move(newState);
 }
 
 void MapDisplay::handleMousePosition(Uint32 elapsed_ms)
@@ -433,5 +465,20 @@ void MapDisplay::setTileVisibility()
 
         const SDL_Rect tileRect{t.curPixel.x, t.curPixel.y, HEX_SIZE, HEX_SIZE};
         t.visible = (SDL_HasIntersection(&tileRect, &displayArea_) == SDL_TRUE);
+    }
+}
+
+void MapDisplay::drawEntities()
+{
+    for (const auto &e : entities_) {
+        if (!e.visible) {
+            continue;
+        }
+
+        const auto pixel = pixelFromHex(e.hex) + e.offset - displayOffset_;
+        const auto dest = entityImg_[e.id].getDestRect(pixel);
+        if (SDL_HasIntersection(&dest, &displayArea_) == SDL_TRUE) {
+            entityImg_[e.id].draw(pixel);
+        }
     }
 }

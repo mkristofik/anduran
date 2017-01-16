@@ -14,6 +14,7 @@
 #define MAP_DISPLAY_H
 
 #include "RandomMap.h"
+#include "SdlTexture.h"
 #include "SdlTextureAtlas.h"
 #include "SdlWindow.h"
 #include "hex_utils.h"
@@ -44,6 +45,17 @@ struct TileDisplay
 };
 
 
+struct MapEntity
+{
+    PartialPixel offset;
+    Hex hex;  // images drawn centered on hex, adjusted by pixel offset.
+    int id;
+    bool visible;
+
+    MapEntity();
+};
+
+
 class MapDisplay
 {
 public:
@@ -58,6 +70,10 @@ public:
 
     void draw();
 
+    int addEntity(SdlTexture img, Hex hex);  // returns new entity id
+    MapEntity getEntity(int id);
+    void updateEntity(int id, MapEntity newState);
+
     void handleMousePosition(Uint32 elapsed_ms);
 
 private:
@@ -67,16 +83,18 @@ private:
     void addBorderTiles();
 
     void setTileVisibility();
+    void drawEntities();
 
     SdlWindow &window_;
     RandomMap &map_;
     std::vector<SdlTextureAtlas> tileImg_;
     std::vector<SdlTextureAtlas> obstacleImg_;
     std::vector<SdlTextureAtlas> edgeImg_;
-    SdlTexture castleImg_;
     std::vector<TileDisplay> tiles_;
     SDL_Rect displayArea_;
     PartialPixel displayOffset_;
+    std::vector<MapEntity> entities_;
+    std::vector<SdlTexture> entityImg_;
 };
 
 #endif

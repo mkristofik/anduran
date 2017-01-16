@@ -13,6 +13,7 @@
 #include "MapDisplay.h"
 #include "RandomMap.h"
 #include "SdlSurface.h"
+#include "SdlTexture.h"
 #include "SdlTextureAtlas.h"
 #include "SdlWindow.h"
 
@@ -25,6 +26,11 @@ void real_main()
     SdlWindow win(1280, 720, "Anduran Map Viewer");
     RandomMap rmap("test.json");
     MapDisplay rmapView(win, rmap);
+
+    SdlTexture castleImg(SdlSurface("img/castle.png"), win);
+    for (const auto &hex : rmap.getCastleTiles()) {
+        rmapView.addEntity(castleImg, hex);
+    }
 
     win.clear();
     rmapView.draw();
