@@ -63,4 +63,7 @@ int hexDistance(const Hex &h1, const Hex &h2);
 // Given a list of hexes, return the index of the hex closest to the source.
 int hexClosestIdx(const Hex &hSrc, const std::vector<Hex> &hexes);
 
+// Set of all hexes within 'radius' distance of the center.
+std::vector<Hex> hexCircle(const Hex &center, int radius);
+
 #endif

@@ -75,17 +75,9 @@ namespace
 
     auto getCastleHexes(const Hex &startHex)
     {
-        std::array<Hex, 9> castle;
-
-        // Return the castle tiles themselves and three hexes to the south to
-        // ensure the main entrance is walkable.
-        const auto nbrs = startHex.getAllNeighbors();
-        std::copy(std::begin(nbrs), std::end(nbrs), std::begin(castle));
-        castle[6] = startHex;
-        castle[7] = startHex.getNeighbor(HexDir::SE).getNeighbor(HexDir::S);
-        castle[8] = startHex.getNeighbor(HexDir::SW).getNeighbor(HexDir::S);
-
-        return castle;
+        // Include all the castle tiles and a one-hex buffer to ensure castles
+        // don't cut off tiles from the rest of a region.
+        return hexCircle(startHex, 2);
     }
 
     auto getUnwalkableCastleHexes(const Hex &startHex)
@@ -629,28 +621,25 @@ void RandomMap::placeCastles()
 {
     // Start with a random hex in each of the four corners of the map.
     RandomHex rhex(width_ / 4);
-    auto upperLeft = rhex();
-    auto upperRight = Hex{width_ - 1, width_ / 4 - 1} - rhex();
-    auto lowerLeft = Hex{width_ / 4 - 1, width_ - 1} - rhex();
-    auto lowerRight = Hex{width_ - 1, width_ - 1} - rhex();
+    const auto upperLeft = rhex();
+    const auto upperRight = Hex{width_ - 1, width_ / 4 - 1} - rhex();
+    const auto lowerLeft = Hex{width_ / 4 - 1, width_ - 1} - rhex();
+    const auto lowerRight = Hex{width_ - 1, width_ - 1} - rhex();
+    const auto corners = {upperLeft, upperRight, lowerLeft, lowerRight};
 
-    // Breadth-first search to find a suitable location for each castle.
-    castles_.push_back(findCastleSpot(intFromHex(upperLeft)));
-    castles_.push_back(findCastleSpot(intFromHex(upperRight)));
-    castles_.push_back(findCastleSpot(intFromHex(lowerLeft)));
-    castles_.push_back(findCastleSpot(intFromHex(lowerRight)));
-
-    // Mark all the castle tiles occupied so other objects don't overlap them.
-    // Also set the castle interior as unwalkable.
-    for (const auto &centerHex : castles_) {
+    for (auto &c : corners) {
+        const auto centerHex = findCastleSpot(intFromHex(c));
         assert(!offGrid(centerHex));
 
+        // Mark all the castle tiles occupied so other objects don't overlap them.
+        // Also set the castle interior as unwalkable.
         for (const auto &hex : getCastleHexes(centerHex)) {
             tileOccupied_[intFromHex(hex)] = 1;
         }
         for (const auto &hex : getUnwalkableCastleHexes(centerHex)) {
             tileWalkable_[intFromHex(hex)] = 0;
         }
+        castles_.push_back(centerHex);
     }
 }
 
@@ -661,6 +650,7 @@ Hex RandomMap::findCastleSpot(int startTile)
     std::queue<int> bfsQ;
     std::vector<char> visited(size_, 0);
 
+    // Breadth-first search to find a suitable location for each castle.
     bfsQ.push(startTile);
     while (!bfsQ.empty()) {
         const auto tile = bfsQ.front();

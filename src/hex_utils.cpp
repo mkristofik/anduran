@@ -188,3 +188,19 @@ int hexClosestIdx(const Hex &hSrc, const std::vector<Hex> &hexes)
         });
     return static_cast<int>(distance(std::begin(hexes), closest));
 }
+
+std::vector<Hex> hexCircle(const Hex &center, int radius)
+{
+    std::vector<Hex> hexes;
+
+    for (auto x = center.x - radius; x <= center.x + radius; ++x) {
+        for (auto y = center.y - radius; y <= center.y + radius; ++y) {
+            const Hex h{x, y};
+            if (hexDistance(h, center) <= radius) {
+                hexes.push_back(h);
+            }
+        }
+    }
+
+    return hexes;
+}
