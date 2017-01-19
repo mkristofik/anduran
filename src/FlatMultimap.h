@@ -60,10 +60,21 @@ public:
     class ValueIterator
     {
     public:
-        ValueIterator(typename container_type::const_iterator i) : iter_(std::move(i)) {}
-        const V & operator*() { return iter_->value; }
-        const V * operator->() { return iter_->value; }
+        using iter_type = typename container_type::const_iterator;
+
+        // std::iterator_traits requires all of these to make std algorithms work.
+        using difference_type = typename iter_type::difference_type;
+        using value_type = typename iter_type::value_type;
+        using pointer = typename iter_type::pointer;
+        using reference = typename iter_type::reference;
+        using iterator_category = typename iter_type::iterator_category;
+
+        ValueIterator(iter_type i) : iter_(std::move(i)) {}
+        const V & operator*() const { return iter_->value; }
+        const V * operator->() const { return iter_->value; }
         ValueIterator & operator++() { ++iter_; return *this; }
+        ValueIterator & operator+=(difference_type d) { iter_ += d; return *this; }
+
         friend bool operator==(const ValueIterator &lhs, const ValueIterator &rhs)
         {
             return lhs.iter_ == rhs.iter_;
@@ -72,9 +83,13 @@ public:
         {
             return !(lhs == rhs);
         }
+        friend difference_type operator-(const ValueIterator &lhs, const ValueIterator &rhs)
+        {
+            return lhs.iter_ - rhs.iter_;
+        }
 
     private:
-        typename container_type::const_iterator iter_;
+        iter_type iter_;
     };
 
     struct ValueRange

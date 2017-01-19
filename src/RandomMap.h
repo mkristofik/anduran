@@ -46,6 +46,9 @@ public:
     // Return a list of tiles at the center of each castle.
     std::vector<Hex> getCastleTiles();
 
+    // Return a list of tiles containing a village.
+    std::vector<Hex> getVillages();
+
     // Convert between integer and Hex representations of a tile location.
     Hex hexFromInt(int index) const;
     int intFromHex(const Hex &hex) const;
@@ -64,6 +67,7 @@ private:
 
     // Assign each tile to the region indicated by the nearest center.
     void assignRegions(const std::vector<Hex> &centers);
+    void mapRegionsToTiles();  // reverse lookup
 
     // Compute the "center of mass" of each region.
     std::vector<Hex> voronoi();
@@ -88,6 +92,11 @@ private:
     void placeCastles();
     Hex findCastleSpot(int startTile);
 
+    // Randomly place a village in each land region not already containing a
+    // castle.
+    void placeVillages();
+    int findVillageSpot(int startTile, int region);
+
     int width_;
     int size_;
     int numRegions_;
@@ -98,7 +107,10 @@ private:
     std::vector<char> tileWalkable_;
     FlatMultimap<int, int> regionNeighbors_;
     std::vector<Terrain> regionTerrain_;
+    FlatMultimap<int, int> regionTiles_;  // which tiles belong to each region
     std::vector<Hex> castles_;  // center tile of each castle
+    std::vector<int> castleRegions_;
+    std::vector<int> villages_;
 };
 
 

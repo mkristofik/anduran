@@ -14,6 +14,7 @@
 #include "open-simplex-noise.h"
 
 #include "boost/container/flat_map.hpp"
+#include "boost/container/flat_set.hpp"
 #include "rapidjson/document.h"
 #include "rapidjson/filereadstream.h"
 #include "rapidjson/filewritestream.h"
@@ -23,6 +24,7 @@
 #include <cmath>
 #include <cstdio>
 #include <ctime>
+#include <iterator>
 #include <memory>
 #include <queue>
 #include <random>
@@ -71,6 +73,15 @@ namespace
         }
 
         doc.AddMember(aryName, ary, alloc);
+    }
+
+    template <typename C, typename T>
+    bool contains(const C &cont, const T &val)
+    {
+        using std::cbegin;
+        using std::cend;
+
+        return std::find(cbegin(cont), cend(cont), val) != cend(cont);
     }
 
     auto getCastleHexes(const Hex &startHex)
@@ -155,15 +166,20 @@ RandomMap::RandomMap(int width)
     tileWalkable_(size_, 1),
     regionNeighbors_(),
     regionTerrain_(),
-    castles_()
+    regionTiles_(),
+    castles_(),
+    castleRegions_(),
+    villages_()
 {
     generateRegions();
     buildNeighborGraphs();
     assignTerrain();
     placeCastles();
+    placeVillages();
     assignObstacles();
 }
 
+// TODO: not all member variables get filled in from the json file
 RandomMap::RandomMap(const char *filename)
     : width_(0),
     size_(0),
@@ -171,11 +187,14 @@ RandomMap::RandomMap(const char *filename)
     tileRegions_(),
     tileNeighbors_(),
     tileObstacles_(),
-    tileOccupied_(),
-    tileWalkable_(),
+    tileOccupied_(),  // TODO
+    tileWalkable_(),  // TODO
     regionNeighbors_(),
     regionTerrain_(),
-    castles_()
+    regionTiles_(),
+    castles_(),
+    castleRegions_(),
+    villages_()
 {
     using namespace rapidjson;
 
@@ -189,14 +208,17 @@ RandomMap::RandomMap(const char *filename)
     tileRegions_ = getJsonArray<int>(doc, "tile-regions");
     regionTerrain_ = getJsonArray<Terrain>(doc, "region-terrain");
     tileObstacles_ = getJsonArray<char>(doc, "tile-obstacles");
+    villages_ = getJsonArray<int>(doc, "villages");
     size_ = tileRegions_.size();
     width_ = std::sqrt(size_);
 
     const auto serialCastles = getJsonArray<int>(doc, "castles");
     for (auto i : serialCastles) {
         castles_.push_back(hexFromInt(i));
+        castleRegions_.push_back(tileRegions_[i]);
     }
 
+    mapRegionsToTiles();
     buildNeighborGraphs();
 }
 
@@ -208,6 +230,7 @@ void RandomMap::writeFile(const char *filename)
     setJsonArray<int>(doc, "tile-regions", tileRegions_);
     setJsonArray<int>(doc, "region-terrain", regionTerrain_);
     setJsonArray<int>(doc, "tile-obstacles", tileObstacles_);
+    setJsonArray<int>(doc, "villages", villages_);
 
     std::vector<int> serialCastles;
     for (const auto &hex : castles_) {
@@ -274,6 +297,16 @@ std::vector<Hex> RandomMap::getCastleTiles()
     return castles_;
 }
 
+std::vector<Hex> RandomMap::getVillages()
+{
+    std::vector<Hex> hexes;
+    for (auto v : villages_) {
+        hexes.push_back(hexFromInt(v));
+    }
+
+    return hexes;
+}
+
 Hex RandomMap::hexFromInt(int index) const
 {
     if (offGrid(index)) {
@@ -320,6 +353,7 @@ void RandomMap::generateRegions()
 
     // Assign each hex to its final region.
     assignRegions(centers);
+    mapRegionsToTiles();
 }
 
 void RandomMap::buildNeighborGraphs()
@@ -405,6 +439,14 @@ void RandomMap::assignRegions(const std::vector<Hex> &centers)
 {
     for (int i = 0; i < size_; ++i) {
         tileRegions_[i] = hexClosestIdx(hexFromInt(i), centers);
+    }
+}
+
+void RandomMap::mapRegionsToTiles()
+{
+    regionTiles_.reserve(size_);
+    for (int i = 0; i < size_; ++i) {
+        regionTiles_.insert(tileRegions_[i], i);
     }
 }
 
@@ -640,6 +682,7 @@ void RandomMap::placeCastles()
             tileWalkable_[intFromHex(hex)] = 0;
         }
         castles_.push_back(centerHex);
+        castleRegions_.push_back(tileRegions_[intFromHex(centerHex)]);
     }
 }
 
@@ -658,10 +701,14 @@ Hex RandomMap::findCastleSpot(int startTile)
         bfsQ.pop();
 
         // all tiles must be in the same region
+        // can't be in water
+        // can't be in the same region as another castle
         // if so, return that tile
         // if not, push the neighbors onto the queue
         const auto curRegion = tileRegions_[tile];
-        if (regionTerrain_[curRegion] != Terrain::WATER) {
+        if (regionTerrain_[curRegion] != Terrain::WATER &&
+            !contains(castleRegions_, curRegion))
+        {
             bool validSpot = true;
             for (const auto &hex : getCastleHexes(hexFromInt(tile))) {
                 const auto index = intFromHex(hex);
@@ -687,4 +734,58 @@ Hex RandomMap::findCastleSpot(int startTile)
 
     // Couldn't find a valid spot on the entire map, this is an error.
     return {};
+}
+
+void RandomMap::placeVillages()
+{
+    for (int r = 0; r < numRegions_; ++r) {
+        if (regionTerrain_[r] == Terrain::WATER || contains(castleRegions_, r)) {
+            continue;
+        }
+
+        // Start with a random tile within the region.
+        const auto regTiles = regionTiles_.find(r);
+        const auto regSize = std::distance(regTiles.first, regTiles.second);
+        std::uniform_int_distribution<int> dist(0, regSize - 1);
+        const auto startTile = std::next(regTiles.first, dist(engine));
+
+        const auto v = findVillageSpot(*startTile, r);
+        if (!offGrid(v)) {
+            villages_.push_back(v);
+            tileOccupied_[v] = 1;  // village tiles are walkable
+        }
+    }
+}
+
+int RandomMap::findVillageSpot(int startTile, int region)
+{
+    assert(!offGrid(startTile));
+
+    std::queue<int> bfsQ;
+    boost::container::flat_set<int> visited;
+
+    // Breadth-first search to find a suitable location for each village.
+    bfsQ.push(startTile);
+    while (!bfsQ.empty()) {
+        const auto tile = bfsQ.front();
+        visited.insert(tile);
+        bfsQ.pop();
+
+        if (offGrid(tile) || tileRegions_[tile] != region) {
+            continue;
+        }
+
+        if (!tileOccupied_[tile]) {
+            return tile;
+        }
+
+        for (const auto &nbr : tileNeighbors_.find(tile)) {
+            if (visited.find(nbr) == std::cend(visited)) {
+                bfsQ.push(nbr);
+            }
+        }
+    }
+
+    // No walkable tiles remaining in this region.
+    return -1;
 }

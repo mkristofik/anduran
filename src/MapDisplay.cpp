@@ -151,7 +151,7 @@ namespace
     }
 
     /*
-    SDL_Point pixelCenter(const Hex &hex)
+    [[maybe_unused]] SDL_Point pixelCenter(const Hex &hex)
     {
         return pixelFromHex(hex) + SDL_Point{HEX_SIZE / 2, HEX_SIZE / 2};
     }
