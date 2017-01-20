@@ -177,6 +177,7 @@ MapEntity::MapEntity()
     : offset(),
     hex(),
     id(-1),
+    frame(-1),
     visible(true)
 {
 }
@@ -211,6 +212,7 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap)
 
     addBorderTiles();
     computeTileEdges();
+    loadObjects();
 }
 
 void MapDisplay::draw()
@@ -257,6 +259,23 @@ int MapDisplay::addEntity(SdlTexture img, Hex hex)
     e.offset.y = HEX_SIZE / 2 - img.height() / 2.0;
     e.hex = std::move(hex);
     e.id = id;
+    entities_.push_back(std::move(e));
+    entityImg_.push_back(std::move(img));
+
+    return id;
+}
+
+int MapDisplay::addEntity(SdlTextureAtlas img, Hex hex, int initialFrame)
+{
+    assert(initialFrame >= 0 && initialFrame < img.numColumns());
+    const int id = entities_.size();
+
+    MapEntity e;
+    e.offset.x = HEX_SIZE / 2 - img.frameWidth() / 2.0;
+    e.offset.y = HEX_SIZE / 2 - img.frameHeight() / 2.0;
+    e.hex = std::move(hex);
+    e.id = id;
+    e.frame = initialFrame;
     entities_.push_back(std::move(e));
     entityImg_.push_back(std::move(img));
 
@@ -378,6 +397,43 @@ void MapDisplay::computeTileEdges()
     }
 }
 
+void MapDisplay::loadObjects()
+{
+    SdlTexture castleImg(SdlSurface("img/castle.png"), window_);
+    for (const auto &hex : map_.getCastleTiles()) {
+        addEntity(castleImg, hex);
+    }
+
+    SdlTextureAtlas desertVillage(SdlSurface("img/villages-desert.png"), window_, 1, 4);
+    SdlTextureAtlas dirtVillage(SdlSurface("img/villages-dirt.png"), window_, 1, 4);
+    SdlTextureAtlas grassVillage(SdlSurface("img/villages-grass.png"), window_, 1, 4);
+    SdlTextureAtlas snowVillage(SdlSurface("img/villages-snow.png"), window_, 1, 4);
+    SdlTextureAtlas swampVillage(SdlSurface("img/villages-swamp.png"), window_, 1, 4);
+    std::uniform_int_distribution<int> dist4(0, 3);
+
+    for (const auto &hex : map_.getVillages()) {
+        switch (map_.getTerrain(hex)) {
+            case Terrain::DESERT:
+                addEntity(desertVillage, hex, dist4(RandomMap::engine));
+                break;
+            case Terrain::DIRT:
+                addEntity(dirtVillage, hex, dist4(RandomMap::engine));
+                break;
+            case Terrain::GRASS:
+                addEntity(grassVillage, hex, dist4(RandomMap::engine));
+                break;
+            case Terrain::SNOW:
+                addEntity(snowVillage, hex, dist4(RandomMap::engine));
+                break;
+            case Terrain::SWAMP:
+                addEntity(swampVillage, hex, dist4(RandomMap::engine));
+                break;
+            default:
+                break;
+        }
+    }
+}
+
 void MapDisplay::addBorderTiles()
 {
     // Each border tile is a copy of another tile within the map grid.
@@ -476,9 +532,19 @@ void MapDisplay::drawEntities()
         }
 
         const auto pixel = pixelFromHex(e.hex) + e.offset - displayOffset_;
-        const auto dest = entityImg_[e.id].getDestRect(pixel);
-        if (SDL_HasIntersection(&dest, &displayArea_) == SDL_TRUE) {
-            entityImg_[e.id].draw(pixel);
+        if (e.frame >= 0) {
+            auto &img = boost::get<SdlTextureAtlas>(entityImg_[e.id]);
+            const auto dest = img.getDestRect(pixel);
+            if (SDL_HasIntersection(&dest, &displayArea_) == SDL_TRUE) {
+                img.drawFrame(0, e.frame, pixel);
+            }
+        }
+        else {
+            auto &img = boost::get<SdlTexture>(entityImg_[e.id]);
+            const auto dest = img.getDestRect(pixel);
+            if (SDL_HasIntersection(&dest, &displayArea_) == SDL_TRUE) {
+                img.draw(pixel);
+            }
         }
     }
 }

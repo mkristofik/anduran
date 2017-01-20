@@ -27,11 +27,6 @@ void real_main()
     RandomMap rmap("test.json");
     MapDisplay rmapView(win, rmap);
 
-    SdlTexture castleImg(SdlSurface("img/castle.png"), win);
-    for (const auto &hex : rmap.getCastleTiles()) {
-        rmapView.addEntity(castleImg, hex);
-    }
-
     win.clear();
     rmapView.draw();
     win.update();

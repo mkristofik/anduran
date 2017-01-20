@@ -20,6 +20,7 @@
 #include "hex_utils.h"
 
 #include "SDL.h"
+#include "boost/variant.hpp"
 #include <vector>
 
 struct PartialPixel
@@ -50,6 +51,7 @@ struct MapEntity
     PartialPixel offset;
     Hex hex;  // images drawn centered on hex, adjusted by pixel offset.
     int id;
+    int frame;  // which frame to draw if using a texture atlas (assume only one row)
     bool visible;
 
     MapEntity();
@@ -71,6 +73,7 @@ public:
     void draw();
 
     int addEntity(SdlTexture img, Hex hex);  // returns new entity id
+    int addEntity(SdlTextureAtlas img, Hex hex, int initialFrame);  // returns new entity id
     MapEntity getEntity(int id);
     void updateEntity(int id, MapEntity newState);
 
@@ -78,6 +81,7 @@ public:
 
 private:
     void computeTileEdges();
+    void loadObjects();
 
     // Add duplicate tiles around the map border so there aren't jagged edges.
     void addBorderTiles();
@@ -94,7 +98,7 @@ private:
     SDL_Rect displayArea_;
     PartialPixel displayOffset_;
     std::vector<MapEntity> entities_;
-    std::vector<SdlTexture> entityImg_;
+    std::vector<boost::variant<SdlTexture, SdlTextureAtlas>> entityImg_;
 };
 
 #endif
