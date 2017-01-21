@@ -404,29 +404,28 @@ void MapDisplay::loadObjects()
         addEntity(castleImg, hex);
     }
 
-    SdlTextureAtlas desertVillage(SdlSurface("img/villages-desert.png"), window_, 1, 4);
-    SdlTextureAtlas dirtVillage(SdlSurface("img/villages-dirt.png"), window_, 1, 4);
-    SdlTextureAtlas grassVillage(SdlSurface("img/villages-grass.png"), window_, 1, 4);
-    SdlTextureAtlas snowVillage(SdlSurface("img/villages-snow.png"), window_, 1, 4);
-    SdlTextureAtlas swampVillage(SdlSurface("img/villages-swamp.png"), window_, 1, 4);
-    std::uniform_int_distribution<int> dist4(0, 3);
+    SdlTexture desertVillage(SdlSurface("img/village-desert.png"), window_);
+    SdlTexture dirtVillage(SdlSurface("img/village-dirt.png"), window_);
+    SdlTexture grassVillage(SdlSurface("img/village-grass.png"), window_);
+    SdlTexture snowVillage(SdlSurface("img/village-snow.png"), window_);
+    SdlTexture swampVillage(SdlSurface("img/village-swamp.png"), window_);
 
     for (const auto &hex : map_.getVillages()) {
         switch (map_.getTerrain(hex)) {
             case Terrain::DESERT:
-                addEntity(desertVillage, hex, dist4(RandomMap::engine));
+                addEntity(desertVillage, hex);
                 break;
             case Terrain::DIRT:
-                addEntity(dirtVillage, hex, dist4(RandomMap::engine));
+                addEntity(dirtVillage, hex);
                 break;
             case Terrain::GRASS:
-                addEntity(grassVillage, hex, dist4(RandomMap::engine));
+                addEntity(grassVillage, hex);
                 break;
             case Terrain::SNOW:
-                addEntity(snowVillage, hex, dist4(RandomMap::engine));
+                addEntity(snowVillage, hex);
                 break;
             case Terrain::SWAMP:
-                addEntity(swampVillage, hex, dist4(RandomMap::engine));
+                addEntity(swampVillage, hex);
                 break;
             default:
                 break;
