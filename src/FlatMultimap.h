@@ -97,8 +97,8 @@ public:
         ValueIterator first;
         ValueIterator second;
 
-        auto begin() { return first; }
-        auto end() { return second; }
+        auto begin() const { return first; }
+        auto end() const { return second; }
     };
 
 private:

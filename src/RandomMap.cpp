@@ -222,7 +222,7 @@ RandomMap::RandomMap(const char *filename)
     buildNeighborGraphs();
 }
 
-void RandomMap::writeFile(const char *filename)
+void RandomMap::writeFile(const char *filename) const
 {
     using namespace rapidjson;
     Document doc(kObjectType);
@@ -256,48 +256,48 @@ int RandomMap::width() const
     return width_;
 }
 
-int RandomMap::getRegion(int index)
+int RandomMap::getRegion(int index) const
 {
     assert(!offGrid(index));
     return tileRegions_[index];
 }
 
-int RandomMap::getRegion(const Hex &hex)
+int RandomMap::getRegion(const Hex &hex) const
 {
     assert(!offGrid(hex));
     return getRegion(intFromHex(hex));
 }
 
-Terrain RandomMap::getTerrain(int index)
+Terrain RandomMap::getTerrain(int index) const
 {
     assert(!offGrid(index));
     return regionTerrain_[getRegion(index)];
 }
 
-Terrain RandomMap::getTerrain(const Hex &hex)
+Terrain RandomMap::getTerrain(const Hex &hex) const
 {
     assert(!offGrid(hex));
     return getTerrain(intFromHex(hex));
 }
 
-bool RandomMap::getObstacle(int index)
+bool RandomMap::getObstacle(int index) const
 {
     assert(!offGrid(index));
     return tileObstacles_[index] > 0;
 }
 
-bool RandomMap::getObstacle(const Hex &hex)
+bool RandomMap::getObstacle(const Hex &hex) const
 {
     assert(!offGrid(hex));
     return getObstacle(intFromHex(hex));
 }
 
-std::vector<Hex> RandomMap::getCastleTiles()
+std::vector<Hex> RandomMap::getCastleTiles() const
 {
     return castles_;
 }
 
-std::vector<Hex> RandomMap::getVillages()
+std::vector<Hex> RandomMap::getVillages() const
 {
     std::vector<Hex> hexes;
     for (auto v : villages_) {

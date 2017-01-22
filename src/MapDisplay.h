@@ -74,7 +74,7 @@ public:
 
     int addEntity(SdlTexture img, Hex hex);  // returns new entity id
     int addEntity(SdlTextureAtlas img, Hex hex, int initialFrame);  // returns new entity id
-    MapEntity getEntity(int id);
+    MapEntity getEntity(int id) const;
     void updateEntity(int id, MapEntity newState);
 
     void handleMousePosition(Uint32 elapsed_ms);

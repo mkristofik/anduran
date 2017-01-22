@@ -42,6 +42,14 @@ void SdlWindow::update()
     SDL_RenderPresent(renderer());
 }
 
+SDL_Rect SdlWindow::getBounds() const
+{
+    int width = 0;
+    int height = 0;
+    SDL_GetRendererOutputSize(renderer(), &width, &height);
+    return {0, 0, width, height};
+}
+
 SDL_Window * SdlWindow::get() const
 {
     return window_.get();

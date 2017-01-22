@@ -30,24 +30,24 @@ public:
     explicit RandomMap(int width);
     explicit RandomMap(const char *filename);
 
-    void writeFile(const char *filename);
+    void writeFile(const char *filename) const;
 
     int size() const;
     int width() const;
 
-    int getRegion(int index);
-    int getRegion(const Hex &hex);
-    Terrain getTerrain(int index);
-    Terrain getTerrain(const Hex &hex);
+    int getRegion(int index) const;
+    int getRegion(const Hex &hex) const;
+    Terrain getTerrain(int index) const;
+    Terrain getTerrain(const Hex &hex) const;
 
-    bool getObstacle(int index);
-    bool getObstacle(const Hex &hex);
+    bool getObstacle(int index) const;
+    bool getObstacle(const Hex &hex) const;
 
     // Return a list of tiles at the center of each castle.
-    std::vector<Hex> getCastleTiles();
+    std::vector<Hex> getCastleTiles() const;
 
     // Return a list of tiles containing a village.
-    std::vector<Hex> getVillages();
+    std::vector<Hex> getVillages() const;
 
     // Convert between integer and Hex representations of a tile location.
     Hex hexFromInt(int index) const;

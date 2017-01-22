@@ -25,6 +25,8 @@ public:
     void clear();
     void update();
 
+    SDL_Rect getBounds() const;
+
     SDL_Window * get() const;
     SDL_Renderer * renderer() const;
 

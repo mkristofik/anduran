@@ -134,14 +134,6 @@ namespace
         images.emplace_back(surf, win, 1, 6);
         return images;
     }
-
-    SDL_Rect getWindowBounds(const SdlWindow &win)
-    {
-        int width = 0;
-        int height = 0;
-        SDL_GetRendererOutputSize(win.renderer(), &width, &height);
-        return {0, 0, width, height};
-    }
     
     SDL_Point pixelFromHex(const Hex &hex)
     {
@@ -190,7 +182,7 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap)
     obstacleImg_(loadObstacleImages(window_)),
     edgeImg_(loadEdgeImages(window_)),
     tiles_(map_.size()),
-    displayArea_(getWindowBounds(window_)),
+    displayArea_(window_.getBounds()),
     displayOffset_(),
     entities_(),
     entityImg_()
@@ -282,7 +274,7 @@ int MapDisplay::addEntity(SdlTextureAtlas img, Hex hex, int initialFrame)
     return id;
 }
 
-MapEntity MapDisplay::getEntity(int id)
+MapEntity MapDisplay::getEntity(int id) const
 {
     assert(id >= 0 && id < static_cast<int>(entities_.size()));
     return entities_[id];
