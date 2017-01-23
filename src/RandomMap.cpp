@@ -169,14 +169,12 @@ RandomMap::RandomMap(int width)
     regionTiles_(),
     castles_(),
     castleRegions_(),
-    villages_(),
     objectTiles_()
 {
     generateRegions();
     buildNeighborGraphs();
     assignTerrain();
     placeCastles();
-    placeVillages();
     placeObjects();
     assignObstacles();
 }
@@ -196,8 +194,7 @@ RandomMap::RandomMap(const char *filename)
     regionTiles_(),
     castles_(),
     castleRegions_(),
-    villages_(),
-    objectTiles_()  // TODO
+    objectTiles_()
 {
     using namespace rapidjson;
 
@@ -211,7 +208,6 @@ RandomMap::RandomMap(const char *filename)
     tileRegions_ = getJsonArray<int>(doc, "tile-regions");
     regionTerrain_ = getJsonArray<Terrain>(doc, "region-terrain");
     tileObstacles_ = getJsonArray<char>(doc, "tile-obstacles");
-    villages_ = getJsonArray<int>(doc, "villages");
     size_ = tileRegions_.size();
     width_ = std::sqrt(size_);
 
@@ -231,6 +227,11 @@ RandomMap::RandomMap(const char *filename)
         objectTiles_.insert("oasis", i);
     }
 
+    const auto villages = getJsonArray<int>(doc, "village");
+    for (auto i : villages) {
+        objectTiles_.insert("village", i);
+    }
+
     mapRegionsToTiles();
     buildNeighborGraphs();
 }
@@ -243,7 +244,6 @@ void RandomMap::writeFile(const char *filename)
     setJsonArray<int>(doc, "tile-regions", tileRegions_);
     setJsonArray<int>(doc, "region-terrain", regionTerrain_);
     setJsonArray<int>(doc, "tile-obstacles", tileObstacles_);
-    setJsonArray<int>(doc, "villages", villages_);
 
     std::vector<int> serialCastles;
     for (const auto &hex : castles_) {
@@ -255,6 +255,8 @@ void RandomMap::writeFile(const char *filename)
     setJsonArray<int>(doc, "shipwreck", shipwrecks);
     const auto oases = objectTiles_.find("oasis");
     setJsonArray<int>(doc, "oasis", oases);
+    const auto villages = objectTiles_.find("village");
+    setJsonArray<int>(doc, "village", villages);
 
     char buf[JSON_BUFFER_SIZE];
     std::shared_ptr<FILE> jsonFile(fopen(filename, "wb"), fclose);
@@ -313,16 +315,6 @@ bool RandomMap::getObstacle(const Hex &hex) const
 std::vector<Hex> RandomMap::getCastleTiles() const
 {
     return castles_;
-}
-
-std::vector<Hex> RandomMap::getVillages() const
-{
-    std::vector<Hex> hexes;
-    for (auto v : villages_) {
-        hexes.push_back(hexFromInt(v));
-    }
-
-    return hexes;
 }
 
 std::vector<Hex> RandomMap::getObjectTiles(const std::string &name)
@@ -764,23 +756,6 @@ Hex RandomMap::findCastleSpot(int startTile)
     return {};
 }
 
-void RandomMap::placeVillages()
-{
-    for (int r = 0; r < numRegions_; ++r) {
-        if (regionTerrain_[r] == Terrain::WATER || contains(castleRegions_, r)) {
-            continue;
-        }
-
-        // TODO: this looks a lot like objects
-        const auto startTile = getRandomTile(r);
-        const auto v = findObjectSpot(startTile, r);
-        if (!offGrid(v)) {
-            villages_.push_back(v);
-            tileOccupied_[v] = 1;  // village tiles are walkable
-        }
-    }
-}
-
 int RandomMap::getRandomTile(int region)
 {
     const auto regTiles = regionTiles_.find(region);
@@ -827,8 +802,13 @@ void RandomMap::placeObjects()
     for (int r = 0; r < numRegions_; ++r) {
         if (regionTerrain_[r] == Terrain::WATER) {
             placeObject("shipwreck", r);
+            continue;
         }
-        else if (regionTerrain_[r] == Terrain::DESERT) {
+
+        if (!contains(castleRegions_, r)) {
+            placeObject("village", r);
+        }
+        if (regionTerrain_[r] == Terrain::DESERT) {
             placeObject("oasis", r);
         }
     }

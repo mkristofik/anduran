@@ -402,7 +402,7 @@ void MapDisplay::loadObjects()
     SdlTexture snowVillage(SdlSurface("img/village-snow.png"), window_);
     SdlTexture swampVillage(SdlSurface("img/village-swamp.png"), window_);
 
-    for (const auto &hex : map_.getVillages()) {
+    for (const auto &hex : map_.getObjectTiles("village")) {
         switch (map_.getTerrain(hex)) {
             case Terrain::DESERT:
                 addEntity(desertVillage, hex);

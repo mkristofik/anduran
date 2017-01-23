@@ -46,8 +46,7 @@ public:
     // Return a list of tiles at the center of each castle.
     std::vector<Hex> getCastleTiles() const;
 
-    // Return a list of tiles containing a village.
-    std::vector<Hex> getVillages() const;
+    // Return a list of tiles containing a given object type.
     std::vector<Hex> getObjectTiles(const std::string &name);
 
     // Convert between integer and Hex representations of a tile location.
@@ -93,12 +92,8 @@ private:
     void placeCastles();
     Hex findCastleSpot(int startTile);
 
-    // Randomly place a village in each land region not already containing a
-    // castle.
-    void placeVillages();
-    int getRandomTile(int region);
-
     // Randomly place various objects in each region.
+    int getRandomTile(int region);
     int findObjectSpot(int startTile, int region);
     void placeObjects();
     void placeObject(std::string name, int region);
@@ -116,7 +111,6 @@ private:
     FlatMultimap<int, int> regionTiles_;  // which tiles belong to each region
     std::vector<Hex> castles_;  // center tile of each castle
     std::vector<int> castleRegions_;
-    std::vector<int> villages_;
     FlatMultimap<std::string, int> objectTiles_;
 };
 
