@@ -169,13 +169,15 @@ RandomMap::RandomMap(int width)
     regionTiles_(),
     castles_(),
     castleRegions_(),
-    villages_()
+    villages_(),
+    objectTiles_()
 {
     generateRegions();
     buildNeighborGraphs();
     assignTerrain();
     placeCastles();
     placeVillages();
+    placeObjects();
     assignObstacles();
 }
 
@@ -194,7 +196,8 @@ RandomMap::RandomMap(const char *filename)
     regionTiles_(),
     castles_(),
     castleRegions_(),
-    villages_()
+    villages_(),
+    objectTiles_()  // TODO
 {
     using namespace rapidjson;
 
@@ -218,11 +221,21 @@ RandomMap::RandomMap(const char *filename)
         castleRegions_.push_back(tileRegions_[i]);
     }
 
+    const auto shipwrecks = getJsonArray<int>(doc, "shipwreck");
+    for (auto i : shipwrecks) {
+        objectTiles_.insert("shipwreck", i);
+    }
+
+    const auto oases = getJsonArray<int>(doc, "oasis");
+    for (auto i : oases) {
+        objectTiles_.insert("oasis", i);
+    }
+
     mapRegionsToTiles();
     buildNeighborGraphs();
 }
 
-void RandomMap::writeFile(const char *filename) const
+void RandomMap::writeFile(const char *filename)
 {
     using namespace rapidjson;
     Document doc(kObjectType);
@@ -237,6 +250,11 @@ void RandomMap::writeFile(const char *filename) const
         serialCastles.push_back(intFromHex(hex));
     }
     setJsonArray<int>(doc, "castles", serialCastles);
+
+    const auto shipwrecks = objectTiles_.find("shipwreck");
+    setJsonArray<int>(doc, "shipwreck", shipwrecks);
+    const auto oases = objectTiles_.find("oasis");
+    setJsonArray<int>(doc, "oasis", oases);
 
     char buf[JSON_BUFFER_SIZE];
     std::shared_ptr<FILE> jsonFile(fopen(filename, "wb"), fclose);
@@ -302,6 +320,16 @@ std::vector<Hex> RandomMap::getVillages() const
     std::vector<Hex> hexes;
     for (auto v : villages_) {
         hexes.push_back(hexFromInt(v));
+    }
+
+    return hexes;
+}
+
+std::vector<Hex> RandomMap::getObjectTiles(const std::string &name)
+{
+    std::vector<Hex> hexes;
+    for (auto tile : objectTiles_.find(name)) {
+        hexes.push_back(hexFromInt(tile));
     }
 
     return hexes;
@@ -743,13 +771,9 @@ void RandomMap::placeVillages()
             continue;
         }
 
-        // Start with a random tile within the region.
-        const auto regTiles = regionTiles_.find(r);
-        const auto regSize = std::distance(regTiles.first, regTiles.second);
-        std::uniform_int_distribution<int> dist(0, regSize - 1);
-        const auto startTile = std::next(regTiles.first, dist(engine));
-
-        const auto v = findVillageSpot(*startTile, r);
+        // TODO: this looks a lot like objects
+        const auto startTile = getRandomTile(r);
+        const auto v = findObjectSpot(startTile, r);
         if (!offGrid(v)) {
             villages_.push_back(v);
             tileOccupied_[v] = 1;  // village tiles are walkable
@@ -757,14 +781,22 @@ void RandomMap::placeVillages()
     }
 }
 
-int RandomMap::findVillageSpot(int startTile, int region)
+int RandomMap::getRandomTile(int region)
+{
+    const auto regTiles = regionTiles_.find(region);
+    const auto regSize = std::distance(regTiles.first, regTiles.second);
+    std::uniform_int_distribution<int> dist(0, regSize - 1);
+    return *std::next(regTiles.first, dist(engine));
+}
+
+int RandomMap::findObjectSpot(int startTile, int region)
 {
     assert(!offGrid(startTile));
 
     std::queue<int> bfsQ;
     boost::container::flat_set<int> visited;
 
-    // Breadth-first search to find a suitable location for each village.
+    // Breadth-first search to find a suitable location.
     bfsQ.push(startTile);
     while (!bfsQ.empty()) {
         const auto tile = bfsQ.front();
@@ -788,4 +820,26 @@ int RandomMap::findVillageSpot(int startTile, int region)
 
     // No walkable tiles remaining in this region.
     return -1;
+}
+
+void RandomMap::placeObjects()
+{
+    for (int r = 0; r < numRegions_; ++r) {
+        if (regionTerrain_[r] == Terrain::WATER) {
+            placeObject("shipwreck", r);
+        }
+        else if (regionTerrain_[r] == Terrain::DESERT) {
+            placeObject("oasis", r);
+        }
+    }
+}
+
+void RandomMap::placeObject(std::string name, int region)
+{
+    const auto startTile = getRandomTile(region);
+    const auto tile = findObjectSpot(startTile, region);
+    if (!offGrid(tile)) {
+        objectTiles_.insert(name, tile);
+        tileOccupied_[tile] = 1;  // object tiles are walkable
+    }
 }

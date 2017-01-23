@@ -30,7 +30,7 @@ public:
     explicit RandomMap(int width);
     explicit RandomMap(const char *filename);
 
-    void writeFile(const char *filename) const;
+    void writeFile(const char *filename);
 
     int size() const;
     int width() const;
@@ -48,6 +48,7 @@ public:
 
     // Return a list of tiles containing a village.
     std::vector<Hex> getVillages() const;
+    std::vector<Hex> getObjectTiles(const std::string &name);
 
     // Convert between integer and Hex representations of a tile location.
     Hex hexFromInt(int index) const;
@@ -95,7 +96,12 @@ private:
     // Randomly place a village in each land region not already containing a
     // castle.
     void placeVillages();
-    int findVillageSpot(int startTile, int region);
+    int getRandomTile(int region);
+
+    // Randomly place various objects in each region.
+    int findObjectSpot(int startTile, int region);
+    void placeObjects();
+    void placeObject(std::string name, int region);
 
     int width_;
     int size_;
@@ -111,6 +117,7 @@ private:
     std::vector<Hex> castles_;  // center tile of each castle
     std::vector<int> castleRegions_;
     std::vector<int> villages_;
+    FlatMultimap<std::string, int> objectTiles_;
 };
 
 

@@ -423,6 +423,16 @@ void MapDisplay::loadObjects()
                 break;
         }
     }
+
+    SdlTexture shipwreck(SdlSurface("img/shipwreck.png"), window_);
+    for (const auto &hex : map_.getObjectTiles("shipwreck")) {
+        addEntity(shipwreck, hex);
+    }
+
+    SdlTexture oasis(SdlSurface("img/oasis.png"), window_);
+    for (const auto &hex : map_.getObjectTiles("oasis")) {
+        addEntity(oasis, hex);
+    }
 }
 
 void MapDisplay::addBorderTiles()

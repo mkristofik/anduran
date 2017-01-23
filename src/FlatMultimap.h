@@ -99,6 +99,7 @@ public:
 
         auto begin() const { return first; }
         auto end() const { return second; }
+        int size() const { return std::distance(first, second); }
     };
 
 private:
