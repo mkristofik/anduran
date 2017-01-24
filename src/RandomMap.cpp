@@ -30,7 +30,6 @@
 #include <random>
 #include <tuple>
 
-
 namespace
 {
     const int REGION_SIZE = 64;
@@ -40,13 +39,13 @@ namespace
     const int JSON_BUFFER_SIZE = 65536;
 
     template <typename T, size_t N>
-    std::vector<T> getJsonArray(rapidjson::Document &doc, const char (&name)[N])
+    std::vector<T> getJsonArray(rapidjson::Value &obj, const char (&name)[N])
     {
         using namespace rapidjson;
 
         std::vector<T> ret;
-        if (doc.HasMember(name)) {
-            const Value &jsonArray = doc[name];
+        if (obj.HasMember(name)) {
+            const Value &jsonArray = obj[name];
             ret.reserve(jsonArray.Size());
             for (const auto &v : jsonArray.GetArray()) {
                 ret.push_back(static_cast<T>(v.GetInt()));
@@ -62,9 +61,6 @@ namespace
         using namespace rapidjson;
         using std::size;
 
-        Value aryName;
-        aryName.SetString(name);
-
         Value ary(kArrayType);
         Document::AllocatorType &alloc = doc.GetAllocator();
         ary.Reserve(size(cont), alloc);
@@ -72,7 +68,7 @@ namespace
             ary.PushBack(static_cast<T>(val), alloc);
         }
 
-        doc.AddMember(aryName, ary, alloc);
+        doc.AddMember(Value(name), ary, alloc);
     }
 
     template <typename C, typename T>
@@ -211,25 +207,24 @@ RandomMap::RandomMap(const char *filename)
     size_ = tileRegions_.size();
     width_ = std::sqrt(size_);
 
+    // Castles are serialized as tile indexes but we need hexes.
+    // TODO: store them as ints instead?
     const auto serialCastles = getJsonArray<int>(doc, "castles");
     for (auto i : serialCastles) {
         castles_.push_back(hexFromInt(i));
         castleRegions_.push_back(tileRegions_[i]);
     }
 
-    const auto shipwrecks = getJsonArray<int>(doc, "shipwreck");
-    for (auto i : shipwrecks) {
-        objectTiles_.insert("shipwreck", i);
-    }
-
-    const auto oases = getJsonArray<int>(doc, "oasis");
-    for (auto i : oases) {
-        objectTiles_.insert("oasis", i);
-    }
-
-    const auto villages = getJsonArray<int>(doc, "village");
-    for (auto i : villages) {
-        objectTiles_.insert("village", i);
+    // All map objects live in the aptly-named sub-object below. Each member is
+    // an array of tile indexes.
+    if (doc.HasMember("objects")) {
+        Value &objs = doc["objects"];
+        for (auto m = objs.MemberBegin(); m != objs.MemberEnd(); ++m) {
+            const char *name = m->name.GetString();
+            for (const auto &v : objs[name].GetArray()) {
+                objectTiles_.insert(name, v.GetInt());
+            }
+        }
     }
 
     mapRegionsToTiles();
@@ -240,6 +235,7 @@ void RandomMap::writeFile(const char *filename)
 {
     using namespace rapidjson;
     Document doc(kObjectType);
+    Document::AllocatorType &alloc = doc.GetAllocator();
 
     setJsonArray<int>(doc, "tile-regions", tileRegions_);
     setJsonArray<int>(doc, "region-terrain", regionTerrain_);
@@ -251,12 +247,24 @@ void RandomMap::writeFile(const char *filename)
     }
     setJsonArray<int>(doc, "castles", serialCastles);
 
-    const auto shipwrecks = objectTiles_.find("shipwreck");
-    setJsonArray<int>(doc, "shipwreck", shipwrecks);
-    const auto oases = objectTiles_.find("oasis");
-    setJsonArray<int>(doc, "oasis", oases);
-    const auto villages = objectTiles_.find("village");
-    setJsonArray<int>(doc, "village", villages);
+    Value objs(kObjectType);
+    Value ary(kArrayType);
+    std::string curObject;
+    for (const auto &o : objectTiles_) {
+        if (o.key != curObject) {
+            if (!ary.Empty()) {
+                objs.AddMember(Value(curObject.c_str(), alloc), ary, alloc);
+                // AddMember() appears to clear 'ary' so we need to reset it.
+                ary.SetArray();
+            }
+            curObject = o.key;
+        }
+        ary.PushBack(o.value, alloc);
+    }
+    if (!ary.Empty()) {
+        objs.AddMember(Value(curObject.c_str(), alloc), ary, alloc);
+    }
+    doc.AddMember("objects", objs, alloc);
 
     char buf[JSON_BUFFER_SIZE];
     std::shared_ptr<FILE> jsonFile(fopen(filename, "wb"), fclose);

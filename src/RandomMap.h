@@ -18,6 +18,7 @@
 #include "iterable_enum_class.h"
 #include <cassert>
 #include <random>
+#include <string>
 #include <vector>
 
 enum class Terrain {WATER, DESERT, SWAMP, GRASS, DIRT, SNOW, _last, _first = WATER};

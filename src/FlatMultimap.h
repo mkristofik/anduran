@@ -24,7 +24,20 @@ template <typename K, typename V>
 class FlatMultimap
 {
 public:
+    struct KeyValue
+    {
+        K key;
+        V value;
+    };
+
+    using container_type = std::vector<KeyValue>;
+    using const_iterator = typename container_type::const_iterator;
+
     FlatMultimap();
+
+    const_iterator begin();
+    const_iterator end();
+    int size();
 
     // Insert a new key-value pair, don't worry about duplicates yet.
     void insert(K key, V value);
@@ -50,8 +63,6 @@ public:
 private:
     void sortAndPrune();
 
-    struct KeyValue;
-    using container_type = std::vector<KeyValue>;
     container_type data_;
     bool isDirty_;
 
@@ -99,16 +110,10 @@ public:
 
         auto begin() const { return first; }
         auto end() const { return second; }
-        int size() const { return std::distance(first, second); }
+        int size() const { return std::distance(begin(), end()); }
     };
 
 private:
-    struct KeyValue
-    {
-        K key;
-        V value;
-    };
-
     friend bool operator<(const KeyValue &lhs, const KeyValue &rhs)
     {
         return std::tie(lhs.key, lhs.value) < std::tie(rhs.key, rhs.value);
@@ -135,6 +140,26 @@ FlatMultimap<K, V>::FlatMultimap()
     : data_(),
     isDirty_(false)
 {
+}
+
+template <typename K, typename V>
+typename FlatMultimap<K, V>::const_iterator FlatMultimap<K, V>::begin()
+{
+    sortAndPrune();
+    return std::cbegin(data_);
+}
+
+template <typename K, typename V>
+typename FlatMultimap<K, V>::const_iterator FlatMultimap<K, V>::end()
+{
+    sortAndPrune();
+    return std::cend(data_);
+}
+
+template <typename K, typename V>
+int FlatMultimap<K, V>::size()
+{
+    return std::distance(begin(), end());
 }
 
 template <typename K, typename V>
