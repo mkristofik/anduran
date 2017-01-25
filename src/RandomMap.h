@@ -53,6 +53,8 @@ public:
     // Convert between integer and Hex representations of a tile location.
     Hex hexFromInt(int index) const;
     int intFromHex(const Hex &hex) const;
+    template <typename R>
+    std::vector<Hex> hexesFromInt(const R &range) const;
 
     // Return true if the tile location is outside the map boundary.
     bool offGrid(int index) const;
@@ -110,10 +112,22 @@ private:
     FlatMultimap<int, int> regionNeighbors_;
     std::vector<Terrain> regionTerrain_;
     FlatMultimap<int, int> regionTiles_;  // which tiles belong to each region
-    std::vector<Hex> castles_;  // center tile of each castle
+    std::vector<int> castles_;  // center tile of each castle
     std::vector<int> castleRegions_;
     FlatMultimap<std::string, int> objectTiles_;
 };
+
+
+template <typename R>
+std::vector<Hex> RandomMap::hexesFromInt(const R &range) const
+{
+    std::vector<Hex> hexes;
+    for (auto tile : range) {
+        hexes.push_back(hexFromInt(tile));
+    }
+
+    return hexes;
+}
 
 
 // This is slated for C++17.  Stole this from

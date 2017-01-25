@@ -161,21 +161,17 @@ RandomMap::RandomMap(const char *filename)
     jsonGetArray(doc, "tile-regions", tileRegions_);
     jsonGetArray(doc, "region-terrain", regionTerrain_);
     jsonGetArray(doc, "tile-obstacles", tileObstacles_);
+    jsonGetArray(doc, "castles", castles_);
     size_ = tileRegions_.size();
     width_ = std::sqrt(size_);
-
-    // Castles are serialized as tile indexes but we need hexes.
-    // TODO: store them as ints instead?
-    std::vector<int> serialCastles;
-    jsonGetArray(doc, "castles", serialCastles);
-    for (auto i : serialCastles) {
-        castles_.push_back(hexFromInt(i));
-        castleRegions_.push_back(tileRegions_[i]);
-    }
 
     // All map objects live in the aptly-named sub-object below. Each member is
     // an array of tile indexes.
     jsonGetMultimap(doc, "objects", objectTiles_);
+
+    for (auto i : castles_) {
+        castleRegions_.push_back(tileRegions_[i]);
+    }
 
     mapRegionsToTiles();
     buildNeighborGraphs();
@@ -188,14 +184,9 @@ void RandomMap::writeFile(const char *filename)
     jsonSetArray<int>(doc, "tile-regions", tileRegions_);
     jsonSetArray<int>(doc, "region-terrain", regionTerrain_);
     jsonSetArray<int>(doc, "tile-obstacles", tileObstacles_);
-
-    std::vector<int> serialCastles;
-    for (const auto &hex : castles_) {
-        serialCastles.push_back(intFromHex(hex));
-    }
-    jsonSetArray<int>(doc, "castles", serialCastles);
-
+    jsonSetArray<int>(doc, "castles", castles_);
     jsonSetMultimap(doc, "objects", objectTiles_);
+
     jsonWriteFile(filename, doc);
 }
 
@@ -247,17 +238,12 @@ bool RandomMap::getObstacle(const Hex &hex) const
 
 std::vector<Hex> RandomMap::getCastleTiles() const
 {
-    return castles_;
+    return hexesFromInt(castles_);
 }
 
 std::vector<Hex> RandomMap::getObjectTiles(const std::string &name)
 {
-    std::vector<Hex> hexes;
-    for (auto tile : objectTiles_.find(name)) {
-        hexes.push_back(hexFromInt(tile));
-    }
-
-    return hexes;
+    return hexesFromInt(objectTiles_.find(name));
 }
 
 Hex RandomMap::hexFromInt(int index) const
@@ -634,8 +620,10 @@ void RandomMap::placeCastles()
         for (const auto &hex : getUnwalkableCastleHexes(centerHex)) {
             tileWalkable_[intFromHex(hex)] = 0;
         }
-        castles_.push_back(centerHex);
-        castleRegions_.push_back(tileRegions_[intFromHex(centerHex)]);
+
+        const auto centerTile = intFromHex(centerHex);
+        castles_.push_back(centerTile);
+        castleRegions_.push_back(tileRegions_[centerTile]);
     }
 }
 
