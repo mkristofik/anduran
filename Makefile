@@ -24,7 +24,7 @@ BUILD_DIR = build
 SRC_DIR = src
 
 RMAPGEN = rmapgen.exe
-RMAPGEN_SRC = RandomMap.cpp hex_utils.cpp rmapgen.cpp
+RMAPGEN_SRC = RandomMap.cpp hex_utils.cpp json_utils.cpp rmapgen.cpp
 RMAPGEN_OBJS = $(RMAPGEN_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-noise.o
 RMAPGEN_DEPS = $(RMAPGEN_OBJS:%.o=%.d)
 # note: don't want to list open-simplex-noise.c here. We only list the cpp
@@ -34,7 +34,7 @@ RMAPGEN_DEPS = $(RMAPGEN_OBJS:%.o=%.d)
 
 MAPVIEW = mapview.exe
 MAPVIEW_SRC = MapDisplay.cpp RandomMap.cpp SdlSurface.cpp SdlTexture.cpp \
-	SdlTextureAtlas.cpp SdlWindow.cpp hex_utils.cpp mapview.cpp
+	SdlTextureAtlas.cpp SdlWindow.cpp hex_utils.cpp json_utils.cpp mapview.cpp
 MAPVIEW_OBJS = $(MAPVIEW_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-noise.o
 MAPVIEW_DEPS = $(MAPVIEW_OBJS:%.o=%.d)
 

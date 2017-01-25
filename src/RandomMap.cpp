@@ -11,18 +11,15 @@
     See the COPYING.txt file for more details.
 */
 #include "RandomMap.h"
+#include "json_utils.h"
 #include "open-simplex-noise.h"
 
 #include "boost/container/flat_map.hpp"
 #include "boost/container/flat_set.hpp"
 #include "rapidjson/document.h"
-#include "rapidjson/filereadstream.h"
-#include "rapidjson/filewritestream.h"
-#include "rapidjson/prettywriter.h"
 
 #include <algorithm>
 #include <cmath>
-#include <cstdio>
 #include <ctime>
 #include <iterator>
 #include <memory>
@@ -36,40 +33,6 @@ namespace
     const int MAX_ALTITUDE = 3;
     const double NOISE_FEATURE_SIZE = 2.0;
     const double OBSTACLE_LEVEL = 0.2;
-    const int JSON_BUFFER_SIZE = 65536;
-
-    template <typename T, size_t N>
-    std::vector<T> getJsonArray(rapidjson::Value &obj, const char (&name)[N])
-    {
-        using namespace rapidjson;
-
-        std::vector<T> ret;
-        if (obj.HasMember(name)) {
-            const Value &jsonArray = obj[name];
-            ret.reserve(jsonArray.Size());
-            for (const auto &v : jsonArray.GetArray()) {
-                ret.push_back(static_cast<T>(v.GetInt()));
-            }
-        }
-
-        return ret;
-    }
-
-    template <typename T, size_t N, typename C>
-    void setJsonArray(rapidjson::Document &doc, const char (&name)[N], const C &cont)
-    {
-        using namespace rapidjson;
-        using std::size;
-
-        Value ary(kArrayType);
-        Document::AllocatorType &alloc = doc.GetAllocator();
-        ary.Reserve(size(cont), alloc);
-        for (const auto &val : cont) {
-            ary.PushBack(static_cast<T>(val), alloc);
-        }
-
-        doc.AddMember(Value(name), ary, alloc);
-    }
 
     template <typename C, typename T>
     bool contains(const C &cont, const T &val)
@@ -192,24 +155,19 @@ RandomMap::RandomMap(const char *filename)
     castleRegions_(),
     objectTiles_()
 {
-    using namespace rapidjson;
-
-    char buf[JSON_BUFFER_SIZE];
-    std::shared_ptr<FILE> jsonFile(fopen(filename, "rb"), fclose);
-    FileReadStream istr(jsonFile.get(), buf, sizeof(buf));
-    Document doc;
-    doc.ParseStream(istr);
+    auto doc = jsonReadFile(filename);
 
     // TODO: report errors if this ever fails?
-    tileRegions_ = getJsonArray<int>(doc, "tile-regions");
-    regionTerrain_ = getJsonArray<Terrain>(doc, "region-terrain");
-    tileObstacles_ = getJsonArray<char>(doc, "tile-obstacles");
+    jsonGetArray(doc, "tile-regions", tileRegions_);
+    jsonGetArray(doc, "region-terrain", regionTerrain_);
+    jsonGetArray(doc, "tile-obstacles", tileObstacles_);
     size_ = tileRegions_.size();
     width_ = std::sqrt(size_);
 
     // Castles are serialized as tile indexes but we need hexes.
     // TODO: store them as ints instead?
-    const auto serialCastles = getJsonArray<int>(doc, "castles");
+    std::vector<int> serialCastles;
+    jsonGetArray(doc, "castles", serialCastles);
     for (auto i : serialCastles) {
         castles_.push_back(hexFromInt(i));
         castleRegions_.push_back(tileRegions_[i]);
@@ -217,15 +175,7 @@ RandomMap::RandomMap(const char *filename)
 
     // All map objects live in the aptly-named sub-object below. Each member is
     // an array of tile indexes.
-    if (doc.HasMember("objects")) {
-        Value &objs = doc["objects"];
-        for (auto m = objs.MemberBegin(); m != objs.MemberEnd(); ++m) {
-            const char *name = m->name.GetString();
-            for (const auto &v : objs[name].GetArray()) {
-                objectTiles_.insert(name, v.GetInt());
-            }
-        }
-    }
+    jsonGetMultimap(doc, "objects", objectTiles_);
 
     mapRegionsToTiles();
     buildNeighborGraphs();
@@ -233,45 +183,20 @@ RandomMap::RandomMap(const char *filename)
 
 void RandomMap::writeFile(const char *filename)
 {
-    using namespace rapidjson;
-    Document doc(kObjectType);
-    Document::AllocatorType &alloc = doc.GetAllocator();
+    rapidjson::Document doc(rapidjson::kObjectType);
 
-    setJsonArray<int>(doc, "tile-regions", tileRegions_);
-    setJsonArray<int>(doc, "region-terrain", regionTerrain_);
-    setJsonArray<int>(doc, "tile-obstacles", tileObstacles_);
+    jsonSetArray<int>(doc, "tile-regions", tileRegions_);
+    jsonSetArray<int>(doc, "region-terrain", regionTerrain_);
+    jsonSetArray<int>(doc, "tile-obstacles", tileObstacles_);
 
     std::vector<int> serialCastles;
     for (const auto &hex : castles_) {
         serialCastles.push_back(intFromHex(hex));
     }
-    setJsonArray<int>(doc, "castles", serialCastles);
+    jsonSetArray<int>(doc, "castles", serialCastles);
 
-    Value objs(kObjectType);
-    Value ary(kArrayType);
-    std::string curObject;
-    for (const auto &o : objectTiles_) {
-        if (o.key != curObject) {
-            if (!ary.Empty()) {
-                objs.AddMember(Value(curObject.c_str(), alloc), ary, alloc);
-                // AddMember() appears to clear 'ary' so we need to reset it.
-                ary.SetArray();
-            }
-            curObject = o.key;
-        }
-        ary.PushBack(o.value, alloc);
-    }
-    if (!ary.Empty()) {
-        objs.AddMember(Value(curObject.c_str(), alloc), ary, alloc);
-    }
-    doc.AddMember("objects", objs, alloc);
-
-    char buf[JSON_BUFFER_SIZE];
-    std::shared_ptr<FILE> jsonFile(fopen(filename, "wb"), fclose);
-    FileWriteStream ostr(jsonFile.get(), buf, sizeof(buf));
-    PrettyWriter<FileWriteStream> writer(ostr);
-    writer.SetFormatOptions(kFormatSingleLineArray);
-    doc.Accept(writer);
+    jsonSetMultimap(doc, "objects", objectTiles_);
+    jsonWriteFile(filename, doc);
 }
 
 int RandomMap::size() const
