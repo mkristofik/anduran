@@ -138,7 +138,6 @@ RandomMap::RandomMap(int width)
     assignObstacles();
 }
 
-// TODO: not all member variables get filled in from the json file
 RandomMap::RandomMap(const char *filename)
     : width_(0),
     size_(0),
@@ -146,8 +145,8 @@ RandomMap::RandomMap(const char *filename)
     tileRegions_(),
     tileNeighbors_(),
     tileObstacles_(),
-    tileOccupied_(),  // TODO
-    tileWalkable_(),  // TODO
+    tileOccupied_(),
+    tileWalkable_(),
     regionNeighbors_(),
     regionTerrain_(),
     regionTiles_(),
@@ -161,6 +160,8 @@ RandomMap::RandomMap(const char *filename)
     jsonGetArray(doc, "tile-regions", tileRegions_);
     jsonGetArray(doc, "region-terrain", regionTerrain_);
     jsonGetArray(doc, "tile-obstacles", tileObstacles_);
+    jsonGetArray(doc, "tile-occupied", tileOccupied_);
+    jsonGetArray(doc, "tile-walkable", tileWalkable_);
     jsonGetArray(doc, "castles", castles_);
     size_ = tileRegions_.size();
     width_ = std::sqrt(size_);
@@ -184,6 +185,8 @@ void RandomMap::writeFile(const char *filename)
     jsonSetArray<int>(doc, "tile-regions", tileRegions_);
     jsonSetArray<int>(doc, "region-terrain", regionTerrain_);
     jsonSetArray<int>(doc, "tile-obstacles", tileObstacles_);
+    jsonSetArray<int>(doc, "tile-occupied", tileOccupied_);
+    jsonSetArray<int>(doc, "tile-walkable", tileWalkable_);
     jsonSetArray<int>(doc, "castles", castles_);
     jsonSetMultimap(doc, "objects", objectTiles_);
 
