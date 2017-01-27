@@ -723,17 +723,41 @@ int RandomMap::findObjectSpot(int startTile, int region)
 
 void RandomMap::placeObjects()
 {
+    std::uniform_int_distribution<int> dist2(0, 1);
+
     for (int r = 0; r < numRegions_; ++r) {
         if (regionTerrain_[r] == Terrain::WATER) {
             placeObject("shipwreck", r);
             continue;
         }
 
-        if (!contains(castleRegions_, r)) {
+        if (contains(castleRegions_, r)) {
+            placeObject("chest", r);
+            placeObject("chest", r);
+            placeObject("gold", r);
+            placeObject("gold", r);
+        }
+        else {
+            placeObject("chest", r);
+            placeObject("gold", r);
             placeObject("village", r);
         }
+
         if (regionTerrain_[r] == Terrain::DESERT) {
             placeObject("oasis", r);
+        }
+        else if (regionTerrain_[r] == Terrain::GRASS) {
+            if (dist2(engine) == 1) {
+                placeObject("windmill", r);
+            }
+        }
+        else if (regionTerrain_[r] == Terrain::DIRT) {
+            placeObject("camp", r);
+        }
+        else if (regionTerrain_[r] == Terrain::SNOW) {
+            if (dist2(engine) == 1) {
+                placeObject("leanto", r);
+            }
         }
     }
 }

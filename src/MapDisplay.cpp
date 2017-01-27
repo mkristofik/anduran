@@ -391,16 +391,16 @@ void MapDisplay::computeTileEdges()
 
 void MapDisplay::loadObjects()
 {
-    SdlTexture castleImg(SdlSurface("img/castle.png"), window_);
+    const SdlTexture castleImg(SdlSurface("img/castle.png"), window_);
     for (const auto &hex : map_.getCastleTiles()) {
         addEntity(castleImg, hex);
     }
 
-    SdlTexture desertVillage(SdlSurface("img/village-desert.png"), window_);
-    SdlTexture dirtVillage(SdlSurface("img/village-dirt.png"), window_);
-    SdlTexture grassVillage(SdlSurface("img/village-grass.png"), window_);
-    SdlTexture snowVillage(SdlSurface("img/village-snow.png"), window_);
-    SdlTexture swampVillage(SdlSurface("img/village-swamp.png"), window_);
+    const SdlTexture desertVillage(SdlSurface("img/village-desert.png"), window_);
+    const SdlTexture dirtVillage(SdlSurface("img/village-dirt.png"), window_);
+    const SdlTexture grassVillage(SdlSurface("img/village-grass.png"), window_);
+    const SdlTexture snowVillage(SdlSurface("img/village-snow.png"), window_);
+    const SdlTexture swampVillage(SdlSurface("img/village-swamp.png"), window_);
 
     for (const auto &hex : map_.getObjectTiles("village")) {
         switch (map_.getTerrain(hex)) {
@@ -424,14 +424,20 @@ void MapDisplay::loadObjects()
         }
     }
 
-    SdlTexture shipwreck(SdlSurface("img/shipwreck.png"), window_);
-    for (const auto &hex : map_.getObjectTiles("shipwreck")) {
-        addEntity(shipwreck, hex);
-    }
+    addObjectEntities("camp", "img/camp.png");
+    addObjectEntities("chest", "img/chest.png");
+    addObjectEntities("gold", "img/gold.png");
+    addObjectEntities("leanto", "img/leanto.png");
+    addObjectEntities("oasis", "img/oasis.png");
+    addObjectEntities("shipwreck", "img/shipwreck.png");
+    addObjectEntities("windmill", "img/windmill.png");
+}
 
-    SdlTexture oasis(SdlSurface("img/oasis.png"), window_);
-    for (const auto &hex : map_.getObjectTiles("oasis")) {
-        addEntity(oasis, hex);
+void MapDisplay::addObjectEntities(const char *name, const char *imgPath)
+{
+    const SdlTexture img(SdlSurface(imgPath), window_);
+    for (const auto &hex : map_.getObjectTiles(name)) {
+        addEntity(img, hex);
     }
 }
 

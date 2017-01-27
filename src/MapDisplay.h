@@ -82,6 +82,7 @@ public:
 private:
     void computeTileEdges();
     void loadObjects();
+    void addObjectEntities(const char *name, const char *imgPath);
 
     // Add duplicate tiles around the map border so there aren't jagged edges.
     void addBorderTiles();
