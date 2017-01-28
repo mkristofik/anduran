@@ -76,8 +76,10 @@ int main(int, char *[])  // two-argument form required by SDL
     try {
         real_main();
     }
-    catch (std::exception &e) {
+    catch (const std::exception &e) {
         SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Exit reason: %s", e.what());
+        return EXIT_FAILURE;
     }
+
     return EXIT_SUCCESS;
 }

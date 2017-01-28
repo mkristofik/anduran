@@ -38,15 +38,24 @@ MAPVIEW_SRC = MapDisplay.cpp RandomMap.cpp SdlSurface.cpp SdlTexture.cpp \
 MAPVIEW_OBJS = $(MAPVIEW_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-noise.o
 MAPVIEW_DEPS = $(MAPVIEW_OBJS:%.o=%.d)
 
+ANDURAN = anduran.exe
+ANDURAN_SRC = MapDisplay.cpp RandomMap.cpp SdlSurface.cpp SdlTexture.cpp \
+	SdlTextureAtlas.cpp SdlWindow.cpp anduran.cpp hex_utils.cpp json_utils.cpp
+ANDURAN_OBJS = $(ANDURAN_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-noise.o
+ANDURAN_DEPS = $(ANDURAN_OBJS:%.o=%.d)
+
 .PHONY : all clean
 
-all : $(RMAPGEN) $(MAPVIEW)
+all : $(RMAPGEN) $(MAPVIEW) $(ANDURAN)
 
 $(RMAPGEN) : $(RMAPGEN_OBJS)
 	$(CXX) $(RMAPGEN_OBJS) -o $@
 
 $(MAPVIEW) : $(MAPVIEW_OBJS)
 	$(CXX) $(MAPVIEW_OBJS) $(LDFLAGS) $(LDLIBS) -o $@
+
+$(ANDURAN) : $(ANDURAN_OBJS)
+	$(CXX) $(ANDURAN_OBJS) $(LDFLAGS) $(LDLIBS) -o $@
 
 # Auto-generate a dependency file for each cpp file. We first create a build
 # directory to house all intermediate files. See example under "Automatic
@@ -82,10 +91,11 @@ $(BUILD_DIR)/%.o : $(SRC_DIR)/%.c
 ifneq ($(MAKECMDGOALS),clean)
 include $(RMAPGEN_DEPS)
 include $(MAPVIEW_DEPS)
+include $(ANDURAN_DEPS)
 endif
 
 # Remove intermediate build files and the executables.  Leading '-' means ignore
 # errors (e.g., if any files are already deleted).
 clean :
 	-rmdir /q /s $(BUILD_DIR)
-	-del $(RMAPGEN) $(MAPVIEW)
+	-del $(RMAPGEN) $(MAPVIEW) $(ANDURAN)
