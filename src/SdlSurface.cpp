@@ -13,6 +13,7 @@
 #include "SdlSurface.h"
 
 #include "SDL_image.h"
+#include <cassert>
 #include <stdexcept>
 
 SdlSurface::SdlSurface(SDL_Surface *surf)
@@ -28,9 +29,10 @@ SdlSurface::SdlSurface(const char *filename)
     }
 }
 
-SdlSurface clone(const SdlSurface &src)
+SdlSurface SdlSurface::clone() const
 {
-    const auto orig = src.get();
+    assert(*this);
+    const auto orig = get();
     auto dest = SDL_CreateRGBSurface(0,
                                      orig->w,
                                      orig->h,
@@ -68,11 +70,13 @@ SdlSurface clone(const SdlSurface &src)
 
 SDL_Surface * SdlSurface::get() const
 {
+    assert(*this);
     return surf_.get();
 }
 
 SDL_Surface * SdlSurface::operator->() const
 {
+    assert(*this);
     return get();
 }
 

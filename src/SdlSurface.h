@@ -28,7 +28,7 @@ public:
     explicit SdlSurface(const char *filename);
 
     // Make a deep copy.  Normal copies just increment the reference count.
-    SdlSurface clone(const SdlSurface &src);
+    SdlSurface clone() const;
 
     SDL_Surface * get() const;
     SDL_Surface * operator->() const;

@@ -19,7 +19,7 @@
 
 // Example usage:
 //
-// enum class Foo {BAR, BAZ, QUUX, XYZZY, _last, _first = BAR};
+// enum class Foo {BAR, BAZ, QUUX, XYZZY, _last, _first = 0};
 // ITERABLE_ENUM_CLASS(Foo);
 // for (auto f : Foo()) {
 //     // doSomething(f);

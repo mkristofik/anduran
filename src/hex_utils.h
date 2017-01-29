@@ -17,7 +17,7 @@
 #include <array>
 #include <vector>
 
-enum class HexDir {N, NE, SE, S, SW, NW, _last, _first = N};
+enum class HexDir {N, NE, SE, S, SW, NW, _last, _first = 0};
 ITERABLE_ENUM_CLASS(HexDir);
 
 

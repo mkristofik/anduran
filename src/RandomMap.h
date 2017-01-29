@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-enum class Terrain {WATER, DESERT, SWAMP, GRASS, DIRT, SNOW, _last, _first = WATER};
+enum class Terrain {WATER, DESERT, SWAMP, GRASS, DIRT, SNOW, _last, _first = 0};
 ITERABLE_ENUM_CLASS(Terrain);
 
 

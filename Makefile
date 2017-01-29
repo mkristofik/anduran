@@ -40,7 +40,7 @@ MAPVIEW_DEPS = $(MAPVIEW_OBJS:%.o=%.d)
 
 ANDURAN = anduran.exe
 ANDURAN_SRC = MapDisplay.cpp RandomMap.cpp SdlSurface.cpp SdlTexture.cpp \
-	SdlTextureAtlas.cpp SdlWindow.cpp anduran.cpp hex_utils.cpp json_utils.cpp
+	SdlTextureAtlas.cpp SdlWindow.cpp anduran.cpp hex_utils.cpp json_utils.cpp team_color.cpp
 ANDURAN_OBJS = $(ANDURAN_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-noise.o
 ANDURAN_DEPS = $(ANDURAN_OBJS:%.o=%.d)
 
