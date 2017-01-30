@@ -17,9 +17,11 @@
 #include "SdlTextureAtlas.h"
 #include "SdlWindow.h"
 #include "hex_utils.h"
+#include "team_color.h"
 
 #include "SDL.h"
 #include "SDL_image.h"
+#include <algorithm>
 #include <cstdlib>
 
 void real_main()
@@ -28,13 +30,18 @@ void real_main()
     RandomMap rmap("test.json");
     MapDisplay rmapView(win, rmap);
 
+    const auto championImages = applyTeamColors(SdlSurface("img/champion.png"));
+    const SdlSurface ellipse("img/ellipse.png");
+    const auto ellipseImages = applyTeamColors(ellipseToRefColor(ellipse));
+    const auto &castles = rmap.getCastleTiles();
+    assert(std::size(castles) <= std::size(championImages));
+
     // Draw a champion in the hex due south of each castle.
-    const SdlTexture champion(SdlSurface("img/champion.png"), win);
-    const SdlTexture ellipse(SdlSurface("img/ellipse.png"), win);
-    for (const auto &c : rmap.getCastleTiles()) {
-        const auto hex = c.getNeighbor(HexDir::S);
-        /*const auto id =*/ rmapView.addEntity(ellipse, hex);
-        rmapView.addEntity(champion, hex);
+    //shuffle(std::begin(castles), std::end(castles), RandomMap::engine);
+    for (auto i = 0u; i < std::size(castles); ++i) {
+        const auto hex = castles[i].getNeighbor(HexDir::S);
+        rmapView.addEntity(SdlTexture(ellipseImages[i], win), hex);
+        rmapView.addEntity(SdlTexture(championImages[i], win), hex);
     }
 
     win.clear();

@@ -28,4 +28,8 @@ constexpr int NUM_TEAMS = enum_size<Team>();
 
 std::array<SdlSurface, NUM_TEAMS> applyTeamColors(const SdlSurface &src);
 
+// Ellipses are red, convert them to the reference color so they can be team
+// colored.
+SdlSurface ellipseToRefColor(const SdlSurface &src);
+
 #endif

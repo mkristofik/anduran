@@ -175,17 +175,17 @@ namespace
         auto pixel = static_cast<Uint32 *>(surf->pixels);
         const auto endPixels = pixel + surf->w * surf->h;
         for (; pixel != endPixels; ++pixel) {
-            // Skip invisible pixels.
-            const Uint32 alpha = (*pixel) & surf->format->Amask;
-            if (alpha == 0) {
+            const auto pixelColor = getColor(*pixel, surf->format);
+            if (pixelColor.a == SDL_ALPHA_TRANSPARENT) {
                 continue;
             }
 
             // If the pixel matches one of the reference colors, replace it.
-            const auto pixelColor = getColor(*pixel, surf->format);
             const auto i = getRefColorIndex(pixelColor);
             if (i >= 0) {
-                *pixel = setColor(teamColors[i], surf->format);
+                auto newColor = teamColors[i];
+                newColor.a = pixelColor.a;
+                *pixel = setColor(newColor, surf->format);
             }
         }
 
@@ -208,4 +208,45 @@ std::array<SdlSurface, NUM_TEAMS> applyTeamColors(const SdlSurface &src)
     }
 
     return images;
+}
+
+SdlSurface ellipseToRefColor(const SdlSurface &src)
+{
+    auto imgCopy = src.clone();
+    if (!imgCopy) {
+        return {};
+    }
+
+    auto surf = imgCopy.get();
+    bool locked = false;
+    if (SDL_MUSTLOCK(surf)) {
+        if (SDL_LockSurface(surf) == 0) {
+            locked = true;
+        }
+        else {
+            SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
+                        "Warning, couldn't lock surface during applyColors: %s",
+                        SDL_GetError());
+        }
+    }
+
+    assert(surf->format->BytesPerPixel == 4);
+
+    auto pixel = static_cast<Uint32 *>(surf->pixels);
+    const auto endPixels = pixel + surf->w * surf->h;
+    for (; pixel != endPixels; ++pixel) {
+        // Replace all non-invisible pixels with the base reference color
+        const auto pixelColor = getColor(*pixel, surf->format);
+        if (pixelColor.a > 0) {
+            auto newColor = refColors[14];
+            newColor.a = pixelColor.a;
+            *pixel = setColor(newColor, surf->format);
+        }
+    }
+
+    if (locked) {
+        SDL_UnlockSurface(surf);
+    }
+
+    return imgCopy;
 }
