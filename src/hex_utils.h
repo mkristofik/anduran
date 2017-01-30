@@ -45,6 +45,9 @@ struct Hex
 
     // Return all the hexes adjacent to the source hex. No bounds checking.
     Neighbors<Hex> getAllNeighbors() const;
+
+    // source: http://stackoverflow.com/a/2223288/46821
+    friend void swap(Hex &lhs, Hex &rhs) noexcept;
 };
 
 Hex operator+(Hex lhs, const Hex &rhs);

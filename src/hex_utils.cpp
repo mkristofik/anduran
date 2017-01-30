@@ -103,6 +103,13 @@ Neighbors<Hex> Hex::getAllNeighbors() const
     return nbrs;
 }
 
+void swap(Hex &lhs, Hex &rhs) noexcept
+{
+    using std::swap;
+    swap(lhs.x, rhs.x);
+    swap(lhs.y, rhs.y);
+}
+
 Hex operator+(Hex lhs, const Hex &rhs)
 {
     lhs += rhs;

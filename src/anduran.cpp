@@ -33,11 +33,13 @@ void real_main()
     const auto championImages = applyTeamColors(SdlSurface("img/champion.png"));
     const SdlSurface ellipse("img/ellipse.png");
     const auto ellipseImages = applyTeamColors(ellipseToRefColor(ellipse));
-    const auto &castles = rmap.getCastleTiles();
+
+    // Randomize the starting locations for each player.
+    auto castles = rmap.getCastleTiles();
     assert(std::size(castles) <= std::size(championImages));
+    shuffle(std::begin(castles), std::end(castles), RandomMap::engine);
 
     // Draw a champion in the hex due south of each castle.
-    //shuffle(std::begin(castles), std::end(castles), RandomMap::engine);
     for (auto i = 0u; i < std::size(castles); ++i) {
         const auto hex = castles[i].getNeighbor(HexDir::S);
         rmapView.addEntity(SdlTexture(ellipseImages[i], win), hex);
