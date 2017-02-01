@@ -39,4 +39,23 @@ private:
     std::shared_ptr<SDL_Surface> surf_;
 };
 
+
+// Some SDL surfaces have to be locked before you can read or modify the raw
+// pixels. This is an RAII wrapper to help with that.
+class SdlLockSurface
+{
+public:
+    SdlLockSurface(SdlSurface &img);
+    ~SdlLockSurface();
+
+    SdlLockSurface(const SdlLockSurface &) = delete;
+    SdlLockSurface & operator=(const SdlLockSurface &) = delete;
+    SdlLockSurface(SdlLockSurface &&) = delete;
+    SdlLockSurface & operator=(SdlLockSurface &&) = delete;
+
+private:
+    SDL_Surface *surf_;
+    bool isLocked_;
+};
+
 #endif

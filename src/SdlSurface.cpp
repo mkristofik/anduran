@@ -84,3 +84,27 @@ SdlSurface::operator bool() const
 {
     return static_cast<bool>(surf_);
 }
+
+
+SdlLockSurface::SdlLockSurface(SdlSurface &img)
+    : surf_(img.get()),
+    isLocked_(false)
+{
+    if (SDL_MUSTLOCK(surf_)) {
+        if (SDL_LockSurface(surf_) == 0) {
+            isLocked_ = true;
+        }
+        else {
+            SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
+                        "Warning, couldn't lock surface: %s",
+                        SDL_GetError());
+        }
+    }
+}
+
+SdlLockSurface::~SdlLockSurface()
+{
+    if (isLocked_) {
+        SDL_UnlockSurface(surf_);
+    }
+}
