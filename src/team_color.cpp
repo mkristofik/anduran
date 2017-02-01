@@ -13,6 +13,8 @@
 
 #include "team_color.h"
 
+#include "RandomMap.h"
+
 #include "SDL.h"
 #include <algorithm>
 #include <array>
@@ -157,19 +159,9 @@ namespace
             return {};
         }
 
-        auto surf = imgCopy.get();
-        bool locked = false;
-        if (SDL_MUSTLOCK(surf)) {
-            if (SDL_LockSurface(surf) == 0) {
-                locked = true;
-            }
-            else {
-                SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
-                            "Warning, couldn't lock surface during applyColors: %s",
-                            SDL_GetError());
-            }
-        }
+        SdlLockSurface guard(imgCopy);
 
+        auto surf = imgCopy.get();
         assert(surf->format->BytesPerPixel == 4);
 
         auto pixel = static_cast<Uint32 *>(surf->pixels);
@@ -187,10 +179,6 @@ namespace
                 newColor.a = pixelColor.a;
                 *pixel = setColor(newColor, surf->format);
             }
-        }
-
-        if (locked) {
-            SDL_UnlockSurface(surf);
         }
 
         return imgCopy;
@@ -217,19 +205,9 @@ SdlSurface ellipseToRefColor(const SdlSurface &src)
         return {};
     }
 
-    auto surf = imgCopy.get();
-    bool locked = false;
-    if (SDL_MUSTLOCK(surf)) {
-        if (SDL_LockSurface(surf) == 0) {
-            locked = true;
-        }
-        else {
-            SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
-                        "Warning, couldn't lock surface during applyColors: %s",
-                        SDL_GetError());
-        }
-    }
+    SdlLockSurface guard(imgCopy);
 
+    auto surf = imgCopy.get();
     assert(surf->format->BytesPerPixel == 4);
 
     auto pixel = static_cast<Uint32 *>(surf->pixels);
@@ -244,8 +222,35 @@ SdlSurface ellipseToRefColor(const SdlSurface &src)
         }
     }
 
-    if (locked) {
-        SDL_UnlockSurface(surf);
+    return imgCopy;
+}
+
+SdlSurface flagToRefColor(const SdlSurface &src)
+{
+    auto imgCopy = src.clone();
+    if (!imgCopy) {
+        return {};
+    }
+
+    SdlLockSurface guard(imgCopy);
+
+    auto surf = imgCopy.get();
+    assert(surf->format->BytesPerPixel == 4);
+
+    auto pixel = static_cast<Uint32 *>(surf->pixels);
+    const auto endPixels = pixel + surf->w * surf->h;
+    for (; pixel != endPixels; ++pixel) {
+        // Convert all green pixels to the closest reference color.
+        const auto pixelColor = getColor(*pixel, surf->format);
+        if (pixelColor.a > 0 && pixelColor.r == 0 && pixelColor.b == 0) {
+            // Divide the colorspace into 15 equal regions corresponding to the
+            // reference color and the 14 darker colors below it.
+            // (255 / 17 == 15)
+            auto index = clamp(pixelColor.g / 17, 0, 14);
+            auto newColor = refColors[index];
+            newColor.a = pixelColor.a;
+            *pixel = setColor(newColor, surf->format);
+        }
     }
 
     return imgCopy;

@@ -46,6 +46,17 @@ void real_main()
         rmapView.addEntity(SdlTexture(ellipseImages[i], win), hex, ZOrder::ELLIPSE);
     }
 
+    // Draw flags on all the ownable objects.
+    const SdlSurface flag("img/flag.png");
+    const auto flagImages = applyTeamColors(flagToRefColor(flag));
+    const SdlTexture neutralFlag(flagImages[static_cast<int>(Team::NEUTRAL)], win);
+    for (const auto &hex : rmap.getObjectTiles("village")) {
+        rmapView.addEntity(neutralFlag, hex, ZOrder::FLAG);
+    }
+    for (const auto &hex : rmap.getObjectTiles("windmill")) {
+        rmapView.addEntity(neutralFlag, hex, ZOrder::FLAG);
+    }
+
     win.clear();
     rmapView.draw();
     win.update();
