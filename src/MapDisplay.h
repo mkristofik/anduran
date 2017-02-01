@@ -46,12 +46,22 @@ struct TileDisplay
 };
 
 
+enum class ZOrder {ELLIPSE,
+                   OBJECT,
+                   FLAG,
+                   SHADOW,
+                   HIGHLIGHT,
+                   PROJECTILE,
+                   ANIMATING};
+
+
 struct MapEntity
 {
     PartialPixel offset;
     Hex hex;  // images drawn centered on hex, adjusted by pixel offset.
     int id;
     int frame;  // which frame to draw if using a texture atlas (assume only one row)
+    ZOrder z;
     bool visible;
 
     MapEntity();
@@ -72,10 +82,14 @@ public:
 
     void draw();
 
-    int addEntity(SdlTexture img, Hex hex);  // returns new entity id
-    int addEntity(SdlTextureAtlas img, Hex hex, int initialFrame);  // returns new entity id
+    // Adding new entity returns the new entity id.
+    int addEntity(SdlTexture img, Hex hex, ZOrder z);
+    int addEntity(SdlTextureAtlas img, Hex hex, int initialFrame, ZOrder z);
+
+    // Fetch/modify entities by value to decouple objects that modify entities
+    // from the map display.
     MapEntity getEntity(int id) const;
-    void updateEntity(int id, MapEntity newState);
+    void updateEntity(MapEntity newState);
 
     void handleMousePosition(Uint32 elapsed_ms);
 
@@ -89,6 +103,9 @@ private:
 
     void setTileVisibility();
     void drawEntities();
+
+    // Return a list of entity ids in the order they should be drawn.
+    std::vector<int> getEntityDrawOrder() const;
 
     SdlWindow &window_;
     RandomMap &map_;

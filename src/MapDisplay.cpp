@@ -11,7 +11,9 @@
     See the COPYING.txt file for more details.
 */
 #include "MapDisplay.h"
+
 #include "boost/container/flat_map.hpp"
+#include <algorithm>
 
 
 SDL_Point operator+(const SDL_Point &lhs, const SDL_Point &rhs)
@@ -170,6 +172,7 @@ MapEntity::MapEntity()
     hex(),
     id(-1),
     frame(-1),
+    z(ZOrder::OBJECT),
     visible(true)
 {
 }
@@ -242,7 +245,7 @@ void MapDisplay::draw()
     drawEntities();
 }
 
-int MapDisplay::addEntity(SdlTexture img, Hex hex)
+int MapDisplay::addEntity(SdlTexture img, Hex hex, ZOrder z)
 {
     const int id = entities_.size();
 
@@ -251,13 +254,14 @@ int MapDisplay::addEntity(SdlTexture img, Hex hex)
     e.offset.y = HEX_SIZE / 2 - img.height() / 2.0;
     e.hex = std::move(hex);
     e.id = id;
+    e.z = z;
     entities_.push_back(std::move(e));
     entityImg_.push_back(std::move(img));
 
     return id;
 }
 
-int MapDisplay::addEntity(SdlTextureAtlas img, Hex hex, int initialFrame)
+int MapDisplay::addEntity(SdlTextureAtlas img, Hex hex, int initialFrame, ZOrder z)
 {
     assert(initialFrame >= 0 && initialFrame < img.numColumns());
     const int id = entities_.size();
@@ -268,6 +272,7 @@ int MapDisplay::addEntity(SdlTextureAtlas img, Hex hex, int initialFrame)
     e.hex = std::move(hex);
     e.id = id;
     e.frame = initialFrame;
+    e.z = z;
     entities_.push_back(std::move(e));
     entityImg_.push_back(std::move(img));
 
@@ -280,8 +285,9 @@ MapEntity MapDisplay::getEntity(int id) const
     return entities_[id];
 }
 
-void MapDisplay::updateEntity(int id, MapEntity newState)
+void MapDisplay::updateEntity(MapEntity newState)
 {
+    const int id = newState.id;
     assert(id >= 0 && id < static_cast<int>(entities_.size()));
     entities_[id] = std::move(newState);
 }
@@ -393,7 +399,7 @@ void MapDisplay::loadObjects()
 {
     const SdlTexture castleImg(SdlSurface("img/castle.png"), window_);
     for (const auto &hex : map_.getCastleTiles()) {
-        addEntity(castleImg, hex);
+        addEntity(castleImg, hex, ZOrder::OBJECT);
     }
 
     const SdlTexture desertVillage(SdlSurface("img/village-desert.png"), window_);
@@ -405,19 +411,19 @@ void MapDisplay::loadObjects()
     for (const auto &hex : map_.getObjectTiles("village")) {
         switch (map_.getTerrain(hex)) {
             case Terrain::DESERT:
-                addEntity(desertVillage, hex);
+                addEntity(desertVillage, hex, ZOrder::OBJECT);
                 break;
             case Terrain::DIRT:
-                addEntity(dirtVillage, hex);
+                addEntity(dirtVillage, hex, ZOrder::OBJECT);
                 break;
             case Terrain::GRASS:
-                addEntity(grassVillage, hex);
+                addEntity(grassVillage, hex, ZOrder::OBJECT);
                 break;
             case Terrain::SNOW:
-                addEntity(snowVillage, hex);
+                addEntity(snowVillage, hex, ZOrder::OBJECT);
                 break;
             case Terrain::SWAMP:
-                addEntity(swampVillage, hex);
+                addEntity(swampVillage, hex, ZOrder::OBJECT);
                 break;
             default:
                 break;
@@ -437,7 +443,7 @@ void MapDisplay::addObjectEntities(const char *name, const char *imgPath)
 {
     const SdlTexture img(SdlSurface(imgPath), window_);
     for (const auto &hex : map_.getObjectTiles(name)) {
-        addEntity(img, hex);
+        addEntity(img, hex, ZOrder::OBJECT);
     }
 }
 
@@ -533,25 +539,40 @@ void MapDisplay::setTileVisibility()
 
 void MapDisplay::drawEntities()
 {
-    for (const auto &e : entities_) {
-        if (!e.visible) {
-            continue;
-        }
-
+    for (auto id : getEntityDrawOrder()) {
+        const auto &e = entities_[id];
         const auto pixel = pixelFromHex(e.hex) + e.offset - displayOffset_;
+
         if (e.frame >= 0) {
-            auto &img = boost::get<SdlTextureAtlas>(entityImg_[e.id]);
+            auto &img = boost::get<SdlTextureAtlas>(entityImg_[id]);
             const auto dest = img.getDestRect(pixel);
             if (SDL_HasIntersection(&dest, &displayArea_) == SDL_TRUE) {
                 img.drawFrame(0, e.frame, pixel);
             }
         }
         else {
-            auto &img = boost::get<SdlTexture>(entityImg_[e.id]);
+            auto &img = boost::get<SdlTexture>(entityImg_[id]);
             const auto dest = img.getDestRect(pixel);
             if (SDL_HasIntersection(&dest, &displayArea_) == SDL_TRUE) {
                 img.draw(pixel);
             }
         }
     }
+}
+
+std::vector<int> MapDisplay::getEntityDrawOrder() const
+{
+    std::vector<int> order;
+    order.reserve(entities_.size());
+
+    for (auto i = 0u; i < entities_.size(); ++i) {
+        if (entities_[i].visible) {
+            order.push_back(i);
+        }
+    }
+
+    stable_sort(std::begin(order), std::end(order), [this] (int lhs, int rhs) {
+                    return entities_[lhs].z < entities_[rhs].z;
+                });
+    return order;
 }

@@ -42,8 +42,8 @@ void real_main()
     // Draw a champion in the hex due south of each castle.
     for (auto i = 0u; i < std::size(castles); ++i) {
         const auto hex = castles[i].getNeighbor(HexDir::S);
-        rmapView.addEntity(SdlTexture(ellipseImages[i], win), hex);
-        rmapView.addEntity(SdlTexture(championImages[i], win), hex);
+        rmapView.addEntity(SdlTexture(championImages[i], win), hex, ZOrder::OBJECT);
+        rmapView.addEntity(SdlTexture(ellipseImages[i], win), hex, ZOrder::ELLIPSE);
     }
 
     win.clear();
