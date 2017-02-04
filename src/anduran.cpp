@@ -62,6 +62,7 @@ void real_main()
     win.update();
 
     bool isDone = false;
+    bool mouseInWindow = true;
     SDL_Event event;
     auto prevFrameTime_ms = SDL_GetTicks();
 
@@ -75,10 +76,20 @@ void real_main()
                 case SDL_QUIT:
                     isDone = true;
                     break;
+                case SDL_WINDOWEVENT:
+                    if (event.window.event == SDL_WINDOWEVENT_LEAVE) {
+                        mouseInWindow = false;
+                    }
+                    else if (event.window.event == SDL_WINDOWEVENT_ENTER) {
+                        mouseInWindow = true;
+                    }
+                    break;
             }
         }
 
-        rmapView.handleMousePosition(elapsed_ms);
+        if (mouseInWindow) {
+            rmapView.handleMousePos(elapsed_ms);
+        }
 
         win.clear();
         rmapView.draw();

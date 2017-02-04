@@ -91,7 +91,8 @@ public:
     MapEntity getEntity(int id) const;
     void updateEntity(MapEntity newState);
 
-    void handleMousePosition(Uint32 elapsed_ms);
+    void handleMousePos(Uint32 elapsed_ms);
+    Hex hexFromMousePos() const;
 
 private:
     void computeTileEdges();
@@ -107,6 +108,8 @@ private:
     // Return a list of entity ids in the order they should be drawn.
     std::vector<int> getEntityDrawOrder() const;
 
+    void scrollDisplay(Uint32 elapsed_ms);
+
     SdlWindow &window_;
     RandomMap &map_;
     std::vector<SdlTextureAtlas> tileImg_;
@@ -117,6 +120,7 @@ private:
     PartialPixel displayOffset_;
     std::vector<MapEntity> entities_;
     std::vector<boost::variant<SdlTexture, SdlTextureAtlas>> entityImg_;
+    int hexShadow_;
 };
 
 #endif

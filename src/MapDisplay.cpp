@@ -150,6 +150,13 @@ namespace
         return pixelFromHex(hex) + SDL_Point{HEX_SIZE / 2, HEX_SIZE / 2};
     }
     */
+
+    SDL_Point getMousePos()
+    {
+        SDL_Point mouse;
+        SDL_GetMouseState(&mouse.x, &mouse.y);
+        return mouse;
+    }
 }
 
 
@@ -188,7 +195,8 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap)
     displayArea_(window_.getBounds()),
     displayOffset_(),
     entities_(),
-    entityImg_()
+    entityImg_(),
+    hexShadow_(-1)
 {
     std::uniform_int_distribution<int> dist3(0, 2);
     std::uniform_int_distribution<int> dist4(0, 3);
@@ -208,6 +216,11 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap)
     addBorderTiles();
     computeTileEdges();
     loadObjects();
+
+    // TODO: use the public interface for this?
+    const auto shadowImg = SdlTexture(SdlSurface("img/hex-shadow.png"), window_);
+    hexShadow_ = addEntity(shadowImg, Hex(), ZOrder::SHADOW);
+    entities_[hexShadow_].visible = false;
 }
 
 void MapDisplay::draw()
@@ -292,45 +305,77 @@ void MapDisplay::updateEntity(MapEntity newState)
     entities_[id] = std::move(newState);
 }
 
-void MapDisplay::handleMousePosition(Uint32 elapsed_ms)
+void MapDisplay::handleMousePos(Uint32 elapsed_ms)
 {
     // Is the mouse near the boundary?
     static const SDL_Rect insideBoundary = {displayArea_.x + BORDER_WIDTH,
                                             displayArea_.y + BORDER_WIDTH,
                                             displayArea_.w - BORDER_WIDTH * 2,
                                             displayArea_.h - BORDER_WIDTH * 2};
-    SDL_Point mouse;
-    SDL_GetMouseState(&mouse.x, &mouse.y);
-    if (SDL_PointInRect(&mouse, &insideBoundary) == SDL_TRUE) {
-        return;
+    const auto mouse = getMousePos();
+    if (SDL_PointInRect(&mouse, &insideBoundary) == SDL_FALSE) {
+        scrollDisplay(elapsed_ms);
     }
 
-    auto scrollX = 0.0;
-    auto scrollY = 0.0;
-    const auto scrollDist = SCROLL_PX_SEC * elapsed_ms / 1000.0;
+    // Move the hex shadow to the hex under the mouse.
+    // TODO: use a better public interface for this?
+    auto &shadow = entities_[hexShadow_];
+    const auto mouseHex = hexFromMousePos();
+    if (map_.offGrid(mouseHex)) {
+        shadow.visible = false;
+    }
+    else {
+        shadow.hex = mouseHex;
+        shadow.visible = true;
+    }
+}
 
-    if (mouse.x - displayArea_.x < BORDER_WIDTH) {
-        scrollX = -scrollDist;
+// source: Battle for Wesnoth, display::pixel_position_to_hex()
+Hex MapDisplay::hexFromMousePos() const
+{
+    // tilingWidth
+    // |   |
+    //  _     _
+    // / \_    tilingHeight
+    // \_/ \  _
+    //   \_/
+    const int tilingWidth = HEX_SIZE * 3 / 2;
+    const int tilingHeight = HEX_SIZE;
+
+    const auto adjMouse = getMousePos() + displayOffset_;
+
+    // I'm not going to pretend to know why the rest of this works.
+    int hx = adjMouse.x / tilingWidth * 2;
+    const int xMod = adjMouse.x % tilingWidth;
+    int hy = adjMouse.y / tilingHeight;
+    const int yMod = adjMouse.y % tilingHeight;
+
+    if (yMod < tilingHeight / 2) {
+        if ((xMod * 2 + yMod) < (HEX_SIZE / 2)) {
+            --hx;
+            --hy;
+        }
+        else if ((xMod * 2 - yMod) < (HEX_SIZE * 3 / 2)) {
+            // do nothing
+        }
+        else {
+            ++hx;
+            --hy;
+        }
     }
-    else if (displayArea_.x + displayArea_.w - mouse.x < BORDER_WIDTH) {
-        scrollX = scrollDist;
-    }
-    if (mouse.y - displayArea_.y < BORDER_WIDTH) {
-        scrollY = -scrollDist;
-    }
-    else if (displayArea_.y + displayArea_.h - mouse.y < BORDER_WIDTH) {
-        scrollY = scrollDist;
+    else {
+        if ((xMod * 2 - (yMod - HEX_SIZE / 2)) < 0) {
+            --hx;
+        }
+        else if ((xMod * 2 + (yMod - HEX_SIZE / 2)) < HEX_SIZE * 2) {
+            // do nothing
+        }
+        else {
+            ++hx;
+        }
     }
 
-    // Stop scrolling when the lower right hex is just inside the window.
-    static const auto lowerRight = pixelFromHex(Hex{map_.width() - 1, map_.width() - 1});
-    static const auto pMaxX = lowerRight.x - displayArea_.w + HEX_SIZE;
-    static const auto pMaxY = lowerRight.y - displayArea_.h + HEX_SIZE;
-
-    // Using doubles here because this might scroll by less than one pixel if the
-    // computer is fast enough.
-    displayOffset_.x = clamp<double>(displayOffset_.x + scrollX, 0, pMaxX);
-    displayOffset_.y = clamp<double>(displayOffset_.y + scrollY, 0, pMaxY);
+    return {hx, hy};
 }
 
 void MapDisplay::computeTileEdges()
@@ -575,4 +620,35 @@ std::vector<int> MapDisplay::getEntityDrawOrder() const
                     return entities_[lhs].z < entities_[rhs].z;
                 });
     return order;
+}
+
+void MapDisplay::scrollDisplay(Uint32 elapsed_ms)
+{
+    const auto mouse = getMousePos();
+    auto scrollX = 0.0;
+    auto scrollY = 0.0;
+    const auto scrollDist = SCROLL_PX_SEC * elapsed_ms / 1000.0;
+
+    if (mouse.x - displayArea_.x < BORDER_WIDTH) {
+        scrollX = -scrollDist;
+    }
+    else if (displayArea_.x + displayArea_.w - mouse.x < BORDER_WIDTH) {
+        scrollX = scrollDist;
+    }
+    if (mouse.y - displayArea_.y < BORDER_WIDTH) {
+        scrollY = -scrollDist;
+    }
+    else if (displayArea_.y + displayArea_.h - mouse.y < BORDER_WIDTH) {
+        scrollY = scrollDist;
+    }
+
+    // Stop scrolling when the lower right hex is just inside the window.
+    static const auto lowerRight = pixelFromHex(Hex{map_.width() - 1, map_.width() - 1});
+    static const auto pMaxX = lowerRight.x - displayArea_.w + HEX_SIZE;
+    static const auto pMaxY = lowerRight.y - displayArea_.h + HEX_SIZE;
+
+    // Using doubles here because this might scroll by less than one pixel if the
+    // computer is fast enough.
+    displayOffset_.x = clamp<double>(displayOffset_.x + scrollX, 0, pMaxX);
+    displayOffset_.y = clamp<double>(displayOffset_.y + scrollY, 0, pMaxY);
 }
