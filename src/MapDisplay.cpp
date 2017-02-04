@@ -307,21 +307,13 @@ void MapDisplay::updateEntity(MapEntity newState)
 
 void MapDisplay::handleMousePos(Uint32 elapsed_ms)
 {
-    // Is the mouse near the boundary?
-    static const SDL_Rect insideBoundary = {displayArea_.x + BORDER_WIDTH,
-                                            displayArea_.y + BORDER_WIDTH,
-                                            displayArea_.w - BORDER_WIDTH * 2,
-                                            displayArea_.h - BORDER_WIDTH * 2};
-    const auto mouse = getMousePos();
-    if (SDL_PointInRect(&mouse, &insideBoundary) == SDL_FALSE) {
-        scrollDisplay(elapsed_ms);
-    }
+    const auto scrolling = scrollDisplay(elapsed_ms);
 
     // Move the hex shadow to the hex under the mouse.
     // TODO: use a better public interface for this?
     auto &shadow = entities_[hexShadow_];
     const auto mouseHex = hexFromMousePos();
-    if (map_.offGrid(mouseHex)) {
+    if (scrolling || map_.offGrid(mouseHex)) {
         shadow.visible = false;
     }
     else {
@@ -622,9 +614,18 @@ std::vector<int> MapDisplay::getEntityDrawOrder() const
     return order;
 }
 
-void MapDisplay::scrollDisplay(Uint32 elapsed_ms)
+bool MapDisplay::scrollDisplay(Uint32 elapsed_ms)
 {
+    // Is the mouse near the boundary?
+    static const SDL_Rect insideBoundary = {displayArea_.x + BORDER_WIDTH,
+                                            displayArea_.y + BORDER_WIDTH,
+                                            displayArea_.w - BORDER_WIDTH * 2,
+                                            displayArea_.h - BORDER_WIDTH * 2};
     const auto mouse = getMousePos();
+    if (SDL_PointInRect(&mouse, &insideBoundary) == SDL_TRUE) {
+        return false;
+    }
+
     auto scrollX = 0.0;
     auto scrollY = 0.0;
     const auto scrollDist = SCROLL_PX_SEC * elapsed_ms / 1000.0;
@@ -649,6 +650,10 @@ void MapDisplay::scrollDisplay(Uint32 elapsed_ms)
 
     // Using doubles here because this might scroll by less than one pixel if the
     // computer is fast enough.
-    displayOffset_.x = clamp<double>(displayOffset_.x + scrollX, 0, pMaxX);
-    displayOffset_.y = clamp<double>(displayOffset_.y + scrollY, 0, pMaxY);
+    const auto newX = clamp<double>(displayOffset_.x + scrollX, 0, pMaxX);
+    const auto newY = clamp<double>(displayOffset_.y + scrollY, 0, pMaxY);
+    const bool scrolling = (newX != displayOffset_.x || newY != displayOffset_.y);
+
+    displayOffset_ = {newX, newY};
+    return scrolling;
 }

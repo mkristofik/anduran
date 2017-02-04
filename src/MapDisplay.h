@@ -108,7 +108,9 @@ private:
     // Return a list of entity ids in the order they should be drawn.
     std::vector<int> getEntityDrawOrder() const;
 
-    void scrollDisplay(Uint32 elapsed_ms);
+    // Scroll the map display if the mouse is near the edge. Return true if the
+    // map is moving.
+    bool scrollDisplay(Uint32 elapsed_ms);
 
     SdlWindow &window_;
     RandomMap &map_;
