@@ -239,6 +239,18 @@ bool RandomMap::getObstacle(const Hex &hex) const
     return getObstacle(intFromHex(hex));
 }
 
+bool RandomMap::getWalkable(int index) const
+{
+    assert(!offGrid(index));
+    return tileWalkable_[index] > 0;
+}
+
+bool RandomMap::getWalkable(const Hex &hex) const
+{
+    assert(!offGrid(hex));
+    return getWalkable(intFromHex(hex));
+}
+
 std::vector<Hex> RandomMap::getCastleTiles() const
 {
     return hexesFromInt(castles_);

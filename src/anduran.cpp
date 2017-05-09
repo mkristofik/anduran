@@ -23,12 +23,21 @@
 #include "SDL_image.h"
 #include <algorithm>
 #include <cstdlib>
+#include <vector>
+
+struct Player
+{
+    Hex championHex;
+    int championId;
+    int ellipseId;
+};
 
 void real_main()
 {
     SdlWindow win(1280, 720, "Champions of Anduran");
     RandomMap rmap("test.json");
     MapDisplay rmapView(win, rmap);
+    std::vector<Player> players;
 
     const auto championImages = applyTeamColors(SdlSurface("img/champion.png"));
     const SdlSurface ellipse("img/ellipse.png");
@@ -42,8 +51,13 @@ void real_main()
     // Draw a champion in the hex due south of each castle.
     for (auto i = 0u; i < std::size(castles); ++i) {
         const auto hex = castles[i].getNeighbor(HexDir::S);
-        rmapView.addEntity(SdlTexture(championImages[i], win), hex, ZOrder::OBJECT);
-        rmapView.addEntity(SdlTexture(ellipseImages[i], win), hex, ZOrder::ELLIPSE);
+        const int champion = rmapView.addEntity(SdlTexture(championImages[i], win),
+                                                hex,
+                                                ZOrder::OBJECT);
+        const int ellipse = rmapView.addEntity(SdlTexture(ellipseImages[i], win),
+                                               hex,
+                                               ZOrder::ELLIPSE);
+        players.push_back(Player{hex, champion, ellipse});
     }
 
     // Draw flags on all the ownable objects.
@@ -57,6 +71,13 @@ void real_main()
         rmapView.addEntity(neutralFlag, hex, ZOrder::FLAG);
     }
 
+    // Highlight the hex containing the current player's champion when the user
+    // clicks on it.
+    int curPlayer = 0;
+    bool championSelected = false;
+    const SdlTexture highlightImg(SdlSurface("img/hex-yellow.png"), win);
+    const auto highlightId = rmapView.addEntity(highlightImg, Hex{}, ZOrder::HIGHLIGHT);
+
     win.clear();
     rmapView.draw();
     win.update();
@@ -69,12 +90,17 @@ void real_main()
     while (!isDone) {
         const auto curTime_ms = SDL_GetTicks();
         const auto elapsed_ms = curTime_ms - prevFrameTime_ms;
+        bool mouseClicked = false;
         prevFrameTime_ms = curTime_ms;
 
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
                 case SDL_QUIT:
                     isDone = true;
+                    break;
+                case SDL_MOUSEBUTTONUP:
+                    // TODO: check which button was clicked
+                    mouseClicked = true;
                     break;
                 case SDL_WINDOWEVENT:
                     if (event.window.event == SDL_WINDOWEVENT_LEAVE) {
@@ -89,6 +115,38 @@ void real_main()
 
         if (mouseInWindow) {
             rmapView.handleMousePos(elapsed_ms);
+        }
+
+        // Move a champion:
+        // - user selects the champion hex (clicking again deselects it)
+        // - user clicks on a walkable hex
+        // - champion moves to the new hex
+        if (mouseClicked) {
+            const auto mouseHex = rmapView.hexFromMousePos();
+            auto highlight = rmapView.getEntity(highlightId);
+            if (mouseHex == players[curPlayer].championHex) {
+                if (!championSelected) {
+                    highlight.hex = mouseHex;
+                    highlight.visible = true;
+                    championSelected = true;
+                }
+                else {
+                    highlight.visible = false;
+                    championSelected = false;
+                }
+            }
+            else if (championSelected && rmap.getWalkable(mouseHex)) {
+                highlight.visible = false;
+                auto champion = rmapView.getEntity(players[curPlayer].championId);
+                auto ellipse = rmapView.getEntity(players[curPlayer].ellipseId);
+                champion.hex = mouseHex;
+                ellipse.hex = mouseHex;
+                rmapView.updateEntity(champion);
+                rmapView.updateEntity(ellipse);
+                players[curPlayer].championHex = mouseHex;
+                championSelected = false;
+            }
+            rmapView.updateEntity(highlight);
         }
 
         win.clear();

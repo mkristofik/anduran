@@ -43,6 +43,8 @@ public:
 
     bool getObstacle(int index) const;
     bool getObstacle(const Hex &hex) const;
+    bool getWalkable(int index) const;
+    bool getWalkable(const Hex &hex) const;
 
     // Return a list of tiles at the center of each castle.
     std::vector<Hex> getCastleTiles() const;
