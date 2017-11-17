@@ -1,0 +1,129 @@
+# Game display
+--------------
+* team color the champions and the ellipse
+- highlight the selected hex
+    * map display can convert pixel to hex
+    - game display controls the highlights
+* flag all villages and windmills
+
+
+# Polish
+--------
+- delay for a beat before scrolling the map when mouse is near the edge
+* don't scroll when the mouse is outside the window
+- how should obstacles overlap with different terrain?
+- use the multi-edge transitions where available
+* proper edge transitions to the border tiles
+- draw the champion facing to the left when moving in that direction
+- hide the ellipse while the champion is moving
+- screen flashes white briefly when first loading
+
+
+# Data-driven map objects
+-------------------------
+- text description
+- list of allowed terrain
+- images to match each terrain
+- number per region
+- flaggable?
+- map display needs to return multiple objects per tile (to allow flags and creatures)
+
+
+# Entity system
+---------------
+* Drawable entities need:
+    * partial pixel offset, initially assume drawn centered on the base hex
+    * base hex
+    * z-order (accents/flags, objects, hex shadow, hex highlight, projectiles, animating creature)
+    * visible flag
+    * texture or texture atlas + row/col
+* keep the texture outside the entity struct so it's small and copyable
+* store a variant texture/textureAtlas somewhere else?
+* pass entity updates by value, move-assign
+* On each frame:
+    * skip if not shown
+    * convert base hex to pixel, compute the draw target
+    * get bounding rect, determine whether within screen bounds
+
+
+# Map viewer
+------------
+* read map json file from disk
+* choose randomly between the three images for each tile
+* map scrolling
+* select obstacle images
+* draw obstacles
+* edge transitions
+    * grass overlaps everything else
+    * snow overlaps dirt, desert, water, swamp (overlapped by grass)
+    * swamp overlaps dirt and desert (overlapped by grass, snow, water)
+    * water overlaps swamp and desert (overlapped by grass, dirt, snow)
+    * dirt overlaps water (overlapped by grass, desert, snow, swamp)
+    * desert overlaps dirt (overlapped by grass, water, snow, swamp)
+* map border
+* draw dashed line between regions of same terrain
+* need to draw dotted line between grass regions
+* Window needs to report its own boundary
+* pick one village image per terrain
+
+
+# Random Map
+------------
+* voronoi algorithm
+* write JSON file
+    * requires a build system so I can link JSON lib
+* build region neighbor graph
+    * flat vector of pairs?
+    * build the whole thing for each hex?
+* assign terrain by altitude
+	* start with random region at altitude 0
+	* randomly +1, 0, -1 for each neighbor
+	* altitude 0: water, desert, swamp
+	* altitude 1-2: grass, dirt
+	* altitude 3: dirt, snow
+* simple noise to assign obstacles, choose random 1-3?
+    * build noise library locally in build_dir
+    * static link
+    * c++ wrapper
+* clear obstacles to ensure each region can reach at least one other region
+* clear obstacles to ensure all open hexes in each region are reachable
+	* requires pathfinding
+	* hex neighbors that are within the same region
+    * BFS to find all walkable hexes within a region
+        * were any hexes not visited?
+        * if yes, clear a path to nearest visited and walkable hex
+        * repeat from the previous unvisited hex
+* obstacle should just be a bool, MapDisplay should choose which image to use
+    * refactor obstacle assignment
+* randomly assign starting towns for 4 players
+* store castle locations as Hex?
+
+
+# Containers
+------------
+- compact queue
+    - minimize memory (de-)allocations
+    - use a vector, keep index to the current front, add to the back
+    - pop() should return by value to avoid invalidating references on push()
+        - I think we can move the return value too
+    - if pop() makes the queue empty, start overwriting old elements
+    - this one is probably just a fun experiment, std::queue is going to be fine
+* flat multimap
+    * sorted vector of nodes
+    * insert, sort, then read-only
+    * write a find() that returns a range so we can use range-for-loop
+        * bonus points if this exposes values only, not pairs
+- priority heap
+    - use some of the ideas from compact queue here?
+
+
+# Build system
+--------------
+* set up git repository
+* looked at build2, alpha release
+* looked at Boost.Build, confusing
+* go back to cmake (annoying)?
+* maintain my own Makefile, learned how to auto-generate dependencies
+* how does Wesnoth build on Windows?
+* connect to GitHub
+* GitHub two-factor auth?  (probably not worth the effort)

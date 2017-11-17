@@ -1,4 +1,3 @@
 *.exe
 build/
 test.*
-dev_notes.txt
