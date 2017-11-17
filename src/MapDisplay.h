@@ -85,6 +85,8 @@ public:
     // Adding new entity returns the new entity id.
     int addEntity(SdlTexture img, Hex hex, ZOrder z);
     int addEntity(SdlTextureAtlas img, Hex hex, int initialFrame, ZOrder z);
+    int addHiddenEntity(SdlTexture img, ZOrder z);
+    int addHiddenEntity(SdlTextureAtlas img, ZOrder z);
 
     // Fetch/modify entities by value to decouple objects that modify entities
     // from the map display.
@@ -93,6 +95,9 @@ public:
 
     void handleMousePos(Uint32 elapsed_ms);
     Hex hexFromMousePos() const;
+
+    void highlight(Hex hex);
+    void clearHighlight();
 
 private:
     void computeTileEdges();
@@ -122,7 +127,8 @@ private:
     PartialPixel displayOffset_;
     std::vector<MapEntity> entities_;
     std::vector<boost::variant<SdlTexture, SdlTextureAtlas>> entityImg_;
-    int hexShadow_;
+    int hexShadowId_;
+    int hexHighlightId_;
 };
 
 #endif

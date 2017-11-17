@@ -71,12 +71,8 @@ void real_main()
         rmapView.addEntity(neutralFlag, hex, ZOrder::FLAG);
     }
 
-    // Highlight the hex containing the current player's champion when the user
-    // clicks on it.
     int curPlayer = 0;
     bool championSelected = false;
-    const SdlTexture highlightImg(SdlSurface("img/hex-yellow.png"), win);
-    const auto highlightId = rmapView.addEntity(highlightImg, Hex{}, ZOrder::HIGHLIGHT);
 
     win.clear();
     rmapView.draw();
@@ -99,8 +95,9 @@ void real_main()
                     isDone = true;
                     break;
                 case SDL_MOUSEBUTTONUP:
-                    // TODO: check which button was clicked
-                    mouseClicked = true;
+                    if (event.button.button == SDL_BUTTON_LEFT) {
+                        mouseClicked = true;
+                    }
                     break;
                 case SDL_WINDOWEVENT:
                     if (event.window.event == SDL_WINDOWEVENT_LEAVE) {
@@ -119,24 +116,24 @@ void real_main()
 
         // Move a champion:
         // - user selects the champion hex (clicking again deselects it)
+        // - highlight that hex when selected
         // - user clicks on a walkable hex
         // - champion moves to the new hex
         if (mouseClicked) {
             const auto mouseHex = rmapView.hexFromMousePos();
-            auto highlight = rmapView.getEntity(highlightId);
             if (mouseHex == players[curPlayer].championHex) {
                 if (!championSelected) {
-                    highlight.hex = mouseHex;
-                    highlight.visible = true;
+                    rmapView.highlight(mouseHex);
                     championSelected = true;
                 }
                 else {
-                    highlight.visible = false;
+                    rmapView.clearHighlight();
                     championSelected = false;
                 }
             }
+            // TODO: this crashes if mouseHex is off the grid
             else if (championSelected && rmap.getWalkable(mouseHex)) {
-                highlight.visible = false;
+                rmapView.clearHighlight();
                 auto champion = rmapView.getEntity(players[curPlayer].championId);
                 auto ellipse = rmapView.getEntity(players[curPlayer].ellipseId);
                 champion.hex = mouseHex;
@@ -146,7 +143,6 @@ void real_main()
                 players[curPlayer].championHex = mouseHex;
                 championSelected = false;
             }
-            rmapView.updateEntity(highlight);
         }
 
         win.clear();

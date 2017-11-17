@@ -175,7 +175,7 @@ TileDisplay::TileDisplay()
 
 
 MapEntity::MapEntity()
-    : offset(),
+    : offset{0.0, 0.0},
     hex(),
     id(-1),
     frame(-1),
@@ -196,7 +196,8 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap)
     displayOffset_(),
     entities_(),
     entityImg_(),
-    hexShadow_(-1)
+    hexShadowId_(-1),
+    hexHighlightId_(-1)
 {
     std::uniform_int_distribution<int> dist3(0, 2);
     std::uniform_int_distribution<int> dist4(0, 3);
@@ -217,10 +218,10 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap)
     computeTileEdges();
     loadObjects();
 
-    // TODO: use the public interface for this?
-    const auto shadowImg = SdlTexture(SdlSurface("img/hex-shadow.png"), window_);
-    hexShadow_ = addEntity(shadowImg, Hex(), ZOrder::SHADOW);
-    entities_[hexShadow_].visible = false;
+    const SdlTexture shadowImg(SdlSurface("img/hex-shadow.png"), window_);
+    hexShadowId_ = addHiddenEntity(shadowImg, ZOrder::SHADOW);
+    const SdlTexture highlightImg(SdlSurface("img/hex-yellow.png"), window_);
+    hexHighlightId_ = addHiddenEntity(highlightImg, ZOrder::HIGHLIGHT);
 }
 
 void MapDisplay::draw()
@@ -292,6 +293,35 @@ int MapDisplay::addEntity(SdlTextureAtlas img, Hex hex, int initialFrame, ZOrder
     return id;
 }
 
+int MapDisplay::addHiddenEntity(SdlTexture img, ZOrder z)
+{
+    const int id = entities_.size();
+
+    MapEntity e;
+    e.id = id;
+    e.z = z;
+    e.visible = false;
+    entities_.push_back(std::move(e));
+    entityImg_.push_back(std::move(img));
+
+    return id;
+}
+
+int MapDisplay::addHiddenEntity(SdlTextureAtlas img, ZOrder z)
+{
+    const int id = entities_.size();
+
+    MapEntity e;
+    e.id = id;
+    e.frame = 0;
+    e.z = z;
+    e.visible = false;
+    entities_.push_back(std::move(e));
+    entityImg_.push_back(std::move(img));
+
+    return id;
+}
+
 MapEntity MapDisplay::getEntity(int id) const
 {
     assert(id >= 0 && id < static_cast<int>(entities_.size()));
@@ -311,7 +341,7 @@ void MapDisplay::handleMousePos(Uint32 elapsed_ms)
 
     // Move the hex shadow to the hex under the mouse.
     // TODO: use a better public interface for this?
-    auto &shadow = entities_[hexShadow_];
+    auto &shadow = entities_[hexShadowId_];
     const auto mouseHex = hexFromMousePos();
     if (scrolling || map_.offGrid(mouseHex)) {
         shadow.visible = false;
@@ -368,6 +398,23 @@ Hex MapDisplay::hexFromMousePos() const
     }
 
     return {hx, hy};
+}
+
+void MapDisplay::highlight(Hex hex)
+{
+    assert(!map_.offGrid(hex));
+
+    auto e = getEntity(hexHighlightId_);
+    e.hex = std::move(hex);
+    e.visible = true;
+    updateEntity(e);
+}
+
+void MapDisplay::clearHighlight()
+{
+    auto e = getEntity(hexHighlightId_);
+    e.visible = false;
+    updateEntity(e);
 }
 
 void MapDisplay::computeTileEdges()
