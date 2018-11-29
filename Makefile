@@ -13,11 +13,11 @@ CC = gcc
 CFLAGS = -Wall -Wextra -O3
 CPPFLAGS = -Ic:/libraries \
 	-Ic:/MinGW/include \
-	-Ic:/libraries/SDL2-2.0.5/x86_64-w64-mingw32/include/SDL2 \
-	-Ic:/libraries/SDL2_image-2.0.1/x86_64-w64-mingw32/include/SDL2
-CXXFLAGS = -g -Wall -Wextra -std=c++1z
-LDFLAGS = -Lc:/libraries/SDL2-2.0.5/x86_64-w64-mingw32/lib \
-	-Lc:/libraries/SDL2_image-2.0.1/x86_64-w64-mingw32/lib
+	-Ic:/libraries/SDL2-2.0.9/x86_64-w64-mingw32/include/SDL2 \
+	-Ic:/libraries/SDL2_image-2.0.4/x86_64-w64-mingw32/include/SDL2
+CXXFLAGS = -g -Wall -Wextra -std=c++17
+LDFLAGS = -Lc:/libraries/SDL2-2.0.9/x86_64-w64-mingw32/lib \
+	-Lc:/libraries/SDL2_image-2.0.4/x86_64-w64-mingw32/lib
 LDLIBS = -lmingw32 -lSDL2main -lSDL2 -lSDL2_image
 
 BUILD_DIR = build
