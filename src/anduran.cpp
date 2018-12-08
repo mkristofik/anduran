@@ -71,7 +71,7 @@ void real_main()
         rmapView.addEntity(neutralFlag, hex, ZOrder::FLAG);
     }
 
-    int curPlayer = 0;
+    unsigned int curPlayer = 0;
     bool championSelected = false;
 
     win.clear();
@@ -121,6 +121,15 @@ void real_main()
         // - champion moves to the new hex
         if (mouseClicked) {
             const auto mouseHex = rmapView.hexFromMousePos();
+            for (auto i = 0u; i < players.size(); ++i) {
+                if (players[i].championHex == mouseHex) {
+                    if (curPlayer != i) {
+                        championSelected = false;
+                    }
+                    curPlayer = i;
+                    break;
+                }
+            }
             if (mouseHex == players[curPlayer].championHex) {
                 if (!championSelected) {
                     rmapView.highlight(mouseHex);
@@ -131,7 +140,6 @@ void real_main()
                     championSelected = false;
                 }
             }
-            // TODO: this crashes if mouseHex is off the grid
             else if (championSelected && rmap.getWalkable(mouseHex)) {
                 rmapView.clearHighlight();
                 auto champion = rmapView.getEntity(players[curPlayer].championId);

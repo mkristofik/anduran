@@ -241,13 +241,14 @@ bool RandomMap::getObstacle(const Hex &hex) const
 
 bool RandomMap::getWalkable(int index) const
 {
-    assert(!offGrid(index));
+    if (offGrid(index)) {
+        return false;
+    }
     return tileWalkable_[index] > 0;
 }
 
 bool RandomMap::getWalkable(const Hex &hex) const
 {
-    assert(!offGrid(hex));
     return getWalkable(intFromHex(hex));
 }
 
