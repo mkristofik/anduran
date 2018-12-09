@@ -1,4 +1,4 @@
-#    Copyright (C) 2016-2017 by Michael Kristofik <kristo605@gmail.com>
+#    Copyright (C) 2016-2018 by Michael Kristofik <kristo605@gmail.com>
 #    Part of the Champions of Anduran project.
 # 
 #    This program is free software; you can redistribute it and/or modify
@@ -33,13 +33,13 @@ RMAPGEN_DEPS = $(RMAPGEN_OBJS:%.o=%.d)
 # below will find open-simplex-noise.c.
 
 MAPVIEW = mapview.exe
-MAPVIEW_SRC = MapDisplay.cpp RandomMap.cpp SdlSurface.cpp SdlTexture.cpp \
+MAPVIEW_SRC = MapDisplay.cpp RandomMap.cpp SdlApp.cpp SdlSurface.cpp SdlTexture.cpp \
 	SdlTextureAtlas.cpp SdlWindow.cpp hex_utils.cpp json_utils.cpp mapview.cpp
 MAPVIEW_OBJS = $(MAPVIEW_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-noise.o
 MAPVIEW_DEPS = $(MAPVIEW_OBJS:%.o=%.d)
 
 ANDURAN = anduran.exe
-ANDURAN_SRC = MapDisplay.cpp RandomMap.cpp SdlSurface.cpp SdlTexture.cpp \
+ANDURAN_SRC = MapDisplay.cpp RandomMap.cpp SdlApp.cpp SdlSurface.cpp SdlTexture.cpp \
 	SdlTextureAtlas.cpp SdlWindow.cpp anduran.cpp hex_utils.cpp json_utils.cpp team_color.cpp
 ANDURAN_OBJS = $(ANDURAN_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-noise.o
 ANDURAN_DEPS = $(ANDURAN_OBJS:%.o=%.d)

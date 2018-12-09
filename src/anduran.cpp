@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2017 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2018 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -12,6 +12,7 @@
 */
 #include "MapDisplay.h"
 #include "RandomMap.h"
+#include "SdlApp.h"
 #include "SdlSurface.h"
 #include "SdlTexture.h"
 #include "SdlTextureAtlas.h"
@@ -32,157 +33,127 @@ struct Player
     int ellipseId;
 };
 
-void real_main()
-{
-    SdlWindow win(1280, 720, "Champions of Anduran");
-    RandomMap rmap("test.json");
-    MapDisplay rmapView(win, rmap);
-    std::vector<Player> players;
 
+class Anduran : public SdlApp
+{
+public:
+    Anduran();
+
+    virtual void do_first_frame() override;
+    virtual void update_frame(Uint32 elapsed_ms) override;
+    virtual void handle_lmouse_up() override;
+
+private:
+    SdlWindow win_;
+    RandomMap rmap_;
+    MapDisplay rmapView_;
+    std::vector<Player> players_;
+    unsigned int curPlayer_;
+    bool championSelected_;
+};
+
+Anduran::Anduran()
+    : SdlApp(),
+    win_(1280, 720, "Champions of Anduran"),
+    rmap_("test.json"),
+    rmapView_(win_, rmap_),
+    players_(),
+    curPlayer_(0),
+    championSelected_(false)
+{
     const auto championImages = applyTeamColors(SdlSurface("img/champion.png"));
     const SdlSurface ellipse("img/ellipse.png");
     const auto ellipseImages = applyTeamColors(ellipseToRefColor(ellipse));
 
     // Randomize the starting locations for each player.
-    auto castles = rmap.getCastleTiles();
+    auto castles = rmap_.getCastleTiles();
     assert(std::size(castles) <= std::size(championImages));
     shuffle(std::begin(castles), std::end(castles), RandomMap::engine);
 
     // Draw a champion in the hex due south of each castle.
     for (auto i = 0u; i < std::size(castles); ++i) {
         const auto hex = castles[i].getNeighbor(HexDir::S);
-        const int champion = rmapView.addEntity(SdlTexture(championImages[i], win),
+        const int champion = rmapView_.addEntity(SdlTexture(championImages[i], win_),
+                                                 hex,
+                                                 ZOrder::OBJECT);
+        const int ellipse = rmapView_.addEntity(SdlTexture(ellipseImages[i], win_),
                                                 hex,
-                                                ZOrder::OBJECT);
-        const int ellipse = rmapView.addEntity(SdlTexture(ellipseImages[i], win),
-                                               hex,
-                                               ZOrder::ELLIPSE);
-        players.push_back(Player{hex, champion, ellipse});
+                                                ZOrder::ELLIPSE);
+        players_.push_back(Player{hex, champion, ellipse});
     }
 
     // Draw flags on all the ownable objects.
     const SdlSurface flag("img/flag.png");
     const auto flagImages = applyTeamColors(flagToRefColor(flag));
-    const SdlTexture neutralFlag(flagImages[static_cast<int>(Team::NEUTRAL)], win);
-    for (const auto &hex : rmap.getObjectTiles("village")) {
-        rmapView.addEntity(neutralFlag, hex, ZOrder::FLAG);
+    const SdlTexture neutralFlag(flagImages[static_cast<int>(Team::NEUTRAL)], win_);
+    for (const auto &hex : rmap_.getObjectTiles("village")) {
+        rmapView_.addEntity(neutralFlag, hex, ZOrder::FLAG);
     }
-    for (const auto &hex : rmap.getObjectTiles("windmill")) {
-        rmapView.addEntity(neutralFlag, hex, ZOrder::FLAG);
-    }
-
-    unsigned int curPlayer = 0;
-    bool championSelected = false;
-
-    win.clear();
-    rmapView.draw();
-    win.update();
-
-    bool isDone = false;
-    bool mouseInWindow = true;
-    SDL_Event event;
-    auto prevFrameTime_ms = SDL_GetTicks();
-
-    while (!isDone) {
-        const auto curTime_ms = SDL_GetTicks();
-        const auto elapsed_ms = curTime_ms - prevFrameTime_ms;
-        bool mouseClicked = false;
-        prevFrameTime_ms = curTime_ms;
-
-        while (SDL_PollEvent(&event)) {
-            switch (event.type) {
-                case SDL_QUIT:
-                    isDone = true;
-                    break;
-                case SDL_MOUSEBUTTONUP:
-                    if (event.button.button == SDL_BUTTON_LEFT) {
-                        mouseClicked = true;
-                    }
-                    break;
-                case SDL_WINDOWEVENT:
-                    if (event.window.event == SDL_WINDOWEVENT_LEAVE) {
-                        mouseInWindow = false;
-                    }
-                    else if (event.window.event == SDL_WINDOWEVENT_ENTER) {
-                        mouseInWindow = true;
-                    }
-                    break;
-            }
-        }
-
-        if (mouseInWindow) {
-            rmapView.handleMousePos(elapsed_ms);
-        }
-
-        // Move a champion:
-        // - user selects the champion hex (clicking again deselects it)
-        // - highlight that hex when selected
-        // - user clicks on a walkable hex
-        // - champion moves to the new hex
-        if (mouseClicked) {
-            const auto mouseHex = rmapView.hexFromMousePos();
-            for (auto i = 0u; i < players.size(); ++i) {
-                if (players[i].championHex == mouseHex) {
-                    if (curPlayer != i) {
-                        championSelected = false;
-                    }
-                    curPlayer = i;
-                    break;
-                }
-            }
-            if (mouseHex == players[curPlayer].championHex) {
-                if (!championSelected) {
-                    rmapView.highlight(mouseHex);
-                    championSelected = true;
-                }
-                else {
-                    rmapView.clearHighlight();
-                    championSelected = false;
-                }
-            }
-            else if (championSelected && rmap.getWalkable(mouseHex)) {
-                rmapView.clearHighlight();
-                auto champion = rmapView.getEntity(players[curPlayer].championId);
-                auto ellipse = rmapView.getEntity(players[curPlayer].ellipseId);
-                champion.hex = mouseHex;
-                ellipse.hex = mouseHex;
-                rmapView.updateEntity(champion);
-                rmapView.updateEntity(ellipse);
-                players[curPlayer].championHex = mouseHex;
-                championSelected = false;
-            }
-        }
-
-        win.clear();
-        rmapView.draw();
-        win.update();
-        SDL_Delay(1);
+    for (const auto &hex : rmap_.getObjectTiles("windmill")) {
+        rmapView_.addEntity(neutralFlag, hex, ZOrder::FLAG);
     }
 }
 
+void Anduran::do_first_frame()
+{
+    win_.clear();
+    rmapView_.draw();
+    win_.update();
+}
+
+void Anduran::update_frame(Uint32 elapsed_ms)
+{
+    if (mouse_in_window()) {
+        rmapView_.handleMousePos(elapsed_ms);
+    }
+    win_.clear();
+    rmapView_.draw();
+    win_.update();
+}
+
+void Anduran::handle_lmouse_up()
+{
+    // Move a champion:
+    // - user selects the champion hex (clicking again deselects it)
+    // - highlight that hex when selected
+    // - user clicks on a walkable hex
+    // - champion moves to the new hex
+    const auto mouseHex = rmapView_.hexFromMousePos();
+    for (auto i = 0u; i < players_.size(); ++i) {
+        if (players_[i].championHex == mouseHex) {
+            if (curPlayer_ != i) {
+                championSelected_ = false;
+            }
+            curPlayer_ = i;
+            break;
+        }
+    }
+    if (mouseHex == players_[curPlayer_].championHex) {
+        if (!championSelected_) {
+            rmapView_.highlight(mouseHex);
+            championSelected_ = true;
+        }
+        else {
+            rmapView_.clearHighlight();
+            championSelected_ = false;
+        }
+    }
+    else if (championSelected_ && rmap_.getWalkable(mouseHex)) {
+        rmapView_.clearHighlight();
+        auto champion = rmapView_.getEntity(players_[curPlayer_].championId);
+        auto ellipse = rmapView_.getEntity(players_[curPlayer_].ellipseId);
+        champion.hex = mouseHex;
+        ellipse.hex = mouseHex;
+        rmapView_.updateEntity(champion);
+        rmapView_.updateEntity(ellipse);
+        players_[curPlayer_].championHex = mouseHex;
+        championSelected_ = false;
+    }
+}
+
+
 int main(int, char *[])  // two-argument form required by SDL
 {
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
-        SDL_LogCritical(SDL_LOG_CATEGORY_SYSTEM, "Error initializing SDL: %s",
-                        SDL_GetError());
-        return EXIT_FAILURE;
-    }
-    atexit(SDL_Quit);
-
-    if (IMG_Init(IMG_INIT_PNG) < 0) {
-        SDL_LogCritical(SDL_LOG_CATEGORY_SYSTEM, "Error initializing SDL_image: %s",
-                        IMG_GetError());
-        return EXIT_FAILURE;
-    }
-    atexit(IMG_Quit);
-
-    try {
-        real_main();
-    }
-    catch (const std::exception &e) {
-        SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Exit reason: %s", e.what());
-        return EXIT_FAILURE;
-    }
-
-    return EXIT_SUCCESS;
+    Anduran app;
+    return app.run();
 }
