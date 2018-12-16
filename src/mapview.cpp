@@ -46,9 +46,11 @@ MapViewApp::MapViewApp()
 
 void MapViewApp::do_first_frame()
 {
+    /*
     win_.clear();
     rmapView_.draw();
     win_.update();
+    */
 }
 
 void MapViewApp::update_frame(Uint32 elapsed_ms)

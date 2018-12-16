@@ -144,12 +144,10 @@ namespace
         return {px, py};
     }
 
-    /*
     [[maybe_unused]] SDL_Point pixelCenter(const Hex &hex)
     {
         return pixelFromHex(hex) + SDL_Point{HEX_SIZE / 2, HEX_SIZE / 2};
     }
-    */
 
     SDL_Point getMousePos()
     {

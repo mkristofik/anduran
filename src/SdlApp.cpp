@@ -59,6 +59,7 @@ bool SdlApp::mouse_in_window() const
     return mouseInWindow_;
 }
 
+// Do I need this?
 SDL_Point SdlApp::get_mouse_pos() const
 {
     SDL_Point mouse;
@@ -96,6 +97,8 @@ bool SdlApp::poll_events()
                 break;
 
             case SDL_WINDOWEVENT:
+                // These events are tied to a particular window, but for now
+                // we'll assume there's only one.
                 if (event.window.event == SDL_WINDOWEVENT_LEAVE) {
                     mouseInWindow_ = false;
                 }
