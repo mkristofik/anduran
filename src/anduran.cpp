@@ -17,6 +17,7 @@
 #include "SdlTexture.h"
 #include "SdlTextureAtlas.h"
 #include "SdlWindow.h"
+#include "anim_utils.h"
 #include "hex_utils.h"
 #include "team_color.h"
 
@@ -24,6 +25,7 @@
 #include "SDL_image.h"
 #include <algorithm>
 #include <cstdlib>
+#include <memory>
 #include <vector>
 
 struct Player
@@ -50,6 +52,7 @@ private:
     std::vector<Player> players_;
     unsigned int curPlayer_;
     bool championSelected_;
+    std::shared_ptr<AnimMove> anim_;
 };
 
 Anduran::Anduran()
@@ -59,7 +62,8 @@ Anduran::Anduran()
     rmapView_(win_, rmap_),
     players_(),
     curPlayer_(0),
-    championSelected_(false)
+    championSelected_(false),
+    anim_()
 {
     const auto championImages = applyTeamColors(SdlSurface("img/champion.png"));
     const SdlSurface ellipse("img/ellipse.png");
@@ -109,12 +113,22 @@ void Anduran::update_frame(Uint32 elapsed_ms)
         rmapView_.handleMousePos(elapsed_ms);
     }
     win_.clear();
+    if (anim_) {
+        anim_->run(elapsed_ms);
+        if (anim_->finished()) {
+            anim_.reset();
+        }
+    }
     rmapView_.draw();
     win_.update();
 }
 
 void Anduran::handle_lmouse_up()
 {
+    if (anim_) {
+        return;
+    }
+
     // Move a champion:
     // - user selects the champion hex (clicking again deselects it)
     // - highlight that hex when selected
@@ -141,13 +155,39 @@ void Anduran::handle_lmouse_up()
         }
     }
     else if (championSelected_ && rmap_.getWalkable(mouseHex)) {
+        /*
+         * first frame before all moves:
+         *     hide the hex highlight
+         *     clear any path highlights
+         *     hide the ellipse
+         *     set image to moving image if we have one
+         *     set z-value higher so it's drawn over everything
+         * first frame of each move:
+         *     get pixel distance between the src and dest hex
+         *     300 ms to move one hex
+         *     face right (base image) if walking NE or SE
+         *     reverse image (face left) if walking NW, SW
+         *     if walking N or S...
+         *         ...and hSrc.x > hDest.x, face left
+         *         ...and hSrc.x < hDest.x, face right
+         *         ...otherwise keep your current facing
+         *     (display entity needs to support drawing mirrored)
+         *     play a sound if we have one
+         * next frames:
+         *     fraction of elapsed time -> pixel offset of moving entity
+         *         that offset needs to be relative to entity's base offset
+         * last frame at >= 300 ms elapsed time:
+         *     set entity hex to the new hex
+         *     return entity offset to base
+         *     reset elapsed timer so we can start moving to the next hex
+         * end of all moves:
+         *     return moving entity to idle (base image, normal z-value, base offset)
+         *     show ellipse
+         */
         rmapView_.clearHighlight();
-        auto champion = rmapView_.getEntity(players_[curPlayer_].championId);
-        auto ellipse = rmapView_.getEntity(players_[curPlayer_].ellipseId);
-        champion.hex = mouseHex;
-        ellipse.hex = mouseHex;
-        rmapView_.updateEntity(champion);
-        rmapView_.updateEntity(ellipse);
+        auto champion = players_[curPlayer_].championId;
+        auto ellipse = players_[curPlayer_].ellipseId;
+        anim_ = std::make_shared<AnimMove>(rmapView_, champion, ellipse, mouseHex);
         players_[curPlayer_].championHex = mouseHex;
         championSelected_ = false;
     }

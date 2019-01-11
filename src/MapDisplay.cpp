@@ -16,9 +16,29 @@
 #include <algorithm>
 
 
+PartialPixel operator+(const PartialPixel &lhs, const PartialPixel &rhs)
+{
+    return {lhs.x + rhs.x, lhs.y + rhs.y};
+}
+
+PartialPixel operator*(double lhs, const SDL_Point &rhs)
+{
+    return {lhs * rhs.x, lhs * rhs.y};
+}
+
+PartialPixel operator*(const SDL_Point &lhs, double rhs)
+{
+    return rhs * lhs;
+}
+
 SDL_Point operator+(const SDL_Point &lhs, const SDL_Point &rhs)
 {
     return {lhs.x + rhs.x, lhs.y + rhs.y};
+}
+
+SDL_Point operator-(const SDL_Point &lhs, const SDL_Point &rhs)
+{
+    return {lhs.x - rhs.x, lhs.y - rhs.y};
 }
 
 SDL_Point operator+(const SDL_Point &lhs, const PartialPixel &rhs)
@@ -413,6 +433,11 @@ void MapDisplay::clearHighlight()
     auto e = getEntity(hexHighlightId_);
     e.visible = false;
     updateEntity(e);
+}
+
+SDL_Point MapDisplay::pixelDistance(const Hex &h1, const Hex &h2) const
+{
+    return pixelFromHex(h2) - pixelFromHex(h1);
 }
 
 void MapDisplay::computeTileEdges()

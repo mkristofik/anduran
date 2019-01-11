@@ -23,11 +23,16 @@
 #include "boost/variant.hpp"
 #include <vector>
 
+// TODO: make a pixel_utils.h?
 struct PartialPixel
 {
     double x = 0.0;
     double y = 0.0;
 };
+
+PartialPixel operator+(const PartialPixel &lhs, const PartialPixel &rhs);
+PartialPixel operator*(double lhs, const SDL_Point &rhs);
+PartialPixel operator*(const SDL_Point &lhs, double rhs);
 
 
 struct TileDisplay
@@ -98,6 +103,8 @@ public:
 
     void highlight(Hex hex);
     void clearHighlight();
+
+    SDL_Point pixelDistance(const Hex &h1, const Hex &h2) const;
 
 private:
     void computeTileEdges();
