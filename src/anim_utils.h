@@ -18,24 +18,49 @@
 
 #include "SDL.h"
 
-class AnimMove
+class AnimBase
 {
 public:
-    AnimMove(MapDisplay &display, int mover, int shadow, const Hex &dest);
+    AnimBase(MapDisplay &display, Uint32 runtime_ms);
+    virtual ~AnimBase() = default;
 
     void run(Uint32 frame_ms);
     bool finished() const;
 
+protected:
+    MapEntity get_entity(int id) const;
+    void update_entity(const MapEntity &entity);
+    MapDisplay & get_display();
+    const MapDisplay & get_display() const;
+
 private:
-    MapDisplay *display_;
+    virtual void start();
+    virtual void update(double runtimeFrac) = 0;
+    virtual void stop();
+
+    MapDisplay &display_;
+    Uint32 elapsed_ms_;
+    Uint32 runtime_ms_;
+    bool isRunning_;
+    bool isDone_;
+};
+
+
+class AnimMove : public AnimBase
+{
+public:
+    AnimMove(MapDisplay &display, int mover, int shadow, const Hex &dest);
+
+private:
+    virtual void start() override;
+    virtual void update(double runtimeFrac) override;
+    virtual void stop() override;
+
     int entity_;
     int entityShadow_;
     Hex destHex_;
     MapEntity baseState_;
     SDL_Point distToMove_;
-    Uint32 elapsed_ms_;
-    bool isRunning_;
-    bool isDone_;
 };
 
 #endif

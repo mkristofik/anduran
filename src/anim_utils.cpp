@@ -12,62 +12,106 @@
 */
 #include "anim_utils.h"
 
-
-namespace
-{
-    const Uint32 RUNTIME_MS = 300;
-}
-
-
-AnimMove::AnimMove(MapDisplay &display, int mover, int shadow, const Hex &dest)
-    : display_(&display),
-    entity_(mover),
-    entityShadow_(shadow),
-    destHex_(dest),
-    baseState_(display_->getEntity(entity_)),
-    distToMove_(display_->pixelDistance(baseState_.hex, destHex_)),
+AnimBase::AnimBase(MapDisplay &display, Uint32 runtime_ms)
+    : display_(display),
     elapsed_ms_(0),
+    runtime_ms_(runtime_ms),
     isRunning_(false),
     isDone_(false)
 {
 }
 
-void AnimMove::run(Uint32 frame_ms)
+void AnimBase::run(Uint32 frame_ms)
 {
     if (!isRunning_) {
-        auto moverObj = display_->getEntity(entity_);
-        auto shadowObj = display_->getEntity(entityShadow_);
-        moverObj.z = ZOrder::ANIMATING;
-        moverObj.visible = true;
-        // TODO: set image to the moving image if we have one
-        // TODO: change the facing depending on move direction
-        shadowObj.visible = false;
-        display_->updateEntity(moverObj);
-        display_->updateEntity(shadowObj);
+        start();
         isRunning_ = true;
     }
-
-    elapsed_ms_ += frame_ms;
-    auto moverObj = display_->getEntity(entity_);
-    if (elapsed_ms_ < RUNTIME_MS) {
-        const auto frac = static_cast<double>(elapsed_ms_) / RUNTIME_MS;
-        moverObj.offset = baseState_.offset + frac * distToMove_;
-        display_->updateEntity(moverObj);
-    }
     else {
-        auto shadowObj = display_->getEntity(entityShadow_);
-        moverObj = baseState_;
-        moverObj.hex = destHex_;
-        moverObj.visible = true;
-        shadowObj.hex = destHex_;
-        shadowObj.visible = true;
-        display_->updateEntity(moverObj);
-        display_->updateEntity(shadowObj);
-        isDone_ = true;
+        elapsed_ms_ += frame_ms;
+        if (elapsed_ms_ < runtime_ms_) {
+            update(static_cast<double>(elapsed_ms_) / runtime_ms_);
+        }
+        else if (!finished()) {
+            stop();
+            isDone_ = true;
+        }
     }
 }
 
-bool AnimMove::finished() const
+bool AnimBase::finished() const
 {
     return isDone_;
+}
+
+MapEntity AnimBase::get_entity(int id) const
+{
+    return get_display().getEntity(id);
+}
+
+void AnimBase::update_entity(const MapEntity &entity)
+{
+    get_display().updateEntity(entity);
+}
+
+MapDisplay & AnimBase::get_display()
+{
+    return display_;
+}
+
+const MapDisplay & AnimBase::get_display() const
+{
+    return display_;
+}
+
+void AnimBase::start()
+{
+}
+
+void AnimBase::stop()
+{
+}
+
+
+AnimMove::AnimMove(MapDisplay &display, int mover, int shadow, const Hex &dest)
+    : AnimBase(display, 300),
+    entity_(mover),
+    entityShadow_(shadow),
+    destHex_(dest),
+    baseState_(get_entity(entity_)),
+    distToMove_(get_display().pixelDelta(baseState_.hex, destHex_))
+{
+}
+
+void AnimMove::start()
+{
+    auto moverObj = get_entity(entity_);
+    auto shadowObj = get_entity(entityShadow_);
+    moverObj.z = ZOrder::ANIMATING;
+    moverObj.visible = true;
+    // TODO: set image to the moving image if we have one
+    // TODO: change the facing depending on move direction
+    shadowObj.visible = false;
+    update_entity(moverObj);
+    update_entity(shadowObj);
+}
+
+void AnimMove::update(double runtimeFrac)
+{
+    auto moverObj = get_entity(entity_);
+    moverObj.offset = baseState_.offset + runtimeFrac * distToMove_;
+    update_entity(moverObj);
+}
+
+void AnimMove::stop()
+{
+    auto moverObj = get_entity(entity_);
+    auto shadowObj = get_entity(entityShadow_);
+    moverObj = baseState_;
+    moverObj.hex = destHex_;
+    moverObj.visible = true;
+    shadowObj.hex = destHex_;
+    shadowObj.visible = true;
+    update_entity(moverObj);
+    update_entity(shadowObj);
 }

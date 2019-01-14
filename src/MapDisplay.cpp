@@ -435,7 +435,7 @@ void MapDisplay::clearHighlight()
     updateEntity(e);
 }
 
-SDL_Point MapDisplay::pixelDistance(const Hex &h1, const Hex &h2) const
+SDL_Point MapDisplay::pixelDelta(const Hex &h1, const Hex &h2) const
 {
     return pixelFromHex(h2) - pixelFromHex(h1);
 }

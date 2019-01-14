@@ -52,7 +52,7 @@ private:
     std::vector<Player> players_;
     unsigned int curPlayer_;
     bool championSelected_;
-    std::shared_ptr<AnimMove> anim_;
+    std::shared_ptr<AnimBase> anim_;
 };
 
 Anduran::Anduran()

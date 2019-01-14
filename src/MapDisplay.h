@@ -104,7 +104,7 @@ public:
     void highlight(Hex hex);
     void clearHighlight();
 
-    SDL_Point pixelDistance(const Hex &h1, const Hex &h2) const;
+    SDL_Point pixelDelta(const Hex &h1, const Hex &h2) const;
 
 private:
     void computeTileEdges();
