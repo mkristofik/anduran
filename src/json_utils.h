@@ -51,7 +51,8 @@ void jsonWriteFile(const char *filename, const rapidjson::Document &doc);
 template <typename T, size_t N>
 void jsonGetArray(rapidjson::Value &obj, const char (&name)[N], std::vector<T> &outVec)
 {
-    static_assert(std::is_integral<T>::value || std::is_enum<T>::value);
+    static_assert(std::is_integral_v<T> || std::is_enum_v<T>,
+                  "Only supports fetching arrays with integer type");
 
     if (!obj.HasMember(name)) {
         return;
@@ -85,7 +86,8 @@ void jsonGetMultimap(rapidjson::Value &obj,
                      const char (&name)[N],
                      FlatMultimap<std::string, T> &outMap)
 {
-    static_assert(std::is_integral<T>::value);
+    static_assert(std::is_integral_v<T>,
+                  "Only supports de-serializing maps of string to integer type");
 
     if (!obj.HasMember(name)) {
         return;
