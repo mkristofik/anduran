@@ -52,7 +52,7 @@ private:
     std::vector<Player> players_;
     unsigned int curPlayer_;
     bool championSelected_;
-    std::shared_ptr<AnimBase> anim_;
+    AnimManager anims_;
 };
 
 Anduran::Anduran()
@@ -63,7 +63,7 @@ Anduran::Anduran()
     players_(),
     curPlayer_(0),
     championSelected_(false),
-    anim_()
+    anims_(rmapView_)
 {
     const auto championImages = applyTeamColors(SdlSurface("img/champion.png"));
     const SdlSurface ellipse("img/ellipse.png");
@@ -113,19 +113,14 @@ void Anduran::update_frame(Uint32 elapsed_ms)
         rmapView_.handleMousePos(elapsed_ms);
     }
     win_.clear();
-    if (anim_) {
-        anim_->run(elapsed_ms);
-        if (anim_->finished()) {
-            anim_.reset();
-        }
-    }
+    anims_.update(elapsed_ms);
     rmapView_.draw();
     win_.update();
 }
 
 void Anduran::handle_lmouse_up()
 {
-    if (anim_) {
+    if (anims_.running()) {
         return;
     }
 
@@ -187,7 +182,7 @@ void Anduran::handle_lmouse_up()
         rmapView_.clearHighlight();
         auto champion = players_[curPlayer_].championId;
         auto ellipse = players_[curPlayer_].ellipseId;
-        anim_ = std::make_shared<AnimMove>(rmapView_, champion, ellipse, mouseHex);
+        anims_.do_move(champion, ellipse, mouseHex);
         players_[curPlayer_].championHex = mouseHex;
         championSelected_ = false;
     }

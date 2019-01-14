@@ -115,3 +115,40 @@ void AnimMove::stop()
     update_entity(moverObj);
     update_entity(shadowObj);
 }
+
+
+AnimManager::AnimManager(MapDisplay &display)
+    : display_(display),
+    anims_(),
+    currentAnim_(-1)
+{
+}
+
+bool AnimManager::running() const
+{
+    return currentAnim_ >= 0;
+}
+
+void AnimManager::update(Uint32 frame_ms)
+{
+    if (!running() && !anims_.empty()) {
+        currentAnim_ = 0;
+    }
+    if (running()) {
+        if (anims_[currentAnim_]->finished()) {
+            ++currentAnim_;
+            // TODO: convenience function for size as int
+            if (currentAnim_ == static_cast<int>(anims_.size())) {
+                anims_.clear();
+                currentAnim_ = -1;
+                return;
+            }
+        }
+        anims_[currentAnim_]->run(frame_ms);
+    }
+}
+
+void AnimManager::do_move(int mover, int shadow, const Hex &dest)
+{
+    anims_.push_back(std::make_shared<AnimMove>(display_, mover, shadow, dest));
+}

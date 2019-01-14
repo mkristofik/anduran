@@ -63,4 +63,23 @@ private:
     SDL_Point distToMove_;
 };
 
+
+// Run a set of animations in sequence.
+class AnimManager
+{
+public:
+    AnimManager(MapDisplay &display);
+
+    bool running() const;
+    void update(Uint32 frame_ms);
+
+    // TODO: perfect forward any number of arguments?
+    void do_move(int mover, int shadow, const Hex &dest);
+
+private:
+    MapDisplay &display_;
+    std::vector<std::shared_ptr<AnimBase>> anims_;
+    int currentAnim_;
+};
+
 #endif
