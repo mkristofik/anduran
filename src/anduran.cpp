@@ -182,7 +182,7 @@ void Anduran::handle_lmouse_up()
         rmapView_.clearHighlight();
         auto champion = players_[curPlayer_].championId;
         auto ellipse = players_[curPlayer_].ellipseId;
-        anims_.do_move(champion, ellipse, mouseHex);
+        anims_.insert<AnimMove>(champion, ellipse, mouseHex);
         players_[curPlayer_].championHex = mouseHex;
         championSelected_ = false;
     }

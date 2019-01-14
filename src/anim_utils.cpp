@@ -147,8 +147,3 @@ void AnimManager::update(Uint32 frame_ms)
         anims_[currentAnim_]->run(frame_ms);
     }
 }
-
-void AnimManager::do_move(int mover, int shadow, const Hex &dest)
-{
-    anims_.push_back(std::make_shared<AnimMove>(display_, mover, shadow, dest));
-}

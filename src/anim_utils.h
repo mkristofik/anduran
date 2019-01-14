@@ -17,6 +17,9 @@
 #include "hex_utils.h"
 
 #include "SDL.h"
+#include <memory>
+#include <utility>
+#include <vector>
 
 class AnimBase
 {
@@ -73,13 +76,23 @@ public:
     bool running() const;
     void update(Uint32 frame_ms);
 
-    // TODO: perfect forward any number of arguments?
-    void do_move(int mover, int shadow, const Hex &dest);
+    // This is probably too clever by half, but whatever.
+    // Skip having to specify the display on every call (because laziness), I
+    // don't have to modify this function if the argument list ever changes, and I
+    // don't have to write a new one for a new animation type.
+    template <typename AnimType, typename... T>
+    void insert(T&&... args);
 
 private:
     MapDisplay &display_;
     std::vector<std::shared_ptr<AnimBase>> anims_;
     int currentAnim_;
 };
+
+template <typename AnimType, typename... T>
+void AnimManager::insert(T&&... args)
+{
+    anims_.push_back(std::make_shared<AnimType>(display_, std::forward<T>(args)...));
+}
 
 #endif
