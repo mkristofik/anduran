@@ -18,6 +18,7 @@
 
 #include "SDL.h"
 #include <memory>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -92,6 +93,8 @@ private:
 template <typename AnimType, typename... T>
 void AnimManager::insert(T&&... args)
 {
+    static_assert(std::is_base_of_v<AnimBase, AnimType>,
+                  "type to be inserted must inherit from AnimBase");
     anims_.push_back(std::make_shared<AnimType>(display_, std::forward<T>(args)...));
 }
 
