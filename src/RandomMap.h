@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2017 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2019 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify

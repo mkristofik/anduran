@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2017 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2019 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -11,6 +11,7 @@
     See the COPYING.txt file for more details.
 */
 #include "RandomMap.h"
+#include "container_utils.h"
 #include "json_utils.h"
 #include "open-simplex-noise.h"
 
@@ -303,7 +304,7 @@ void RandomMap::generateRegions()
     for (int i = 0; i < 4; ++i) {
         assignRegions(centers);
         centers = voronoi();
-        numRegions_ = static_cast<int>(centers.size());
+        numRegions_ = size_int(centers);
     }
 
     // Assign each hex to its final region.
@@ -459,7 +460,7 @@ std::vector<int> RandomMap::randomAltitudes()
         }
     }
 
-    assert(static_cast<int>(altitude.size()) == numRegions_);
+    assert(size_int(altitude) == numRegions_);
     assert(none_of(std::cbegin(altitude), std::cend(altitude), [] (auto elem) {
                        return elem == -1;
                    }));

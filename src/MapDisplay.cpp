@@ -11,6 +11,7 @@
     See the COPYING.txt file for more details.
 */
 #include "MapDisplay.h"
+#include "container_utils.h"
 
 #include "boost/container/flat_map.hpp"
 #include <algorithm>
@@ -342,14 +343,14 @@ int MapDisplay::addHiddenEntity(SdlTextureAtlas img, ZOrder z)
 
 MapEntity MapDisplay::getEntity(int id) const
 {
-    assert(id >= 0 && id < static_cast<int>(entities_.size()));
+    assert(id >= 0 && id < size_int(entities_));
     return entities_[id];
 }
 
 void MapDisplay::updateEntity(MapEntity newState)
 {
     const int id = newState.id;
-    assert(id >= 0 && id < static_cast<int>(entities_.size()));
+    assert(id >= 0 && id < size_int(entities_));
     entities_[id] = std::move(newState);
 }
 
@@ -445,7 +446,7 @@ void MapDisplay::computeTileEdges()
     // Map all hexes, including those on the outside border, to their location in
     // the tile list.
     boost::container::flat_map<Hex, int> hexmap;
-    for (int i = 0; i < static_cast<int>(tiles_.size()); ++i) {
+    for (int i = 0; i < size_int(tiles_); ++i) {
         hexmap.emplace(tiles_[i].hex, i);
     }
 

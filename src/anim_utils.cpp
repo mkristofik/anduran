@@ -11,6 +11,7 @@
     See the COPYING.txt file for more details.
 */
 #include "anim_utils.h"
+#include "container_utils.h"
 
 AnimBase::AnimBase(MapDisplay &display, Uint32 runtime_ms)
     : display_(display),
@@ -138,7 +139,7 @@ void AnimManager::update(Uint32 frame_ms)
         if (anims_[currentAnim_]->finished()) {
             ++currentAnim_;
             // TODO: convenience function for size as int
-            if (currentAnim_ == static_cast<int>(anims_.size())) {
+            if (currentAnim_ == size_int(anims_)) {
                 anims_.clear();
                 currentAnim_ = -1;
                 return;
