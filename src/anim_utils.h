@@ -60,11 +60,16 @@ private:
     virtual void update(double runtimeFrac) override;
     virtual void stop() override;
 
+    // All unit sprites are drawn looking to the right. A unit walking to the left
+    // should face left so it always walks forward.
+    bool should_face_left() const;
+
     int entity_;
     int entityShadow_;
     Hex destHex_;
     MapEntity baseState_;
     SDL_Point distToMove_;
+    bool faceLeft_;
 };
 
 

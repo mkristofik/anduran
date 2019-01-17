@@ -18,6 +18,7 @@
 #include <memory>
 
 // Wrapper around SDL_Texture, representing a static image in video memory.
+// TODO: is this just a 1x1 SdlTextureAtlas?
 class SdlTexture
 {
 public:

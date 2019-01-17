@@ -57,6 +57,12 @@ void SdlTextureAtlas::drawFrameCentered(int row, int col, SDL_Point p)
     texture_.draw(p, &srcRect);
 }
 
+void SdlTextureAtlas::drawFrameFlippedH(int row, int col, const SDL_Point &p)
+{
+    const auto srcRect = getFrameRect(row, col);
+    texture_.drawFlippedH(p, &srcRect);
+}
+
 SDL_Rect SdlTextureAtlas::getDestRect(int px, int py) const
 {
     const auto srcRect = getFrameRect(0, 0);  // assume all frames are the same size

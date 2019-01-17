@@ -35,6 +35,10 @@ public:
     // Draw the frame at 0-based (row, col) using 'p' as the center point.
     void drawFrameCentered(int row, int col, SDL_Point p);
 
+    // Draw the frame mirrored horizontally at 0-based (row, col) using 'p' as the
+    // upper-left corner.
+    void drawFrameFlippedH(int row, int col, const SDL_Point &p);
+
     // Return the bounding box for drawing one frame at (px,py).
     SDL_Rect getDestRect(int px, int py) const;
     SDL_Rect getDestRect(const SDL_Point &p) const;

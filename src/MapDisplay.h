@@ -57,6 +57,7 @@ struct MapEntity
     int frame;  // which frame to draw if using a texture atlas (assume only one row)
     ZOrder z;
     bool visible;
+    bool mirrored;  // draw image flipped horizontally
 
     MapEntity();
 };
@@ -85,7 +86,7 @@ public:
     // Fetch/modify entities by value to decouple objects that modify entities
     // from the map display.
     MapEntity getEntity(int id) const;
-    void updateEntity(MapEntity newState);
+    void updateEntity(const MapEntity &newState);
 
     void handleMousePos(Uint32 elapsed_ms);
     Hex hexFromMousePos() const;
@@ -93,7 +94,7 @@ public:
     void highlight(Hex hex);
     void clearHighlight();
 
-    SDL_Point pixelDelta(const Hex &h1, const Hex &h2) const;
+    SDL_Point pixelDelta(const Hex &hSrc, const Hex &hDest) const;
 
 private:
     void computeTileEdges();

@@ -150,7 +150,7 @@ void Anduran::handle_lmouse_up()
         }
     }
     else if (championSelected_ && rmap_.getWalkable(mouseHex)) {
-        /*
+        /* TODO:
          * first frame before all moves:
          *     hide the hex highlight
          *     clear any path highlights

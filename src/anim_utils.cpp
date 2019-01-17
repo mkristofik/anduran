@@ -80,7 +80,8 @@ AnimMove::AnimMove(MapDisplay &display, int mover, int shadow, const Hex &dest)
     entityShadow_(shadow),
     destHex_(dest),
     baseState_(get_entity(entity_)),
-    distToMove_(get_display().pixelDelta(baseState_.hex, destHex_))
+    distToMove_(get_display().pixelDelta(baseState_.hex, destHex_)),
+    faceLeft_(should_face_left())
 {
 }
 
@@ -90,8 +91,8 @@ void AnimMove::start()
     auto shadowObj = get_entity(entityShadow_);
     moverObj.z = ZOrder::ANIMATING;
     moverObj.visible = true;
+    moverObj.mirrored = faceLeft_;
     // TODO: set image to the moving image if we have one
-    // TODO: change the facing depending on move direction
     shadowObj.visible = false;
     update_entity(moverObj);
     update_entity(shadowObj);
@@ -111,10 +112,23 @@ void AnimMove::stop()
     moverObj = baseState_;
     moverObj.hex = destHex_;
     moverObj.visible = true;
+    moverObj.mirrored = faceLeft_;
     shadowObj.hex = destHex_;
     shadowObj.visible = true;
     update_entity(moverObj);
     update_entity(shadowObj);
+}
+
+bool AnimMove::should_face_left() const
+{
+    auto moverObj = get_entity(entity_);
+    if (moverObj.hex.x > destHex_.x) {
+        return true;
+    }
+    else if (moverObj.hex.x == destHex_.x && moverObj.mirrored) {
+        return true;
+    }
+    return false;
 }
 
 

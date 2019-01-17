@@ -162,7 +162,8 @@ MapEntity::MapEntity()
     id(-1),
     frame(-1),
     z(ZOrder::OBJECT),
-    visible(true)
+    visible(true),
+    mirrored(false)
 {
 }
 
@@ -310,11 +311,11 @@ MapEntity MapDisplay::getEntity(int id) const
     return entities_[id];
 }
 
-void MapDisplay::updateEntity(MapEntity newState)
+void MapDisplay::updateEntity(const MapEntity &newState)
 {
     const int id = newState.id;
     assert(id >= 0 && id < size_int(entities_));
-    entities_[id] = std::move(newState);
+    entities_[id] = newState;
 }
 
 void MapDisplay::handleMousePos(Uint32 elapsed_ms)
@@ -399,9 +400,9 @@ void MapDisplay::clearHighlight()
     updateEntity(e);
 }
 
-SDL_Point MapDisplay::pixelDelta(const Hex &h1, const Hex &h2) const
+SDL_Point MapDisplay::pixelDelta(const Hex &hSrc, const Hex &hDest) const
 {
-    return pixelFromHex(h2) - pixelFromHex(h1);
+    return pixelFromHex(hDest) - pixelFromHex(hSrc);
 }
 
 void MapDisplay::computeTileEdges()
@@ -617,14 +618,26 @@ void MapDisplay::drawEntities()
         if (e.frame >= 0) {
             auto &img = boost::get<SdlTextureAtlas>(entityImg_[id]);
             const auto dest = img.getDestRect(pixel);
-            if (SDL_HasIntersection(&dest, &displayArea_) == SDL_TRUE) {
+            if (SDL_HasIntersection(&dest, &displayArea_) == SDL_FALSE) {
+                continue;
+            }
+            if (e.mirrored) {
+                img.drawFrameFlippedH(0, e.frame, pixel);
+            }
+            else {
                 img.drawFrame(0, e.frame, pixel);
             }
         }
         else {
             auto &img = boost::get<SdlTexture>(entityImg_[id]);
             const auto dest = img.getDestRect(pixel);
-            if (SDL_HasIntersection(&dest, &displayArea_) == SDL_TRUE) {
+            if (SDL_HasIntersection(&dest, &displayArea_) == SDL_FALSE) {
+                continue;
+            }
+            if (e.mirrored) {
+                img.drawFlippedH(pixel);
+            }
+            else {
                 img.draw(pixel);
             }
         }
