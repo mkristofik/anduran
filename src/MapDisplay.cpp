@@ -16,43 +16,6 @@
 #include "boost/container/flat_map.hpp"
 #include <algorithm>
 
-
-PartialPixel operator+(const PartialPixel &lhs, const PartialPixel &rhs)
-{
-    return {lhs.x + rhs.x, lhs.y + rhs.y};
-}
-
-PartialPixel operator*(double lhs, const SDL_Point &rhs)
-{
-    return {lhs * rhs.x, lhs * rhs.y};
-}
-
-PartialPixel operator*(const SDL_Point &lhs, double rhs)
-{
-    return rhs * lhs;
-}
-
-SDL_Point operator+(const SDL_Point &lhs, const SDL_Point &rhs)
-{
-    return {lhs.x + rhs.x, lhs.y + rhs.y};
-}
-
-SDL_Point operator-(const SDL_Point &lhs, const SDL_Point &rhs)
-{
-    return {lhs.x - rhs.x, lhs.y - rhs.y};
-}
-
-SDL_Point operator+(const SDL_Point &lhs, const PartialPixel &rhs)
-{
-    return {static_cast<int>(lhs.x + rhs.x), static_cast<int>(lhs.y + rhs.y)};
-}
-
-SDL_Point operator-(const SDL_Point &lhs, const PartialPixel &rhs)
-{
-    return {static_cast<int>(lhs.x - rhs.x), static_cast<int>(lhs.y - rhs.y)};
-}
-
-
 namespace
 {
     const int HEX_SIZE = 72;

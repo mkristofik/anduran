@@ -18,22 +18,11 @@
 #include "SdlTextureAtlas.h"
 #include "SdlWindow.h"
 #include "hex_utils.h"
+#include "pixel_utils.h"
 
 #include "SDL.h"
 #include "boost/variant.hpp"
 #include <vector>
-
-// TODO: make a pixel_utils.h?
-struct PartialPixel
-{
-    double x = 0.0;
-    double y = 0.0;
-};
-
-PartialPixel operator+(const PartialPixel &lhs, const PartialPixel &rhs);
-PartialPixel operator*(double lhs, const SDL_Point &rhs);
-PartialPixel operator*(const SDL_Point &lhs, double rhs);
-
 
 struct TileDisplay
 {

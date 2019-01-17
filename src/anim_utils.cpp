@@ -138,7 +138,6 @@ void AnimManager::update(Uint32 frame_ms)
     if (running()) {
         if (anims_[currentAnim_]->finished()) {
             ++currentAnim_;
-            // TODO: convenience function for size as int
             if (currentAnim_ == size_int(anims_)) {
                 anims_.clear();
                 currentAnim_ = -1;
