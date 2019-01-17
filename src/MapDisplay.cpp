@@ -167,6 +167,20 @@ MapEntity::MapEntity()
 {
 }
 
+void MapEntity::faceHex(const Hex &hDest)
+{
+    if (hex.x > hDest.x) {
+        mirrored = true;
+    }
+    else if (hex.x == hDest.x && mirrored) {
+        mirrored = true;
+    }
+    else {
+        mirrored = false;
+    }
+}
+
+
 
 MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap)
     : window_(win),
