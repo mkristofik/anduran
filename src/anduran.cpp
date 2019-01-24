@@ -180,6 +180,7 @@ void Anduran::handle_lmouse_up()
          *     show ellipse
          */
         rmapView_.clearHighlight();
+        // TODO: path between players_[curPlayer_].championHex and mouseHex
         auto champion = players_[curPlayer_].championId;
         auto ellipse = players_[curPlayer_].ellipseId;
         anims_.insert<AnimMove>(champion, ellipse, mouseHex);

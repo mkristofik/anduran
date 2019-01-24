@@ -112,6 +112,7 @@ public:
         auto begin() const { return first; }
         auto end() const { return second; }
         int size() const { return std::distance(begin(), end()); }
+        bool empty() const { return size() == 0; }
     };
 
 private:

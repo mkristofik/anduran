@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <cmath>
 #include <ctime>
+#include <functional>
 #include <iterator>
 #include <memory>
 #include <queue>
@@ -114,12 +115,13 @@ double Noise::get(int x, int y)
 
 
 std::default_random_engine RandomMap::engine(static_cast<unsigned int>(std::time(nullptr)));
+const int RandomMap::invalidIndex = -1;
 
 RandomMap::RandomMap(int width)
     : width_(width),
     size_(width_ * width_),
     numRegions_(0),
-    tileRegions_(size_, -1),
+    tileRegions_(size_, invalidIndex),
     tileNeighbors_(),
     tileObstacles_(size_, 0),
     tileOccupied_(size_, 0),
@@ -253,6 +255,34 @@ bool RandomMap::getWalkable(const Hex &hex) const
     return getWalkable(intFromHex(hex));
 }
 
+// TODO: adding const to these two functions would require FlatMultimap to have
+// const member functions.
+Neighbors<int> RandomMap::getNeighbors(int index)
+{
+    Neighbors<int> ret;
+    ret.fill(invalidIndex);
+    if (offGrid(index)) {
+        return ret;
+    }
+
+    const auto neighbors = tileNeighbors_.find(index);
+    assert(neighbors.empty() || neighbors.size() == ret.size());
+
+    std::copy(std::begin(neighbors), std::end(neighbors), std::begin(ret));
+    return ret;
+}
+
+Neighbors<Hex> RandomMap::getNeighbors(const Hex &hex)
+{
+    Neighbors<Hex> ret;
+    const auto intNeighbors = getNeighbors(intFromHex(hex));
+    for (auto i = 0u; i < intNeighbors.size(); ++i) {
+        ret[i] = hexFromInt(intNeighbors[i]);
+    }
+
+    return ret;
+}
+
 std::vector<Hex> RandomMap::getCastleTiles() const
 {
     return hexesFromInt(castles_);
@@ -275,7 +305,7 @@ Hex RandomMap::hexFromInt(int index) const
 int RandomMap::intFromHex(const Hex &hex) const
 {
     if (offGrid(hex)) {
-        return -1;
+        return invalidIndex;
     }
 
     return hex.y * width_ + hex.x;
@@ -323,10 +353,13 @@ void RandomMap::buildNeighborGraphs()
     for (int i = 0; i < size_; ++i) {
         for (auto dir : HexDir()) {
             const int nbrTile = intFromHex(hexFromInt(i).getNeighbor(dir));
+
+            // It will simplify pathfinding if every tile has 6 neighbors, even if
+            // some of them are off the grid.
+            tileNeighbors_.insert(i, nbrTile);
             if (offGrid(nbrTile)) {
                 continue;
             }
-            tileNeighbors_.insert(i, nbrTile);
 
             const int region = tileRegions_[i];
             const int nbrRegion = tileRegions_[nbrTile];
@@ -491,6 +524,10 @@ void RandomMap::avoidIsolatedRegions()
     // adjacent regions.
     for (int i = 0; i < size_; ++i) {
         for (const auto &nbr : tileNeighbors_.find(i)) {
+            if (offGrid(nbr)) {
+                continue;
+            }
+
             const auto region = tileRegions_[i];
             const auto nbrRegion = tileRegions_[nbr];
             if ((region == nbrRegion) ||
@@ -556,7 +593,8 @@ void RandomMap::exploreWalkableTiles(int startTile, std::vector<char> &visited)
         bfsQ.pop();
 
         for (const auto &nbr : tileNeighbors_.find(tile)) {
-            if (tileRegions_[nbr] == region &&
+            if (!offGrid(nbr) &&
+                tileRegions_[nbr] == region &&
                 !visited[nbr] &&
                 tileWalkable_[nbr])
             {
@@ -571,18 +609,18 @@ void RandomMap::connectIsolatedTiles(int startTile, const std::vector<char> &vis
     const int region = tileRegions_[startTile];
     std::queue<int> bfsQ;
     boost::container::flat_map<int, int> cameFrom;
-    int pathStart = -1;
+    int pathStart = invalidIndex;
 
     // Search for the nearest visited walkable tile in the same region.  Clear a
     // path of obstacles to get there.
     bfsQ.push(startTile);
-    cameFrom.emplace(startTile, -1);
-    while (pathStart == -1 && !bfsQ.empty()) {
+    cameFrom.emplace(startTile, invalidIndex);
+    while (pathStart == invalidIndex && !bfsQ.empty()) {
         const int tile = bfsQ.front();
         bfsQ.pop();
 
         for (const auto &nbr : tileNeighbors_.find(tile)) {
-            if (tileRegions_[nbr] != region) {
+            if (offGrid(nbr) || tileRegions_[nbr] != region) {
                 continue;
             }
             else if (visited[nbr] && tileWalkable_[nbr]) {
@@ -684,7 +722,7 @@ Hex RandomMap::findCastleSpot(int startTile)
         }
 
         for (const auto &nbr : tileNeighbors_.find(tile)) {
-            if (!visited[nbr]) {
+            if (!offGrid(nbr) && !visited[nbr]) {
                 bfsQ.push(nbr);
             }
         }
@@ -725,14 +763,14 @@ int RandomMap::findObjectSpot(int startTile, int region)
         }
 
         for (const auto &nbr : tileNeighbors_.find(tile)) {
-            if (visited.find(nbr) == std::cend(visited)) {
+            if (!offGrid(nbr) && visited.find(nbr) == std::cend(visited)) {
                 bfsQ.push(nbr);
             }
         }
     }
 
     // No walkable tiles remaining in this region.
-    return -1;
+    return invalidIndex;
 }
 
 void RandomMap::placeObjects()

@@ -16,7 +16,7 @@
 int main()
 {
     RandomMap map(36);
-    map.writeFile("test.json");
+    map.writeFile("test2.json");
 
     /* TODO: turn this into a unit test?
     FlatMultimap<int, int> test;

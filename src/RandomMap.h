@@ -46,6 +46,11 @@ public:
     bool getWalkable(int index) const;
     bool getWalkable(const Hex &hex) const;
 
+    // Return the set of 6 neighbors for a given hex in the same order as HexDir.
+    // Caller is responsible for verifying each neighbor is on the grid.
+    Neighbors<int> getNeighbors(int index);
+    Neighbors<Hex> getNeighbors(const Hex &hex);
+
     // Return a list of tiles at the center of each castle.
     std::vector<Hex> getCastleTiles() const;
 
@@ -63,6 +68,7 @@ public:
     bool offGrid(const Hex &hex) const;
 
     static std::default_random_engine engine;
+    static const int invalidIndex;
 
 private:
     void generateRegions();
@@ -132,7 +138,7 @@ std::vector<Hex> RandomMap::hexesFromInt(const R &range) const
 }
 
 
-// This is slated for C++17.  Stole this from
+// TODO: This is slated for C++17.  Stole this from
 // http://en.cppreference.com/w/cpp/algorithm/clamp
 template<typename T>
 constexpr const T& clamp(const T& v, const T& lo, const T& hi)

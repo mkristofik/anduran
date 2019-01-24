@@ -39,7 +39,7 @@ private:
 MapViewApp::MapViewApp()
     : SdlApp(),
     win_(1280, 720, "Anduran Map Viewer"),
-    rmap_("test.json"),
+    rmap_("test2.json"),
     rmapView_(win_, rmap_)
 {
 }
