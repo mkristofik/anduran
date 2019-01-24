@@ -15,6 +15,7 @@
 
 #include "iterable_enum_class.h"
 #include <array>
+#include <ostream>
 #include <vector>
 
 enum class HexDir {N, NE, SE, S, SW, NW, _last, _first = 0};
@@ -59,6 +60,7 @@ bool operator<(const Hex &lhs, const Hex &rhs);
 bool operator>(const Hex &lhs, const Hex &rhs);
 bool operator<=(const Hex &lhs, const Hex &rhs);
 bool operator>=(const Hex &lhs, const Hex &rhs);
+std::ostream & operator<<(std::ostream &os, const Hex &rhs);
 
 // Distance between hexes, one step per tile.
 int hexDistance(const Hex &h1, const Hex &h2);

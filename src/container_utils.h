@@ -24,4 +24,14 @@ int size_int(const C &cont)
     return static_cast<int>(size(cont));
 }
 
+
+template <typename C, typename T>
+bool contains(const C &cont, const T &val)
+{
+    using std::cbegin;
+    using std::cend;
+
+    return std::find(cbegin(cont), cend(cont), val) != cend(cont);
+}
+
 #endif

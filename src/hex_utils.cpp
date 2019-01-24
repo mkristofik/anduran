@@ -161,6 +161,12 @@ bool operator>=(const Hex &lhs, const Hex &rhs)
     return !(lhs < rhs);
 }
 
+std::ostream & operator<<(std::ostream &os, const Hex &rhs)
+{
+    os << '(' << rhs.x << ',' << rhs.y << ')';
+    return os;
+}
+
 // source: Battle for Wesnoth, distance_between() in map_location.cpp.
 int hexDistance(const Hex &h1, const Hex &h2)
 {

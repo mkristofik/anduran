@@ -16,6 +16,8 @@
 #include "RandomMap.h"
 #include "hex_utils.h"
 
+#include <vector>
+
 class Pathfinder
 {
 public:
@@ -26,9 +28,11 @@ public:
     Pathfinder & operator=(const Pathfinder &) = delete;
     Pathfinder & operator=(Pathfinder &&) = delete;
 
-    void find_path(const Hex &hSrc, const Hex &hDest);
+    std::vector<Hex> find_path(const Hex &hSrc, const Hex &hDest);
 
 private:
+    Neighbors<int> get_neighbors(int index) const;
+
     RandomMap &rmap_;
 };
 

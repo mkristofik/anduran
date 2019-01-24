@@ -14,9 +14,9 @@
 
 #include "boost/container/flat_map.hpp"
 
+#include <algorithm>
 #include <functional>
 #include <queue>
-#include <vector>
 
 struct EstimatedPathCost
 {
@@ -35,12 +35,16 @@ Pathfinder::Pathfinder(RandomMap &rmap)
 {
 }
 
-void Pathfinder::find_path(const Hex &hSrc, const Hex &hDest)
+std::vector<Hex> Pathfinder::find_path(const Hex &hSrc, const Hex &hDest)
 {
+    std::vector<Hex> path;
+
+    // TODO: turn these into member variables to avoid allocating memory on each
+    // call. Will need to manually manage the priority queue to do that.
     std::priority_queue<
         EstimatedPathCost,
         std::vector<EstimatedPathCost>,
-        std::greater<EstimatedPathCost>
+        std::greater<EstimatedPathCost>  // need > to get a min-queue, weird
     > frontier;
 
     boost::container::flat_map<int, int> cameFrom;
@@ -52,6 +56,7 @@ void Pathfinder::find_path(const Hex &hSrc, const Hex &hDest)
     cameFrom.emplace(iSrc, RandomMap::invalidIndex);
     costSoFar.emplace(iSrc, 0);
 
+    // source: https://www.redblobgames.com/pathfinding/a-star/introduction.html#astar
     while (!frontier.empty()) {
         auto current = frontier.top();
         frontier.pop();
@@ -60,19 +65,51 @@ void Pathfinder::find_path(const Hex &hSrc, const Hex &hDest)
             break;
         }
 
-        for (auto iNbr : rmap_.getNeighbors(current.index)) {
+        // TODO: possible optimization to skip neighbors of the previous tile.
+        // Assuming nonzero cost per tile, it will always be less efficient to
+        // reach those tiles in two steps (i.e., through this tile) than one.
+        for (auto iNbr : get_neighbors(current.index)) {
             if (rmap_.offGrid(iNbr)) {
                 continue;
             }
 
             const auto newCost = costSoFar[current.index] + 1;
             auto costIter = costSoFar.find(iNbr);
-            if (costIter == costSoFar.end() || newCost < costIter->second) {
-                costIter->second = newCost;
-                // TODO: heuristic makes this A* instead of Dijkstra's
-                frontier.push({iNbr, newCost /*+ heuristic*/});
-                cameFrom[iNbr] = current.index;
+            if (costIter != costSoFar.end() && newCost >= costIter->second) {
+                continue;
             }
+            else if (costIter == costSoFar.end()) {
+                costSoFar.emplace(iNbr, newCost);
+            }
+            else {
+                costIter->second = newCost;
+            }
+
+            // TODO: heuristic makes this A* instead of Dijkstra's
+            frontier.push({iNbr, newCost /*+ heuristic*/});
+            cameFrom[iNbr] = current.index;
         }
     }
+
+    // Walk backwards to produce the path.
+    auto fromIter = cameFrom.find(iDest);
+    while (fromIter != cameFrom.end()) {
+        path.push_back(rmap_.hexFromInt(fromIter->first));
+        fromIter = cameFrom.find(fromIter->second);
+    }
+    std::reverse(path.begin(), path.end());
+
+    return path;
+}
+
+Neighbors<int> Pathfinder::get_neighbors(int index) const
+{
+    Neighbors<int> iNbrs;
+    assert(!rmap_.offGrid(index));
+
+    const auto hNbrs = rmap_.hexFromInt(index).getAllNeighbors();
+    for (auto i = 0u; i < hNbrs.size(); ++i) {
+        iNbrs[i] = rmap_.intFromHex(hNbrs[i]);
+    }
+    return iNbrs;
 }

@@ -11,6 +11,7 @@
     See the COPYING.txt file for more details.
 */
 #include "MapDisplay.h"
+#include "Pathfinder.h"
 #include "RandomMap.h"
 #include "SdlApp.h"
 #include "SdlSurface.h"
@@ -25,6 +26,7 @@
 #include "SDL_image.h"
 #include <algorithm>
 #include <cstdlib>
+#include <iostream>
 #include <memory>
 #include <vector>
 
@@ -53,6 +55,7 @@ private:
     unsigned int curPlayer_;
     bool championSelected_;
     AnimManager anims_;
+    Pathfinder pathfind_;
 };
 
 Anduran::Anduran()
@@ -63,7 +66,8 @@ Anduran::Anduran()
     players_(),
     curPlayer_(0),
     championSelected_(false),
-    anims_(rmapView_)
+    anims_(rmapView_),
+    pathfind_(rmap_)
 {
     const auto championImages = applyTeamColors(SdlSurface("img/champion.png"));
     const SdlSurface ellipse("img/ellipse.png");
@@ -180,7 +184,14 @@ void Anduran::handle_lmouse_up()
          *     show ellipse
          */
         rmapView_.clearHighlight();
+
         // TODO: path between players_[curPlayer_].championHex and mouseHex
+        const auto path = pathfind_.find_path(players_[curPlayer_].championHex, mouseHex);
+        for (auto &h : path) {
+            std::cout << h << ' ';
+        }
+        std::cout << '\n';
+
         auto champion = players_[curPlayer_].championId;
         auto ellipse = players_[curPlayer_].ellipseId;
         anims_.insert<AnimMove>(champion, ellipse, mouseHex);

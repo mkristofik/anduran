@@ -46,11 +46,6 @@ public:
     bool getWalkable(int index) const;
     bool getWalkable(const Hex &hex) const;
 
-    // Return the set of 6 neighbors for a given hex in the same order as HexDir.
-    // Caller is responsible for verifying each neighbor is on the grid.
-    Neighbors<int> getNeighbors(int index);
-    Neighbors<Hex> getNeighbors(const Hex &hex);
-
     // Return a list of tiles at the center of each castle.
     std::vector<Hex> getCastleTiles() const;
 
