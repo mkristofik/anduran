@@ -85,8 +85,9 @@ std::vector<Hex> Pathfinder::find_path(const Hex &hSrc, const Hex &hDest)
                 costIter->second = newCost;
             }
 
-            // TODO: heuristic makes this A* instead of Dijkstra's
-            frontier.push({iNbr, newCost /*+ heuristic*/});
+            // heuristic makes this A* instead of Dijkstra's
+            const auto estimate = hexDistance(rmap_.hexFromInt(iNbr), hDest);
+            frontier.push({iNbr, newCost + estimate});
             cameFrom[iNbr] = current.index;
         }
     }
@@ -110,6 +111,9 @@ Neighbors<int> Pathfinder::get_neighbors(int index) const
     const auto hNbrs = rmap_.hexFromInt(index).getAllNeighbors();
     for (auto i = 0u; i < hNbrs.size(); ++i) {
         iNbrs[i] = rmap_.intFromHex(hNbrs[i]);
+        if (!rmap_.getWalkable(iNbrs[i])) {
+            iNbrs[i] = RandomMap::invalidIndex;
+        }
     }
     return iNbrs;
 }

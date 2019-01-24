@@ -21,7 +21,7 @@
 class Pathfinder
 {
 public:
-    Pathfinder(RandomMap &rmap);
+    explicit Pathfinder(RandomMap &rmap);
 
     Pathfinder(const Pathfinder &) = delete;
     Pathfinder(Pathfinder &&) = delete;
