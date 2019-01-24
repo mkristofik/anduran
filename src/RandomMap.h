@@ -132,14 +132,4 @@ std::vector<Hex> RandomMap::hexesFromInt(const R &range) const
     return hexes;
 }
 
-
-// TODO: This is slated for C++17.  Stole this from
-// http://en.cppreference.com/w/cpp/algorithm/clamp
-template<typename T>
-constexpr const T& clamp(const T& v, const T& lo, const T& hi)
-{
-    return assert(lo <= hi),
-        (v < lo) ? lo : (v > hi) ? hi : v;
-}
-
 #endif

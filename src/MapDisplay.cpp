@@ -711,8 +711,8 @@ bool MapDisplay::scrollDisplay(Uint32 elapsed_ms)
 
     // Using doubles here because this might scroll by less than one pixel if the
     // computer is fast enough.
-    const auto newX = clamp<double>(displayOffset_.x + scrollX, 0, pMaxX);
-    const auto newY = clamp<double>(displayOffset_.y + scrollY, 0, pMaxY);
+    const auto newX = std::clamp<double>(displayOffset_.x + scrollX, 0, pMaxX);
+    const auto newY = std::clamp<double>(displayOffset_.y + scrollY, 0, pMaxY);
     const bool scrolling = (newX != displayOffset_.x || newY != displayOffset_.y);
 
     displayOffset_ = {newX, newY};

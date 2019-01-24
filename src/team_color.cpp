@@ -246,7 +246,7 @@ SdlSurface flagToRefColor(const SdlSurface &src)
             // Divide the colorspace into 15 equal regions corresponding to the
             // reference color and the 14 darker colors below it.
             // (255 / 17 == 15)
-            auto index = clamp(pixelColor.g / 17, 0, 14);
+            auto index = std::clamp(pixelColor.g / 17, 0, 14);
             auto newColor = refColors[index];
             newColor.a = pixelColor.a;
             *pixel = setColor(newColor, surf->format);

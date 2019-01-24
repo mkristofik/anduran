@@ -449,7 +449,7 @@ std::vector<int> RandomMap::randomAltitudes()
             }
 
             const auto newAlt = altitude[curRegion] + step(engine);
-            altitude[nbrRegion] = clamp(newAlt, 0, MAX_ALTITUDE);
+            altitude[nbrRegion] = std::clamp(newAlt, 0, MAX_ALTITUDE);
             regionStack.push_back(nbrRegion);
         }
     }
