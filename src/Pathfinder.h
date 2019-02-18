@@ -27,6 +27,7 @@ public:
     Pathfinder(Pathfinder &&) = delete;
     Pathfinder & operator=(const Pathfinder &) = delete;
     Pathfinder & operator=(Pathfinder &&) = delete;
+    ~Pathfinder() = default;
 
     std::vector<Hex> find_path(const Hex &hSrc, const Hex &hDest);
 

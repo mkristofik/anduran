@@ -39,7 +39,7 @@ protected:
 
 private:
     virtual void start();
-    virtual void update(double runtimeFrac) = 0;
+    virtual void update(Uint32 elapsed_ms) = 0;
     virtual void stop();
 
     MapDisplay &display_;
@@ -53,16 +53,17 @@ private:
 class AnimMove : public AnimBase
 {
 public:
-    AnimMove(MapDisplay &display, int mover, int shadow, const Hex &dest);
+    AnimMove(MapDisplay &display, int mover, int shadow, const std::vector<Hex> &path);
 
 private:
     virtual void start() override;
-    virtual void update(double runtimeFrac) override;
+    virtual void update(Uint32 elapsed_ms) override;
     virtual void stop() override;
 
     int entity_;
     int entityShadow_;
-    Hex destHex_;
+    unsigned int pathStep_;
+    std::vector<Hex> path_;
     MapEntity baseState_;
     SDL_Point distToMove_;
 };

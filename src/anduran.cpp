@@ -185,7 +185,6 @@ void Anduran::handle_lmouse_up()
          */
         rmapView_.clearHighlight();
 
-        // TODO: path between players_[curPlayer_].championHex and mouseHex
         const auto path = pathfind_.find_path(players_[curPlayer_].championHex, mouseHex);
         for (auto &h : path) {
             std::cout << h << ' ';
@@ -194,7 +193,7 @@ void Anduran::handle_lmouse_up()
 
         auto champion = players_[curPlayer_].championId;
         auto ellipse = players_[curPlayer_].ellipseId;
-        anims_.insert<AnimMove>(champion, ellipse, mouseHex);
+        anims_.insert<AnimMove>(champion, ellipse, path);
         players_[curPlayer_].championHex = mouseHex;
         championSelected_ = false;
     }
