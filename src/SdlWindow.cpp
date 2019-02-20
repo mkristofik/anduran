@@ -28,6 +28,11 @@ SdlWindow::SdlWindow(int width, int height, const char *caption)
     SDL_SetWindowTitle(win, caption);
     window_.reset(win, SDL_DestroyWindow);
     renderer_.reset(ren, SDL_DestroyRenderer);
+
+    // Force a draw event to avoid a blank white window at startup while we're
+    // busy loading game objects.
+    clear();
+    update();
 }
 
 void SdlWindow::clear()

@@ -23,7 +23,7 @@ destination hex
 * proper edge transitions to the border tiles
 * draw the champion facing to the left when moving in that direction
 * hide the ellipse while the champion is moving
-- screen flashes white briefly when first loading
+* screen flashes white briefly when first loading
 
 
 # Data-driven map objects
