@@ -13,6 +13,12 @@
 #include "anim_utils.h"
 #include "container_utils.h"
 
+namespace
+{
+    const Uint32 MOVE_STEP_MS = 200;
+}
+
+
 AnimBase::AnimBase(MapDisplay &display, Uint32 runtime_ms)
     : display_(display),
     elapsed_ms_(0),
@@ -78,7 +84,7 @@ AnimMove::AnimMove(MapDisplay &display,
                    int mover,
                    int shadow,
                    const std::vector<Hex> &path)
-    : AnimBase(display, 300 * path.size()),
+    : AnimBase(display, MOVE_STEP_MS * path.size()),
     entity_(mover),
     entityShadow_(shadow),
     pathStep_(0),
@@ -94,31 +100,36 @@ void AnimMove::start()
 {
     auto moverObj = get_entity(entity_);
     auto shadowObj = get_entity(entityShadow_);
+
     moverObj.z = ZOrder::ANIMATING;
     moverObj.visible = true;
     moverObj.faceHex(path_[0]);
     // TODO: set image to the moving image if we have one
+    // TODO: play the moving sound if we have one
     shadowObj.visible = false;
+
     update_entity(moverObj);
     update_entity(shadowObj);
 }
 
 void AnimMove::update(Uint32 elapsed_ms)
 {
-    const auto stepElapsed_ms = elapsed_ms - 300 * pathStep_;
-    const auto stepFrac = static_cast<double>(stepElapsed_ms) / 300;
+    const auto stepElapsed_ms = elapsed_ms - MOVE_STEP_MS * pathStep_;
+    const auto stepFrac = static_cast<double>(stepElapsed_ms) / MOVE_STEP_MS;
     auto moverObj = get_entity(entity_);
 
     if (stepFrac < 1.0) {
         moverObj.offset = baseState_.offset + stepFrac * distToMove_;
     }
     else {
+        const auto &hCurrent = path_[pathStep_];
         moverObj.offset = baseState_.offset;
-        moverObj.hex = path_[pathStep_];
+        moverObj.hex = hCurrent;
         ++pathStep_;
         if (pathStep_ < path_.size()) {
-            distToMove_ = get_display().pixelDelta(path_[pathStep_ - 1], path_[pathStep_]);
-            moverObj.faceHex(path_[pathStep_]);
+            const auto &hNext = path_[pathStep_];
+            distToMove_ = get_display().pixelDelta(hCurrent, hNext);
+            moverObj.faceHex(hNext);
         }
     }
 
@@ -129,13 +140,15 @@ void AnimMove::stop()
 {
     auto moverObj = get_entity(entity_);
     auto shadowObj = get_entity(entityShadow_);
-    const auto destHex = path_.back();
+    const auto &hDest = path_.back();
+
     moverObj = baseState_;
-    moverObj.faceHex(destHex);
-    moverObj.hex = destHex;
+    moverObj.faceHex(hDest);
+    moverObj.hex = hDest;
     moverObj.visible = true;
-    shadowObj.hex = destHex;
+    shadowObj.hex = hDest;
     shadowObj.visible = true;
+
     update_entity(moverObj);
     update_entity(shadowObj);
 }

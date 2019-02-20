@@ -1,10 +1,17 @@
 # Game display
 --------------
 * team color the champions and the ellipse
-- highlight the selected hex
+* highlight the selected hex
     * map display can convert pixel to hex
-    - game display controls the highlights
+    * game display controls the highlights
 * flag all villages and windmills
+
+
+# Pathfinding
+-------------
+- Game objects (towns, windmills, etc.) should not be walkable unless they're a
+destination hex
+- configurable walking speed
 
 
 # Polish
@@ -14,8 +21,8 @@
 - how should obstacles overlap with different terrain?
 - use the multi-edge transitions where available
 * proper edge transitions to the border tiles
-- draw the champion facing to the left when moving in that direction
-- hide the ellipse while the champion is moving
+* draw the champion facing to the left when moving in that direction
+* hide the ellipse while the champion is moving
 - screen flashes white briefly when first loading
 
 
@@ -29,6 +36,13 @@
 - map display needs to return multiple objects per tile (to allow flags and creatures)
 
 
+# Game state
+------------
+- status of every game-relevant object
+- not every object needs a drawable entity
+- some objects represented by multiple entities (champions and their ellipses)
+
+
 # Entity system
 ---------------
 * Drawable entities need:
@@ -39,6 +53,7 @@
     * texture or texture atlas + row/col
 * keep the texture outside the entity struct so it's small and copyable
 * store a variant texture/textureAtlas somewhere else?
+- combine texture and textureAtlas into one class?
 * pass entity updates by value, move-assign
 * On each frame:
     * skip if not shown

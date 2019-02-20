@@ -92,8 +92,8 @@ std::vector<Hex> Pathfinder::find_path(const Hex &hSrc, const Hex &hDest)
         }
     }
 
-    // Walk backwards to produce the path.
-    // TODO: maybe include the source hex in the path?
+    // Walk backwards to produce the path (don't need the starting hex). If the
+    // destination hex wasn't found, the path will be empty.
     auto fromIter = cameFrom.find(iDest);
     while (fromIter != cameFrom.end() && fromIter->first != iSrc) {
         path.push_back(rmap_.hexFromInt(fromIter->first));

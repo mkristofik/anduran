@@ -154,48 +154,17 @@ void Anduran::handle_lmouse_up()
         }
     }
     else if (championSelected_ && rmap_.getWalkable(mouseHex)) {
-        /* TODO:
-         * first frame before all moves:
-         *     hide the hex highlight
-         *     clear any path highlights
-         *     hide the ellipse
-         *     set image to moving image if we have one
-         *     set z-value higher so it's drawn over everything
-         * first frame of each move:
-         *     get pixel distance between the src and dest hex
-         *     300 ms to move one hex
-         *     face right (base image) if walking NE or SE
-         *     reverse image (face left) if walking NW, SW
-         *     if walking N or S...
-         *         ...and hSrc.x > hDest.x, face left
-         *         ...and hSrc.x < hDest.x, face right
-         *         ...otherwise keep your current facing
-         *     (display entity needs to support drawing mirrored)
-         *     play a sound if we have one
-         * next frames:
-         *     fraction of elapsed time -> pixel offset of moving entity
-         *         that offset needs to be relative to entity's base offset
-         * last frame at >= 300 ms elapsed time:
-         *     set entity hex to the new hex
-         *     return entity offset to base
-         *     reset elapsed timer so we can start moving to the next hex
-         * end of all moves:
-         *     return moving entity to idle (base image, normal z-value, base offset)
-         *     show ellipse
-         */
-        rmapView_.clearHighlight();
+        const auto path = pathfind_.find_path(players_[curPlayer_].championHex,
+                                              mouseHex);
+        if (!path.empty()) {
+            auto champion = players_[curPlayer_].championId;
+            auto ellipse = players_[curPlayer_].ellipseId;
 
-        const auto path = pathfind_.find_path(players_[curPlayer_].championHex, mouseHex);
-        for (auto &h : path) {
-            std::cout << h << ' ';
+            anims_.insert<AnimMove>(champion, ellipse, path);
+            players_[curPlayer_].championHex = mouseHex;
+            championSelected_ = false;
+            rmapView_.clearHighlight();
         }
-        std::cout << '\n';
-
-        auto champion = players_[curPlayer_].championId;
-        auto ellipse = players_[curPlayer_].ellipseId;
-        anims_.insert<AnimMove>(champion, ellipse, path);
-        players_[curPlayer_].championHex = mouseHex;
-        championSelected_ = false;
     }
 }
 
