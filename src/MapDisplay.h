@@ -82,10 +82,13 @@ public:
     void draw();
 
     // Adding new entity returns the new entity id.
-    int addEntity(SdlTexture img, Hex hex, ZOrder z);
-    int addEntity(SdlTextureAtlas img, Hex hex, int initialFrame, ZOrder z);
-    int addHiddenEntity(SdlTexture img, ZOrder z);
-    int addHiddenEntity(SdlTextureAtlas img, ZOrder z);
+    int addEntity(const SdlTexture &img, const Hex &hex, ZOrder z);
+    int addEntity(const SdlTextureAtlas &img,
+                  const Hex &hex,
+                  int initialFrame,
+                  ZOrder z);
+    int addHiddenEntity(const SdlTexture &img, ZOrder z);
+    int addHiddenEntity(const SdlTextureAtlas &img, ZOrder z);
 
     // Fetch/modify entities by value to decouple objects that modify entities
     // from the map display.
@@ -95,7 +98,7 @@ public:
     void handleMousePos(Uint32 elapsed_ms);
     Hex hexFromMousePos() const;
 
-    void highlight(Hex hex);
+    void highlight(const Hex &hex);
     void clearHighlight();
 
     SDL_Point pixelDelta(const Hex &hSrc, const Hex &hDest) const;

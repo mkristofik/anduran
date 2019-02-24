@@ -256,23 +256,26 @@ void MapDisplay::draw()
     drawEntities();
 }
 
-int MapDisplay::addEntity(SdlTexture img, Hex hex, ZOrder z)
+int MapDisplay::addEntity(const SdlTexture &img, const Hex &hex, ZOrder z)
 {
     const int id = entities_.size();
 
     MapEntity e;
     e.offset.x = HEX_SIZE / 2 - img.width() / 2.0;
     e.offset.y = HEX_SIZE / 2 - img.height() / 2.0;
-    e.hex = std::move(hex);
+    e.hex = hex;
     e.id = id;
     e.z = z;
     entities_.push_back(std::move(e));
-    entityImg_.push_back(std::move(img));
+    entityImg_.push_back(img);
 
     return id;
 }
 
-int MapDisplay::addEntity(SdlTextureAtlas img, Hex hex, int initialFrame, ZOrder z)
+int MapDisplay::addEntity(const SdlTextureAtlas &img,
+                          const Hex &hex,
+                          int initialFrame,
+                          ZOrder z)
 {
     assert(initialFrame >= 0 && initialFrame < img.numColumns());
     const int id = entities_.size();
@@ -280,17 +283,17 @@ int MapDisplay::addEntity(SdlTextureAtlas img, Hex hex, int initialFrame, ZOrder
     MapEntity e;
     e.offset.x = HEX_SIZE / 2 - img.frameWidth() / 2.0;
     e.offset.y = HEX_SIZE / 2 - img.frameHeight() / 2.0;
-    e.hex = std::move(hex);
+    e.hex = hex;
     e.id = id;
     e.frame = initialFrame;
     e.z = z;
     entities_.push_back(std::move(e));
-    entityImg_.push_back(std::move(img));
+    entityImg_.push_back(img);
 
     return id;
 }
 
-int MapDisplay::addHiddenEntity(SdlTexture img, ZOrder z)
+int MapDisplay::addHiddenEntity(const SdlTexture &img, ZOrder z)
 {
     const int id = entities_.size();
 
@@ -299,12 +302,12 @@ int MapDisplay::addHiddenEntity(SdlTexture img, ZOrder z)
     e.z = z;
     e.visible = false;
     entities_.push_back(std::move(e));
-    entityImg_.push_back(std::move(img));
+    entityImg_.push_back(img);
 
     return id;
 }
 
-int MapDisplay::addHiddenEntity(SdlTextureAtlas img, ZOrder z)
+int MapDisplay::addHiddenEntity(const SdlTextureAtlas &img, ZOrder z)
 {
     const int id = entities_.size();
 
@@ -314,7 +317,7 @@ int MapDisplay::addHiddenEntity(SdlTextureAtlas img, ZOrder z)
     e.z = z;
     e.visible = false;
     entities_.push_back(std::move(e));
-    entityImg_.push_back(std::move(img));
+    entityImg_.push_back(img);
 
     return id;
 }
@@ -337,8 +340,7 @@ void MapDisplay::handleMousePos(Uint32 elapsed_ms)
     const auto scrolling = scrollDisplay(elapsed_ms);
 
     // Move the hex shadow to the hex under the mouse.
-    // TODO: use a better public interface for this?
-    auto &shadow = entities_[hexShadowId_];
+    auto shadow = getEntity(hexShadowId_);
     const auto mouseHex = hexFromMousePos();
     if (scrolling || map_.offGrid(mouseHex)) {
         shadow.visible = false;
@@ -347,6 +349,8 @@ void MapDisplay::handleMousePos(Uint32 elapsed_ms)
         shadow.hex = mouseHex;
         shadow.visible = true;
     }
+
+    updateEntity(shadow);
 }
 
 // source: Battle for Wesnoth, display::pixel_position_to_hex()
@@ -397,12 +401,12 @@ Hex MapDisplay::hexFromMousePos() const
     return {hx, hy};
 }
 
-void MapDisplay::highlight(Hex hex)
+void MapDisplay::highlight(const Hex &hex)
 {
     assert(!map_.offGrid(hex));
 
     auto e = getEntity(hexHighlightId_);
-    e.hex = std::move(hex);
+    e.hex = hex;
     e.visible = true;
     updateEntity(e);
 }

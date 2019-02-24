@@ -40,7 +40,7 @@ public:
     int size();
 
     // Insert a new key-value pair, don't worry about duplicates yet.
-    void insert(K key, V value);
+    void insert(const K &key, const V &value);
 
     // Return the set of all values matching 'key'.
     //
@@ -165,9 +165,9 @@ int FlatMultimap<K, V>::size()
 }
 
 template <typename K, typename V>
-void FlatMultimap<K, V>::insert(K key, V value)
+void FlatMultimap<K, V>::insert(const K &key, const V &value)
 {
-    data_.push_back(KeyValue{std::move(key), std::move(value)});
+    data_.push_back(KeyValue{key, value});
     isDirty_ = true;
 }
 
