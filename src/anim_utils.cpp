@@ -142,8 +142,9 @@ void AnimMove::stop()
     auto shadowObj = get_entity(entityShadow_);
     const auto &hDest = path_.back();
 
+    const auto isMirrored = moverObj.mirrored;
     moverObj = baseState_;
-    moverObj.faceHex(hDest);
+    moverObj.mirrored = isMirrored;
     moverObj.hex = hDest;
     moverObj.visible = true;
     shadowObj.hex = hDest;
