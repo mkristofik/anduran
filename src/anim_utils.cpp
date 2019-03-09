@@ -91,17 +91,19 @@ AnimMove::AnimMove(MapDisplay &display,
     entityShadow_(shadow),
     pathStep_(0),
     path_(path),
-    baseState_(get_entity(entity_)),
+    baseState_(),
     distToMove_()
 {
     assert(!path.empty());
-    distToMove_ = get_display().pixelDelta(baseState_.hex, path_[0]);
 }
 
 void AnimMove::start()
 {
     auto moverObj = get_entity(entity_);
     auto shadowObj = get_entity(entityShadow_);
+
+    baseState_ = moverObj;
+    distToMove_ = get_display().pixelDelta(baseState_.hex, path_[0]);
 
     moverObj.z = ZOrder::ANIMATING;
     moverObj.visible = true;
@@ -192,12 +194,12 @@ AnimMelee::AnimMelee(MapDisplay &display,
                      )
     : AnimBase(display, 600),  // TODO: magic number
     attacker_(attackerId),
-    attBaseState_(get_entity(attacker_)),
+    attBaseState_(),
     attImg_(attackerImg),
     attAnim_(attackAnim),
     attFrames_(attackFrames),
     defender_(defenderId),
-    defBaseState_(get_entity(defender_)),
+    defBaseState_(),
     defImg_(defenderImg),
     defHit_(defenderHitImg),
     defImgChanged_(false),
@@ -212,11 +214,12 @@ void AnimMelee::start()
     auto attObj = get_entity(attacker_);
     auto defObj = get_entity(defender_);
 
-    // TODO: can't do base state until we get here because other animations might
-    // be running.
+    // Can't do base state until we get here because other animations might be
+    // running.
     attBaseState_ = attObj;
     defBaseState_ = defObj;
     distToMove_ = get_display().pixelDelta(attBaseState_.hex, defBaseState_.hex) / 2;
+
     attObj.z = ZOrder::ANIMATING;
     attObj.visible = true;
     attObj.faceHex(defBaseState_.hex);
