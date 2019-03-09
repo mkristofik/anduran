@@ -324,22 +324,21 @@ int MapDisplay::addHiddenEntity(const SdlTextureAtlas &img, ZOrder z)
 
 MapEntity MapDisplay::getEntity(int id) const
 {
-    // TODO: turn this into a index_in_bounds function?
-    assert(id >= 0 && id < size_int(entities_));
+    assert(in_bounds(entities_, id));
     return entities_[id];
 }
 
 void MapDisplay::updateEntity(const MapEntity &newState)
 {
     const int id = newState.id;
-    assert(id >= 0 && id < size_int(entities_));
+    assert(in_bounds(entities_, id));
     entities_[id] = newState;
 }
 
 void MapDisplay::setEntityImage(int id,
-                                const boost::variant<SdlTexture, SdlTextureAtlas> &img)
+                                const std::variant<SdlTexture, SdlTextureAtlas> &img)
 {
-    assert(id >= 0 && id < size_int(entityImg_));
+    assert(in_bounds(entityImg_, id));
     entityImg_[id] = img;
 }
 
@@ -642,7 +641,7 @@ void MapDisplay::drawEntities()
         const auto pixel = pixelFromHex(e.hex) + e.offset - displayOffset_;
 
         if (e.frame >= 0) {
-            auto &img = boost::get<SdlTextureAtlas>(entityImg_[id]);
+            auto &img = std::get<SdlTextureAtlas>(entityImg_[id]);
             const auto dest = img.getDestRect(pixel);
             if (SDL_HasIntersection(&dest, &displayArea_) == SDL_FALSE) {
                 continue;
@@ -655,7 +654,7 @@ void MapDisplay::drawEntities()
             }
         }
         else {
-            auto &img = boost::get<SdlTexture>(entityImg_[id]);
+            auto &img = std::get<SdlTexture>(entityImg_[id]);
             const auto dest = img.getDestRect(pixel);
             if (SDL_HasIntersection(&dest, &displayArea_) == SDL_FALSE) {
                 continue;

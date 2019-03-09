@@ -21,7 +21,7 @@
 #include "pixel_utils.h"
 
 #include "SDL.h"
-#include "boost/variant.hpp"
+#include <variant>
 #include <vector>
 
 struct TileDisplay
@@ -94,8 +94,7 @@ public:
     // from the map display.
     MapEntity getEntity(int id) const;
     void updateEntity(const MapEntity &newState);
-    // TODO: std::variant?
-    void setEntityImage(int id, const boost::variant<SdlTexture, SdlTextureAtlas> &img);
+    void setEntityImage(int id, const std::variant<SdlTexture, SdlTextureAtlas> &img);
 
     void handleMousePos(Uint32 elapsed_ms);
     Hex hexFromMousePos() const;
@@ -133,7 +132,7 @@ private:
     SDL_Rect displayArea_;
     PartialPixel displayOffset_;
     std::vector<MapEntity> entities_;
-    std::vector<boost::variant<SdlTexture, SdlTextureAtlas>> entityImg_;
+    std::vector<std::variant<SdlTexture, SdlTextureAtlas>> entityImg_;
     int hexShadowId_;
     int hexHighlightId_;
 };

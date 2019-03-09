@@ -13,6 +13,7 @@
 #ifndef CONTAINER_UTILS_H
 #define CONTAINER_UTILS_H
 
+#include <algorithm>
 #include <iterator>
 
 // Convenience function for getting the size of something as an int. Casting to
@@ -22,6 +23,13 @@ int size_int(const C &cont)
 {
     using std::size;
     return static_cast<int>(size(cont));
+}
+
+
+template <typename C>
+bool in_bounds(const C &cont, int index)
+{
+    return index >= 0 && index < size_int(cont);
 }
 
 
