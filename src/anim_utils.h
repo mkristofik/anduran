@@ -14,7 +14,10 @@
 #define ANIM_UTILS_H
 
 #include "MapDisplay.h"
+#include "SdlTexture.h"
+#include "SdlTextureAtlas.h"
 #include "hex_utils.h"
+#include "pixel_utils.h"
 
 #include "SDL.h"
 #include <memory>
@@ -66,6 +69,41 @@ private:
     std::vector<Hex> path_;
     MapEntity baseState_;
     SDL_Point distToMove_;
+};
+
+
+class AnimMelee : public AnimBase
+{
+public:
+    AnimMelee(MapDisplay &display,
+              int attackerId,
+              const SdlTexture &attackerImg,
+              const SdlTextureAtlas &attackAnim,
+              const std::vector<Uint32> &attackFrames,
+              int defenderId,
+              const SdlTexture &defenderImg,
+              const SdlTexture &defenderHitImg,
+              const SdlTextureAtlas &dieAnim,
+              const std::vector<Uint32> &dieFrames);
+
+private:
+    virtual void start() override;
+    virtual void update(Uint32 elapsed_ms) override;
+    virtual void stop() override;
+
+    int attacker_;
+    MapEntity attBaseState_;
+    SdlTexture attImg_;
+    SdlTextureAtlas attAnim_;
+    std::vector<Uint32> attFrames_;
+    int defender_;
+    MapEntity defBaseState_;
+    SdlTexture defImg_;
+    SdlTexture defHit_;
+    bool defImgChanged_;
+    SdlTextureAtlas dieAnim_;
+    std::vector<Uint32> dieFrames_;
+    PartialPixel distToMove_;
 };
 
 

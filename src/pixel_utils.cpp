@@ -27,6 +27,21 @@ PartialPixel operator*(const SDL_Point &lhs, double rhs)
     return rhs * lhs;
 }
 
+PartialPixel operator*(double lhs, const PartialPixel &rhs)
+{
+    return {lhs * rhs.x, lhs * rhs.y};
+}
+
+PartialPixel operator*(const PartialPixel &lhs, double rhs)
+{
+    return rhs * lhs;
+}
+
+PartialPixel operator/(const SDL_Point &lhs, double rhs)
+{
+    return {lhs.x / rhs, lhs.y / rhs};
+}
+
 SDL_Point operator+(const SDL_Point &lhs, const SDL_Point &rhs)
 {
     return {lhs.x + rhs.x, lhs.y + rhs.y};

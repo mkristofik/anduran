@@ -94,6 +94,8 @@ public:
     // from the map display.
     MapEntity getEntity(int id) const;
     void updateEntity(const MapEntity &newState);
+    // TODO: std::variant?
+    void setEntityImage(int id, const boost::variant<SdlTexture, SdlTextureAtlas> &img);
 
     void handleMousePos(Uint32 elapsed_ms);
     Hex hexFromMousePos() const;
@@ -101,6 +103,7 @@ public:
     void highlight(const Hex &hex);
     void clearHighlight();
 
+    // TODO: PartialPixel return type instead?
     SDL_Point pixelDelta(const Hex &hSrc, const Hex &hDest) const;
 
 private:

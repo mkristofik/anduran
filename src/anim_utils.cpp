@@ -13,6 +13,8 @@
 #include "anim_utils.h"
 #include "container_utils.h"
 
+#include <algorithm>
+
 namespace
 {
     const Uint32 MOVE_STEP_MS = 200;
@@ -154,6 +156,153 @@ void AnimMove::stop()
     update_entity(shadowObj);
 }
 
+
+// TODO: melee attack animation
+//     - attacker and defender entities, in adjacent hexes
+//     - first frame, attacker and defender face each other
+//     - attacker needs:
+//         - team colored attack animation
+//         - team colored idle image
+//         - lasts 600 ms, hits at 300 ms
+//         - attack sound, starts playing at 100 ms
+//         - frame timings
+//         - moves halfway to target hex in first 300 ms, then moves back
+//         - return to idle image at end
+//     - defender needs:
+//         - team colored defend image
+//         - team colored perish animation
+//         - team colored idle image
+//         - if perish animation available and unit perishes, start perish
+//         animation at hit time
+//         - image fades out smoothly for 1000 ms, after perish
+//         animation completes
+//         - otherwise, switch to defend image at hit time
+//         - return to idle image at hit time + 250 ms
+//         - play hit sound or perish sound at hit time
+AnimMelee::AnimMelee(MapDisplay &display,
+                     int attackerId,
+                     const SdlTexture &attackerImg,
+                     const SdlTextureAtlas &attackAnim,
+                     const std::vector<Uint32> &attackFrames,
+                     int defenderId,
+                     const SdlTexture &defenderImg,
+                     const SdlTexture &defenderHitImg,
+                     const SdlTextureAtlas &dieAnim,
+                     const std::vector<Uint32> &dieFrames
+                     )
+    : AnimBase(display, 600),  // TODO: magic number
+    attacker_(attackerId),
+    attBaseState_(get_entity(attacker_)),
+    attImg_(attackerImg),
+    attAnim_(attackAnim),
+    attFrames_(attackFrames),
+    defender_(defenderId),
+    defBaseState_(get_entity(defender_)),
+    defImg_(defenderImg),
+    defHit_(defenderHitImg),
+    defImgChanged_(false),
+    dieAnim_(dieAnim),
+    dieFrames_(dieFrames),
+    distToMove_()
+{
+}
+
+void AnimMelee::start()
+{
+    auto attObj = get_entity(attacker_);
+    auto defObj = get_entity(defender_);
+
+    // TODO: can't do base state until we get here because other animations might
+    // be running.
+    attBaseState_ = attObj;
+    defBaseState_ = defObj;
+    distToMove_ = get_display().pixelDelta(attBaseState_.hex, defBaseState_.hex) / 2;
+    attObj.z = ZOrder::ANIMATING;
+    attObj.visible = true;
+    attObj.faceHex(defBaseState_.hex);
+    attObj.frame = 0;
+    get_display().setEntityImage(attacker_, attAnim_);
+    defObj.z = ZOrder::ANIMATING;
+    defObj.visible = true;
+    defObj.faceHex(attBaseState_.hex);
+    get_display().setEntityImage(defender_, defImg_);
+
+    update_entity(attObj);
+    update_entity(defObj);
+}
+
+void AnimMelee::update(Uint32 elapsed_ms)
+{
+    const Uint32 hitTime_ms = 300;  // TODO: get_runtime / 2
+    auto attObj = get_entity(attacker_);
+
+    if (elapsed_ms < hitTime_ms) {
+        attObj.offset = static_cast<double>(elapsed_ms) / hitTime_ms * distToMove_;
+    }
+    else {
+        attObj.offset = (2 - static_cast<double>(elapsed_ms) / hitTime_ms) * distToMove_;
+        if (!defImgChanged_) {
+            get_display().setEntityImage(defender_, defHit_);
+            defImgChanged_ = true;
+        }
+    }
+
+    // TODO: play attack sound at 100 ms, hit sound at 300 ms
+    // TODO: possibly play the die animation
+
+    auto frameIter = lower_bound(std::begin(attFrames_), std::end(attFrames_),
+                                 elapsed_ms);
+    if (frameIter != std::end(attFrames_)) {
+        attObj.frame = std::distance(std::begin(attFrames_), frameIter);
+    }
+    else {
+        attObj.frame = std::size(attFrames_) - 1;
+    }
+
+    update_entity(attObj);
+}
+
+void AnimMelee::stop()
+{
+    auto attObj = get_entity(attacker_);
+    auto defObj = get_entity(defender_);
+
+    const bool attMirrored = attObj.mirrored;
+    attObj = attBaseState_;
+    attObj.frame = -1;
+    attObj.mirrored = attMirrored;
+    get_display().setEntityImage(attacker_, attImg_);
+    const bool defMirrored = defObj.mirrored;
+    defObj = defBaseState_;
+    defObj.frame = -1;
+    defObj.mirrored = defMirrored;
+    get_display().setEntityImage(defender_, defImg_);
+
+    update_entity(attObj);
+    update_entity(defObj);
+}
+
+/* TODO: ranged attack animation
+ *     - attacker and defender entities, in adjacent hexes
+ *     - first frame, attacker and defender face each other
+ *     - projectile entity, initially hidden
+ *     - attacker needs:
+ *         - team colored ranged attack animation
+ *         - team colored idle image
+ *         - lasts 600 ms, projectile fires at 300 ms
+ *         - start ranged attack sound at 150 ms
+ *     - projectile needs:
+ *         - rotated to face target
+ *         - visible at 300 ms
+ *         - flies at 1 hex/150 ms
+ *         - flies 90% of total distance to target so leading edge hits near the
+ *         center of the target
+ *         - image drawn with trailing edge in the center of hex, facing to the
+ *         right
+ *     - defender needs:
+ *         - all same rules as melee attack
+ *         - compute hit time to start animating, play sounds
+ */
 
 AnimManager::AnimManager(MapDisplay &display)
     : display_(display),

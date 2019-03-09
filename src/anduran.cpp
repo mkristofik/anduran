@@ -46,6 +46,7 @@ public:
     virtual void do_first_frame() override;
     virtual void update_frame(Uint32 elapsed_ms) override;
     virtual void handle_lmouse_up() override;
+    void experiment();
 
 private:
     SdlWindow win_;
@@ -164,8 +165,54 @@ void Anduran::handle_lmouse_up()
             players_[curPlayer_].championHex = mouseHex;
             championSelected_ = false;
             rmapView_.clearHighlight();
+
+            if (mouseHex == Hex{4, 8}) {
+                experiment();
+            }
         }
     }
+}
+
+void Anduran::experiment()
+{
+    // TODO: this is all temporary so I can experiment
+    const auto blue = static_cast<int>(Team::BLUE);
+    const auto archerImg = applyTeamColors(SdlSurface("img/archer.png"));
+    auto archer = SdlTexture(archerImg[blue], win_);
+    const auto archerAttackImg = applyTeamColors(SdlSurface("img/archer-attack-ranged.png"));
+    auto archerAttack = SdlTextureAtlas(archerAttackImg[blue], win_, 1, 6);
+    const auto swordsmanImg = applyTeamColors(SdlSurface("img/swordsman.png"));
+    auto swordsman = SdlTexture(swordsmanImg[blue], win_);
+    const auto swordsmanAttackImg = applyTeamColors(SdlSurface("img/swordsman-attack-melee.png"));
+    auto swordsmanAttack = SdlTextureAtlas(swordsmanAttackImg[blue], win_, 1, 4);
+    const auto swordsmanDefendImg = applyTeamColors(SdlSurface("img/swordsman-defend.png"));
+    auto swordsmanDefend = SdlTexture(swordsmanDefendImg[blue], win_);
+
+    const auto red = static_cast<int>(Team::RED);
+    const auto orcImg = applyTeamColors(SdlSurface("img/orc-grunt.png"));
+    auto orc = SdlTexture(orcImg[red], win_);
+    const auto orcAttackImg = applyTeamColors(SdlSurface("img/orc-grunt-attack-melee.png"));
+    auto orcAttack = SdlTextureAtlas(orcAttackImg[red], win_, 1, 7);
+    const auto orcDefendImg = applyTeamColors(SdlSurface("img/orc-grunt-defend.png"));
+    auto orcDefend = SdlTexture(orcDefendImg[red], win_);
+    const auto orcDieImg = applyTeamColors(SdlSurface("img/orc-grunt-die.png"));
+    auto orcDie = SdlTextureAtlas(orcDieImg[red], win_, 1, 8);
+
+    const std::vector<SdlTexture> images = {archer, swordsman, swordsmanDefend, orc, orcDefend};
+    const std::vector<SdlTextureAtlas> anims = {archerAttack, swordsmanAttack, orcAttack, orcDie};
+
+    const int enemy = rmapView_.addEntity(orc, Hex{5, 8}, ZOrder::OBJECT);
+    std::vector<Uint32> attackFrames = {75, 150, 300, 400};
+    std::vector<Uint32> dieFrames = {120, 240, 360, 480, 600, 720, 840, 960};
+    anims_.insert<AnimMelee>(players_[curPlayer_].championId,
+                             swordsman,
+                             swordsmanAttack,
+                             attackFrames,
+                             enemy,
+                             orc,
+                             orcDefend,
+                             orcDie,
+                             dieFrames);
 }
 
 

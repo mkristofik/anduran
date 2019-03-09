@@ -324,6 +324,7 @@ int MapDisplay::addHiddenEntity(const SdlTextureAtlas &img, ZOrder z)
 
 MapEntity MapDisplay::getEntity(int id) const
 {
+    // TODO: turn this into a index_in_bounds function?
     assert(id >= 0 && id < size_int(entities_));
     return entities_[id];
 }
@@ -333,6 +334,13 @@ void MapDisplay::updateEntity(const MapEntity &newState)
     const int id = newState.id;
     assert(id >= 0 && id < size_int(entities_));
     entities_[id] = newState;
+}
+
+void MapDisplay::setEntityImage(int id,
+                                const boost::variant<SdlTexture, SdlTextureAtlas> &img)
+{
+    assert(id >= 0 && id < size_int(entityImg_));
+    entityImg_[id] = img;
 }
 
 void MapDisplay::handleMousePos(Uint32 elapsed_ms)

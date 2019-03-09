@@ -31,7 +31,10 @@ SdlSurface::SdlSurface(const char *filename)
 
 SdlSurface SdlSurface::clone() const
 {
-    assert(*this);
+    if (!*this) {
+        return {};
+    }
+
     const auto orig = get();
     auto dest = SDL_CreateRGBSurface(0,
                                      orig->w,

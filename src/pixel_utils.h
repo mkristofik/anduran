@@ -24,6 +24,9 @@ struct PartialPixel
 PartialPixel operator+(const PartialPixel &lhs, const PartialPixel &rhs);
 PartialPixel operator*(double lhs, const SDL_Point &rhs);
 PartialPixel operator*(const SDL_Point &lhs, double rhs);
+PartialPixel operator*(double lhs, const PartialPixel &rhs);
+PartialPixel operator*(const PartialPixel &lhs, double rhs);
+PartialPixel operator/(const SDL_Point &lhs, double rhs);
 
 SDL_Point operator+(const SDL_Point &lhs, const SDL_Point &rhs);
 SDL_Point operator-(const SDL_Point &lhs, const SDL_Point &rhs);
