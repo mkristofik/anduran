@@ -102,7 +102,6 @@ public:
     void highlight(const Hex &hex);
     void clearHighlight();
 
-    // TODO: PartialPixel return type instead?
     SDL_Point pixelDelta(const Hex &hSrc, const Hex &hDest) const;
 
 private:

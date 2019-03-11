@@ -30,6 +30,8 @@ PartialPixel operator/(const SDL_Point &lhs, double rhs);
 
 SDL_Point operator+(const SDL_Point &lhs, const SDL_Point &rhs);
 SDL_Point operator-(const SDL_Point &lhs, const SDL_Point &rhs);
+// TODO: this is possibly surprising that it truncates to int x and y.
+// Make everything constexpr if I decide to do something about this.
 SDL_Point operator+(const SDL_Point &lhs, const PartialPixel &rhs);
 SDL_Point operator-(const SDL_Point &lhs, const PartialPixel &rhs);
 

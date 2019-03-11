@@ -435,7 +435,7 @@ void MapDisplay::computeTileEdges()
     // Map all hexes, including those on the outside border, to their location in
     // the tile list.
     boost::container::flat_map<Hex, int> hexmap;
-    for (int i = 0; i < size_int(tiles_); ++i) {
+    for (int i = 0; i < ssize(tiles_); ++i) {
         hexmap.emplace(tiles_[i].hex, i);
     }
 

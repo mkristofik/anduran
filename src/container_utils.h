@@ -17,9 +17,9 @@
 #include <iterator>
 
 // Convenience function for getting the size of something as an int. Casting to
-// avoid a compiler warning is annoying.
+// avoid a compiler warning is annoying.  This was proposed for C++20.
 template <typename C>
-int size_int(const C &cont)
+constexpr int ssize(const C &cont)
 {
     using std::size;
     return static_cast<int>(size(cont));
@@ -27,9 +27,9 @@ int size_int(const C &cont)
 
 
 template <typename C>
-bool in_bounds(const C &cont, int index)
+constexpr bool in_bounds(const C &cont, int index)
 {
-    return index >= 0 && index < size_int(cont);
+    return index >= 0 && index < ssize(cont);
 }
 
 

@@ -297,7 +297,7 @@ void RandomMap::generateRegions()
     for (int i = 0; i < 4; ++i) {
         assignRegions(centers);
         centers = voronoi();
-        numRegions_ = size_int(centers);
+        numRegions_ = ssize(centers);
     }
 
     // Assign each hex to its final region.
@@ -454,7 +454,7 @@ std::vector<int> RandomMap::randomAltitudes()
         }
     }
 
-    assert(size_int(altitude) == numRegions_);
+    assert(ssize(altitude) == numRegions_);
     assert(none_of(std::cbegin(altitude), std::cend(altitude), [] (auto elem) {
                        return elem == -1;
                    }));

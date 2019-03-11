@@ -86,7 +86,7 @@ AnimMove::AnimMove(MapDisplay &display,
                    int mover,
                    int shadow,
                    const std::vector<Hex> &path)
-    : AnimBase(display, MOVE_STEP_MS * path.size()),
+    : AnimBase(display, MOVE_STEP_MS * std::size(path)),
     entity_(mover),
     entityShadow_(shadow),
     pathStep_(0),
@@ -130,7 +130,7 @@ void AnimMove::update(Uint32 elapsed_ms)
         moverObj.offset = baseState_.offset;
         moverObj.hex = hCurrent;
         ++pathStep_;
-        if (pathStep_ < path_.size()) {
+        if (pathStep_ < std::size(path_)) {
             const auto &hNext = path_[pathStep_];
             distToMove_ = get_display().pixelDelta(hCurrent, hNext);
             moverObj.faceHex(hNext);
@@ -327,7 +327,7 @@ void AnimManager::update(Uint32 frame_ms)
     if (running()) {
         if (anims_[currentAnim_]->finished()) {
             ++currentAnim_;
-            if (currentAnim_ == size_int(anims_)) {
+            if (currentAnim_ == ssize(anims_)) {
                 anims_.clear();
                 currentAnim_ = -1;
                 return;
