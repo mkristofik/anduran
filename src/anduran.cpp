@@ -202,17 +202,28 @@ void Anduran::experiment()
     const std::vector<SdlTextureAtlas> anims = {archerAttack, swordsmanAttack, orcAttack, orcDie};
 
     const int enemy = rmapView_.addEntity(orc, Hex{5, 8}, ZOrder::OBJECT);
-    std::vector<Uint32> attackFrames = {75, 150, 300, 400};
+    std::vector<Uint32> swordsmanAttackFrames = {75, 150, 300, 400};
+    std::vector<Uint32> orcAttackFrames = {50, 100, 200, 275, 375, 425, 500};
     std::vector<Uint32> dieFrames = {120, 240, 360, 480, 600, 720, 840, 960};
     anims_.insert<AnimMelee>(players_[curPlayer_].championId,
                              swordsman,
                              swordsmanAttack,
-                             attackFrames,
+                             swordsmanAttackFrames,
                              enemy,
                              orc,
                              orcDefend,
                              orcDie,
                              dieFrames);
+    anims_.insert<AnimMelee>(enemy,
+                             orc,
+                             orcAttack,
+                             orcAttackFrames,
+                             players_[curPlayer_].championId,
+                             swordsman,
+                             swordsmanDefend,
+                             orcDie,
+                             dieFrames);
+
 }
 
 

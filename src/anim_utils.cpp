@@ -18,6 +18,26 @@
 namespace
 {
     const Uint32 MOVE_STEP_MS = 200;
+    const Uint32 MELEE_RUNTIME_MS = 600;
+    const Uint32 MELEE_HIT_MS = 300;
+
+    // Return to idle state but retain facing.
+    void set_idle(MapEntity &entity, const MapEntity &baseState)
+    {
+        const auto isMirrored = entity.mirrored;
+        entity = baseState;
+        entity.mirrored = isMirrored;
+    }
+
+    // Choose the animation frame to show based on elapsed time.  Show the last
+    // frame if we're past the end of the animation.
+    int get_anim_frame(const std::vector<Uint32> &frameList, Uint32 elapsed_ms)
+    {
+        auto iter = lower_bound(std::begin(frameList), std::end(frameList),
+                                elapsed_ms);
+        return std::min<int>(distance(std::begin(frameList), iter),
+                             ssize(frameList) - 1);
+    }
 }
 
 
@@ -146,9 +166,7 @@ void AnimMove::stop()
     auto shadowObj = get_entity(entityShadow_);
     const auto &hDest = path_.back();
 
-    const auto isMirrored = moverObj.mirrored;
-    moverObj = baseState_;
-    moverObj.mirrored = isMirrored;
+    set_idle(moverObj, baseState_);
     moverObj.hex = hDest;
     moverObj.visible = true;
     shadowObj.hex = hDest;
@@ -192,7 +210,7 @@ AnimMelee::AnimMelee(MapDisplay &display,
                      const SdlTextureAtlas &dieAnim,
                      const std::vector<Uint32> &dieFrames
                      )
-    : AnimBase(display, 600),  // TODO: magic number
+    : AnimBase(display, MELEE_RUNTIME_MS),  // TODO: adjust by what happens to defender
     attacker_(attackerId),
     attBaseState_(),
     attImg_(attackerImg),
@@ -236,32 +254,23 @@ void AnimMelee::start()
 
 void AnimMelee::update(Uint32 elapsed_ms)
 {
-    const Uint32 hitTime_ms = 300;  // TODO: get_runtime / 2
     auto attObj = get_entity(attacker_);
 
-    if (elapsed_ms < hitTime_ms) {
-        attObj.offset = static_cast<double>(elapsed_ms) / hitTime_ms * distToMove_;
+    const auto hitFrac = std::min(static_cast<double>(elapsed_ms) / MELEE_HIT_MS, 2.0);
+    if (hitFrac < 1.0) {
+        attObj.offset = hitFrac * distToMove_;
     }
     else {
-        attObj.offset = (2 - static_cast<double>(elapsed_ms) / hitTime_ms) * distToMove_;
+        attObj.offset = (2 - hitFrac) * distToMove_;
         if (!defImgChanged_) {
             get_display().setEntityImage(defender_, defHit_);
             defImgChanged_ = true;
         }
     }
+    attObj.frame = get_anim_frame(attFrames_, elapsed_ms);
 
     // TODO: play attack sound at 100 ms, hit sound at 300 ms
     // TODO: possibly play the die animation
-
-    auto frameIter = lower_bound(std::begin(attFrames_), std::end(attFrames_),
-                                 elapsed_ms);
-    if (frameIter != std::end(attFrames_)) {
-        attObj.frame = std::distance(std::begin(attFrames_), frameIter);
-    }
-    else {
-        attObj.frame = std::size(attFrames_) - 1;
-    }
-
     update_entity(attObj);
 }
 
@@ -270,15 +279,9 @@ void AnimMelee::stop()
     auto attObj = get_entity(attacker_);
     auto defObj = get_entity(defender_);
 
-    const bool attMirrored = attObj.mirrored;
-    attObj = attBaseState_;
-    attObj.frame = -1;
-    attObj.mirrored = attMirrored;
+    set_idle(attObj, attBaseState_);
     get_display().setEntityImage(attacker_, attImg_);
-    const bool defMirrored = defObj.mirrored;
-    defObj = defBaseState_;
-    defObj.frame = -1;
-    defObj.mirrored = defMirrored;
+    set_idle(defObj, defBaseState_);
     get_display().setEntityImage(defender_, defImg_);
 
     update_entity(attObj);
