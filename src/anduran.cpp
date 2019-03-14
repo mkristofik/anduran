@@ -181,6 +181,7 @@ void Anduran::experiment()
     auto archer = SdlTexture(archerImg[blue], win_);
     const auto archerAttackImg = applyTeamColors(SdlSurface("img/archer-attack-ranged.png"));
     auto archerAttack = SdlTextureAtlas(archerAttackImg[blue], win_, 1, 6);
+    auto arrow = SdlTexture(SdlSurface("img/missile.png"), win_);
     const auto swordsmanImg = applyTeamColors(SdlSurface("img/swordsman.png"));
     auto swordsman = SdlTexture(swordsmanImg[blue], win_);
     const auto swordsmanAttackImg = applyTeamColors(SdlSurface("img/swordsman-attack-melee.png"));
@@ -202,8 +203,10 @@ void Anduran::experiment()
     const std::vector<SdlTextureAtlas> anims = {archerAttack, swordsmanAttack, orcAttack, orcDie};
 
     const int enemy = rmapView_.addEntity(orc, Hex{5, 8}, ZOrder::OBJECT);
+    const int projectile = rmapView_.addHiddenEntity(arrow, ZOrder::PROJECTILE);
     std::vector<Uint32> swordsmanAttackFrames = {75, 150, 300, 400};
     std::vector<Uint32> orcAttackFrames = {50, 100, 200, 275, 375, 425, 500};
+    std::vector<Uint32> archerAttackFrames = {65, 140, 215, 315, 445, 510};
     std::vector<Uint32> dieFrames = {120, 240, 360, 480, 600, 720, 840, 960};
     anims_.insert<AnimMelee>(players_[curPlayer_].championId,
                              swordsman,
@@ -223,7 +226,15 @@ void Anduran::experiment()
                              swordsmanDefend,
                              orcDie,
                              dieFrames);
-
+    anims_.insert<AnimRanged>(players_[curPlayer_].championId,
+                              archer,
+                              archerAttack,
+                              archerAttackFrames,
+                              enemy,
+                              orc,
+                              orcDie,
+                              dieFrames,
+                              projectile);
 }
 
 

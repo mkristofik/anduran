@@ -258,10 +258,10 @@ void AnimMelee::update(Uint32 elapsed_ms)
 
     const auto hitFrac = std::min(static_cast<double>(elapsed_ms) / MELEE_HIT_MS, 2.0);
     if (hitFrac < 1.0) {
-        attObj.offset = hitFrac * distToMove_;
+        attObj.offset = attBaseState_.offset + hitFrac * distToMove_;
     }
     else {
-        attObj.offset = (2 - hitFrac) * distToMove_;
+        attObj.offset = attBaseState_.offset + (2 - hitFrac) * distToMove_;
         if (!defImgChanged_) {
             get_display().setEntityImage(defender_, defHit_);
             defImgChanged_ = true;
@@ -309,6 +309,125 @@ void AnimMelee::stop()
  *         - all same rules as melee attack
  *         - compute hit time to start animating, play sounds
  */
+AnimRanged::AnimRanged(MapDisplay &display,
+                       int attackerId,
+                       const SdlTexture &attackerImg,
+                       const SdlTextureAtlas &attackAnim,
+                       const std::vector<Uint32> &attackFrames,
+                       int defenderId,
+                       const SdlTexture &defenderImg,
+                       const SdlTextureAtlas &dieAnim,
+                       const std::vector<Uint32> &dieFrames,
+                       int projectileId)
+    : AnimBase(display, 1450),  // TODO: adjust based on what happens to defender
+    attacker_(attackerId),
+    attBaseState_(),
+    attImg_(attackerImg),
+    attAnim_(attackAnim),
+    attFrames_(attackFrames),
+    attackerReset_(false),
+    defender_(defenderId),
+    defBaseState_(),
+    defImg_(defenderImg),
+    dieAnimStarted_(false),
+    dieAnim_(dieAnim),
+    dieFrames_(dieFrames),
+    projectile_(projectileId),
+    projectileBaseState_(),
+    projectileReset_(false),
+    distToMove_()
+{
+}
+
+void AnimRanged::start()
+{
+    auto attObj = get_entity(attacker_);
+    auto defObj = get_entity(defender_);
+    auto projObj = get_entity(projectile_);
+
+    attBaseState_ = attObj;
+    defBaseState_ = defObj;
+    projectileBaseState_ = projObj;
+    // Rather than figure out how far the projectile has to fly so its leading
+    // edge stops at the target, just shorten the flight distance by a fudge
+    // factor.
+    distToMove_ = get_display().pixelDelta(attBaseState_.hex, defBaseState_.hex) * 0.9;
+
+    attObj.z = ZOrder::ANIMATING;
+    attObj.visible = true;
+    attObj.faceHex(defBaseState_.hex);
+    attObj.frame = 0;
+    get_display().setEntityImage(attacker_, attAnim_);
+    defObj.z = ZOrder::ANIMATING;
+    defObj.visible = true;
+    defObj.faceHex(attBaseState_.hex);
+    get_display().setEntityImage(defender_, defImg_);
+    projObj.hex = attBaseState_.hex;
+    projObj.visible = false;
+    // TODO: compute projectile angle
+
+    update_entity(attObj);
+    update_entity(defObj);
+    update_entity(projObj);
+}
+
+void AnimRanged::update(Uint32 elapsed_ms)
+{
+    // TODO: holy magic numbers Batman
+
+    if (elapsed_ms < 600) {
+        auto attObj = get_entity(attacker_);
+        attObj.frame = get_anim_frame(attFrames_, elapsed_ms);
+        update_entity(attObj);
+    }
+    else if (!attackerReset_) {
+        auto attObj = get_entity(attacker_);
+        set_idle(attObj, attBaseState_);
+        // TODO: this is a common pattern, to update an entity and change its
+        // image.
+        update_entity(attObj);
+        get_display().setEntityImage(attacker_, attImg_);
+        attackerReset_ = true;
+    }
+
+    if (elapsed_ms >= 300) {
+        if (elapsed_ms < 450) {
+            auto projObj = get_entity(projectile_);
+            // Note: assumes target is one hex away.
+            const auto flightFrac = (elapsed_ms - 300) / 150.0;
+            projObj.visible = true;
+            projObj.offset = projectileBaseState_.offset + distToMove_ * flightFrac;
+            update_entity(projObj);
+        }
+        else if (!projectileReset_) {
+            auto projObj = get_entity(projectile_);
+            projObj = projectileBaseState_;
+            projObj.visible = false;
+            update_entity(projObj);
+            projectileReset_ = true;
+        }
+    }
+
+    if (elapsed_ms >= 450) {
+        if (!dieAnimStarted_) {
+            get_display().setEntityImage(defender_, dieAnim_);
+            dieAnimStarted_ = true;
+        }
+        auto defObj = get_entity(defender_);
+        defObj.frame = get_anim_frame(dieFrames_, elapsed_ms - 450);
+        update_entity(defObj);
+    }
+}
+
+void AnimRanged::stop()
+{
+    auto defObj = get_entity(defender_);
+    defObj = defBaseState_;
+    defObj.visible = false;
+    update_entity(defObj);
+    get_display().setEntityImage(defender_, defImg_);
+}
+
 
 AnimManager::AnimManager(MapDisplay &display)
     : display_(display),

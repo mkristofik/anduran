@@ -107,6 +107,44 @@ private:
 };
 
 
+class AnimRanged : public AnimBase
+{
+public:
+    AnimRanged(MapDisplay &display,
+               int attackerId,
+               const SdlTexture &attackerImg,
+               const SdlTextureAtlas &attackAnim,
+               const std::vector<Uint32> &attackFrames,
+               int defenderId,
+               const SdlTexture &defenderImg,
+               const SdlTextureAtlas &dieAnim,
+               const std::vector<Uint32> &dieFrames,
+               int projectileId);
+
+private:
+    virtual void start() override;
+    virtual void update(Uint32 elapsed_ms) override;
+    virtual void stop() override;
+
+    int attacker_;
+    MapEntity attBaseState_;
+    SdlTexture attImg_;
+    SdlTextureAtlas attAnim_;
+    std::vector<Uint32> attFrames_;
+    bool attackerReset_;
+    int defender_;
+    MapEntity defBaseState_;
+    SdlTexture defImg_;
+    bool dieAnimStarted_;
+    SdlTextureAtlas dieAnim_;
+    std::vector<Uint32> dieFrames_;
+    int projectile_;
+    MapEntity projectileBaseState_;
+    bool projectileReset_;
+    PartialPixel distToMove_;
+};
+
+
 // Run a set of animations in sequence.
 class AnimManager
 {
