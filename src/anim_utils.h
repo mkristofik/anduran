@@ -37,6 +37,9 @@ public:
 protected:
     MapEntity get_entity(int id) const;
     void update_entity(const MapEntity &entity);
+    void update_entity(const MapEntity &entity,
+                       const std::variant<SdlTexture, SdlTextureAtlas> &img);
+
     MapDisplay & get_display();
     const MapDisplay & get_display() const;
 

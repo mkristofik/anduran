@@ -83,6 +83,14 @@ void AnimBase::update_entity(const MapEntity &entity)
     get_display().updateEntity(entity);
 }
 
+void AnimBase::update_entity(const MapEntity &entity,
+                             const std::variant<SdlTexture, SdlTextureAtlas> &img)
+{
+    auto &display = get_display();
+    display.updateEntity(entity);
+    display.setEntityImage(entity.id, img);
+}
+
 MapDisplay & AnimBase::get_display()
 {
     return display_;
@@ -242,14 +250,12 @@ void AnimMelee::start()
     attObj.visible = true;
     attObj.faceHex(defBaseState_.hex);
     attObj.frame = 0;
-    get_display().setEntityImage(attacker_, attAnim_);
     defObj.z = ZOrder::ANIMATING;
     defObj.visible = true;
     defObj.faceHex(attBaseState_.hex);
-    get_display().setEntityImage(defender_, defImg_);
 
-    update_entity(attObj);
-    update_entity(defObj);
+    update_entity(attObj, attAnim_);
+    update_entity(defObj, defImg_);
 }
 
 void AnimMelee::update(Uint32 elapsed_ms)
@@ -280,12 +286,9 @@ void AnimMelee::stop()
     auto defObj = get_entity(defender_);
 
     set_idle(attObj, attBaseState_);
-    get_display().setEntityImage(attacker_, attImg_);
     set_idle(defObj, defBaseState_);
-    get_display().setEntityImage(defender_, defImg_);
-
-    update_entity(attObj);
-    update_entity(defObj);
+    update_entity(attObj, attImg_);
+    update_entity(defObj, defImg_);
 }
 
 /* TODO: ranged attack animation
@@ -357,17 +360,15 @@ void AnimRanged::start()
     attObj.visible = true;
     attObj.faceHex(defBaseState_.hex);
     attObj.frame = 0;
-    get_display().setEntityImage(attacker_, attAnim_);
     defObj.z = ZOrder::ANIMATING;
     defObj.visible = true;
     defObj.faceHex(attBaseState_.hex);
-    get_display().setEntityImage(defender_, defImg_);
     projObj.hex = attBaseState_.hex;
     projObj.visible = false;
     // TODO: compute projectile angle
 
-    update_entity(attObj);
-    update_entity(defObj);
+    update_entity(attObj, attAnim_);
+    update_entity(defObj, defImg_);
     update_entity(projObj);
 }
 
@@ -383,10 +384,7 @@ void AnimRanged::update(Uint32 elapsed_ms)
     else if (!attackerReset_) {
         auto attObj = get_entity(attacker_);
         set_idle(attObj, attBaseState_);
-        // TODO: this is a common pattern, to update an entity and change its
-        // image.
-        update_entity(attObj);
-        get_display().setEntityImage(attacker_, attImg_);
+        update_entity(attObj, attImg_);
         attackerReset_ = true;
     }
 
@@ -424,8 +422,7 @@ void AnimRanged::stop()
     auto defObj = get_entity(defender_);
     defObj = defBaseState_;
     defObj.visible = false;
-    update_entity(defObj);
-    get_display().setEntityImage(defender_, defImg_);
+    update_entity(defObj, defImg_);
 }
 
 
