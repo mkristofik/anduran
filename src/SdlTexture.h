@@ -1,13 +1,13 @@
 /*
-    Copyright (C) 2016-2017 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License version 2
     or at your option any later version.
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY.
- 
+
     See the COPYING.txt file for more details.
 */
 #ifndef SDL_TEXTURE_H
@@ -16,48 +16,67 @@
 #include "SdlSurface.h"
 #include "SdlWindow.h"
 #include <memory>
+#include <vector>
 
-// Wrapper around SDL_Texture, representing a static image in video memory.
-// TODO: is this just a 1x1 SdlTextureAtlas?
+struct Frame
+{
+    int row = 0;
+    int col = 0;
+};
+
+
+struct TextureData;
+
+
+// Wrapper around a sprite sheet in video memory. Assumes a rectangular source
+// image and all frames are the same size. Simple images are treated as a 1x1
+// sprite sheet. Animations are sprite sheets with timing for each frame.
 class SdlTexture
 {
 public:
-    SdlTexture(const SdlSurface &src, SdlWindow &win);
+    SdlTexture();
 
+    static SdlTexture make_image(const SdlSurface &src,
+                                 SdlWindow &win);
+
+    static SdlTexture make_sprite_sheet(const SdlSurface &src,
+                                        SdlWindow &win,
+                                        const Frame &numFrames);
+
+    static SdlTexture make_animation(const SdlSurface &src,
+                                     SdlWindow &win,
+                                     const Frame &numFrames,
+                                     const std::vector<Uint32> &timing_ms);
+
+    int rows() const;
+    int cols() const;
     int width() const;
     int height() const;
-
-    // Draw the texture to its window using (px,py) as the upper-left corner.
-    // Optionally provide 'srcRect' to draw only a portion of the image.
-    void draw(int px, int py, const SDL_Rect *srcRect = nullptr);
-    void draw(const SDL_Point &p, const SDL_Rect *srcRect = nullptr);
-
-    // Draw the texture using (px,py) as the center point.
-    void drawCentered(int px, int py, const SDL_Rect *srcRect = nullptr);
-    void drawCentered(const SDL_Point &p, const SDL_Rect *srcRect = nullptr);
-
-    // Rotate the texture clockwise before drawing.
-    void drawRotated(int px, int py, double angle_rad,
-                     const SDL_Rect *srcRect = nullptr);
-    void drawRotated(const SDL_Point &p, double angle_rad,
-                     const SDL_Rect *srcRect = nullptr);
-
-    // Flip the texture before drawing.
-    void drawFlippedH(int px, int py, const SDL_Rect *srcRect = nullptr);
-    void drawFlippedH(const SDL_Point &p, const SDL_Rect *srcRect = nullptr);
-
-    // Return the bounding box for drawing the texture at (px,py).
-    SDL_Rect getDestRect(int px, int py, const SDL_Rect *srcRect = nullptr) const;
-    SDL_Rect getDestRect(const SDL_Point &p, const SDL_Rect *srcRect = nullptr) const;
+    int frame_width() const;
+    int frame_height() const;
 
     explicit operator bool() const;
     SDL_Texture * get() const;
 
+    // Return the bounding box for drawing one frame using 'p' as the upper-left
+    // corner.
+    SDL_Rect get_dest_rect(const SDL_Point &p) const;
+
+    // Draw the selected frame using 'p' as the upper-left corner.
+    void draw(const SDL_Point &p, const Frame &frame = Frame());
+
+    // Draw the selected frame using 'p' as the center point.
+    void draw_centered(const SDL_Point &p, const Frame &frame = Frame());
+
+    // Draw the selected frame mirrored horizontally using 'p' as the upper-left
+    // corner.
+    void draw_mirrored(const SDL_Point &p, const Frame &frame = Frame());
+
 private:
-    std::shared_ptr<SDL_Texture> texture_;
-    SDL_Renderer *renderer_;
-    int width_;
-    int height_;
+    SdlTexture(std::shared_ptr<TextureData> &&data);
+    SDL_Rect get_frame_rect(const Frame &frame) const;
+
+    std::shared_ptr<TextureData> pimpl_;
 };
 
 #endif

@@ -10,12 +10,12 @@
 #    See the COPYING.txt file for more details.
 
 CC = gcc
-CFLAGS = -Wall -Wextra -O3
+CFLAGS = -Wall -Wextra -Werror -O3
 CPPFLAGS = -Ic:/libraries \
 	-Ic:/MinGW/include \
 	-Ic:/libraries/SDL2-2.0.9/x86_64-w64-mingw32/include/SDL2 \
 	-Ic:/libraries/SDL2_image-2.0.4/x86_64-w64-mingw32/include/SDL2
-CXXFLAGS = -g -Wall -Wextra -std=c++17
+CXXFLAGS = -g -Wall -Wextra -Werror -std=c++17
 LDFLAGS = -Lc:/libraries/SDL2-2.0.9/x86_64-w64-mingw32/lib \
 	-Lc:/libraries/SDL2_image-2.0.4/x86_64-w64-mingw32/lib
 LDLIBS = -lmingw32 -lSDL2main -lSDL2 -lSDL2_image
@@ -38,7 +38,6 @@ MAPVIEW_SRC = MapDisplay.cpp \
 	SdlApp.cpp \
 	SdlSurface.cpp \
 	SdlTexture.cpp \
-	SdlTextureAtlas.cpp \
 	SdlWindow.cpp \
 	hex_utils.cpp \
 	json_utils.cpp \
@@ -54,7 +53,6 @@ ANDURAN_SRC = MapDisplay.cpp \
 	SdlApp.cpp \
 	SdlSurface.cpp \
 	SdlTexture.cpp \
-	SdlTextureAtlas.cpp \
 	SdlWindow.cpp \
 	anduran.cpp \
 	anim_utils.cpp \

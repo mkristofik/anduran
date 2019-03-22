@@ -15,13 +15,11 @@
 
 #include "RandomMap.h"
 #include "SdlTexture.h"
-#include "SdlTextureAtlas.h"
 #include "SdlWindow.h"
 #include "hex_utils.h"
 #include "pixel_utils.h"
 
 #include "SDL.h"
-#include <variant>
 #include <vector>
 
 struct TileDisplay
@@ -51,10 +49,10 @@ enum class ZOrder {ELLIPSE,
 
 struct MapEntity
 {
-    PartialPixel offset;
-    Hex hex;  // images drawn centered on hex, adjusted by pixel offset.
+    PartialPixel offset;  // base offset will draw the image centered on hex
+    Hex hex;
+    Frame frame;
     int id;
-    int frame;  // which frame to draw if using a texture atlas (assume only one row)
     ZOrder z;
     bool visible;
     bool mirrored;  // draw image flipped horizontally
@@ -83,18 +81,13 @@ public:
 
     // Adding new entity returns the new entity id.
     int addEntity(const SdlTexture &img, const Hex &hex, ZOrder z);
-    int addEntity(const SdlTextureAtlas &img,
-                  const Hex &hex,
-                  int initialFrame,
-                  ZOrder z);
     int addHiddenEntity(const SdlTexture &img, ZOrder z);
-    int addHiddenEntity(const SdlTextureAtlas &img, ZOrder z);
 
     // Fetch/modify entities by value to decouple objects that modify entities
     // from the map display.
     MapEntity getEntity(int id) const;
     void updateEntity(const MapEntity &newState);
-    void setEntityImage(int id, const std::variant<SdlTexture, SdlTextureAtlas> &img);
+    void setEntityImage(int id, const SdlTexture &img);
 
     void handleMousePos(Uint32 elapsed_ms);
     Hex hexFromMousePos() const;
@@ -124,14 +117,14 @@ private:
 
     SdlWindow &window_;
     RandomMap &map_;
-    std::vector<SdlTextureAtlas> tileImg_;
-    std::vector<SdlTextureAtlas> obstacleImg_;
-    std::vector<SdlTextureAtlas> edgeImg_;
+    std::vector<SdlTexture> tileImg_;
+    std::vector<SdlTexture> obstacleImg_;
+    std::vector<SdlTexture> edgeImg_;
     std::vector<TileDisplay> tiles_;
     SDL_Rect displayArea_;
     PartialPixel displayOffset_;
     std::vector<MapEntity> entities_;
-    std::vector<std::variant<SdlTexture, SdlTextureAtlas>> entityImg_;
+    std::vector<SdlTexture> entityImg_;
     int hexShadowId_;
     int hexHighlightId_;
 };

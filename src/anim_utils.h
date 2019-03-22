@@ -15,7 +15,6 @@
 
 #include "MapDisplay.h"
 #include "SdlTexture.h"
-#include "SdlTextureAtlas.h"
 #include "hex_utils.h"
 #include "pixel_utils.h"
 
@@ -37,8 +36,7 @@ public:
 protected:
     MapEntity get_entity(int id) const;
     void update_entity(const MapEntity &entity);
-    void update_entity(const MapEntity &entity,
-                       const std::variant<SdlTexture, SdlTextureAtlas> &img);
+    void update_entity(const MapEntity &entity, const SdlTexture &img);
 
     MapDisplay & get_display();
     const MapDisplay & get_display() const;
@@ -81,12 +79,12 @@ public:
     AnimMelee(MapDisplay &display,
               int attackerId,
               const SdlTexture &attackerImg,
-              const SdlTextureAtlas &attackAnim,
+              const SdlTexture &attackAnim,
               const std::vector<Uint32> &attackFrames,
               int defenderId,
               const SdlTexture &defenderImg,
               const SdlTexture &defenderHitImg,
-              const SdlTextureAtlas &dieAnim,
+              const SdlTexture &dieAnim,
               const std::vector<Uint32> &dieFrames);
 
 private:
@@ -97,14 +95,14 @@ private:
     int attacker_;
     MapEntity attBaseState_;
     SdlTexture attImg_;
-    SdlTextureAtlas attAnim_;
+    SdlTexture attAnim_;
     std::vector<Uint32> attFrames_;
     int defender_;
     MapEntity defBaseState_;
     SdlTexture defImg_;
     SdlTexture defHit_;
     bool defImgChanged_;
-    SdlTextureAtlas dieAnim_;
+    SdlTexture dieAnim_;
     std::vector<Uint32> dieFrames_;
     PartialPixel distToMove_;
 };
@@ -116,11 +114,11 @@ public:
     AnimRanged(MapDisplay &display,
                int attackerId,
                const SdlTexture &attackerImg,
-               const SdlTextureAtlas &attackAnim,
+               const SdlTexture &attackAnim,
                const std::vector<Uint32> &attackFrames,
                int defenderId,
                const SdlTexture &defenderImg,
-               const SdlTextureAtlas &dieAnim,
+               const SdlTexture &dieAnim,
                const std::vector<Uint32> &dieFrames,
                int projectileId);
 
@@ -132,14 +130,14 @@ private:
     int attacker_;
     MapEntity attBaseState_;
     SdlTexture attImg_;
-    SdlTextureAtlas attAnim_;
+    SdlTexture attAnim_;
     std::vector<Uint32> attFrames_;
     bool attackerReset_;
     int defender_;
     MapEntity defBaseState_;
     SdlTexture defImg_;
     bool dieAnimStarted_;
-    SdlTextureAtlas dieAnim_;
+    SdlTexture dieAnim_;
     std::vector<Uint32> dieFrames_;
     int projectile_;
     MapEntity projectileBaseState_;

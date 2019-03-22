@@ -13,13 +13,7 @@
 #include "MapDisplay.h"
 #include "RandomMap.h"
 #include "SdlApp.h"
-#include "SdlSurface.h"
-#include "SdlTexture.h"
-#include "SdlTextureAtlas.h"
 #include "SdlWindow.h"
-
-#include "SDL.h"
-#include "SDL_image.h"
 #include <cstdlib>
 
 class MapViewApp : public SdlApp

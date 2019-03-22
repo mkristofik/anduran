@@ -11,8 +11,8 @@
     See the COPYING.txt file for more details.
 */
 #include "anim_utils.h"
-#include "container_utils.h"
 
+#include "container_utils.h"
 #include <algorithm>
 
 namespace
@@ -31,12 +31,13 @@ namespace
 
     // Choose the animation frame to show based on elapsed time.  Show the last
     // frame if we're past the end of the animation.
-    int get_anim_frame(const std::vector<Uint32> &frameList, Uint32 elapsed_ms)
+    Frame get_anim_frame(const std::vector<Uint32> &frameList, Uint32 elapsed_ms)
     {
         auto iter = lower_bound(std::begin(frameList), std::end(frameList),
                                 elapsed_ms);
-        return std::min<int>(distance(std::begin(frameList), iter),
-                             ssize(frameList) - 1);
+        const auto col = std::min<int>(distance(std::begin(frameList), iter),
+                                       ssize(frameList) - 1);
+        return {0, col};
     }
 }
 
@@ -83,8 +84,7 @@ void AnimBase::update_entity(const MapEntity &entity)
     get_display().updateEntity(entity);
 }
 
-void AnimBase::update_entity(const MapEntity &entity,
-                             const std::variant<SdlTexture, SdlTextureAtlas> &img)
+void AnimBase::update_entity(const MapEntity &entity, const SdlTexture &img)
 {
     auto &display = get_display();
     display.updateEntity(entity);
@@ -210,12 +210,12 @@ void AnimMove::stop()
 AnimMelee::AnimMelee(MapDisplay &display,
                      int attackerId,
                      const SdlTexture &attackerImg,
-                     const SdlTextureAtlas &attackAnim,
+                     const SdlTexture &attackAnim,
                      const std::vector<Uint32> &attackFrames,
                      int defenderId,
                      const SdlTexture &defenderImg,
                      const SdlTexture &defenderHitImg,
-                     const SdlTextureAtlas &dieAnim,
+                     const SdlTexture &dieAnim,
                      const std::vector<Uint32> &dieFrames
                      )
     : AnimBase(display, MELEE_RUNTIME_MS),  // TODO: adjust by what happens to defender
@@ -249,7 +249,7 @@ void AnimMelee::start()
     attObj.z = ZOrder::ANIMATING;
     attObj.visible = true;
     attObj.faceHex(defBaseState_.hex);
-    attObj.frame = 0;
+    attObj.frame = Frame{0, 0};
     defObj.z = ZOrder::ANIMATING;
     defObj.visible = true;
     defObj.faceHex(attBaseState_.hex);
@@ -315,11 +315,11 @@ void AnimMelee::stop()
 AnimRanged::AnimRanged(MapDisplay &display,
                        int attackerId,
                        const SdlTexture &attackerImg,
-                       const SdlTextureAtlas &attackAnim,
+                       const SdlTexture &attackAnim,
                        const std::vector<Uint32> &attackFrames,
                        int defenderId,
                        const SdlTexture &defenderImg,
-                       const SdlTextureAtlas &dieAnim,
+                       const SdlTexture &dieAnim,
                        const std::vector<Uint32> &dieFrames,
                        int projectileId)
     : AnimBase(display, 1450),  // TODO: adjust based on what happens to defender
@@ -359,7 +359,7 @@ void AnimRanged::start()
     attObj.z = ZOrder::ANIMATING;
     attObj.visible = true;
     attObj.faceHex(defBaseState_.hex);
-    attObj.frame = 0;
+    attObj.frame = {0, 0};
     defObj.z = ZOrder::ANIMATING;
     defObj.visible = true;
     defObj.faceHex(attBaseState_.hex);
@@ -376,6 +376,7 @@ void AnimRanged::update(Uint32 elapsed_ms)
 {
     // TODO: holy magic numbers Batman
 
+    // Attacker
     if (elapsed_ms < 600) {
         auto attObj = get_entity(attacker_);
         attObj.frame = get_anim_frame(attFrames_, elapsed_ms);
@@ -388,6 +389,7 @@ void AnimRanged::update(Uint32 elapsed_ms)
         attackerReset_ = true;
     }
 
+    // Projectile
     if (elapsed_ms >= 300) {
         if (elapsed_ms < 450) {
             auto projObj = get_entity(projectile_);
@@ -406,6 +408,7 @@ void AnimRanged::update(Uint32 elapsed_ms)
         }
     }
 
+    // Defender
     if (elapsed_ms >= 450) {
         if (!dieAnimStarted_) {
             get_display().setEntityImage(defender_, dieAnim_);

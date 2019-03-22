@@ -16,7 +16,6 @@
 #include "SdlApp.h"
 #include "SdlSurface.h"
 #include "SdlTexture.h"
-#include "SdlTextureAtlas.h"
 #include "SdlWindow.h"
 #include "anim_utils.h"
 #include "hex_utils.h"
@@ -82,19 +81,18 @@ Anduran::Anduran()
     // Draw a champion in the hex due south of each castle.
     for (auto i = 0u; i < std::size(castles); ++i) {
         const auto hex = castles[i].getNeighbor(HexDir::S);
-        const int champion = rmapView_.addEntity(SdlTexture(championImages[i], win_),
-                                                 hex,
-                                                 ZOrder::OBJECT);
-        const int ellipse = rmapView_.addEntity(SdlTexture(ellipseImages[i], win_),
-                                                hex,
-                                                ZOrder::ELLIPSE);
+        auto championImg = SdlTexture::make_image(championImages[i], win_);
+        const int champion = rmapView_.addEntity(championImg, hex, ZOrder::OBJECT);
+        auto ellipseImg = SdlTexture::make_image(ellipseImages[i], win_);
+        const int ellipse = rmapView_.addEntity(ellipseImg, hex, ZOrder::ELLIPSE);
         players_.push_back(Player{hex, champion, ellipse});
     }
 
     // Draw flags on all the ownable objects.
     const SdlSurface flag("img/flag.png");
     const auto flagImages = applyTeamColors(flagToRefColor(flag));
-    const SdlTexture neutralFlag(flagImages[static_cast<int>(Team::NEUTRAL)], win_);
+    auto neutralFlag =
+        SdlTexture::make_image(flagImages[static_cast<int>(Team::NEUTRAL)], win_);
     for (const auto &hex : rmap_.getObjectTiles("village")) {
         rmapView_.addEntity(neutralFlag, hex, ZOrder::FLAG);
     }
@@ -178,29 +176,34 @@ void Anduran::experiment()
     // TODO: this is all temporary so I can experiment
     const auto blue = static_cast<int>(Team::BLUE);
     const auto archerImg = applyTeamColors(SdlSurface("img/archer.png"));
-    auto archer = SdlTexture(archerImg[blue], win_);
+    auto archer = SdlTexture::make_image(archerImg[blue], win_);
     const auto archerAttackImg = applyTeamColors(SdlSurface("img/archer-attack-ranged.png"));
-    auto archerAttack = SdlTextureAtlas(archerAttackImg[blue], win_, 1, 6);
-    auto arrow = SdlTexture(SdlSurface("img/missile.png"), win_);
+    auto archerAttack = SdlTexture::make_sprite_sheet(archerAttackImg[blue],
+                                                      win_,
+                                                      Frame{1, 6});
+    auto arrow = SdlTexture::make_image(SdlSurface("img/missile.png"), win_);
     const auto swordsmanImg = applyTeamColors(SdlSurface("img/swordsman.png"));
-    auto swordsman = SdlTexture(swordsmanImg[blue], win_);
+    auto swordsman = SdlTexture::make_image(swordsmanImg[blue], win_);
     const auto swordsmanAttackImg = applyTeamColors(SdlSurface("img/swordsman-attack-melee.png"));
-    auto swordsmanAttack = SdlTextureAtlas(swordsmanAttackImg[blue], win_, 1, 4);
+    auto swordsmanAttack = SdlTexture::make_sprite_sheet(swordsmanAttackImg[blue],
+                                                         win_,
+                                                         Frame{1, 4});
     const auto swordsmanDefendImg = applyTeamColors(SdlSurface("img/swordsman-defend.png"));
-    auto swordsmanDefend = SdlTexture(swordsmanDefendImg[blue], win_);
+    auto swordsmanDefend = SdlTexture::make_image(swordsmanDefendImg[blue], win_);
 
     const auto red = static_cast<int>(Team::RED);
     const auto orcImg = applyTeamColors(SdlSurface("img/orc-grunt.png"));
-    auto orc = SdlTexture(orcImg[red], win_);
+    auto orc = SdlTexture::make_image(orcImg[red], win_);
     const auto orcAttackImg = applyTeamColors(SdlSurface("img/orc-grunt-attack-melee.png"));
-    auto orcAttack = SdlTextureAtlas(orcAttackImg[red], win_, 1, 7);
+    auto orcAttack = SdlTexture::make_sprite_sheet(orcAttackImg[red],
+                                                   win_,
+                                                   Frame{1, 7});
     const auto orcDefendImg = applyTeamColors(SdlSurface("img/orc-grunt-defend.png"));
-    auto orcDefend = SdlTexture(orcDefendImg[red], win_);
+    auto orcDefend = SdlTexture::make_image(orcDefendImg[red], win_);
     const auto orcDieImg = applyTeamColors(SdlSurface("img/orc-grunt-die.png"));
-    auto orcDie = SdlTextureAtlas(orcDieImg[red], win_, 1, 8);
-
-    const std::vector<SdlTexture> images = {archer, swordsman, swordsmanDefend, orc, orcDefend};
-    const std::vector<SdlTextureAtlas> anims = {archerAttack, swordsmanAttack, orcAttack, orcDie};
+    auto orcDie = SdlTexture::make_sprite_sheet(orcDieImg[red],
+                                                win_,
+                                                Frame{1, 8});
 
     const int enemy = rmapView_.addEntity(orc, Hex{5, 8}, ZOrder::OBJECT);
     const int projectile = rmapView_.addHiddenEntity(arrow, ZOrder::PROJECTILE);
