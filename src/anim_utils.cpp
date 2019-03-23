@@ -211,26 +211,21 @@ AnimMelee::AnimMelee(MapDisplay &display,
                      int attackerId,
                      const SdlTexture &attackerImg,
                      const SdlTexture &attackAnim,
-                     const std::vector<Uint32> &attackFrames,
                      int defenderId,
                      const SdlTexture &defenderImg,
                      const SdlTexture &defenderHitImg,
-                     const SdlTexture &dieAnim,
-                     const std::vector<Uint32> &dieFrames
-                     )
+                     const SdlTexture &dieAnim)
     : AnimBase(display, MELEE_RUNTIME_MS),  // TODO: adjust by what happens to defender
     attacker_(attackerId),
     attBaseState_(),
     attImg_(attackerImg),
     attAnim_(attackAnim),
-    attFrames_(attackFrames),
     defender_(defenderId),
     defBaseState_(),
     defImg_(defenderImg),
     defHit_(defenderHitImg),
     defImgChanged_(false),
     dieAnim_(dieAnim),
-    dieFrames_(dieFrames),
     distToMove_()
 {
 }
@@ -273,7 +268,7 @@ void AnimMelee::update(Uint32 elapsed_ms)
             defImgChanged_ = true;
         }
     }
-    attObj.frame = get_anim_frame(attFrames_, elapsed_ms);
+    attObj.frame = get_anim_frame(attAnim_.timing_ms(), elapsed_ms);
 
     // TODO: play attack sound at 100 ms, hit sound at 300 ms
     // TODO: possibly play the die animation
@@ -316,25 +311,21 @@ AnimRanged::AnimRanged(MapDisplay &display,
                        int attackerId,
                        const SdlTexture &attackerImg,
                        const SdlTexture &attackAnim,
-                       const std::vector<Uint32> &attackFrames,
                        int defenderId,
                        const SdlTexture &defenderImg,
                        const SdlTexture &dieAnim,
-                       const std::vector<Uint32> &dieFrames,
                        int projectileId)
     : AnimBase(display, 1450),  // TODO: adjust based on what happens to defender
     attacker_(attackerId),
     attBaseState_(),
     attImg_(attackerImg),
     attAnim_(attackAnim),
-    attFrames_(attackFrames),
     attackerReset_(false),
     defender_(defenderId),
     defBaseState_(),
     defImg_(defenderImg),
     dieAnimStarted_(false),
     dieAnim_(dieAnim),
-    dieFrames_(dieFrames),
     projectile_(projectileId),
     projectileBaseState_(),
     projectileReset_(false),
@@ -379,7 +370,7 @@ void AnimRanged::update(Uint32 elapsed_ms)
     // Attacker
     if (elapsed_ms < 600) {
         auto attObj = get_entity(attacker_);
-        attObj.frame = get_anim_frame(attFrames_, elapsed_ms);
+        attObj.frame = get_anim_frame(attAnim_.timing_ms(), elapsed_ms);
         update_entity(attObj);
     }
     else if (!attackerReset_) {
@@ -415,7 +406,7 @@ void AnimRanged::update(Uint32 elapsed_ms)
             dieAnimStarted_ = true;
         }
         auto defObj = get_entity(defender_);
-        defObj.frame = get_anim_frame(dieFrames_, elapsed_ms - 450);
+        defObj.frame = get_anim_frame(dieAnim_.timing_ms(), elapsed_ms - 450);
         update_entity(defObj);
     }
 }

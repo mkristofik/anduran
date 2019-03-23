@@ -178,16 +178,18 @@ void Anduran::experiment()
     const auto archerImg = applyTeamColors(SdlSurface("img/archer.png"));
     auto archer = SdlTexture::make_image(archerImg[blue], win_);
     const auto archerAttackImg = applyTeamColors(SdlSurface("img/archer-attack-ranged.png"));
-    auto archerAttack = SdlTexture::make_sprite_sheet(archerAttackImg[blue],
-                                                      win_,
-                                                      Frame{1, 6});
+    auto archerAttack = SdlTexture::make_animation(archerAttackImg[blue],
+                                                   win_,
+                                                   Frame{1, 6},
+                                                   {65, 140, 215, 315, 445, 510});
     auto arrow = SdlTexture::make_image(SdlSurface("img/missile.png"), win_);
     const auto swordsmanImg = applyTeamColors(SdlSurface("img/swordsman.png"));
     auto swordsman = SdlTexture::make_image(swordsmanImg[blue], win_);
     const auto swordsmanAttackImg = applyTeamColors(SdlSurface("img/swordsman-attack-melee.png"));
-    auto swordsmanAttack = SdlTexture::make_sprite_sheet(swordsmanAttackImg[blue],
-                                                         win_,
-                                                         Frame{1, 4});
+    auto swordsmanAttack = SdlTexture::make_animation(swordsmanAttackImg[blue],
+                                                      win_,
+                                                      Frame{1, 4},
+                                                      {75, 150, 300, 400});
     const auto swordsmanDefendImg = applyTeamColors(SdlSurface("img/swordsman-defend.png"));
     auto swordsmanDefend = SdlTexture::make_image(swordsmanDefendImg[blue], win_);
 
@@ -195,48 +197,40 @@ void Anduran::experiment()
     const auto orcImg = applyTeamColors(SdlSurface("img/orc-grunt.png"));
     auto orc = SdlTexture::make_image(orcImg[red], win_);
     const auto orcAttackImg = applyTeamColors(SdlSurface("img/orc-grunt-attack-melee.png"));
-    auto orcAttack = SdlTexture::make_sprite_sheet(orcAttackImg[red],
-                                                   win_,
-                                                   Frame{1, 7});
+    auto orcAttack = SdlTexture::make_animation(orcAttackImg[red],
+                                                win_,
+                                                Frame{1, 7},
+                                                {50, 100, 200, 275, 375, 425, 500});
     const auto orcDefendImg = applyTeamColors(SdlSurface("img/orc-grunt-defend.png"));
     auto orcDefend = SdlTexture::make_image(orcDefendImg[red], win_);
     const auto orcDieImg = applyTeamColors(SdlSurface("img/orc-grunt-die.png"));
-    auto orcDie = SdlTexture::make_sprite_sheet(orcDieImg[red],
-                                                win_,
-                                                Frame{1, 8});
+    auto orcDie = SdlTexture::make_animation(orcDieImg[red],
+                                             win_,
+                                             Frame{1, 8},
+                                             {120, 240, 360, 480, 600, 720, 840, 960});
 
     const int enemy = rmapView_.addEntity(orc, Hex{5, 8}, ZOrder::OBJECT);
     const int projectile = rmapView_.addHiddenEntity(arrow, ZOrder::PROJECTILE);
-    std::vector<Uint32> swordsmanAttackFrames = {75, 150, 300, 400};
-    std::vector<Uint32> orcAttackFrames = {50, 100, 200, 275, 375, 425, 500};
-    std::vector<Uint32> archerAttackFrames = {65, 140, 215, 315, 445, 510};
-    std::vector<Uint32> dieFrames = {120, 240, 360, 480, 600, 720, 840, 960};
     anims_.insert<AnimMelee>(players_[curPlayer_].championId,
                              swordsman,
                              swordsmanAttack,
-                             swordsmanAttackFrames,
                              enemy,
                              orc,
                              orcDefend,
-                             orcDie,
-                             dieFrames);
+                             orcDie);
     anims_.insert<AnimMelee>(enemy,
                              orc,
                              orcAttack,
-                             orcAttackFrames,
                              players_[curPlayer_].championId,
                              swordsman,
                              swordsmanDefend,
-                             orcDie,
-                             dieFrames);
+                             orcDie);
     anims_.insert<AnimRanged>(players_[curPlayer_].championId,
                               archer,
                               archerAttack,
-                              archerAttackFrames,
                               enemy,
                               orc,
                               orcDie,
-                              dieFrames,
                               projectile);
 }
 

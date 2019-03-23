@@ -80,12 +80,10 @@ public:
               int attackerId,
               const SdlTexture &attackerImg,
               const SdlTexture &attackAnim,
-              const std::vector<Uint32> &attackFrames,
               int defenderId,
               const SdlTexture &defenderImg,
               const SdlTexture &defenderHitImg,
-              const SdlTexture &dieAnim,
-              const std::vector<Uint32> &dieFrames);
+              const SdlTexture &dieAnim);
 
 private:
     virtual void start() override;
@@ -96,14 +94,12 @@ private:
     MapEntity attBaseState_;
     SdlTexture attImg_;
     SdlTexture attAnim_;
-    std::vector<Uint32> attFrames_;
     int defender_;
     MapEntity defBaseState_;
     SdlTexture defImg_;
     SdlTexture defHit_;
     bool defImgChanged_;
     SdlTexture dieAnim_;
-    std::vector<Uint32> dieFrames_;
     PartialPixel distToMove_;
 };
 
@@ -115,11 +111,9 @@ public:
                int attackerId,
                const SdlTexture &attackerImg,
                const SdlTexture &attackAnim,
-               const std::vector<Uint32> &attackFrames,
                int defenderId,
                const SdlTexture &defenderImg,
                const SdlTexture &dieAnim,
-               const std::vector<Uint32> &dieFrames,
                int projectileId);
 
 private:
@@ -131,14 +125,12 @@ private:
     MapEntity attBaseState_;
     SdlTexture attImg_;
     SdlTexture attAnim_;
-    std::vector<Uint32> attFrames_;
     bool attackerReset_;
     int defender_;
     MapEntity defBaseState_;
     SdlTexture defImg_;
     bool dieAnimStarted_;
     SdlTexture dieAnim_;
-    std::vector<Uint32> dieFrames_;
     int projectile_;
     MapEntity projectileBaseState_;
     bool projectileReset_;

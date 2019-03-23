@@ -130,6 +130,11 @@ int SdlTexture::frame_height() const
     return pimpl_->frameHeight;
 }
 
+const std::vector<Uint32> & SdlTexture::timing_ms() const
+{
+    return pimpl_->timing_ms;
+}
+
 SdlTexture::operator bool() const
 {
     return static_cast<bool>(pimpl_->texture);

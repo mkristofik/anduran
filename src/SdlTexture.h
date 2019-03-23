@@ -54,6 +54,7 @@ public:
     int height() const;
     int frame_width() const;
     int frame_height() const;
+    const std::vector<Uint32> & timing_ms() const;
 
     explicit operator bool() const;
     SDL_Texture * get() const;
