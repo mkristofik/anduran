@@ -35,6 +35,10 @@ class SdlTexture
 {
 public:
     SdlTexture();
+    SdlTexture(const SdlSurface &src,
+               SdlWindow &win,
+               const Frame &numFrames,
+               const std::vector<Uint32> &timing_ms);
 
     static SdlTexture make_image(const SdlSurface &src,
                                  SdlWindow &win);

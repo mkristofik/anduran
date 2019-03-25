@@ -50,6 +50,23 @@ SdlTexture::SdlTexture()
 {
 }
 
+SdlTexture::SdlTexture(const SdlSurface &src,
+                       SdlWindow &win,
+                       const Frame &numFrames,
+                       const std::vector<Uint32> &timing_ms)
+    : pimpl_(new TextureData)
+{
+    pimpl_->renderer = win.renderer();
+    assert(numFrames.row > 0 && numFrames.col > 0 && pimpl_->renderer);
+
+    pimpl_->rows = numFrames.row;
+    pimpl_->cols = numFrames.col;
+    pimpl_->frameWidth = src->w / pimpl_->cols;
+    pimpl_->frameHeight = src->h / pimpl_->rows;
+    pimpl_->texture = make_texture(pimpl_->renderer, src.get());
+    pimpl_->timing_ms = timing_ms;
+}
+
 SdlTexture::SdlTexture(std::shared_ptr<TextureData> &&data)
     : pimpl_(data)
 {

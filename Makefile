@@ -17,8 +17,9 @@ CPPFLAGS = -Ic:/libraries \
 	-Ic:/libraries/SDL2_image-2.0.4/x86_64-w64-mingw32/include/SDL2
 CXXFLAGS = -g -Wall -Wextra -Werror -std=c++17
 LDFLAGS = -Lc:/libraries/SDL2-2.0.9/x86_64-w64-mingw32/lib \
-	-Lc:/libraries/SDL2_image-2.0.4/x86_64-w64-mingw32/lib
-LDLIBS = -lmingw32 -lSDL2main -lSDL2 -lSDL2_image
+	-Lc:/libraries/SDL2_image-2.0.4/x86_64-w64-mingw32/lib \
+	-Lc:/MinGW/lib
+LDLIBS = -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lboost_system -lboost_filesystem
 
 BUILD_DIR = build
 SRC_DIR = src
@@ -51,6 +52,7 @@ ANDURAN_SRC = MapDisplay.cpp \
 	Pathfinder.cpp \
 	RandomMap.cpp \
 	SdlApp.cpp \
+	SdlImageManager.cpp \
 	SdlSurface.cpp \
 	SdlTexture.cpp \
 	SdlWindow.cpp \

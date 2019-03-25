@@ -14,6 +14,7 @@
 #include "Pathfinder.h"
 #include "RandomMap.h"
 #include "SdlApp.h"
+#include "SdlImageManager.h"
 #include "SdlSurface.h"
 #include "SdlTexture.h"
 #include "SdlWindow.h"
@@ -56,6 +57,7 @@ private:
     bool championSelected_;
     AnimManager anims_;
     Pathfinder pathfind_;
+    SdlImageManager images_;
 };
 
 Anduran::Anduran()
@@ -67,10 +69,11 @@ Anduran::Anduran()
     curPlayer_(0),
     championSelected_(false),
     anims_(rmapView_),
-    pathfind_(rmap_)
+    pathfind_(rmap_),
+    images_("img/")
 {
-    const auto championImages = applyTeamColors(SdlSurface("img/champion.png"));
-    const SdlSurface ellipse("img/ellipse.png");
+    const auto championImages = applyTeamColors(images_.get_surface("champion"));
+    const auto ellipse = images_.get_surface("ellipse");
     const auto ellipseImages = applyTeamColors(ellipseToRefColor(ellipse));
 
     // Randomize the starting locations for each player.
@@ -89,7 +92,7 @@ Anduran::Anduran()
     }
 
     // Draw flags on all the ownable objects.
-    const SdlSurface flag("img/flag.png");
+    const auto flag = images_.get_surface("flag");
     const auto flagImages = applyTeamColors(flagToRefColor(flag));
     auto neutralFlag =
         SdlTexture::make_image(flagImages[static_cast<int>(Team::NEUTRAL)], win_);
@@ -182,7 +185,7 @@ void Anduran::experiment()
                                                    win_,
                                                    Frame{1, 6},
                                                    {65, 140, 215, 315, 445, 510});
-    auto arrow = SdlTexture::make_image(SdlSurface("img/missile.png"), win_);
+    auto arrow = images_.make_texture("missile", win_);
     const auto swordsmanImg = applyTeamColors(SdlSurface("img/swordsman.png"));
     auto swordsman = SdlTexture::make_image(swordsmanImg[blue], win_);
     const auto swordsmanAttackImg = applyTeamColors(SdlSurface("img/swordsman-attack-melee.png"));

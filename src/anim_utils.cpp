@@ -33,6 +33,10 @@ namespace
     // frame if we're past the end of the animation.
     Frame get_anim_frame(const std::vector<Uint32> &frameList, Uint32 elapsed_ms)
     {
+        if (frameList.empty()) {
+            return {};
+        }
+
         auto iter = lower_bound(std::begin(frameList), std::end(frameList),
                                 elapsed_ms);
         const auto col = std::min<int>(distance(std::begin(frameList), iter),

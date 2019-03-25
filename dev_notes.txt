@@ -45,18 +45,18 @@ destination hex
 
 # Image management
 ------------------
-- animations have a key, number of frames, timing
-- static images just need a key
+* animations have a key, number of frames, timing
+* static images just need a key
 - both might have to be team colored (lazily?)
-- manager class needs handle to the window to be able to make textures
+* manager class needs handle to the window to be able to make textures
 - images have:
     - base surface
     - 1 base texture
     - N team colored textures
-- is a static image just a 1x1 texture atlas?
-- is a static image just an animation with no frame timing?
-- one class to rule them all?
-- is the manager class just a vector of images?
+* is a static image just a 1x1 texture atlas?
+* is a static image just an animation with no frame timing?
+* one class to rule them all?
+* is the manager class just a vector of images?
 
 
 # Entity system
@@ -69,7 +69,7 @@ destination hex
     * texture or texture atlas + row/col
 * keep the texture outside the entity struct so it's small and copyable
 * store a variant texture/textureAtlas somewhere else?
-- combine texture and textureAtlas into one class?
+* combine texture and textureAtlas into one class?
 * pass entity updates by value, move-assign
 * On each frame:
     * skip if not shown
