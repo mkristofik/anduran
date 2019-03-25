@@ -13,6 +13,7 @@
 #include "MapDisplay.h"
 #include "RandomMap.h"
 #include "SdlApp.h"
+#include "SdlImageManager.h"
 #include "SdlWindow.h"
 #include <cstdlib>
 
@@ -27,6 +28,7 @@ public:
 private:
     SdlWindow win_;
     RandomMap rmap_;
+    SdlImageManager images_;
     MapDisplay rmapView_;
 };
 
@@ -34,7 +36,8 @@ MapViewApp::MapViewApp()
     : SdlApp(),
     win_(1280, 720, "Anduran Map Viewer"),
     rmap_("test2.json"),
-    rmapView_(win_, rmap_)
+    images_("img/"),
+    rmapView_(win_, rmap_, images_)
 {
 }
 

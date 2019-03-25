@@ -90,35 +90,35 @@ namespace
 
     auto loadTileImages(SdlWindow &win)
     {
-        std::vector<SdlTexture> images;
+        std::vector<SdlTexture> tiles;
         for (auto t : Terrain()) {
             const SdlSurface surf(tileFilename(t));
-            images.push_back(SdlTexture::make_sprite_sheet(surf, win, Frame{1, 3}));
+            tiles.push_back(SdlTexture::make_sprite_sheet(surf, win, Frame{1, 3}));
         }
-        return images;
+        return tiles;
     }
 
     auto loadObstacleImages(SdlWindow &win)
     {
-        std::vector<SdlTexture> images;
+        std::vector<SdlTexture> obstacles;
         for (auto t : Terrain()) {
             const SdlSurface surf(obstacleFilename(t));
-            images.push_back(SdlTexture::make_sprite_sheet(surf, win, Frame{1, 4}));
+            obstacles.push_back(SdlTexture::make_sprite_sheet(surf, win, Frame{1, 4}));
         }
-        return images;
+        return obstacles;
     }
 
     auto loadEdgeImages(SdlWindow &win)
     {
-        std::vector<SdlTexture> images;
+        std::vector<SdlTexture> edges;
         for (auto t : Terrain()) {
             const SdlSurface surf(edgeFilename(t));
-            images.push_back(SdlTexture::make_sprite_sheet(surf, win, Frame{1, 6}));
+            edges.push_back(SdlTexture::make_sprite_sheet(surf, win, Frame{1, 6}));
         }
 
         const SdlSurface surf("img/edges-same-terrain.png");
-        images.push_back(SdlTexture::make_sprite_sheet(surf, win, Frame{1, 6}));
-        return images;
+        edges.push_back(SdlTexture::make_sprite_sheet(surf, win, Frame{1, 6}));
+        return edges;
     }
     
     SDL_Point pixelFromHex(const Hex &hex)
@@ -182,9 +182,10 @@ void MapEntity::faceHex(const Hex &hDest)
 
 
 
-MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap)
+MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
     : window_(win),
     map_(rmap),
+    images_(imgMgr),
     tileImg_(loadTileImages(window_)),
     obstacleImg_(loadObstacleImages(window_)),
     edgeImg_(loadEdgeImages(window_)),
@@ -215,11 +216,9 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap)
     computeTileEdges();
     loadObjects();
 
-    const auto shadowImg = SdlTexture::make_image(SdlSurface("img/hex-shadow.png"),
-                                                  window_);
+    const auto shadowImg = images_.make_texture("hex-shadow", window_);
     hexShadowId_ = addHiddenEntity(shadowImg, ZOrder::SHADOW);
-    const auto highlightImg = SdlTexture::make_image(SdlSurface("img/hex-yellow.png"),
-                                                     window_);
+    const auto highlightImg = images_.make_texture("hex-yellow", window_);
     hexHighlightId_ = addHiddenEntity(highlightImg, ZOrder::HIGHLIGHT);
 }
 
@@ -459,21 +458,16 @@ void MapDisplay::computeTileEdges()
 
 void MapDisplay::loadObjects()
 {
-    const auto castleImg = SdlTexture::make_image(SdlSurface("img/castle.png"), window_);
+    const auto castleImg = images_.make_texture("castle", window_);
     for (const auto &hex : map_.getCastleTiles()) {
         addEntity(castleImg, hex, ZOrder::OBJECT);
     }
 
-    const auto desertVillage =
-        SdlTexture::make_image(SdlSurface("img/village-desert.png"), window_);
-    const auto dirtVillage =
-        SdlTexture::make_image(SdlSurface("img/village-dirt.png"), window_);
-    const auto grassVillage =
-        SdlTexture::make_image(SdlSurface("img/village-grass.png"), window_);
-    const auto snowVillage =
-        SdlTexture::make_image(SdlSurface("img/village-snow.png"), window_);
-    const auto swampVillage =
-        SdlTexture::make_image(SdlSurface("img/village-swamp.png"), window_);
+    const auto desertVillage = images_.make_texture("village-desert", window_);
+    const auto dirtVillage = images_.make_texture("village-dirt", window_);
+    const auto grassVillage = images_.make_texture("village-grass", window_);
+    const auto snowVillage = images_.make_texture("village-snow", window_);
+    const auto swampVillage = images_.make_texture("village-swamp", window_);
 
     for (const auto &hex : map_.getObjectTiles("village")) {
         switch (map_.getTerrain(hex)) {
@@ -497,18 +491,18 @@ void MapDisplay::loadObjects()
         }
     }
 
-    addObjectEntities("camp", "img/camp.png");
-    addObjectEntities("chest", "img/chest.png");
-    addObjectEntities("gold", "img/gold.png");
-    addObjectEntities("leanto", "img/leanto.png");
-    addObjectEntities("oasis", "img/oasis.png");
-    addObjectEntities("shipwreck", "img/shipwreck.png");
-    addObjectEntities("windmill", "img/windmill.png");
+    addObjectEntities("camp", "camp");
+    addObjectEntities("chest", "chest");
+    addObjectEntities("gold", "gold");
+    addObjectEntities("leanto", "leanto");
+    addObjectEntities("oasis", "oasis");
+    addObjectEntities("shipwreck", "shipwreck");
+    addObjectEntities("windmill", "windmill");
 }
 
-void MapDisplay::addObjectEntities(const char *name, const char *imgPath)
+void MapDisplay::addObjectEntities(const char *name, const char *imgName)
 {
-    const auto img = SdlTexture::make_image(SdlSurface(imgPath), window_);
+    const auto img = images_.make_texture(imgName, window_);
     for (const auto &hex : map_.getObjectTiles(name)) {
         addEntity(img, hex, ZOrder::OBJECT);
     }

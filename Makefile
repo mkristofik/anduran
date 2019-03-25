@@ -37,6 +37,7 @@ MAPVIEW = mapview.exe
 MAPVIEW_SRC = MapDisplay.cpp \
 	RandomMap.cpp \
 	SdlApp.cpp \
+	SdlImageManager.cpp \
 	SdlSurface.cpp \
 	SdlTexture.cpp \
 	SdlWindow.cpp \

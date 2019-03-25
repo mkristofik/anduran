@@ -14,6 +14,7 @@
 #define MAP_DISPLAY_H
 
 #include "RandomMap.h"
+#include "SdlImageManager.h"
 #include "SdlTexture.h"
 #include "SdlWindow.h"
 #include "hex_utils.h"
@@ -68,7 +69,7 @@ struct MapEntity
 class MapDisplay
 {
 public:
-    MapDisplay(SdlWindow &win, RandomMap &rmap);
+    MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr);
 
     // There is no good reason to have more than one of these.
     MapDisplay(const MapDisplay &) = delete;
@@ -100,7 +101,7 @@ public:
 private:
     void computeTileEdges();
     void loadObjects();
-    void addObjectEntities(const char *name, const char *imgPath);
+    void addObjectEntities(const char *name, const char *imgName);
 
     // Add duplicate tiles around the map border so there aren't jagged edges.
     void addBorderTiles();
@@ -117,6 +118,7 @@ private:
 
     SdlWindow &window_;
     RandomMap &map_;
+    SdlImageManager &images_;
     std::vector<SdlTexture> tileImg_;
     std::vector<SdlTexture> obstacleImg_;
     std::vector<SdlTexture> edgeImg_;

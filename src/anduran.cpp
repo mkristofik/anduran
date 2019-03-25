@@ -51,26 +51,26 @@ public:
 private:
     SdlWindow win_;
     RandomMap rmap_;
+    SdlImageManager images_;
     MapDisplay rmapView_;
     std::vector<Player> players_;
     unsigned int curPlayer_;
     bool championSelected_;
     AnimManager anims_;
     Pathfinder pathfind_;
-    SdlImageManager images_;
 };
 
 Anduran::Anduran()
     : SdlApp(),
     win_(1280, 720, "Champions of Anduran"),
     rmap_("test.json"),
-    rmapView_(win_, rmap_),
+    images_("img/"),
+    rmapView_(win_, rmap_, images_),
     players_(),
     curPlayer_(0),
     championSelected_(false),
     anims_(rmapView_),
-    pathfind_(rmap_),
-    images_("img/")
+    pathfind_(rmap_)
 {
     const auto championImages = applyTeamColors(images_.get_surface("champion"));
     const auto ellipse = images_.get_surface("ellipse");
