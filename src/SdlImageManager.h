@@ -27,16 +27,18 @@ struct SdlImageData
     Frame frames;
     std::vector<Uint32> timing_ms;
 
+    SdlImageData();
     explicit operator bool() const;
 };
 
 
 // Load all the files where images are stored and embed sprite sheet and animation
 // timing information.
+// TODO: document the config file format and naming scheme
 class SdlImageManager
 {
 public:
-    SdlImageManager(const std::string &pathName);
+    SdlImageManager(const std::string &pathname);
 
     SdlImageData get(const std::string &name) const;
     SdlSurface get_surface(const std::string &name) const;
@@ -45,6 +47,8 @@ public:
     SdlTexture make_texture(const std::string &name, SdlWindow &win) const;
 
 private:
+    void load_config(const std::string &filename);
+
     std::unordered_map<std::string, SdlImageData> images_;
 };
 

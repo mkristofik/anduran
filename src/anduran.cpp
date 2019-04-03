@@ -181,10 +181,13 @@ void Anduran::experiment()
     const auto archerImg = applyTeamColors(SdlSurface("img/archer.png"));
     auto archer = SdlTexture::make_image(archerImg[blue], win_);
     const auto archerAttackImg = applyTeamColors(SdlSurface("img/archer-attack-ranged.png"));
-    auto archerAttack = SdlTexture::make_animation(archerAttackImg[blue],
+    /*auto archerAttack = SdlTexture::make_animation(archerAttackImg[blue],
                                                    win_,
                                                    Frame{1, 6},
                                                    {65, 140, 215, 315, 445, 510});
+                                                   */
+    // TODO: this works but you get the pink one (not team colored)
+    auto archerAttack = images_.make_texture("archer-attack-ranged", win_);
     auto arrow = images_.make_texture("missile", win_);
     const auto swordsmanImg = applyTeamColors(SdlSurface("img/swordsman.png"));
     auto swordsman = SdlTexture::make_image(swordsmanImg[blue], win_);

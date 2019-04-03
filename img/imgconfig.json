@@ -1,0 +1,18 @@
+{
+    "archer-attack-ranged": {
+        "frames": [1, 6],
+        "timing_ms": [65, 140, 215, 315, 445, 510]
+    },
+    "orc-grunt-attack-melee": {
+        "frames": [1, 7],
+        "timing_ms": [50, 100, 200, 275, 375, 425, 500]
+    },
+    "orc-grunt-die": {
+        "frames": [1, 8],
+        "timing_ms": [120, 240, 360, 480, 600, 720, 840, 960]
+    },
+    "swordsman-attack-melee": {
+        "frames": [1, 4],
+        "timing_ms": [75, 150, 300, 400]
+    }
+}

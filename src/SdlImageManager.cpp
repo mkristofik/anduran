@@ -11,10 +11,18 @@
     See the COPYING.txt file for more details.
 */
 #include "SdlImageManager.h"
+#include "json_utils.h"
 
 #include "boost/filesystem.hpp"
 #include <iostream>  // TODO
 #include <stdexcept>
+
+SdlImageData::SdlImageData()
+    : surface(),
+    frames{1, 1},
+    timing_ms()
+{
+}
 
 SdlImageData::operator bool() const
 {
@@ -22,34 +30,35 @@ SdlImageData::operator bool() const
 }
 
 
-SdlImageManager::SdlImageManager(const std::string &pathName)
+SdlImageManager::SdlImageManager(const std::string &pathname)
     : images_()
 {
-    const boost::filesystem::path dir(pathName);
+    const boost::filesystem::path dir(pathname);
     if (!boost::filesystem::exists(dir) || !boost::filesystem::is_directory(dir)) {
         SDL_LogCritical(SDL_LOG_CATEGORY_VIDEO,
                         "Image directory not found: %s",
-                        pathName.c_str());
+                        pathname.c_str());
         throw std::runtime_error("Couldn't load images");
     }
     /*
     std::wstring foo = L"img/";
     const std::filesystem::path dir(std::move(foo), std::filesystem::path::generic_format);
     */
+
+    auto configPath = dir;
+    configPath /= "imgconfig.json";
+    load_config(configPath.generic_string());
+
     for (auto &p : boost::filesystem::directory_iterator(dir)) {
         if (p.path().extension() != ".png") {
             continue;
         }
 
-        SdlImageData data;
-        data.surface = SdlSurface{p.path().generic_string().c_str()};
-        data.frames = {1, 1};
-        // TODO: frames and timing
-        const std::string imgName = p.path().stem().generic_string();
-        images_.emplace(imgName, data);
+        // This either adds the surface to a known image with frames and timing
+        // data from the config file, or adds a new static image.
+        const std::string name = p.path().stem().generic_string();
+        images_[name].surface = SdlSurface(p.path().generic_string().c_str());
     }
-
-    // TODO: load json config file
 }
 
 SdlImageData SdlImageManager::get(const std::string &name) const
@@ -76,4 +85,32 @@ SdlTexture SdlImageManager::make_texture(const std::string &name, SdlWindow &win
     }
 
     return {data.surface, win, data.frames, data.timing_ms};
+}
+
+void SdlImageManager::load_config(const std::string &filename)
+{
+    if (!boost::filesystem::exists(filename)) {
+        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
+                    "Image config file not found: %s",
+                    filename.c_str());
+        return;
+    }
+
+    auto doc = jsonReadFile(filename.c_str());
+
+    // TODO: are there any errors to report from this?
+    std::vector<int> tmpFrames;
+    for (auto m = doc.MemberBegin(); m != doc.MemberEnd(); ++m) {
+        SdlImageData data;
+
+        tmpFrames.clear();
+        jsonGetArray(m->value, "frames", tmpFrames);
+        if (tmpFrames.size() >= 2) {
+            data.frames.row = tmpFrames[0];
+            data.frames.col = tmpFrames[1];
+        }
+        jsonGetArray(m->value, "timing_ms", data.timing_ms);
+
+        images_.emplace(m->name.GetString(), data);
+    }
 }
