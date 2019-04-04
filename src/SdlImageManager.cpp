@@ -14,7 +14,6 @@
 #include "json_utils.h"
 
 #include "boost/filesystem.hpp"
-#include <iostream>  // TODO
 #include <stdexcept>
 
 SdlImageData::SdlImageData()
@@ -40,10 +39,6 @@ SdlImageManager::SdlImageManager(const std::string &pathname)
                         pathname.c_str());
         throw std::runtime_error("Couldn't load images");
     }
-    /*
-    std::wstring foo = L"img/";
-    const std::filesystem::path dir(std::move(foo), std::filesystem::path::generic_format);
-    */
 
     auto configPath = dir;
     configPath /= "imgconfig.json";

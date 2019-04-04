@@ -47,6 +47,7 @@ public:
     virtual void update_frame(Uint32 elapsed_ms) override;
     virtual void handle_lmouse_up() override;
     void experiment();
+    SdlTexture load_unit_image(const std::string &name, Team team);
 
 private:
     SdlWindow win_;
@@ -177,46 +178,21 @@ void Anduran::handle_lmouse_up()
 void Anduran::experiment()
 {
     // TODO: this is all temporary so I can experiment
-    const auto blue = static_cast<int>(Team::BLUE);
-    const auto archerImg = applyTeamColors(SdlSurface("img/archer.png"));
-    auto archer = SdlTexture::make_image(archerImg[blue], win_);
-    const auto archerAttackImg = applyTeamColors(SdlSurface("img/archer-attack-ranged.png"));
-    /*auto archerAttack = SdlTexture::make_animation(archerAttackImg[blue],
-                                                   win_,
-                                                   Frame{1, 6},
-                                                   {65, 140, 215, 315, 445, 510});
-                                                   */
-    // TODO: this works but you get the pink one (not team colored)
-    auto archerAttack = images_.make_texture("archer-attack-ranged", win_);
+    auto archer = load_unit_image("archer", Team::BLUE);
+    auto archerAttack = load_unit_image("archer-attack-ranged", Team::BLUE);
+    auto swordsman = load_unit_image("swordsman", Team::BLUE);
+    auto swordsmanAttack = load_unit_image("swordsman-attack-melee", Team::BLUE);
+    auto swordsmanDefend = load_unit_image("swordsman-defend", Team::BLUE);
+
+    auto orc = load_unit_image("orc-grunt", Team::RED);
+    auto orcAttack = load_unit_image("orc-grunt-attack-melee", Team::RED);
+    auto orcDefend = load_unit_image("orc-grunt-defend", Team::RED);
+    auto orcDie = load_unit_image("orc-grunt-die", Team::RED);
+
     auto arrow = images_.make_texture("missile", win_);
-    const auto swordsmanImg = applyTeamColors(SdlSurface("img/swordsman.png"));
-    auto swordsman = SdlTexture::make_image(swordsmanImg[blue], win_);
-    const auto swordsmanAttackImg = applyTeamColors(SdlSurface("img/swordsman-attack-melee.png"));
-    auto swordsmanAttack = SdlTexture::make_animation(swordsmanAttackImg[blue],
-                                                      win_,
-                                                      Frame{1, 4},
-                                                      {75, 150, 300, 400});
-    const auto swordsmanDefendImg = applyTeamColors(SdlSurface("img/swordsman-defend.png"));
-    auto swordsmanDefend = SdlTexture::make_image(swordsmanDefendImg[blue], win_);
-
-    const auto red = static_cast<int>(Team::RED);
-    const auto orcImg = applyTeamColors(SdlSurface("img/orc-grunt.png"));
-    auto orc = SdlTexture::make_image(orcImg[red], win_);
-    const auto orcAttackImg = applyTeamColors(SdlSurface("img/orc-grunt-attack-melee.png"));
-    auto orcAttack = SdlTexture::make_animation(orcAttackImg[red],
-                                                win_,
-                                                Frame{1, 7},
-                                                {50, 100, 200, 275, 375, 425, 500});
-    const auto orcDefendImg = applyTeamColors(SdlSurface("img/orc-grunt-defend.png"));
-    auto orcDefend = SdlTexture::make_image(orcDefendImg[red], win_);
-    const auto orcDieImg = applyTeamColors(SdlSurface("img/orc-grunt-die.png"));
-    auto orcDie = SdlTexture::make_animation(orcDieImg[red],
-                                             win_,
-                                             Frame{1, 8},
-                                             {120, 240, 360, 480, 600, 720, 840, 960});
-
     const int enemy = rmapView_.addEntity(orc, Hex{5, 8}, ZOrder::OBJECT);
     const int projectile = rmapView_.addHiddenEntity(arrow, ZOrder::PROJECTILE);
+
     anims_.insert<AnimMelee>(players_[curPlayer_].championId,
                              swordsman,
                              swordsmanAttack,
@@ -240,6 +216,13 @@ void Anduran::experiment()
                               projectile);
 }
 
+SdlTexture Anduran::load_unit_image(const std::string &name, Team team)
+{
+    const auto imgData = images_.get(name);
+    const auto imgSet = applyTeamColors(imgData.surface);
+
+    return {imgSet[static_cast<int>(team)], win_, imgData.frames, imgData.timing_ms};
+}
 
 int main(int, char *[])  // two-argument form required by SDL
 {
