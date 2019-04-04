@@ -100,6 +100,7 @@ public:
 
 private:
     void computeTileEdges();
+    void loadTerrainImages();
     void loadObjects();
     void addObjectEntities(const char *name, const char *imgName);
 

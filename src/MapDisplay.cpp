@@ -26,21 +26,21 @@ namespace
     {
         switch(t) {
             case Terrain::WATER:
-                return "img/tiles-water.png";
+                return "tiles-water";
             case Terrain::DESERT:
-                return "img/tiles-desert.png";
+                return "tiles-desert";
             case Terrain::SWAMP:
-                return "img/tiles-swamp.png";
+                return "tiles-swamp";
             case Terrain::GRASS:
-                return "img/tiles-grass.png";
+                return "tiles-grass";
             case Terrain::DIRT:
-                return "img/tiles-dirt.png";
+                return "tiles-dirt";
             case Terrain::SNOW:
-                return "img/tiles-snow.png";
+                return "tiles-snow";
             default:
                 SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Unrecognized terrain %d",
                             static_cast<int>(t));
-                return "img/tiles-water.png";
+                return "tiles-water";
         }
     }
 
@@ -48,21 +48,21 @@ namespace
     {
         switch(t) {
             case Terrain::WATER:
-                return "img/obstacles-water.png";
+                return "obstacles-water";
             case Terrain::DESERT:
-                return "img/obstacles-desert.png";
+                return "obstacles-desert";
             case Terrain::SWAMP:
-                return "img/obstacles-swamp.png";
+                return "obstacles-swamp";
             case Terrain::GRASS:
-                return "img/obstacles-grass.png";
+                return "obstacles-grass";
             case Terrain::DIRT:
-                return "img/obstacles-dirt.png";
+                return "obstacles-dirt";
             case Terrain::SNOW:
-                return "img/obstacles-snow.png";
+                return "obstacles-snow";
             default:
                 SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Unrecognized terrain %d",
                             static_cast<int>(t));
-                return "img/obstacles-water.png";
+                return "obstacles-water";
         }
     }
 
@@ -70,55 +70,22 @@ namespace
     {
         switch(t) {
             case Terrain::WATER:
-                return "img/edges-water.png";
+                return "edges-water";
             case Terrain::DESERT:
-                return "img/edges-desert.png";
+                return "edges-desert";
             case Terrain::SWAMP:
-                return "img/edges-swamp.png";
+                return "edges-swamp";
             case Terrain::GRASS:
-                return "img/edges-grass.png";
+                return "edges-grass";
             case Terrain::DIRT:
-                return "img/edges-dirt.png";
+                return "edges-dirt";
             case Terrain::SNOW:
-                return "img/edges-snow.png";
+                return "edges-snow";
             default:
                 SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Unrecognized terrain %d",
                             static_cast<int>(t));
-                return "img/edges-water.png";
+                return "edges-water";
         }
-    }
-
-    auto loadTileImages(SdlWindow &win)
-    {
-        std::vector<SdlTexture> tiles;
-        for (auto t : Terrain()) {
-            const SdlSurface surf(tileFilename(t));
-            tiles.push_back(SdlTexture::make_sprite_sheet(surf, win, Frame{1, 3}));
-        }
-        return tiles;
-    }
-
-    auto loadObstacleImages(SdlWindow &win)
-    {
-        std::vector<SdlTexture> obstacles;
-        for (auto t : Terrain()) {
-            const SdlSurface surf(obstacleFilename(t));
-            obstacles.push_back(SdlTexture::make_sprite_sheet(surf, win, Frame{1, 4}));
-        }
-        return obstacles;
-    }
-
-    auto loadEdgeImages(SdlWindow &win)
-    {
-        std::vector<SdlTexture> edges;
-        for (auto t : Terrain()) {
-            const SdlSurface surf(edgeFilename(t));
-            edges.push_back(SdlTexture::make_sprite_sheet(surf, win, Frame{1, 6}));
-        }
-
-        const SdlSurface surf("img/edges-same-terrain.png");
-        edges.push_back(SdlTexture::make_sprite_sheet(surf, win, Frame{1, 6}));
-        return edges;
     }
     
     SDL_Point pixelFromHex(const Hex &hex)
@@ -186,9 +153,9 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
     : window_(win),
     map_(rmap),
     images_(imgMgr),
-    tileImg_(loadTileImages(window_)),
-    obstacleImg_(loadObstacleImages(window_)),
-    edgeImg_(loadEdgeImages(window_)),
+    tileImg_(),
+    obstacleImg_(),
+    edgeImg_(),
     tiles_(map_.size()),
     displayArea_(window_.getBounds()),
     displayOffset_(),
@@ -205,6 +172,7 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
         tiles_[i].basePixel = pixelFromHex(tiles_[i].hex);
         tiles_[i].curPixel = tiles_[i].basePixel;
         tiles_[i].terrain = static_cast<int>(map_.getTerrain(i));
+        // TODO: magic number of frames for terrain and obstacles
         tiles_[i].terrainFrame = dist3(RandomMap::engine);
         if (map_.getObstacle(i)) {
             tiles_[i].obstacle = dist4(RandomMap::engine);
@@ -212,6 +180,7 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
         tiles_[i].region = map_.getRegion(i);
     }
 
+    loadTerrainImages();
     addBorderTiles();
     computeTileEdges();
     loadObjects();
@@ -454,6 +423,16 @@ void MapDisplay::computeTileEdges()
             }
         }
     }
+}
+
+void MapDisplay::loadTerrainImages()
+{
+    for (auto t : Terrain()) {
+        tileImg_.push_back(images_.make_texture(tileFilename(t), window_));
+        obstacleImg_.push_back(images_.make_texture(obstacleFilename(t), window_));
+        edgeImg_.push_back(images_.make_texture(edgeFilename(t), window_));
+    }
+    edgeImg_.push_back(images_.make_texture("edges-same-terrain", window_));
 }
 
 void MapDisplay::loadObjects()

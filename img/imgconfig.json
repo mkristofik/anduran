@@ -3,6 +3,45 @@
         "frames": [1, 6],
         "timing_ms": [65, 140, 215, 315, 445, 510]
     },
+    "edges-desert": {
+        "frames": [1, 6]
+    },
+    "edges-dirt": {
+        "frames": [1, 6]
+    },
+    "edges-grass": {
+        "frames": [1, 6]
+    },
+    "edges-same-terrain": {
+        "frames": [1, 6]
+    },
+    "edges-snow": {
+        "frames": [1, 6]
+    },
+    "edges-swamp": {
+        "frames": [1, 6]
+    },
+    "edges-water": {
+        "frames": [1, 6]
+    },
+    "obstacles-desert": {
+        "frames": [1, 4]
+    },
+    "obstacles-dirt": {
+        "frames": [1, 4]
+    },
+    "obstacles-grass": {
+        "frames": [1, 4]
+    },
+    "obstacles-snow": {
+        "frames": [1, 4]
+    },
+    "obstacles-swamp": {
+        "frames": [1, 4]
+    },
+    "obstacles-water": {
+        "frames": [1, 4]
+    },
     "orc-grunt-attack-melee": {
         "frames": [1, 7],
         "timing_ms": [50, 100, 200, 275, 375, 425, 500]
@@ -14,5 +53,23 @@
     "swordsman-attack-melee": {
         "frames": [1, 4],
         "timing_ms": [75, 150, 300, 400]
+    },
+    "tiles-desert": {
+        "frames": [1, 3]
+    },
+    "tiles-dirt": {
+        "frames": [1, 3]
+    },
+    "tiles-grass": {
+        "frames": [1, 3]
+    },
+    "tiles-snow": {
+        "frames": [1, 3]
+    },
+    "tiles-swamp": {
+        "frames": [1, 3]
+    },
+    "tiles-water": {
+        "frames": [1, 3]
     }
 }
