@@ -1,0 +1,18 @@
+{
+    "archer": {
+        "img-idle": "archer",
+        "anim-ranged": "archer-attack-ranged",
+        "projectile": "missile"
+    },
+    "orc": {
+        "img-idle": "orc-grunt",
+        "img-defend": "orc-grunt-defend",
+        "anim-attack": "orc-grunt-attack-melee",
+        "anim-die": "orc-grunt-die"
+    },
+    "swordsman": {
+        "img-idle": "swordsman",
+        "img-defend": "swordsman-defend",
+        "anim-attack": "swordsman-attack-melee"
+    }
+}

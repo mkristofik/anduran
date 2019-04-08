@@ -57,6 +57,7 @@ ANDURAN_SRC = MapDisplay.cpp \
 	SdlSurface.cpp \
 	SdlTexture.cpp \
 	SdlWindow.cpp \
+	UnitManager.cpp \
 	anduran.cpp \
 	anim_utils.cpp \
 	hex_utils.cpp \

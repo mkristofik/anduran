@@ -18,6 +18,7 @@
 #include "SdlSurface.h"
 #include "SdlTexture.h"
 #include "SdlWindow.h"
+#include "UnitManager.h"
 #include "anim_utils.h"
 #include "hex_utils.h"
 #include "team_color.h"
@@ -59,6 +60,7 @@ private:
     bool championSelected_;
     AnimManager anims_;
     Pathfinder pathfind_;
+    UnitManager units_;
 };
 
 Anduran::Anduran()
@@ -71,7 +73,8 @@ Anduran::Anduran()
     curPlayer_(0),
     championSelected_(false),
     anims_(rmapView_),
-    pathfind_(rmap_)
+    pathfind_(rmap_),
+    units_("data/units.json", win_, images_)
 {
     const auto championImages = applyTeamColors(images_.get_surface("champion"));
     const auto ellipse = images_.get_surface("ellipse");
@@ -178,16 +181,19 @@ void Anduran::handle_lmouse_up()
 void Anduran::experiment()
 {
     // TODO: this is all temporary so I can experiment
-    auto archer = load_unit_image("archer", Team::BLUE);
-    auto archerAttack = load_unit_image("archer-attack-ranged", Team::BLUE);
-    auto swordsman = load_unit_image("swordsman", Team::BLUE);
-    auto swordsmanAttack = load_unit_image("swordsman-attack-melee", Team::BLUE);
-    auto swordsmanDefend = load_unit_image("swordsman-defend", Team::BLUE);
+    const auto archerId = units_.get_id("archer");
+    auto archer = units_.get_image(archerId, ImageType::IMG_IDLE, Team::BLUE);
+    auto archerAttack = units_.get_image(archerId, ImageType::ANIM_RANGED, Team::BLUE);
+    const auto swordsmanId = units_.get_id("swordsman");
+    auto swordsman = units_.get_image(swordsmanId, ImageType::IMG_IDLE, Team::BLUE);
+    auto swordsmanAttack = units_.get_image(swordsmanId, ImageType::ANIM_ATTACK, Team::BLUE);
+    auto swordsmanDefend = units_.get_image(swordsmanId, ImageType::IMG_DEFEND, Team::BLUE);
 
-    auto orc = load_unit_image("orc-grunt", Team::RED);
-    auto orcAttack = load_unit_image("orc-grunt-attack-melee", Team::RED);
-    auto orcDefend = load_unit_image("orc-grunt-defend", Team::RED);
-    auto orcDie = load_unit_image("orc-grunt-die", Team::RED);
+    const auto orcId = units_.get_id("orc");
+    auto orc = units_.get_image(orcId, ImageType::IMG_IDLE, Team::RED);
+    auto orcAttack = units_.get_image(orcId, ImageType::ANIM_ATTACK, Team::RED);
+    auto orcDefend = units_.get_image(orcId, ImageType::IMG_DEFEND, Team::RED);
+    auto orcDie = units_.get_image(orcId, ImageType::ANIM_DIE, Team::RED);
 
     auto arrow = images_.make_texture("missile", win_);
     const int enemy = rmapView_.addEntity(orc, Hex{5, 8}, ZOrder::OBJECT);
