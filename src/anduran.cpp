@@ -31,11 +31,12 @@
 #include <memory>
 #include <vector>
 
-struct Player
+struct GameObject
 {
-    Hex championHex;
-    int championId;
-    int ellipseId;
+    Hex hex;
+    int entity;
+    int secondary;  // embellishment such as a flag or ellipse
+    Team team;
 };
 
 
@@ -44,18 +45,16 @@ class Anduran : public SdlApp
 public:
     Anduran();
 
-    virtual void do_first_frame() override;
     virtual void update_frame(Uint32 elapsed_ms) override;
     virtual void handle_lmouse_up() override;
     void experiment();
-    SdlTexture load_unit_image(const std::string &name, Team team);
 
 private:
     SdlWindow win_;
     RandomMap rmap_;
     SdlImageManager images_;
     MapDisplay rmapView_;
-    std::vector<Player> players_;
+    std::vector<GameObject> players_;
     unsigned int curPlayer_;
     bool championSelected_;
     AnimManager anims_;
@@ -92,7 +91,7 @@ Anduran::Anduran()
         const int champion = rmapView_.addEntity(championImg, hex, ZOrder::OBJECT);
         auto ellipseImg = SdlTexture::make_image(ellipseImages[i], win_);
         const int ellipse = rmapView_.addEntity(ellipseImg, hex, ZOrder::ELLIPSE);
-        players_.push_back(Player{hex, champion, ellipse});
+        players_.push_back(GameObject{hex, champion, ellipse, static_cast<Team>(i)});
     }
 
     // Draw flags on all the ownable objects.
@@ -106,15 +105,6 @@ Anduran::Anduran()
     for (const auto &hex : rmap_.getObjectTiles("windmill")) {
         rmapView_.addEntity(neutralFlag, hex, ZOrder::FLAG);
     }
-}
-
-void Anduran::do_first_frame()
-{
-    /*
-    win_.clear();
-    rmapView_.draw();
-    win_.update();
-    */
 }
 
 void Anduran::update_frame(Uint32 elapsed_ms)
@@ -141,7 +131,7 @@ void Anduran::handle_lmouse_up()
     // - champion moves to the new hex
     const auto mouseHex = rmapView_.hexFromMousePos();
     for (auto i = 0u; i < players_.size(); ++i) {
-        if (players_[i].championHex == mouseHex) {
+        if (players_[i].hex == mouseHex) {
             if (curPlayer_ != i) {
                 championSelected_ = false;
             }
@@ -149,7 +139,7 @@ void Anduran::handle_lmouse_up()
             break;
         }
     }
-    if (mouseHex == players_[curPlayer_].championHex) {
+    if (mouseHex == players_[curPlayer_].hex) {
         if (!championSelected_) {
             rmapView_.highlight(mouseHex);
             championSelected_ = true;
@@ -160,14 +150,18 @@ void Anduran::handle_lmouse_up()
         }
     }
     else if (championSelected_ && rmap_.getWalkable(mouseHex)) {
-        const auto path = pathfind_.find_path(players_[curPlayer_].championHex,
+        const auto path = pathfind_.find_path(players_[curPlayer_].hex,
                                               mouseHex);
         if (!path.empty()) {
-            auto champion = players_[curPlayer_].championId;
-            auto ellipse = players_[curPlayer_].ellipseId;
+            auto champion = players_[curPlayer_].entity;
+            auto ellipse = players_[curPlayer_].secondary;
 
-            anims_.insert<AnimMove>(champion, ellipse, path);
-            players_[curPlayer_].championHex = mouseHex;
+            anims_.insert<AnimHide>(ellipse);
+            anims_.insert<AnimMove>(champion, path);
+            if (mouseHex != Hex{4, 8}) {
+                anims_.insert<AnimShow>(ellipse, mouseHex);
+            }
+            players_[curPlayer_].hex = mouseHex;
             championSelected_ = false;
             rmapView_.clearHighlight();
 
@@ -181,25 +175,27 @@ void Anduran::handle_lmouse_up()
 void Anduran::experiment()
 {
     // TODO: this is all temporary so I can experiment
+    const auto team = players_[curPlayer_].team;
     const auto archerId = units_.get_id("archer");
-    auto archer = units_.get_image(archerId, ImageType::IMG_IDLE, Team::BLUE);
-    auto archerAttack = units_.get_image(archerId, ImageType::ANIM_RANGED, Team::BLUE);
+    auto archer = units_.get_image(archerId, ImageType::IMG_IDLE, team);
+    auto archerAttack = units_.get_image(archerId, ImageType::ANIM_RANGED, team);
     const auto swordsmanId = units_.get_id("swordsman");
-    auto swordsman = units_.get_image(swordsmanId, ImageType::IMG_IDLE, Team::BLUE);
-    auto swordsmanAttack = units_.get_image(swordsmanId, ImageType::ANIM_ATTACK, Team::BLUE);
-    auto swordsmanDefend = units_.get_image(swordsmanId, ImageType::IMG_DEFEND, Team::BLUE);
+    auto swordsman = units_.get_image(swordsmanId, ImageType::IMG_IDLE, team);
+    auto swordsmanAttack = units_.get_image(swordsmanId, ImageType::ANIM_ATTACK, team);
+    auto swordsmanDefend = units_.get_image(swordsmanId, ImageType::IMG_DEFEND, team);
 
     const auto orcId = units_.get_id("orc");
-    auto orc = units_.get_image(orcId, ImageType::IMG_IDLE, Team::RED);
-    auto orcAttack = units_.get_image(orcId, ImageType::ANIM_ATTACK, Team::RED);
-    auto orcDefend = units_.get_image(orcId, ImageType::IMG_DEFEND, Team::RED);
-    auto orcDie = units_.get_image(orcId, ImageType::ANIM_DIE, Team::RED);
+    auto orc = units_.get_image(orcId, ImageType::IMG_IDLE, Team::NEUTRAL);
+    auto orcAttack = units_.get_image(orcId, ImageType::ANIM_ATTACK, Team::NEUTRAL);
+    auto orcDefend = units_.get_image(orcId, ImageType::IMG_DEFEND, Team::NEUTRAL);
+    auto orcDie = units_.get_image(orcId, ImageType::ANIM_DIE, Team::NEUTRAL);
 
-    auto arrow = images_.make_texture("missile", win_);
+    auto arrow = units_.get_projectile(archerId);
     const int enemy = rmapView_.addEntity(orc, Hex{5, 8}, ZOrder::OBJECT);
     const int projectile = rmapView_.addHiddenEntity(arrow, ZOrder::PROJECTILE);
+    auto ellipse = players_[curPlayer_].secondary;
 
-    anims_.insert<AnimMelee>(players_[curPlayer_].championId,
+    anims_.insert<AnimMelee>(players_[curPlayer_].entity,
                              swordsman,
                              swordsmanAttack,
                              enemy,
@@ -209,25 +205,18 @@ void Anduran::experiment()
     anims_.insert<AnimMelee>(enemy,
                              orc,
                              orcAttack,
-                             players_[curPlayer_].championId,
+                             players_[curPlayer_].entity,
                              swordsman,
                              swordsmanDefend,
                              orcDie);
-    anims_.insert<AnimRanged>(players_[curPlayer_].championId,
+    anims_.insert<AnimRanged>(players_[curPlayer_].entity,
                               archer,
                               archerAttack,
                               enemy,
                               orc,
                               orcDie,
                               projectile);
-}
-
-SdlTexture Anduran::load_unit_image(const std::string &name, Team team)
-{
-    const auto imgData = images_.get(name);
-    const auto imgSet = applyTeamColors(imgData.surface);
-
-    return {imgSet[static_cast<int>(team)], win_, imgData.frames, imgData.timing_ms};
+    anims_.insert<AnimShow>(ellipse, players_[curPlayer_].hex);
 }
 
 int main(int, char *[])  // two-argument form required by SDL

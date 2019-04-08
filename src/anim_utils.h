@@ -54,10 +54,38 @@ private:
 };
 
 
+class AnimHide : public AnimBase
+{
+public:
+    AnimHide(MapDisplay &display, int entity);
+
+private:
+    virtual void start() override;
+    virtual void update(Uint32) override {}
+
+    int entity_;
+};
+
+
+// TODO: allow this to change the image too.
+class AnimShow : public AnimBase
+{
+public:
+    AnimShow(MapDisplay &display, int entity, Hex hex);
+
+private:
+    virtual void start() override;
+    virtual void update(Uint32) override {}
+
+    int entity_;
+    Hex hex_;
+};
+
+
 class AnimMove : public AnimBase
 {
 public:
-    AnimMove(MapDisplay &display, int mover, int shadow, const std::vector<Hex> &path);
+    AnimMove(MapDisplay &display, int mover, const std::vector<Hex> &path);
 
 private:
     virtual void start() override;
@@ -65,7 +93,6 @@ private:
     virtual void stop() override;
 
     int entity_;
-    int entityShadow_;
     unsigned int pathStep_;
     std::vector<Hex> path_;
     MapEntity baseState_;

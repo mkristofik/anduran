@@ -114,13 +114,41 @@ void AnimBase::stop()
 }
 
 
+AnimHide::AnimHide(MapDisplay &display, int entity)
+    : AnimBase(display, 0),
+    entity_(entity)
+{
+}
+
+void AnimHide::start()
+{
+    auto obj = get_entity(entity_);
+    obj.visible = false;
+    update_entity(obj);
+}
+
+
+AnimShow::AnimShow(MapDisplay &display, int entity, Hex hex)
+    : AnimBase(display, 0),
+    entity_(entity),
+    hex_(hex)
+{
+}
+
+void AnimShow::start()
+{
+    auto obj = get_entity(entity_);
+    obj.hex = hex_;
+    obj.visible = true;
+    update_entity(obj);
+}
+
+
 AnimMove::AnimMove(MapDisplay &display,
                    int mover,
-                   int shadow,
                    const std::vector<Hex> &path)
     : AnimBase(display, MOVE_STEP_MS * std::size(path)),
     entity_(mover),
-    entityShadow_(shadow),
     pathStep_(0),
     path_(path),
     baseState_(),
@@ -132,7 +160,6 @@ AnimMove::AnimMove(MapDisplay &display,
 void AnimMove::start()
 {
     auto moverObj = get_entity(entity_);
-    auto shadowObj = get_entity(entityShadow_);
 
     baseState_ = moverObj;
     distToMove_ = get_display().pixelDelta(baseState_.hex, path_[0]);
@@ -142,10 +169,8 @@ void AnimMove::start()
     moverObj.faceHex(path_[0]);
     // TODO: set image to the moving image if we have one
     // TODO: play the moving sound if we have one
-    shadowObj.visible = false;
 
     update_entity(moverObj);
-    update_entity(shadowObj);
 }
 
 void AnimMove::update(Uint32 elapsed_ms)
@@ -175,17 +200,13 @@ void AnimMove::update(Uint32 elapsed_ms)
 void AnimMove::stop()
 {
     auto moverObj = get_entity(entity_);
-    auto shadowObj = get_entity(entityShadow_);
     const auto &hDest = path_.back();
 
     set_idle(moverObj, baseState_);
     moverObj.hex = hDest;
     moverObj.visible = true;
-    shadowObj.hex = hDest;
-    shadowObj.visible = true;
 
     update_entity(moverObj);
-    update_entity(shadowObj);
 }
 
 

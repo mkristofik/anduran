@@ -59,7 +59,7 @@ bool SdlApp::mouse_in_window() const
     return mouseInWindow_;
 }
 
-// Do I need this?
+// TODO: Do I need this?
 SDL_Point SdlApp::get_mouse_pos() const
 {
     SDL_Point mouse;
