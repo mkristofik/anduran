@@ -16,7 +16,6 @@
 #include "FlatMultimap.h"
 #include "hex_utils.h"
 #include "iterable_enum_class.h"
-#include <cassert>
 #include <random>
 #include <string>
 #include <vector>

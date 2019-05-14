@@ -12,6 +12,7 @@
 */
 #include "Pathfinder.h"
 
+#include "RandomMap.h"
 #include "boost/container/flat_map.hpp"
 
 #include <algorithm>

@@ -11,6 +11,7 @@
     See the COPYING.txt file for more details.
 */
 #include "SdlImageManager.h"
+#include "SdlWindow.h"
 #include "json_utils.h"
 
 #include "boost/filesystem.hpp"

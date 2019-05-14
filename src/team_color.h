@@ -17,6 +17,9 @@
 #include "iterable_enum_class.h"
 #include <array>
 
+class SdlTexture;
+
+
 // This is an implementation of the team color algorithm from Battle for
 // Wesnoth.  We reserve a specific palette of 19 shades of magenta as a
 // reference.  Those colors are replaced at runtime with the corresponding
@@ -27,7 +30,11 @@ ITERABLE_ENUM_CLASS(Team);
 
 constexpr int NUM_TEAMS = enum_size<Team>();
 
-std::array<SdlSurface, NUM_TEAMS> applyTeamColors(const SdlSurface &src);
+using TeamColoredSurfaces = std::array<SdlSurface, NUM_TEAMS>;
+using TeamColoredTextures = std::array<SdlTexture, NUM_TEAMS>;
+
+
+TeamColoredSurfaces applyTeamColors(const SdlSurface &src);
 
 // Ellipses are red, convert them to the reference color so they can be team
 // colored. Do the same with flags, which are green.

@@ -26,6 +26,7 @@
 #include "SDL.h"
 #include "SDL_image.h"
 #include <algorithm>
+#include <cassert>
 #include <cstdlib>
 #include <iostream>
 #include <memory>

@@ -12,6 +12,7 @@
 */
 #include "SdlTexture.h"
 
+#include "SdlWindow.h"
 #include "container_utils.h"
 #include "pixel_utils.h"
 #include <cassert>

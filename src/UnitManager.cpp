@@ -110,9 +110,9 @@ SdlTexture UnitManager::get_projectile(int id) const
     return media_[id].projectile;
 }
 
-TeamColoredImages UnitManager::load_image_set(const std::string &name)
+TeamColoredTextures UnitManager::load_image_set(const std::string &name)
 {
-    TeamColoredImages images;
+    TeamColoredTextures images;
     
     const auto imgData = imgSource_.get(name);
     if (!imgData) {

@@ -14,9 +14,11 @@
 #define SDL_TEXTURE_H
 
 #include "SdlSurface.h"
-#include "SdlWindow.h"
 #include <memory>
 #include <vector>
+
+class SdlWindow;
+
 
 struct Frame
 {

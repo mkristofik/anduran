@@ -14,6 +14,7 @@
 
 #include "container_utils.h"
 #include <algorithm>
+#include <cassert>
 
 namespace
 {

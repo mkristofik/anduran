@@ -13,10 +13,12 @@
 #ifndef PATHFINDER_H
 #define PATHFINDER_H
 
-#include "RandomMap.h"
 #include "hex_utils.h"
 
 #include <vector>
+
+class RandomMap;
+
 
 class Pathfinder
 {

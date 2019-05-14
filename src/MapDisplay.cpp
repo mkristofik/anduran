@@ -11,6 +11,10 @@
     See the COPYING.txt file for more details.
 */
 #include "MapDisplay.h"
+
+#include "RandomMap.h"
+#include "SdlImageManager.h"
+#include "SdlWindow.h"
 #include "container_utils.h"
 
 #include "boost/container/flat_map.hpp"

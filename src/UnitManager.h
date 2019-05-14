@@ -22,7 +22,6 @@
 #include <unordered_map>
 #include <vector>
 
-// TODO: are other forward declarations possible in other files?
 class SdlImageManager;
 class SdlWindow;
 
@@ -37,12 +36,9 @@ enum class ImageType {IMG_IDLE,
 ITERABLE_ENUM_CLASS(ImageType);
 
 
-using TeamColoredImages = std::array<SdlTexture, NUM_TEAMS>;
-
-
 struct UnitMedia
 {
-    std::array<TeamColoredImages, enum_size<ImageType>()> images;
+    std::array<TeamColoredTextures, enum_size<ImageType>()> images;
     SdlTexture projectile;
     int id;
 };
@@ -72,7 +68,7 @@ public:
     SdlTexture get_projectile(int id) const;
 
 private:
-    TeamColoredImages load_image_set(const std::string &name);
+    TeamColoredTextures load_image_set(const std::string &name);
     SdlTexture load_image(const std::string &name);
 
     SdlWindow &window_;

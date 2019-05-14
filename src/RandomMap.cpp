@@ -20,6 +20,7 @@
 #include "rapidjson/document.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <ctime>
 #include <functional>

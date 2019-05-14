@@ -15,11 +15,13 @@
 
 #include "SdlSurface.h"
 #include "SdlTexture.h"
-#include "SdlWindow.h"
 
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+class SdlWindow;
+
 
 struct SdlImageData
 {

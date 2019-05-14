@@ -17,7 +17,6 @@
 
 #include "SDL.h"
 #include <algorithm>
-#include <array>
 #include <cassert>
 #include <iterator>
 #include <tuple>
@@ -188,9 +187,9 @@ namespace
 }
 
 
-std::array<SdlSurface, NUM_TEAMS> applyTeamColors(const SdlSurface &src)
+TeamColoredSurfaces applyTeamColors(const SdlSurface &src)
 {
-    std::array<SdlSurface, NUM_TEAMS> images;
+    TeamColoredSurfaces images;
     for (int i = 0; i < NUM_TEAMS; ++i) {
         images[i] = applyColors(src, TEAM_COLORS[i]);
     }

@@ -13,15 +13,17 @@
 #ifndef MAP_DISPLAY_H
 #define MAP_DISPLAY_H
 
-#include "RandomMap.h"
-#include "SdlImageManager.h"
 #include "SdlTexture.h"
-#include "SdlWindow.h"
 #include "hex_utils.h"
 #include "pixel_utils.h"
 
 #include "SDL.h"
 #include <vector>
+
+class RandomMap;
+class SdlImageManager;
+class SdlWindow;
+
 
 struct TileDisplay
 {
