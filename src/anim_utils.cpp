@@ -128,9 +128,23 @@ void AnimHide::start()
 }
 
 
-AnimShow::AnimShow(MapDisplay &display, int entity, Hex hex)
+AnimShow::AnimShow(MapDisplay &display, int entity, const Hex &hex)
+    : AnimShow(display, entity, {}, hex)
+{
+}
+
+AnimShow::AnimShow(MapDisplay &display, int entity, const SdlTexture &img)
+    : AnimShow(display, entity, img, {})
+{
+}
+
+AnimShow::AnimShow(MapDisplay &display,
+                   int entity,
+                   const SdlTexture &img,
+                   const Hex &hex)
     : AnimBase(display, 0),
     entity_(entity),
+    imgToChange_(img),
     hex_(hex)
 {
 }
@@ -138,9 +152,18 @@ AnimShow::AnimShow(MapDisplay &display, int entity, Hex hex)
 void AnimShow::start()
 {
     auto obj = get_entity(entity_);
-    obj.hex = hex_;
+
     obj.visible = true;
-    update_entity(obj);
+    if (hex_ != Hex::invalid()) {
+        obj.hex = hex_;
+    }
+
+    if (imgToChange_) {
+        update_entity(obj, imgToChange_);
+    }
+    else {
+        update_entity(obj);
+    }
 }
 
 

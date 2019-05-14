@@ -67,17 +67,19 @@ private:
 };
 
 
-// TODO: allow this to change the image too.
 class AnimShow : public AnimBase
 {
 public:
-    AnimShow(MapDisplay &display, int entity, Hex hex);
+    AnimShow(MapDisplay &display, int entity, const Hex &hex);
+    AnimShow(MapDisplay &display, int entity, const SdlTexture &img);
+    AnimShow(MapDisplay &display, int entity, const SdlTexture &img, const Hex &hex);
 
 private:
     virtual void start() override;
     virtual void update(Uint32) override {}
 
     int entity_;
+    SdlTexture imgToChange_;
     Hex hex_;
 };
 
