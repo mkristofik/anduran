@@ -22,7 +22,6 @@ class MapViewApp : public SdlApp
 public:
     MapViewApp();
 
-    virtual void do_first_frame() override;
     virtual void update_frame(Uint32 elapsed_ms) override;
 
 private:
@@ -39,15 +38,6 @@ MapViewApp::MapViewApp()
     images_("img/"),
     rmapView_(win_, rmap_, images_)
 {
-}
-
-void MapViewApp::do_first_frame()
-{
-    /*
-    win_.clear();
-    rmapView_.draw();
-    win_.update();
-    */
 }
 
 void MapViewApp::update_frame(Uint32 elapsed_ms)

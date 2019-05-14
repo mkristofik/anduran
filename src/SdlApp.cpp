@@ -43,7 +43,6 @@ int SdlApp::run()
 {
     try {
         prevFrameTime_ms_ = SDL_GetTicks();
-        do_first_frame();
         do_game_loop();
     }
     catch (const std::exception &e) {
@@ -57,14 +56,6 @@ int SdlApp::run()
 bool SdlApp::mouse_in_window() const
 {
     return mouseInWindow_;
-}
-
-// TODO: Do I need this?
-SDL_Point SdlApp::get_mouse_pos() const
-{
-    SDL_Point mouse;
-    SDL_GetMouseState(&mouse.x, &mouse.y);
-    return mouse;
 }
 
 void SdlApp::do_game_loop()

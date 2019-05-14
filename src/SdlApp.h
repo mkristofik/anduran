@@ -42,10 +42,8 @@ public:
 
 protected:
     bool mouse_in_window() const;
-    SDL_Point get_mouse_pos() const;
 
 private:
-    virtual void do_first_frame() {}
     virtual void update_frame(Uint32 elapsed_ms) = 0;
     virtual void handle_lmouse_up() {}
 
