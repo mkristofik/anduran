@@ -51,6 +51,9 @@ public:
     void experiment();
 
 private:
+    // Load images that aren't tied to units.
+    void load_images();
+
     SdlWindow win_;
     RandomMap rmap_;
     SdlImageManager images_;
@@ -61,6 +64,9 @@ private:
     AnimManager anims_;
     Pathfinder pathfind_;
     UnitManager units_;
+    TeamColoredTextures championImages_;
+    TeamColoredTextures ellipseImages_;
+    TeamColoredTextures flagImages_;
 };
 
 Anduran::Anduran()
@@ -74,32 +80,28 @@ Anduran::Anduran()
     championSelected_(false),
     anims_(rmapView_),
     pathfind_(rmap_),
-    units_("data/units.json", win_, images_)
+    units_("data/units.json", win_, images_),
+    championImages_(),
+    ellipseImages_(),
+    flagImages_()
 {
-    const auto championImages = applyTeamColors(images_.get_surface("champion"));
-    const auto ellipse = images_.get_surface("ellipse");
-    const auto ellipseImages = applyTeamColors(ellipseToRefColor(ellipse));
+    load_images();
 
     // Randomize the starting locations for each player.
     auto castles = rmap_.getCastleTiles();
-    assert(std::size(castles) <= std::size(championImages));
+    assert(std::size(castles) <= NUM_TEAMS);
     shuffle(std::begin(castles), std::end(castles), RandomMap::engine);
 
     // Draw a champion in the hex due south of each castle.
     for (auto i = 0u; i < std::size(castles); ++i) {
         const auto hex = castles[i].getNeighbor(HexDir::S);
-        auto championImg = SdlTexture::make_image(championImages[i], win_);
-        const int champion = rmapView_.addEntity(championImg, hex, ZOrder::OBJECT);
-        auto ellipseImg = SdlTexture::make_image(ellipseImages[i], win_);
-        const int ellipse = rmapView_.addEntity(ellipseImg, hex, ZOrder::ELLIPSE);
+        const int champion = rmapView_.addEntity(championImages_[i], hex, ZOrder::OBJECT);
+        const int ellipse = rmapView_.addEntity(ellipseImages_[i], hex, ZOrder::ELLIPSE);
         players_.push_back(GameObject{hex, champion, ellipse, static_cast<Team>(i)});
     }
 
     // Draw flags on all the ownable objects.
-    const auto flag = images_.get_surface("flag");
-    const auto flagImages = applyTeamColors(flagToRefColor(flag));
-    auto neutralFlag =
-        SdlTexture::make_image(flagImages[static_cast<int>(Team::NEUTRAL)], win_);
+    const auto &neutralFlag = flagImages_[static_cast<int>(Team::NEUTRAL)];
     for (const auto &hex : rmap_.getObjectTiles("village")) {
         rmapView_.addEntity(neutralFlag, hex, ZOrder::FLAG);
     }
@@ -218,6 +220,27 @@ void Anduran::experiment()
                               orcDie,
                               projectile);
     anims_.insert<AnimShow>(ellipse, players_[curPlayer_].hex);
+    anims_.insert<AnimShow>(players_[curPlayer_].entity, championImages_[curPlayer_]);
+}
+
+void Anduran::load_images()
+{
+    const auto championSurfaces = applyTeamColors(images_.get_surface("champion"));
+    for (auto i = 0u; i < std::size(championSurfaces); ++i) {
+        championImages_[i] = SdlTexture::make_image(championSurfaces[i], win_);
+    }
+
+    const auto ellipse = images_.get_surface("ellipse");
+    const auto ellipseSurfaces = applyTeamColors(ellipseToRefColor(ellipse));
+    for (auto i = 0u; i < std::size(ellipseSurfaces); ++i) {
+        ellipseImages_[i] = SdlTexture::make_image(ellipseSurfaces[i], win_);
+    }
+
+    const auto flag = images_.get_surface("flag");
+    const auto flagSurfaces = applyTeamColors(flagToRefColor(flag));
+    for (auto i = 0u; i < std::size(flagSurfaces); ++i) {
+        flagImages_[i] = SdlTexture::make_image(flagSurfaces[i], win_);
+    }
 }
 
 int main(int, char *[])  // two-argument form required by SDL
