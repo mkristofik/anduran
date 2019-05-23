@@ -203,15 +203,13 @@ void Anduran::experiment()
                              swordsmanAttack,
                              enemy,
                              orc,
-                             orcDefend,
-                             orcDie);
+                             orcDefend);
     anims_.insert<AnimMelee>(enemy,
                              orc,
                              orcAttack,
                              players_[curPlayer_].entity,
                              swordsman,
-                             swordsmanDefend,
-                             orcDie);
+                             swordsmanDefend);
     anims_.insert<AnimRanged>(players_[curPlayer_].entity,
                               archer,
                               archerAttack,

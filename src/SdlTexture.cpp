@@ -153,6 +153,15 @@ const std::vector<Uint32> & SdlTexture::timing_ms() const
     return pimpl_->timing_ms;
 }
 
+Uint32 SdlTexture::duration_ms() const
+{
+    if (pimpl_->timing_ms.empty()) {
+        return 0;
+    }
+
+    return pimpl_->timing_ms.back();
+}
+
 SdlTexture::operator bool() const
 {
     return static_cast<bool>(pimpl_->texture);

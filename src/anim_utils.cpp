@@ -19,7 +19,6 @@
 namespace
 {
     const Uint32 MOVE_STEP_MS = 200;
-    const Uint32 MELEE_RUNTIME_MS = 600;
     const Uint32 MELEE_HIT_MS = 300;
 
     // Return to idle state but retain facing.
@@ -262,21 +261,25 @@ AnimMelee::AnimMelee(MapDisplay &display,
                      const SdlTexture &attackAnim,
                      int defenderId,
                      const SdlTexture &defenderImg,
-                     const SdlTexture &defenderHitImg,
-                     const SdlTexture &dieAnim)
-    : AnimBase(display, MELEE_RUNTIME_MS),  // TODO: adjust by what happens to defender
+                     const SdlTexture &defenderAnim)
+    : AnimBase(display, total_runtime_ms(defenderAnim)),
     attacker_(attackerId),
     attBaseState_(),
     attImg_(attackerImg),
     attAnim_(attackAnim),
+    attackerReset_(false),
     defender_(defenderId),
     defBaseState_(),
     defImg_(defenderImg),
-    defHit_(defenderHitImg),
-    defImgChanged_(false),
-    dieAnim_(dieAnim),
+    defAnim_(defenderAnim),
+    defAnimStarted_(false),
     distToMove_()
 {
+}
+
+Uint32 AnimMelee::total_runtime_ms(const SdlTexture &defenderAnim)
+{
+    return std::max(MELEE_HIT_MS * 2, MELEE_HIT_MS + defenderAnim.duration_ms());
 }
 
 void AnimMelee::start()
@@ -304,24 +307,40 @@ void AnimMelee::start()
 
 void AnimMelee::update(Uint32 elapsed_ms)
 {
-    auto attObj = get_entity(attacker_);
+    const auto hitFrac = static_cast<double>(elapsed_ms) / MELEE_HIT_MS;
 
-    const auto hitFrac = std::min(static_cast<double>(elapsed_ms) / MELEE_HIT_MS, 2.0);
+    // Attacker
+    auto attObj = get_entity(attacker_);
     if (hitFrac < 1.0) {
         attObj.offset = attBaseState_.offset + hitFrac * distToMove_;
+        attObj.frame = get_anim_frame(attAnim_.timing_ms(), elapsed_ms);
+        update_entity(attObj);
     }
-    else {
+    else if (hitFrac <= 2.0) {
         attObj.offset = attBaseState_.offset + (2 - hitFrac) * distToMove_;
-        if (!defImgChanged_) {
-            get_display().setEntityImage(defender_, defHit_);
-            defImgChanged_ = true;
-        }
+        attObj.frame = get_anim_frame(attAnim_.timing_ms(), elapsed_ms);
+        update_entity(attObj);
     }
-    attObj.frame = get_anim_frame(attAnim_.timing_ms(), elapsed_ms);
+    // This part only runs if the defender animation runs longer.
+    else if (!attackerReset_) {
+        auto attObj = get_entity(attacker_);
+        set_idle(attObj, attBaseState_);
+        update_entity(attObj, attImg_);
+        attackerReset_ = true;
+    }
+
+    // Defender
+    if (hitFrac >= 1.0) {
+        if (!defAnimStarted_) {
+            get_display().setEntityImage(defender_, defAnim_);
+            defAnimStarted_ = true;
+        }
+        auto defObj = get_entity(defender_);
+        defObj.frame = get_anim_frame(defAnim_.timing_ms(), elapsed_ms - MELEE_HIT_MS);
+        update_entity(defObj);
+    }
 
     // TODO: play attack sound at 100 ms, hit sound at 300 ms
-    // TODO: possibly play the die animation
-    update_entity(attObj);
 }
 
 void AnimMelee::stop()

@@ -111,10 +111,11 @@ public:
               const SdlTexture &attackAnim,
               int defenderId,
               const SdlTexture &defenderImg,
-              const SdlTexture &defenderHitImg,
-              const SdlTexture &dieAnim);
+              const SdlTexture &defenderAnim);
 
 private:
+    static Uint32 total_runtime_ms(const SdlTexture &defenderAnim);
+
     virtual void start() override;
     virtual void update(Uint32 elapsed_ms) override;
     virtual void stop() override;
@@ -123,12 +124,12 @@ private:
     MapEntity attBaseState_;
     SdlTexture attImg_;
     SdlTexture attAnim_;
+    bool attackerReset_;
     int defender_;
     MapEntity defBaseState_;
     SdlTexture defImg_;
-    SdlTexture defHit_;
-    bool defImgChanged_;
-    SdlTexture dieAnim_;
+    SdlTexture defAnim_;
+    bool defAnimStarted_;;
     PartialPixel distToMove_;
 };
 

@@ -60,7 +60,12 @@ public:
     int height() const;
     int frame_width() const;
     int frame_height() const;
+
+    // Each element holds the time we should switch to the next frame, assuming
+    // the animation starts at 0 ms.  Last element therefore also represents the
+    // total length of the animation.  For static images this is empty.
     const std::vector<Uint32> & timing_ms() const;
+    Uint32 duration_ms() const;
 
     explicit operator bool() const;
     SDL_Texture * get() const;
