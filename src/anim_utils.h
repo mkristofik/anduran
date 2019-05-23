@@ -108,7 +108,7 @@ public:
     AnimMelee(MapDisplay &display,
               int attackerId,
               const SdlTexture &attackerImg,
-              const SdlTexture &attackAnim,
+              const SdlTexture &attackerAnim,
               int defenderId,
               const SdlTexture &defenderImg,
               const SdlTexture &defenderAnim);
@@ -140,13 +140,16 @@ public:
     AnimRanged(MapDisplay &display,
                int attackerId,
                const SdlTexture &attackerImg,
-               const SdlTexture &attackAnim,
+               const SdlTexture &attackerAnim,
                int defenderId,
                const SdlTexture &defenderImg,
-               const SdlTexture &dieAnim,
+               const SdlTexture &defenderAnim,
                int projectileId);
 
 private:
+    static Uint32 total_runtime_ms(const SdlTexture &attackerAnim,
+                                   const SdlTexture &defenderAnim);
+
     virtual void start() override;
     virtual void update(Uint32 elapsed_ms) override;
     virtual void stop() override;
@@ -159,8 +162,8 @@ private:
     int defender_;
     MapEntity defBaseState_;
     SdlTexture defImg_;
-    bool dieAnimStarted_;
-    SdlTexture dieAnim_;
+    bool defAnimStarted_;
+    SdlTexture defAnim_;
     int projectile_;
     MapEntity projectileBaseState_;
     bool projectileReset_;

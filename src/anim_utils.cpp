@@ -20,6 +20,9 @@ namespace
 {
     const Uint32 MOVE_STEP_MS = 200;
     const Uint32 MELEE_HIT_MS = 300;
+    const Uint32 RANGED_SHOT_MS = 300;
+    const Uint32 RANGED_FLIGHT_MS = 150;
+    const Uint32 RANGED_HIT_MS = RANGED_SHOT_MS + RANGED_FLIGHT_MS;
 
     // Return to idle state but retain facing.
     void set_idle(MapEntity &entity, const MapEntity &baseState)
@@ -233,32 +236,10 @@ void AnimMove::stop()
 }
 
 
-// TODO: melee attack animation
-//     - attacker and defender entities, in adjacent hexes
-//     - first frame, attacker and defender face each other
-//     - attacker needs:
-//         - team colored attack animation
-//         - team colored idle image
-//         - lasts 600 ms, hits at 300 ms
-//         - attack sound, starts playing at 100 ms
-//         - frame timings
-//         - moves halfway to target hex in first 300 ms, then moves back
-//         - return to idle image at end
-//     - defender needs:
-//         - team colored defend image
-//         - team colored perish animation
-//         - team colored idle image
-//         - if perish animation available and unit perishes, start perish
-//         animation at hit time
-//         - image fades out smoothly for 1000 ms, after perish
-//         animation completes
-//         - otherwise, switch to defend image at hit time
-//         - return to idle image at hit time + 250 ms
-//         - play hit sound or perish sound at hit time
 AnimMelee::AnimMelee(MapDisplay &display,
                      int attackerId,
                      const SdlTexture &attackerImg,
-                     const SdlTexture &attackAnim,
+                     const SdlTexture &attackerAnim,
                      int defenderId,
                      const SdlTexture &defenderImg,
                      const SdlTexture &defenderAnim)
@@ -266,7 +247,7 @@ AnimMelee::AnimMelee(MapDisplay &display,
     attacker_(attackerId),
     attBaseState_(),
     attImg_(attackerImg),
-    attAnim_(attackAnim),
+    attAnim_(attackerAnim),
     attackerReset_(false),
     defender_(defenderId),
     defBaseState_(),
@@ -354,51 +335,38 @@ void AnimMelee::stop()
     update_entity(defObj, defImg_);
 }
 
-/* TODO: ranged attack animation
- *     - attacker and defender entities, in adjacent hexes
- *     - first frame, attacker and defender face each other
- *     - projectile entity, initially hidden
- *     - attacker needs:
- *         - team colored ranged attack animation
- *         - team colored idle image
- *         - lasts 600 ms, projectile fires at 300 ms
- *         - start ranged attack sound at 150 ms
- *     - projectile needs:
- *         - rotated to face target
- *         - visible at 300 ms
- *         - flies at 1 hex/150 ms
- *         - flies 90% of total distance to target so leading edge hits near the
- *         center of the target
- *         - image drawn with trailing edge in the center of hex, facing to the
- *         right
- *     - defender needs:
- *         - all same rules as melee attack
- *         - compute hit time to start animating, play sounds
- */
+
 AnimRanged::AnimRanged(MapDisplay &display,
                        int attackerId,
                        const SdlTexture &attackerImg,
-                       const SdlTexture &attackAnim,
+                       const SdlTexture &attackerAnim,
                        int defenderId,
                        const SdlTexture &defenderImg,
-                       const SdlTexture &dieAnim,
+                       const SdlTexture &defenderAnim,
                        int projectileId)
-    : AnimBase(display, 1450),  // TODO: adjust based on what happens to defender
+    : AnimBase(display, total_runtime_ms(attackerAnim, defenderAnim)),
     attacker_(attackerId),
     attBaseState_(),
     attImg_(attackerImg),
-    attAnim_(attackAnim),
+    attAnim_(attackerAnim),
     attackerReset_(false),
     defender_(defenderId),
     defBaseState_(),
     defImg_(defenderImg),
-    dieAnimStarted_(false),
-    dieAnim_(dieAnim),
+    defAnimStarted_(false),
+    defAnim_(defenderAnim),
     projectile_(projectileId),
     projectileBaseState_(),
     projectileReset_(false),
     distToMove_()
 {
+}
+
+Uint32 AnimRanged::total_runtime_ms(const SdlTexture &attackerAnim,
+                                    const SdlTexture &defenderAnim)
+{
+    return std::max(attackerAnim.duration_ms(),
+                    RANGED_HIT_MS + defenderAnim.duration_ms());
 }
 
 void AnimRanged::start()
@@ -433,10 +401,8 @@ void AnimRanged::start()
 
 void AnimRanged::update(Uint32 elapsed_ms)
 {
-    // TODO: holy magic numbers Batman
-
     // Attacker
-    if (elapsed_ms < 600) {
+    if (elapsed_ms < attAnim_.duration_ms()) {
         auto attObj = get_entity(attacker_);
         attObj.frame = get_anim_frame(attAnim_.timing_ms(), elapsed_ms);
         update_entity(attObj);
@@ -449,11 +415,12 @@ void AnimRanged::update(Uint32 elapsed_ms)
     }
 
     // Projectile
-    if (elapsed_ms >= 300) {
-        if (elapsed_ms < 450) {
+    if (elapsed_ms >= RANGED_SHOT_MS) {
+        if (elapsed_ms < RANGED_HIT_MS) {
             auto projObj = get_entity(projectile_);
             // Note: assumes target is one hex away.
-            const auto flightFrac = (elapsed_ms - 300) / 150.0;
+            const auto flightFrac =
+                static_cast<double>(elapsed_ms - RANGED_SHOT_MS) / RANGED_FLIGHT_MS;
             projObj.visible = true;
             projObj.offset = projectileBaseState_.offset + distToMove_ * flightFrac;
             update_entity(projObj);
@@ -468,13 +435,13 @@ void AnimRanged::update(Uint32 elapsed_ms)
     }
 
     // Defender
-    if (elapsed_ms >= 450) {
-        if (!dieAnimStarted_) {
-            get_display().setEntityImage(defender_, dieAnim_);
-            dieAnimStarted_ = true;
+    if (elapsed_ms >= RANGED_HIT_MS) {
+        if (!defAnimStarted_) {
+            get_display().setEntityImage(defender_, defAnim_);
+            defAnimStarted_ = true;
         }
         auto defObj = get_entity(defender_);
-        defObj.frame = get_anim_frame(dieAnim_.timing_ms(), elapsed_ms - 450);
+        defObj.frame = get_anim_frame(defAnim_.timing_ms(), elapsed_ms - RANGED_HIT_MS);
         update_entity(defObj);
     }
 }
