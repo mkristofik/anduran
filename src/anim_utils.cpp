@@ -131,20 +131,20 @@ void AnimHide::start()
 }
 
 
-AnimShow::AnimShow(MapDisplay &display, int entity, const Hex &hex)
-    : AnimShow(display, entity, {}, hex)
+AnimDisplay::AnimDisplay(MapDisplay &display, int entity, const Hex &hex)
+    : AnimDisplay(display, entity, {}, hex)
 {
 }
 
-AnimShow::AnimShow(MapDisplay &display, int entity, const SdlTexture &img)
-    : AnimShow(display, entity, img, {})
+AnimDisplay::AnimDisplay(MapDisplay &display, int entity, const SdlTexture &img)
+    : AnimDisplay(display, entity, img, {})
 {
 }
 
-AnimShow::AnimShow(MapDisplay &display,
-                   int entity,
-                   const SdlTexture &img,
-                   const Hex &hex)
+AnimDisplay::AnimDisplay(MapDisplay &display,
+                         int entity,
+                         const SdlTexture &img,
+                         const Hex &hex)
     : AnimBase(display, 0),
     entity_(entity),
     imgToChange_(img),
@@ -152,7 +152,7 @@ AnimShow::AnimShow(MapDisplay &display,
 {
 }
 
-void AnimShow::start()
+void AnimDisplay::start()
 {
     auto obj = get_entity(entity_);
 

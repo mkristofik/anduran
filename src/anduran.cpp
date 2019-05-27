@@ -185,7 +185,7 @@ void Anduran::handle_lmouse_up()
             anims_.insert<AnimHide>(ellipse);
             anims_.insert<AnimMove>(champion, path);
             if (mouseHex != Hex{4, 8}) {
-                anims_.insert<AnimShow>(ellipse, mouseHex);
+                anims_.insert<AnimDisplay>(ellipse, mouseHex);
 
                 // If we land on an object with a flag, change the flag color to
                 // match the player's.
@@ -195,8 +195,8 @@ void Anduran::handle_lmouse_up()
                     auto &obj = objects_[i->second];
                     if (obj.team != player.team) {
                         obj.team = player.team;
-                        anims_.insert<AnimShow>(obj.secondary,
-                                                flagImages_[curPlayerNum_]);
+                        anims_.insert<AnimDisplay>(obj.secondary,
+                                                   flagImages_[curPlayerNum_]);
                     }
                 }
             }
@@ -253,9 +253,9 @@ void Anduran::experiment()
                               orc,
                               orcDie,
                               projectile);
-    anims_.insert<AnimShow>(ellipse, objects_[curPlayerId_].hex);
-    anims_.insert<AnimShow>(objects_[curPlayerId_].entity,
-                            championImages_[curPlayerNum_]);
+    anims_.insert<AnimDisplay>(ellipse, objects_[curPlayerId_].hex);
+    anims_.insert<AnimDisplay>(objects_[curPlayerId_].entity,
+                               championImages_[curPlayerNum_]);
 }
 
 void Anduran::load_images()

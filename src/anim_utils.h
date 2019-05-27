@@ -67,12 +67,12 @@ private:
 };
 
 
-class AnimShow : public AnimBase
+class AnimDisplay : public AnimBase
 {
 public:
-    AnimShow(MapDisplay &display, int entity, const Hex &hex);
-    AnimShow(MapDisplay &display, int entity, const SdlTexture &img);
-    AnimShow(MapDisplay &display, int entity, const SdlTexture &img, const Hex &hex);
+    AnimDisplay(MapDisplay &display, int entity, const Hex &hex);
+    AnimDisplay(MapDisplay &display, int entity, const SdlTexture &img);
+    AnimDisplay(MapDisplay &display, int entity, const SdlTexture &img, const Hex &hex);
 
 private:
     virtual void start() override;
