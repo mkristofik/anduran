@@ -15,6 +15,7 @@
 
 #include "hex_utils.h"
 
+#include "boost/container/flat_map.hpp"
 #include <vector>
 
 class RandomMap;
@@ -37,6 +38,10 @@ private:
     Neighbors<int> get_neighbors(int index) const;
 
     RandomMap &rmap_;
+    boost::container::flat_map<int, int> cameFrom_;
+    boost::container::flat_map<int, int> costSoFar_;
+    int iSrc_;
+    int iDest_;
 };
 
 #endif

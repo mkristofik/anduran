@@ -13,7 +13,6 @@
 #include "Pathfinder.h"
 
 #include "RandomMap.h"
-#include "boost/container/flat_map.hpp"
 
 #include <algorithm>
 #include <functional>
@@ -32,7 +31,11 @@ bool operator>(const EstimatedPathCost &lhs, const EstimatedPathCost &rhs)
 
 
 Pathfinder::Pathfinder(RandomMap &rmap)
-    : rmap_(rmap)
+    : rmap_(rmap),
+    cameFrom_(),
+    costSoFar_(),
+    iSrc_(RandomMap::invalidIndex),
+    iDest_(RandomMap::invalidIndex)
 {
 }
 
@@ -48,25 +51,24 @@ std::vector<Hex> Pathfinder::find_path(const Hex &hSrc, const Hex &hDest)
         std::greater<EstimatedPathCost>  // need > to get a min-queue, weird
     > frontier;
 
-    boost::container::flat_map<int, int> cameFrom;
-    boost::container::flat_map<int, int> costSoFar;
+    cameFrom_.clear();
+    costSoFar_.clear();
+    iSrc_ = rmap_.intFromHex(hSrc);
+    iDest_ = rmap_.intFromHex(hDest);
     
-    const auto iSrc = rmap_.intFromHex(hSrc);
-    const auto iDest = rmap_.intFromHex(hDest);
-    frontier.push({iSrc, 0});
-    cameFrom.emplace(iSrc, RandomMap::invalidIndex);
-    costSoFar.emplace(iSrc, 0);
+    frontier.push({iSrc_, 0});
+    cameFrom_.emplace(iSrc_, RandomMap::invalidIndex);
+    costSoFar_.emplace(iSrc_, 0);
 
     // source: https://www.redblobgames.com/pathfinding/a-star/introduction.html#astar
     while (!frontier.empty()) {
         auto current = frontier.top();
         frontier.pop();
 
-        if (current.index == iDest) {
+        if (current.index == iDest_) {
             break;
         }
 
-        // TODO: possible optimization to skip neighbors of the previous tile.
         // Assuming nonzero cost per tile, it will always be less efficient to
         // reach those tiles in two steps (i.e., through this tile) than one.
         for (auto iNbr : get_neighbors(current.index)) {
@@ -74,13 +76,13 @@ std::vector<Hex> Pathfinder::find_path(const Hex &hSrc, const Hex &hDest)
                 continue;
             }
 
-            const auto newCost = costSoFar[current.index] + 1;
-            auto costIter = costSoFar.find(iNbr);
-            if (costIter != costSoFar.end() && newCost >= costIter->second) {
+            const auto newCost = costSoFar_[current.index] + 1;
+            auto costIter = costSoFar_.find(iNbr);
+            if (costIter != costSoFar_.end() && newCost >= costIter->second) {
                 continue;
             }
-            else if (costIter == costSoFar.end()) {
-                costSoFar.emplace(iNbr, newCost);
+            else if (costIter == costSoFar_.end()) {
+                costSoFar_.emplace(iNbr, newCost);
             }
             else {
                 costIter->second = newCost;
@@ -89,16 +91,16 @@ std::vector<Hex> Pathfinder::find_path(const Hex &hSrc, const Hex &hDest)
             // heuristic makes this A* instead of Dijkstra's
             const auto estimate = hexDistance(rmap_.hexFromInt(iNbr), hDest);
             frontier.push({iNbr, newCost + estimate});
-            cameFrom[iNbr] = current.index;
+            cameFrom_[iNbr] = current.index;
         }
     }
 
     // Walk backwards to produce the path (don't need the starting hex). If the
     // destination hex wasn't found, the path will be empty.
-    auto fromIter = cameFrom.find(iDest);
-    while (fromIter != cameFrom.end() && fromIter->first != iSrc) {
+    auto fromIter = cameFrom_.find(iDest_);
+    while (fromIter != cameFrom_.end() && fromIter->first != iSrc_) {
         path.push_back(rmap_.hexFromInt(fromIter->first));
-        fromIter = cameFrom.find(fromIter->second);
+        fromIter = cameFrom_.find(fromIter->second);
     }
     std::reverse(path.begin(), path.end());
 
@@ -110,11 +112,24 @@ Neighbors<int> Pathfinder::get_neighbors(int index) const
     Neighbors<int> iNbrs;
     assert(!rmap_.offGrid(index));
 
+    // TODO: possible optimization to skip neighbors of the previous tile.
     const auto hNbrs = rmap_.hexFromInt(index).getAllNeighbors();
     for (auto i = 0u; i < hNbrs.size(); ++i) {
         iNbrs[i] = rmap_.intFromHex(hNbrs[i]);
+
+        // Every step has a nonzero cost so we'll never step back to the tile we
+        // just came from.
+        auto prevIter = cameFrom_.find(index);
+        if (prevIter != std::end(cameFrom_) && iNbrs[i] == prevIter->second) {
+            iNbrs[i] = RandomMap::invalidIndex;
+            continue;
+        }
+
+        // TODO: game objects are only walkable if they're on the destination hex
+        // or if they match the player's team color.
         if (!rmap_.getWalkable(iNbrs[i])) {
             iNbrs[i] = RandomMap::invalidIndex;
+            continue;
         }
     }
     return iNbrs;
