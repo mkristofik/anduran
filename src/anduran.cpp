@@ -20,8 +20,11 @@
 #include "SdlWindow.h"
 #include "UnitManager.h"
 #include "anim_utils.h"
+#include "container_utils.h"
 #include "hex_utils.h"
 #include "team_color.h"
+
+#include "boost/container/flat_map.hpp"
 
 #include "SDL.h"
 #include "SDL_image.h"
@@ -35,9 +38,9 @@
 struct GameObject
 {
     Hex hex;
-    int entity;
-    int secondary;  // embellishment such as a flag or ellipse
-    Team team;
+    int entity = -1;
+    int secondary = -1;  // embellishment such as a flag or ellipse
+    Team team = Team::NEUTRAL;
 };
 
 
@@ -58,8 +61,10 @@ private:
     RandomMap rmap_;
     SdlImageManager images_;
     MapDisplay rmapView_;
-    std::vector<GameObject> players_;
-    unsigned int curPlayer_;
+    std::vector<GameObject> objects_;
+    std::vector<int> playerObjectIds_;
+    int curPlayerId_;
+    int curPlayerNum_;
     bool championSelected_;
     AnimManager anims_;
     Pathfinder pathfind_;
@@ -67,6 +72,7 @@ private:
     TeamColoredTextures championImages_;
     TeamColoredTextures ellipseImages_;
     TeamColoredTextures flagImages_;
+    boost::container::flat_multimap<Hex, int> visitableObjects_;
 };
 
 Anduran::Anduran()
@@ -75,15 +81,18 @@ Anduran::Anduran()
     rmap_("test.json"),
     images_("img/"),
     rmapView_(win_, rmap_, images_),
-    players_(),
-    curPlayer_(0),
+    objects_(),
+    playerObjectIds_(),
+    curPlayerId_(0),
+    curPlayerNum_(0),
     championSelected_(false),
     anims_(rmapView_),
     pathfind_(rmap_),
     units_("data/units.json", win_, images_),
     championImages_(),
     ellipseImages_(),
-    flagImages_()
+    flagImages_(),
+    visitableObjects_()
 {
     load_images();
 
@@ -97,16 +106,28 @@ Anduran::Anduran()
         const auto hex = castles[i].getNeighbor(HexDir::S);
         const int champion = rmapView_.addEntity(championImages_[i], hex, ZOrder::OBJECT);
         const int ellipse = rmapView_.addEntity(ellipseImages_[i], hex, ZOrder::ELLIPSE);
-        players_.push_back(GameObject{hex, champion, ellipse, static_cast<Team>(i)});
+        // TODO: it would be less confusing if object ids matched their map
+        // entity ids.
+        playerObjectIds_.push_back(ssize(objects_));
+        objects_.push_back(GameObject{hex, champion, ellipse, static_cast<Team>(i)});
     }
 
     // Draw flags on all the ownable objects.
     const auto &neutralFlag = flagImages_[static_cast<int>(Team::NEUTRAL)];
     for (const auto &hex : rmap_.getObjectTiles("village")) {
-        rmapView_.addEntity(neutralFlag, hex, ZOrder::FLAG);
+        GameObject village;
+        village.hex = hex;
+        // TODO: how to look up the entity for the village itself
+        village.secondary = rmapView_.addEntity(neutralFlag, hex, ZOrder::FLAG);
+        visitableObjects_.emplace(hex, ssize(objects_));
+        objects_.push_back(village);
     }
     for (const auto &hex : rmap_.getObjectTiles("windmill")) {
-        rmapView_.addEntity(neutralFlag, hex, ZOrder::FLAG);
+        GameObject windmill;
+        windmill.hex = hex;
+        windmill.secondary = rmapView_.addEntity(neutralFlag, hex, ZOrder::FLAG);
+        visitableObjects_.emplace(hex, ssize(objects_));
+        objects_.push_back(windmill);
     }
 }
 
@@ -133,16 +154,17 @@ void Anduran::handle_lmouse_up()
     // - user clicks on a walkable hex
     // - champion moves to the new hex
     const auto mouseHex = rmapView_.hexFromMousePos();
-    for (auto i = 0u; i < players_.size(); ++i) {
-        if (players_[i].hex == mouseHex) {
-            if (curPlayer_ != i) {
+    for (auto i = 0; i < ssize(playerObjectIds_); ++i) {
+        if (objects_[playerObjectIds_[i]].hex == mouseHex) {
+            if (curPlayerNum_ != i) {
                 championSelected_ = false;
             }
-            curPlayer_ = i;
+            curPlayerId_ = playerObjectIds_[i];
+            curPlayerNum_ = i;
             break;
         }
     }
-    if (mouseHex == players_[curPlayer_].hex) {
+    if (mouseHex == objects_[curPlayerId_].hex) {
         if (!championSelected_) {
             rmapView_.highlight(mouseHex);
             championSelected_ = true;
@@ -153,18 +175,32 @@ void Anduran::handle_lmouse_up()
         }
     }
     else if (championSelected_ && rmap_.getWalkable(mouseHex)) {
-        const auto path = pathfind_.find_path(players_[curPlayer_].hex,
+        const auto path = pathfind_.find_path(objects_[curPlayerId_].hex,
                                               mouseHex);
         if (!path.empty()) {
-            auto champion = players_[curPlayer_].entity;
-            auto ellipse = players_[curPlayer_].secondary;
+            auto &player = objects_[curPlayerId_];
+            auto champion = player.entity;
+            auto ellipse = player.secondary;
 
             anims_.insert<AnimHide>(ellipse);
             anims_.insert<AnimMove>(champion, path);
             if (mouseHex != Hex{4, 8}) {
                 anims_.insert<AnimShow>(ellipse, mouseHex);
+
+                // If we land on an object with a flag, change the flag color to
+                // match the player's.
+                // TODO: different actions depending on the object visited.
+                const auto objectsHere = visitableObjects_.equal_range(mouseHex);
+                for (auto i = objectsHere.first; i != objectsHere.second; ++i) {
+                    auto &obj = objects_[i->second];
+                    if (obj.team != player.team) {
+                        obj.team = player.team;
+                        anims_.insert<AnimShow>(obj.secondary,
+                                                flagImages_[curPlayerNum_]);
+                    }
+                }
             }
-            players_[curPlayer_].hex = mouseHex;
+            player.hex = mouseHex;
             championSelected_ = false;
             rmapView_.clearHighlight();
 
@@ -178,7 +214,7 @@ void Anduran::handle_lmouse_up()
 void Anduran::experiment()
 {
     // TODO: this is all temporary so I can experiment
-    const auto team = players_[curPlayer_].team;
+    const auto team = objects_[curPlayerId_].team;
     const auto archerId = units_.get_id("archer");
     auto archer = units_.get_image(archerId, ImageType::IMG_IDLE, team);
     auto archerAttack = units_.get_image(archerId, ImageType::ANIM_RANGED, team);
@@ -196,9 +232,9 @@ void Anduran::experiment()
     auto arrow = units_.get_projectile(archerId);
     const int enemy = rmapView_.addEntity(orc, Hex{5, 8}, ZOrder::OBJECT);
     const int projectile = rmapView_.addHiddenEntity(arrow, ZOrder::PROJECTILE);
-    auto ellipse = players_[curPlayer_].secondary;
+    auto ellipse = objects_[curPlayerId_].secondary;
 
-    anims_.insert<AnimMelee>(players_[curPlayer_].entity,
+    anims_.insert<AnimMelee>(objects_[curPlayerId_].entity,
                              swordsman,
                              swordsmanAttack,
                              enemy,
@@ -207,18 +243,19 @@ void Anduran::experiment()
     anims_.insert<AnimMelee>(enemy,
                              orc,
                              orcAttack,
-                             players_[curPlayer_].entity,
+                             objects_[curPlayerId_].entity,
                              swordsman,
                              swordsmanDefend);
-    anims_.insert<AnimRanged>(players_[curPlayer_].entity,
+    anims_.insert<AnimRanged>(objects_[curPlayerId_].entity,
                               archer,
                               archerAttack,
                               enemy,
                               orc,
                               orcDie,
                               projectile);
-    anims_.insert<AnimShow>(ellipse, players_[curPlayer_].hex);
-    anims_.insert<AnimShow>(players_[curPlayer_].entity, championImages_[curPlayer_]);
+    anims_.insert<AnimShow>(ellipse, objects_[curPlayerId_].hex);
+    anims_.insert<AnimShow>(objects_[curPlayerId_].entity,
+                            championImages_[curPlayerNum_]);
 }
 
 void Anduran::load_images()
