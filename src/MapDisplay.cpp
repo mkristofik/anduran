@@ -187,7 +187,6 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
     loadTerrainImages();
     addBorderTiles();
     computeTileEdges();
-    loadObjects();
 
     const auto shadowImg = images_.make_texture("hex-shadow", window_);
     hexShadowId_ = addHiddenEntity(shadowImg, ZOrder::SHADOW);
@@ -437,61 +436,6 @@ void MapDisplay::loadTerrainImages()
         edgeImg_.push_back(images_.make_texture(edgeFilename(t), window_));
     }
     edgeImg_.push_back(images_.make_texture("edges-same-terrain", window_));
-}
-
-// TODO: the game needs to do all this.  It needs to keep track of where all
-// these are so you can interact with them, pick them up, etc.
-void MapDisplay::loadObjects()
-{
-    const auto castleImg = images_.make_texture("castle", window_);
-    for (const auto &hex : map_.getCastleTiles()) {
-        addEntity(castleImg, hex, ZOrder::OBJECT);
-    }
-
-    // TODO: flat_map of Terrain to village images?
-    const auto desertVillage = images_.make_texture("village-desert", window_);
-    const auto dirtVillage = images_.make_texture("village-dirt", window_);
-    const auto grassVillage = images_.make_texture("village-grass", window_);
-    const auto snowVillage = images_.make_texture("village-snow", window_);
-    const auto swampVillage = images_.make_texture("village-swamp", window_);
-
-    for (const auto &hex : map_.getObjectTiles(ObjectType::VILLAGE)) {
-        switch (map_.getTerrain(hex)) {
-            case Terrain::DESERT:
-                addEntity(desertVillage, hex, ZOrder::OBJECT);
-                break;
-            case Terrain::DIRT:
-                addEntity(dirtVillage, hex, ZOrder::OBJECT);
-                break;
-            case Terrain::GRASS:
-                addEntity(grassVillage, hex, ZOrder::OBJECT);
-                break;
-            case Terrain::SNOW:
-                addEntity(snowVillage, hex, ZOrder::OBJECT);
-                break;
-            case Terrain::SWAMP:
-                addEntity(swampVillage, hex, ZOrder::OBJECT);
-                break;
-            default:
-                break;
-        }
-    }
-
-    addObjectEntities(ObjectType::CAMP, "camp");
-    addObjectEntities(ObjectType::CHEST, "chest");
-    addObjectEntities(ObjectType::RESOURCE, "gold");
-    addObjectEntities(ObjectType::LEANTO, "leanto");
-    addObjectEntities(ObjectType::OASIS, "oasis");
-    addObjectEntities(ObjectType::SHIPWRECK, "shipwreck");
-    addObjectEntities(ObjectType::WINDMILL, "windmill");
-}
-
-void MapDisplay::addObjectEntities(ObjectType type, const char *imgName)
-{
-    const auto img = images_.make_texture(imgName, window_);
-    for (const auto &hex : map_.getObjectTiles(type)) {
-        addEntity(img, hex, ZOrder::OBJECT);
-    }
 }
 
 void MapDisplay::addBorderTiles()

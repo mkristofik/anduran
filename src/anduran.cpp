@@ -42,6 +42,7 @@ struct GameObject
     int entity = -1;
     int secondary = -1;  // embellishment such as a flag or ellipse
     Team team = Team::NEUTRAL;
+    ObjectType type = ObjectType::INVALID;
 };
 
 
@@ -57,6 +58,12 @@ public:
 private:
     // Load images that aren't tied to units.
     void load_images();
+
+    // Load objects and draw them on the map.
+    void load_players();
+    void load_villages();
+    void load_objects();
+    void load_simple_object(ObjectType type, const char *imgName);
 
     SdlWindow win_;
     RandomMap rmap_;
@@ -96,39 +103,104 @@ Anduran::Anduran()
     visitableObjects_()
 {
     load_images();
+    load_players();
+    load_villages();
+    load_objects();
+}
 
+void Anduran::load_players()
+{
     // Randomize the starting locations for each player.
     auto castles = rmap_.getCastleTiles();
     assert(std::size(castles) <= NUM_TEAMS);
     shuffle(std::begin(castles), std::end(castles), RandomMap::engine);
 
-    // Draw a champion in the hex due south of each castle.
+    const auto castleImg = images_.make_texture("castle", win_);
     for (auto i = 0u; i < std::size(castles); ++i) {
-        const auto hex = castles[i].getNeighbor(HexDir::S);
-        const int champion = rmapView_.addEntity(championImages_[i], hex, ZOrder::OBJECT);
-        const int ellipse = rmapView_.addEntity(ellipseImages_[i], hex, ZOrder::ELLIPSE);
+        GameObject castle;
+        castle.hex = castles[i];
+        castle.entity = rmapView_.addEntity(castleImg, castle.hex, ZOrder::OBJECT);
+        castle.team = static_cast<Team>(i);
+        castle.type = ObjectType::CASTLE;
+        objects_.push_back(castle);
+
+        // Draw a champion in the hex due south of each castle.
+        GameObject champion;
+        champion.hex = castles[i].getNeighbor(HexDir::S);
+        champion.entity = rmapView_.addEntity(championImages_[i],
+                                              champion.hex,
+                                              ZOrder::UNIT);
+        champion.secondary = rmapView_.addEntity(ellipseImages_[i],
+                                                 champion.hex,
+                                                 ZOrder::ELLIPSE);
+        champion.team = static_cast<Team>(i);
+        champion.type = ObjectType::CHAMPION;
         // TODO: it would be less confusing if object ids matched their map
         // entity ids.
         playerObjectIds_.push_back(ssize(objects_));
-        objects_.push_back(GameObject{hex, champion, ellipse, static_cast<Team>(i)});
+        objects_.push_back(champion);
     }
+}
 
-    // Draw flags on all the ownable objects.
+void Anduran::load_villages()
+{
+    std::array<SdlTexture, enum_size<Terrain>()> villageImages = {
+        SdlTexture{},
+        images_.make_texture("village-desert", win_),
+        images_.make_texture("village-swamp", win_),
+        images_.make_texture("village-grass", win_),
+        images_.make_texture("village-dirt", win_),
+        images_.make_texture("village-snow", win_)
+    };
+
     const auto &neutralFlag = flagImages_[static_cast<int>(Team::NEUTRAL)];
     for (const auto &hex : rmap_.getObjectTiles(ObjectType::VILLAGE)) {
+        const int terrain = static_cast<int>(rmap_.getTerrain(hex));
         GameObject village;
         village.hex = hex;
-        // TODO: how to look up the entity for the village itself
-        village.secondary = rmapView_.addEntity(neutralFlag, hex, ZOrder::FLAG);
-        visitableObjects_.emplace(hex, ssize(objects_));
+        village.entity = rmapView_.addEntity(villageImages[terrain],
+                                             village.hex,
+                                             ZOrder::OBJECT);
+        village.secondary = rmapView_.addEntity(neutralFlag, village.hex, ZOrder::FLAG);
+        village.type = ObjectType::VILLAGE;
+        visitableObjects_.emplace(village.hex, ssize(objects_));
         objects_.push_back(village);
     }
+}
+
+void Anduran::load_objects()
+{
+    // Windmills are ownable so draw flags on them.
+    const auto windmillImg = images_.make_texture("windmill", win_);
+    const auto &neutralFlag = flagImages_[static_cast<int>(Team::NEUTRAL)];
     for (const auto &hex : rmap_.getObjectTiles(ObjectType::WINDMILL)) {
         GameObject windmill;
         windmill.hex = hex;
-        windmill.secondary = rmapView_.addEntity(neutralFlag, hex, ZOrder::FLAG);
+        windmill.entity = rmapView_.addEntity(windmillImg, windmill.hex, ZOrder::OBJECT);
+        windmill.secondary = rmapView_.addEntity(neutralFlag, windmill.hex, ZOrder::FLAG);
+        windmill.type = ObjectType::WINDMILL;
         visitableObjects_.emplace(hex, ssize(objects_));
         objects_.push_back(windmill);
+    }
+
+    // The remaining object types have nothing special about them (yet).
+    load_simple_object(ObjectType::CAMP, "camp");
+    load_simple_object(ObjectType::CHEST, "chest");
+    load_simple_object(ObjectType::RESOURCE, "gold");
+    load_simple_object(ObjectType::LEANTO, "leanto");
+    load_simple_object(ObjectType::OASIS, "oasis");
+    load_simple_object(ObjectType::SHIPWRECK, "shipwreck");
+}
+
+void Anduran::load_simple_object(ObjectType type, const char *imgName)
+{
+    const auto img = images_.make_texture(imgName, win_);
+    for (const auto &hex : rmap_.getObjectTiles(type)) {
+        GameObject obj;
+        obj.hex = hex;
+        obj.entity = rmapView_.addEntity(img, obj.hex, ZOrder::OBJECT);
+        obj.type = type;
+        objects_.push_back(obj);
     }
 }
 

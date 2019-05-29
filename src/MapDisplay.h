@@ -44,6 +44,7 @@ struct TileDisplay
 
 enum class ZOrder {ELLIPSE,
                    OBJECT,
+                   UNIT,
                    FLAG,
                    SHADOW,
                    HIGHLIGHT,
@@ -104,8 +105,6 @@ public:
 private:
     void computeTileEdges();
     void loadTerrainImages();
-    void loadObjects();
-    void addObjectEntities(ObjectType type, const char *imgName);
 
     // Add duplicate tiles around the map border so there aren't jagged edges.
     void addBorderTiles();

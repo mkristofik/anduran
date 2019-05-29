@@ -96,6 +96,7 @@ destination hex
 * need to draw dotted line between grass regions
 * Window needs to report its own boundary
 * pick one village image per terrain
+- placeholder art for villages and castles
 
 
 # Random Map

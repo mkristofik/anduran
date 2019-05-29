@@ -19,6 +19,7 @@
 #define OBJ_TYPES \
     X(CAMP) \
     X(CASTLE) \
+    X(CHAMPION) \
     X(CHEST) \
     X(LEANTO) \
     X(OASIS) \

@@ -658,6 +658,7 @@ Hex RandomMap::findCastleSpot(int startTile)
         // all tiles must be in the same region
         // can't be in water
         // can't be in the same region as another castle
+        // TODO: can't also be in a region adjacent to another castle?
         // if so, return that tile
         // if not, push the neighbors onto the queue
         const auto curRegion = tileRegions_[tile];
@@ -738,7 +739,6 @@ void RandomMap::placeObjects()
 
     for (int r = 0; r < numRegions_; ++r) {
         if (regionTerrain_[r] == Terrain::WATER) {
-            // TODO: define enums for all the object types, maybe ObjectTypes.h?
             placeObject(ObjectType::SHIPWRECK, r);
             continue;
         }
