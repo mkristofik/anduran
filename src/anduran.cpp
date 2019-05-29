@@ -22,6 +22,7 @@
 #include "anim_utils.h"
 #include "container_utils.h"
 #include "hex_utils.h"
+#include "object_types.h"
 #include "team_color.h"
 
 #include "boost/container/flat_map.hpp"
@@ -114,7 +115,7 @@ Anduran::Anduran()
 
     // Draw flags on all the ownable objects.
     const auto &neutralFlag = flagImages_[static_cast<int>(Team::NEUTRAL)];
-    for (const auto &hex : rmap_.getObjectTiles("village")) {
+    for (const auto &hex : rmap_.getObjectTiles(ObjectType::VILLAGE)) {
         GameObject village;
         village.hex = hex;
         // TODO: how to look up the entity for the village itself
@@ -122,7 +123,7 @@ Anduran::Anduran()
         visitableObjects_.emplace(hex, ssize(objects_));
         objects_.push_back(village);
     }
-    for (const auto &hex : rmap_.getObjectTiles("windmill")) {
+    for (const auto &hex : rmap_.getObjectTiles(ObjectType::WINDMILL)) {
         GameObject windmill;
         windmill.hex = hex;
         windmill.secondary = rmapView_.addEntity(neutralFlag, hex, ZOrder::FLAG);

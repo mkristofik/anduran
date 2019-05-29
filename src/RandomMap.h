@@ -16,6 +16,7 @@
 #include "FlatMultimap.h"
 #include "hex_utils.h"
 #include "iterable_enum_class.h"
+#include "object_types.h"
 #include <random>
 #include <string>
 #include <vector>
@@ -49,7 +50,7 @@ public:
     std::vector<Hex> getCastleTiles() const;
 
     // Return a list of tiles containing a given object type.
-    std::vector<Hex> getObjectTiles(const std::string &name);
+    std::vector<Hex> getObjectTiles(ObjectType type);
 
     // Convert between integer and Hex representations of a tile location.
     Hex hexFromInt(int index) const;
@@ -101,7 +102,7 @@ private:
     int getRandomTile(int region);
     int findObjectSpot(int startTile, int region);
     void placeObjects();
-    void placeObject(std::string name, int region);
+    void placeObject(ObjectType type, int region);
 
     int width_;
     int size_;

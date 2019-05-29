@@ -47,12 +47,12 @@ destination hex
 ------------------
 * animations have a key, number of frames, timing
 * static images just need a key
-- both might have to be team colored (lazily?)
+* both might have to be team colored (lazily?)
 * manager class needs handle to the window to be able to make textures
-- images have:
-    - base surface
-    - 1 base texture
-    - N team colored textures
+* images have:
+    * base surface
+    * 1 base texture
+    * N team colored textures
 * is a static image just a 1x1 texture atlas?
 * is a static image just an animation with no frame timing?
 * one class to rule them all?

@@ -25,7 +25,7 @@ BUILD_DIR = build
 SRC_DIR = src
 
 RMAPGEN = rmapgen.exe
-RMAPGEN_SRC = RandomMap.cpp hex_utils.cpp json_utils.cpp rmapgen.cpp
+RMAPGEN_SRC = RandomMap.cpp hex_utils.cpp json_utils.cpp object_types.cpp rmapgen.cpp
 RMAPGEN_OBJS = $(RMAPGEN_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-noise.o
 RMAPGEN_DEPS = $(RMAPGEN_OBJS:%.o=%.d)
 # note: don't want to list open-simplex-noise.c here. We only list the cpp
@@ -44,6 +44,7 @@ MAPVIEW_SRC = MapDisplay.cpp \
 	hex_utils.cpp \
 	json_utils.cpp \
 	mapview.cpp \
+	object_types.cpp \
 	pixel_utils.cpp
 MAPVIEW_OBJS = $(MAPVIEW_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-noise.o
 MAPVIEW_DEPS = $(MAPVIEW_OBJS:%.o=%.d)
@@ -62,6 +63,7 @@ ANDURAN_SRC = MapDisplay.cpp \
 	anim_utils.cpp \
 	hex_utils.cpp \
 	json_utils.cpp \
+	object_types.cpp \
 	pixel_utils.cpp \
 	team_color.cpp
 ANDURAN_OBJS = $(ANDURAN_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-noise.o

@@ -252,8 +252,10 @@ std::vector<Hex> RandomMap::getCastleTiles() const
     return hexesFromInt(castles_);
 }
 
-std::vector<Hex> RandomMap::getObjectTiles(const std::string &name)
+std::vector<Hex> RandomMap::getObjectTiles(ObjectType type)
 {
+    auto name = obj_name_from_type(type);
+    assert(!name.empty());
     return hexesFromInt(objectTiles_.find(name));
 }
 
@@ -736,46 +738,50 @@ void RandomMap::placeObjects()
 
     for (int r = 0; r < numRegions_; ++r) {
         if (regionTerrain_[r] == Terrain::WATER) {
-            placeObject("shipwreck", r);
+            // TODO: define enums for all the object types, maybe ObjectTypes.h?
+            placeObject(ObjectType::SHIPWRECK, r);
             continue;
         }
 
         if (contains(castleRegions_, r)) {
-            placeObject("chest", r);
-            placeObject("chest", r);
-            placeObject("gold", r);
-            placeObject("gold", r);
+            placeObject(ObjectType::CHEST, r);
+            placeObject(ObjectType::CHEST, r);
+            placeObject(ObjectType::RESOURCE, r);
+            placeObject(ObjectType::RESOURCE, r);
         }
         else {
-            placeObject("chest", r);
-            placeObject("gold", r);
-            placeObject("village", r);
+            placeObject(ObjectType::CHEST, r);
+            placeObject(ObjectType::RESOURCE, r);
+            placeObject(ObjectType::VILLAGE, r);
         }
 
         if (regionTerrain_[r] == Terrain::DESERT) {
-            placeObject("oasis", r);
+            placeObject(ObjectType::OASIS, r);
         }
         else if (regionTerrain_[r] == Terrain::GRASS) {
             if (dist2(engine) == 1) {
-                placeObject("windmill", r);
+                placeObject(ObjectType::WINDMILL, r);
             }
         }
+        // TODO: I think a lean-to and a camp are basically the same object.
         else if (regionTerrain_[r] == Terrain::DIRT) {
-            placeObject("camp", r);
+            placeObject(ObjectType::CAMP, r);
         }
         else if (regionTerrain_[r] == Terrain::SNOW) {
             if (dist2(engine) == 1) {
-                placeObject("leanto", r);
+                placeObject(ObjectType::LEANTO, r);
             }
         }
     }
 }
 
-void RandomMap::placeObject(std::string name, int region)
+void RandomMap::placeObject(ObjectType type, int region)
 {
     const auto startTile = getRandomTile(region);
     const auto tile = findObjectSpot(startTile, region);
     if (!offGrid(tile)) {
+        auto name = obj_name_from_type(type);
+        assert(!name.empty());
         objectTiles_.insert(name, tile);
         tileOccupied_[tile] = 1;  // object tiles are walkable
     }

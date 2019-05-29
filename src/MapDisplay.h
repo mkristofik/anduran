@@ -15,6 +15,7 @@
 
 #include "SdlTexture.h"
 #include "hex_utils.h"
+#include "object_types.h"
 #include "pixel_utils.h"
 
 #include "SDL.h"
@@ -104,7 +105,7 @@ private:
     void computeTileEdges();
     void loadTerrainImages();
     void loadObjects();
-    void addObjectEntities(const char *name, const char *imgName);
+    void addObjectEntities(ObjectType type, const char *imgName);
 
     // Add duplicate tiles around the map border so there aren't jagged edges.
     void addBorderTiles();

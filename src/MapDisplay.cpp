@@ -439,6 +439,8 @@ void MapDisplay::loadTerrainImages()
     edgeImg_.push_back(images_.make_texture("edges-same-terrain", window_));
 }
 
+// TODO: the game needs to do all this.  It needs to keep track of where all
+// these are so you can interact with them, pick them up, etc.
 void MapDisplay::loadObjects()
 {
     const auto castleImg = images_.make_texture("castle", window_);
@@ -446,13 +448,14 @@ void MapDisplay::loadObjects()
         addEntity(castleImg, hex, ZOrder::OBJECT);
     }
 
+    // TODO: flat_map of Terrain to village images?
     const auto desertVillage = images_.make_texture("village-desert", window_);
     const auto dirtVillage = images_.make_texture("village-dirt", window_);
     const auto grassVillage = images_.make_texture("village-grass", window_);
     const auto snowVillage = images_.make_texture("village-snow", window_);
     const auto swampVillage = images_.make_texture("village-swamp", window_);
 
-    for (const auto &hex : map_.getObjectTiles("village")) {
+    for (const auto &hex : map_.getObjectTiles(ObjectType::VILLAGE)) {
         switch (map_.getTerrain(hex)) {
             case Terrain::DESERT:
                 addEntity(desertVillage, hex, ZOrder::OBJECT);
@@ -474,19 +477,19 @@ void MapDisplay::loadObjects()
         }
     }
 
-    addObjectEntities("camp", "camp");
-    addObjectEntities("chest", "chest");
-    addObjectEntities("gold", "gold");
-    addObjectEntities("leanto", "leanto");
-    addObjectEntities("oasis", "oasis");
-    addObjectEntities("shipwreck", "shipwreck");
-    addObjectEntities("windmill", "windmill");
+    addObjectEntities(ObjectType::CAMP, "camp");
+    addObjectEntities(ObjectType::CHEST, "chest");
+    addObjectEntities(ObjectType::RESOURCE, "gold");
+    addObjectEntities(ObjectType::LEANTO, "leanto");
+    addObjectEntities(ObjectType::OASIS, "oasis");
+    addObjectEntities(ObjectType::SHIPWRECK, "shipwreck");
+    addObjectEntities(ObjectType::WINDMILL, "windmill");
 }
 
-void MapDisplay::addObjectEntities(const char *name, const char *imgName)
+void MapDisplay::addObjectEntities(ObjectType type, const char *imgName)
 {
     const auto img = images_.make_texture(imgName, window_);
-    for (const auto &hex : map_.getObjectTiles(name)) {
+    for (const auto &hex : map_.getObjectTiles(type)) {
         addEntity(img, hex, ZOrder::OBJECT);
     }
 }
