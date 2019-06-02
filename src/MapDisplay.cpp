@@ -168,23 +168,24 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
     hexShadowId_(-1),
     hexHighlightId_(-1)
 {
-    std::uniform_int_distribution<int> dist3(0, 2);
-    std::uniform_int_distribution<int> dist4(0, 3);
+    loadTerrainImages();
+
+    // Assume all tile and obstacle images have the same number of frames.
+    std::uniform_int_distribution<int> randTerrain(0, tileImg_[0].cols() - 1);
+    std::uniform_int_distribution<int> randObstacle(0, obstacleImg_[0].cols() - 1);
 
     for (int i = 0; i < map_.size(); ++i) {
         tiles_[i].hex = map_.hexFromInt(i);
         tiles_[i].basePixel = pixelFromHex(tiles_[i].hex);
         tiles_[i].curPixel = tiles_[i].basePixel;
         tiles_[i].terrain = static_cast<int>(map_.getTerrain(i));
-        // TODO: magic number of frames for terrain and obstacles
-        tiles_[i].terrainFrame = dist3(RandomMap::engine);
+        tiles_[i].terrainFrame = randTerrain(RandomMap::engine);
         if (map_.getObstacle(i)) {
-            tiles_[i].obstacle = dist4(RandomMap::engine);
+            tiles_[i].obstacle = randObstacle(RandomMap::engine);
         }
         tiles_[i].region = map_.getRegion(i);
     }
 
-    loadTerrainImages();
     addBorderTiles();
     computeTileEdges();
 
