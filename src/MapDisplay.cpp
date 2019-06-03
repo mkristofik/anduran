@@ -128,7 +128,7 @@ TileDisplay::TileDisplay()
 
 
 MapEntity::MapEntity()
-    : offset{0.0, 0.0},
+    : offset(),
     hex(),
     frame(),
     id(-1),
@@ -309,7 +309,7 @@ Hex MapDisplay::hexFromMousePos() const
     const int tilingWidth = HEX_SIZE * 3 / 2;
     const int tilingHeight = HEX_SIZE;
 
-    const auto adjMouse = getMousePos() + displayOffset_;
+    const auto adjMouse = static_cast<SDL_Point>(getMousePos() + displayOffset_);
 
     // I'm not going to pretend to know why the rest of this works.
     int hx = adjMouse.x / tilingWidth * 2;
@@ -522,7 +522,7 @@ void MapDisplay::addBorderTiles()
 void MapDisplay::setTileVisibility()
 {
     for (auto &t : tiles_) {
-        t.curPixel = t.basePixel - displayOffset_;
+        t.curPixel = static_cast<SDL_Point>(t.basePixel - displayOffset_);
 
         const SDL_Rect tileRect{t.curPixel.x, t.curPixel.y, HEX_SIZE, HEX_SIZE};
         t.visible = (SDL_HasIntersection(&tileRect, &displayArea_) == SDL_TRUE);
@@ -533,7 +533,8 @@ void MapDisplay::drawEntities()
 {
     for (auto id : getEntityDrawOrder()) {
         const auto &e = entities_[id];
-        const auto pixel = pixelFromHex(e.hex) + e.offset - displayOffset_;
+        const auto pixel = static_cast<SDL_Point>(pixelFromHex(e.hex) + e.offset -
+                                                  displayOffset_);
 
         auto &img = entityImg_[id];
         const auto dest = img.get_dest_rect(pixel);

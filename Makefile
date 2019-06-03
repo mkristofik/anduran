@@ -44,8 +44,7 @@ MAPVIEW_SRC = MapDisplay.cpp \
 	hex_utils.cpp \
 	json_utils.cpp \
 	mapview.cpp \
-	object_types.cpp \
-	pixel_utils.cpp
+	object_types.cpp
 MAPVIEW_OBJS = $(MAPVIEW_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-noise.o
 MAPVIEW_DEPS = $(MAPVIEW_OBJS:%.o=%.d)
 
@@ -64,7 +63,6 @@ ANDURAN_SRC = MapDisplay.cpp \
 	hex_utils.cpp \
 	json_utils.cpp \
 	object_types.cpp \
-	pixel_utils.cpp \
 	team_color.cpp
 ANDURAN_OBJS = $(ANDURAN_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-noise.o
 ANDURAN_DEPS = $(ANDURAN_OBJS:%.o=%.d)

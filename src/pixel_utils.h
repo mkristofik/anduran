@@ -19,20 +19,81 @@ struct PartialPixel
 {
     double x = 0.0;
     double y = 0.0;
+
+    explicit constexpr operator SDL_Point() const;
 };
 
-PartialPixel operator+(const PartialPixel &lhs, const PartialPixel &rhs);
-PartialPixel operator*(double lhs, const SDL_Point &rhs);
-PartialPixel operator*(const SDL_Point &lhs, double rhs);
-PartialPixel operator*(double lhs, const PartialPixel &rhs);
-PartialPixel operator*(const PartialPixel &lhs, double rhs);
-PartialPixel operator/(const SDL_Point &lhs, double rhs);
+constexpr PartialPixel operator+(const PartialPixel &lhs, const PartialPixel &rhs);
+constexpr PartialPixel operator-(const PartialPixel &lhs, const PartialPixel &rhs);
+constexpr PartialPixel operator+(const SDL_Point &lhs, const PartialPixel &rhs);
+constexpr PartialPixel operator-(const SDL_Point &lhs, const PartialPixel &rhs);
+constexpr PartialPixel operator*(double lhs, const SDL_Point &rhs);
+constexpr PartialPixel operator*(const SDL_Point &lhs, double rhs);
+constexpr PartialPixel operator*(double lhs, const PartialPixel &rhs);
+constexpr PartialPixel operator*(const PartialPixel &lhs, double rhs);
+constexpr PartialPixel operator/(const SDL_Point &lhs, double rhs);
 
-SDL_Point operator+(const SDL_Point &lhs, const SDL_Point &rhs);
-SDL_Point operator-(const SDL_Point &lhs, const SDL_Point &rhs);
-// TODO: this is possibly surprising that it truncates to int x and y.
-// Make everything constexpr if I decide to do something about this.
-SDL_Point operator+(const SDL_Point &lhs, const PartialPixel &rhs);
-SDL_Point operator-(const SDL_Point &lhs, const PartialPixel &rhs);
+constexpr SDL_Point operator+(const SDL_Point &lhs, const SDL_Point &rhs);
+constexpr SDL_Point operator-(const SDL_Point &lhs, const SDL_Point &rhs);
+
+constexpr PartialPixel::operator SDL_Point() const
+{
+    return {static_cast<int>(x), static_cast<int>(y)};
+}
+
+constexpr PartialPixel operator+(const PartialPixel &lhs, const PartialPixel &rhs)
+{
+    return {lhs.x + rhs.x, lhs.y + rhs.y};
+}
+
+constexpr PartialPixel operator-(const PartialPixel &lhs, const PartialPixel &rhs)
+{
+    return {lhs.x - rhs.x, lhs.y - rhs.y};
+}
+
+constexpr PartialPixel operator+(const SDL_Point &lhs, const PartialPixel &rhs)
+{
+    return {lhs.x + rhs.x, lhs.y + rhs.y};
+}
+
+constexpr PartialPixel operator-(const SDL_Point &lhs, const PartialPixel &rhs)
+{
+    return {lhs.x - rhs.x, lhs.y - rhs.y};
+}
+
+constexpr PartialPixel operator*(double lhs, const SDL_Point &rhs)
+{
+    return {lhs * rhs.x, lhs * rhs.y};
+}
+
+constexpr PartialPixel operator*(const SDL_Point &lhs, double rhs)
+{
+    return rhs * lhs;
+}
+
+constexpr PartialPixel operator*(double lhs, const PartialPixel &rhs)
+{
+    return {lhs * rhs.x, lhs * rhs.y};
+}
+
+constexpr PartialPixel operator*(const PartialPixel &lhs, double rhs)
+{
+    return rhs * lhs;
+}
+
+constexpr PartialPixel operator/(const SDL_Point &lhs, double rhs)
+{
+    return {lhs.x / rhs, lhs.y / rhs};
+}
+
+constexpr SDL_Point operator+(const SDL_Point &lhs, const SDL_Point &rhs)
+{
+    return {lhs.x + rhs.x, lhs.y + rhs.y};
+}
+
+constexpr SDL_Point operator-(const SDL_Point &lhs, const SDL_Point &rhs)
+{
+    return {lhs.x - rhs.x, lhs.y - rhs.y};
+}
 
 #endif
