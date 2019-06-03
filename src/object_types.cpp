@@ -38,7 +38,6 @@ namespace
 // TODO: these functions seem easily unit-testable
 const std::string & obj_name_from_type(ObjectType type)
 {
-    // TODO: use string_view instead?
     static const std::string invalid;
 
     switch(type) {

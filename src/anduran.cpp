@@ -63,7 +63,7 @@ private:
     void load_players();
     void load_villages();
     void load_objects();
-    void load_simple_object(ObjectType type, const char *imgName);
+    void load_simple_object(ObjectType type, const std::string &imgName);
 
     SdlWindow win_;
     RandomMap rmap_;
@@ -192,7 +192,7 @@ void Anduran::load_objects()
     load_simple_object(ObjectType::SHIPWRECK, "shipwreck");
 }
 
-void Anduran::load_simple_object(ObjectType type, const char *imgName)
+void Anduran::load_simple_object(ObjectType type, const std::string &imgName)
 {
     const auto img = images_.make_texture(imgName, win_);
     for (const auto &hex : rmap_.getObjectTiles(type)) {
