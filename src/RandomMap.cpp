@@ -763,14 +763,10 @@ void RandomMap::placeObjects()
                 placeObject(ObjectType::WINDMILL, r);
             }
         }
-        // TODO: I think a lean-to and a camp are basically the same object.
-        else if (regionTerrain_[r] == Terrain::DIRT) {
+        else if (regionTerrain_[r] == Terrain::DIRT ||
+                 regionTerrain_[r] == Terrain::SNOW)
+        {
             placeObject(ObjectType::CAMP, r);
-        }
-        else if (regionTerrain_[r] == Terrain::SNOW) {
-            if (dist2(engine) == 1) {
-                placeObject(ObjectType::LEANTO, r);
-            }
         }
     }
 }

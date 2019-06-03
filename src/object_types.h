@@ -21,7 +21,6 @@
     X(CASTLE) \
     X(CHAMPION) \
     X(CHEST) \
-    X(LEANTO) \
     X(OASIS) \
     X(RESOURCE) \
     X(SHIPWRECK) \

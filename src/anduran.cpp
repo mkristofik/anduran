@@ -183,11 +183,24 @@ void Anduran::load_objects()
         objects_.push_back(windmill);
     }
 
+    // Draw different camp images depending on terrain.
+    const auto campImg = images_.make_texture("camp", win_);
+    const auto leantoImg = images_.make_texture("leanto", win_);
+    for (const auto &hex : rmap_.getObjectTiles(ObjectType::CAMP)) {
+        GameObject obj;
+        obj.hex = hex;
+        auto img = campImg;
+        if (rmap_.getTerrain(obj.hex) == Terrain::SNOW) {
+            img = leantoImg;
+        }
+        obj.entity = rmapView_.addEntity(img, obj.hex, ZOrder::OBJECT);
+        obj.type = ObjectType::CAMP;
+        objects_.push_back(obj);
+    }
+
     // The remaining object types have nothing special about them (yet).
-    load_simple_object(ObjectType::CAMP, "camp");
     load_simple_object(ObjectType::CHEST, "chest");
     load_simple_object(ObjectType::RESOURCE, "gold");
-    load_simple_object(ObjectType::LEANTO, "leanto");
     load_simple_object(ObjectType::OASIS, "oasis");
     load_simple_object(ObjectType::SHIPWRECK, "shipwreck");
 }
