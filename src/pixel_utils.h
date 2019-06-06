@@ -36,6 +36,7 @@ constexpr PartialPixel operator/(const SDL_Point &lhs, double rhs);
 constexpr SDL_Point operator+(const SDL_Point &lhs, const SDL_Point &rhs);
 constexpr SDL_Point operator-(const SDL_Point &lhs, const SDL_Point &rhs);
 
+
 constexpr PartialPixel::operator SDL_Point() const
 {
     return {static_cast<int>(x), static_cast<int>(y)};

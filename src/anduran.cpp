@@ -133,7 +133,7 @@ void Anduran::load_players()
         champion.secondary = rmapView_.addEntity(ellipseImages_[i],
                                                  champion.hex,
                                                  ZOrder::ELLIPSE);
-        champion.team = static_cast<Team>(i);
+        champion.team = castle.team;
         champion.type = ObjectType::CHAMPION;
         // TODO: it would be less confusing if object ids matched their map
         // entity ids.
@@ -153,14 +153,14 @@ void Anduran::load_villages()
         images_.make_texture("village-snow", win_)
     };
 
-    const auto &neutralFlag = flagImages_[static_cast<int>(Team::NEUTRAL)];
+    auto &neutralFlag = enum_fetch(flagImages_, Team::NEUTRAL);
     for (const auto &hex : rmap_.getObjectTiles(ObjectType::VILLAGE)) {
-        const int terrain = static_cast<int>(rmap_.getTerrain(hex));
         GameObject village;
         village.hex = hex;
-        village.entity = rmapView_.addEntity(villageImages[terrain],
-                                             village.hex,
-                                             ZOrder::OBJECT);
+        village.entity =
+            rmapView_.addEntity(enum_fetch(villageImages, rmap_.getTerrain(hex)),
+                                village.hex,
+                                ZOrder::OBJECT);
         village.secondary = rmapView_.addEntity(neutralFlag, village.hex, ZOrder::FLAG);
         village.type = ObjectType::VILLAGE;
         visitableObjects_.emplace(village.hex, ssize(objects_));
@@ -172,7 +172,7 @@ void Anduran::load_objects()
 {
     // Windmills are ownable so draw flags on them.
     const auto windmillImg = images_.make_texture("windmill", win_);
-    const auto &neutralFlag = flagImages_[static_cast<int>(Team::NEUTRAL)];
+    auto &neutralFlag = enum_fetch(flagImages_, Team::NEUTRAL);
     for (const auto &hex : rmap_.getObjectTiles(ObjectType::WINDMILL)) {
         GameObject windmill;
         windmill.hex = hex;

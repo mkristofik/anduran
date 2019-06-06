@@ -45,24 +45,19 @@ UnitManager::UnitManager(const std::string &configFile,
             const std::string field = f->name.GetString();
             const std::string imgName = f->value.GetString();
             if (field == "img-idle") {
-                const auto i = static_cast<int>(ImageType::IMG_IDLE);
-                media.images[i] = load_image_set(imgName);
+                media.images.emplace(ImageType::IMG_IDLE, load_image_set(imgName));
             }
             else if (field == "img-defend") {
-                const auto i = static_cast<int>(ImageType::IMG_DEFEND);
-                media.images[i] = load_image_set(imgName);
+                media.images.emplace(ImageType::IMG_DEFEND, load_image_set(imgName));
             }
             else if (field == "anim-attack") {
-                const auto i = static_cast<int>(ImageType::ANIM_ATTACK);
-                media.images[i] = load_image_set(imgName);
+                media.images.emplace(ImageType::ANIM_ATTACK, load_image_set(imgName));
             }
             else if (field == "anim-ranged") {
-                const auto i = static_cast<int>(ImageType::ANIM_RANGED);
-                media.images[i] = load_image_set(imgName);
+                media.images.emplace(ImageType::ANIM_RANGED, load_image_set(imgName));
             }
             else if (field == "anim-die") {
-                const auto i = static_cast<int>(ImageType::ANIM_DIE);
-                media.images[i] = load_image_set(imgName);
+                media.images.emplace(ImageType::ANIM_DIE, load_image_set(imgName));
             }
             else if (field == "projectile") {
                 media.projectile = load_image(imgName);
@@ -92,16 +87,19 @@ SdlTexture UnitManager::get_image(int id, ImageType imgType, Team team) const
 {
     assert(in_bounds(media_, id));
 
-    const auto itype = static_cast<int>(imgType);
-    const auto iteam = static_cast<int>(team);
-    auto img = media_[id].images[itype][iteam];
-    if (!img) {
-        // Use the base image if the requested image type doesn't exist.
-        const auto idle = static_cast<int>(ImageType::IMG_IDLE);
-        img = media_[id].images[idle][iteam];
+    auto imgIter = media_[id].images.find(imgType);
+    const auto endIter = std::end(media_[id].images);
+    if (imgIter != endIter) {
+        return enum_fetch(imgIter->second, team);
     }
 
-    return img;
+    // Use the base image if the requested image type doesn't exist.
+    imgIter = media_[id].images.find(ImageType::IMG_IDLE);
+    if (imgIter != endIter) {
+        return enum_fetch(imgIter->second, team);
+    }
+
+    return {};
 }
 
 SdlTexture UnitManager::get_projectile(int id) const

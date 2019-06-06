@@ -17,7 +17,7 @@
 #include "iterable_enum_class.h"
 #include "team_color.h"
 
-#include <array>
+#include "boost/container/flat_map.hpp"
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -30,15 +30,12 @@ enum class ImageType {IMG_IDLE,
                       IMG_DEFEND,
                       ANIM_ATTACK,
                       ANIM_RANGED,
-                      ANIM_DIE,
-                      _last,
-                      _first = 0};
-ITERABLE_ENUM_CLASS(ImageType);
+                      ANIM_DIE};
 
 
 struct UnitMedia
 {
-    std::array<TeamColoredTextures, enum_size<ImageType>()> images;
+    boost::container::flat_map<ImageType, TeamColoredTextures> images;
     SdlTexture projectile;
     int id;
 };
