@@ -14,13 +14,12 @@
 // Provide the necessary functions to treat an enum class like a container in a
 // range-based for-loop.  This works for classic enums too but is probably most
 // useful for a strongly-typed enum class.  Requires two sentry values at the
-// end of the enum, in the exact order listed.
+// end of the enum, but that's hidden behind the macro.
 // source: http://stackoverflow.com/q/8498300/46821
 
 // Example usage:
 //
-// enum class Foo {BAR, BAZ, QUUX, XYZZY, _last, _first = 0};
-// ITERABLE_ENUM_CLASS(Foo);
+// ITERABLE_ENUM_CLASS(Foo, BAR, BAZ, QUUX, XYZZY);
 // for (auto f : Foo()) {
 //     // doSomething(f);
 // }
@@ -31,7 +30,6 @@
 #include <array>
 #include <type_traits>
 
-// TODO: can __VA_ARGS__ be used to hide the sentry values?
 #define ITERABLE_ENUM_CLASS(T, ...) \
     enum class T {__VA_ARGS__, _last, _first = 0}; \
     constexpr T operator++(T &t) \
