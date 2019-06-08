@@ -32,7 +32,8 @@
 #include <type_traits>
 
 // TODO: can __VA_ARGS__ be used to hide the sentry values?
-#define ITERABLE_ENUM_CLASS(T) \
+#define ITERABLE_ENUM_CLASS(T, ...) \
+    enum class T {__VA_ARGS__, _last, _first = 0}; \
     constexpr T operator++(T &t) \
     { \
         using U = std::underlying_type_t<T>; \

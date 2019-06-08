@@ -25,8 +25,7 @@ class SdlTexture;
 // reference.  Those colors are replaced at runtime with the corresponding
 // color for each team.
 
-enum class Team {BLUE, RED, GREEN, PURPLE, NEUTRAL, _last, _first = 0};
-ITERABLE_ENUM_CLASS(Team);
+ITERABLE_ENUM_CLASS(Team, BLUE, RED, GREEN, PURPLE, NEUTRAL);
 
 constexpr int NUM_TEAMS = enum_size<Team>();
 

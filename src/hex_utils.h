@@ -18,8 +18,7 @@
 #include <ostream>
 #include <vector>
 
-enum class HexDir {N, NE, SE, S, SW, NW, _last, _first = 0};
-ITERABLE_ENUM_CLASS(HexDir);
+ITERABLE_ENUM_CLASS(HexDir, N, NE, SE, S, SW, NW);
 
 
 // Convenience type for all neighbors of a hex, in HexDir order.
