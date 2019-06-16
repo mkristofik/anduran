@@ -10,6 +10,7 @@
  
     See the COPYING.txt file for more details.
 */
+#include "GameState.h"
 #include "MapDisplay.h"
 #include "Pathfinder.h"
 #include "RandomMap.h"
@@ -25,8 +26,6 @@
 #include "object_types.h"
 #include "team_color.h"
 
-#include "boost/container/flat_map.hpp"
-
 #include "SDL.h"
 #include "SDL_image.h"
 #include <algorithm>
@@ -36,30 +35,6 @@
 #include <memory>
 #include <optional>
 #include <vector>
-
-struct GameObject
-{
-    Hex hex;
-    int entity = -1;
-    int secondary = -1;  // embellishment such as a flag or ellipse
-    Team team = Team::NEUTRAL;
-    ObjectType type = ObjectType::INVALID;
-};
-
-bool operator<(const GameObject &lhs, const GameObject &rhs)
-{
-    return lhs.entity < rhs.entity;
-}
-
-bool operator<(const GameObject &lhs, int id)
-{
-    return lhs.entity < id;
-}
-
-bool operator<(int id, const GameObject &rhs)
-{
-    return id < rhs.entity;
-}
 
 
 class Anduran : public SdlApp
@@ -82,16 +57,11 @@ private:
     void load_objects();
     void load_simple_object(ObjectType type, const std::string &imgName);
 
-    // Fetch/modify objects by value like we do for map entities. Object id is the
-    // same as the map entity id.
-    std::optional<GameObject> get_object(int id);
-    void update_object(const GameObject &obj);
-
     SdlWindow win_;
     RandomMap rmap_;
     SdlImageManager images_;
     MapDisplay rmapView_;
-    std::vector<GameObject> objects_;
+    GameState game_;
     std::vector<int> playerObjectIds_;
     int curPlayerId_;
     int curPlayerNum_;
@@ -102,7 +72,6 @@ private:
     TeamColoredTextures championImages_;
     TeamColoredTextures ellipseImages_;
     TeamColoredTextures flagImages_;
-    boost::container::flat_multimap<Hex, int> visitableObjects_;
 };
 
 Anduran::Anduran()
@@ -111,7 +80,7 @@ Anduran::Anduran()
     rmap_("test.json"),
     images_("img/"),
     rmapView_(win_, rmap_, images_),
-    objects_(),
+    game_(),
     playerObjectIds_(),
     curPlayerId_(0),
     curPlayerNum_(0),
@@ -121,14 +90,12 @@ Anduran::Anduran()
     units_("data/units.json", win_, images_),
     championImages_(),
     ellipseImages_(),
-    flagImages_(),
-    visitableObjects_()
+    flagImages_()
 {
     load_images();
     load_players();
     load_villages();
     load_objects();
-    sort(std::begin(objects_), std::end(objects_));
 }
 
 void Anduran::update_frame(Uint32 elapsed_ms)
@@ -155,7 +122,7 @@ void Anduran::handle_lmouse_up()
     // - champion moves to the new hex
     const auto mouseHex = rmapView_.hexFromMousePos();
     for (auto i = 0; i < ssize(playerObjectIds_); ++i) {
-        if (auto player = get_object(playerObjectIds_[i]); player->hex == mouseHex) {
+        if (auto player = game_.get_object(playerObjectIds_[i]); player->hex == mouseHex) {
             if (curPlayerNum_ != i) {
                 championSelected_ = false;
             }
@@ -165,7 +132,7 @@ void Anduran::handle_lmouse_up()
         }
     }
 
-    auto player = get_object(curPlayerId_);
+    auto player = game_.get_object(curPlayerId_);
     if (mouseHex == player->hex) {
         if (!championSelected_) {
             rmapView_.highlight(mouseHex);
@@ -189,23 +156,21 @@ void Anduran::handle_lmouse_up()
 
                 // If we land on an object with a flag, change the flag color to
                 // match the player's.
-                const auto objectsHere = visitableObjects_.equal_range(mouseHex);
-                for (auto i = objectsHere.first; i != objectsHere.second; ++i) {
-                    auto obj = get_object(i->second);
-                    if (obj &&
-                        (obj->type == ObjectType::VILLAGE ||
-                         obj->type == ObjectType::WINDMILL) &&
-                        obj->team != player->team)
+                auto objectsHere = game_.objects_in_hex(mouseHex);
+                for (auto &obj : objectsHere) {
+                    if ((obj.type == ObjectType::VILLAGE ||
+                         obj.type == ObjectType::WINDMILL) &&
+                        obj.team != player->team)
                     {
-                        obj->team = player->team;
-                        update_object(*obj);
-                        anims_.insert<AnimDisplay>(obj->secondary,
+                        obj.team = player->team;
+                        game_.update_object(obj);
+                        anims_.insert<AnimDisplay>(obj.secondary,
                                                    flagImages_[curPlayerNum_]);
                     }
                 }
             }
             player->hex = mouseHex;
-            update_object(*player);
+            game_.update_object(*player);
             championSelected_ = false;
             rmapView_.clearHighlight();
 
@@ -219,7 +184,7 @@ void Anduran::handle_lmouse_up()
 void Anduran::experiment()
 {
     // TODO: this is all temporary so I can experiment
-    auto player = get_object(curPlayerId_);
+    auto player = game_.get_object(curPlayerId_);
     const auto team = player->team;
     const auto archerId = units_.get_id("archer");
     auto archer = units_.get_image(archerId, ImageType::IMG_IDLE, team);
@@ -297,7 +262,7 @@ void Anduran::load_players()
         castle.entity = rmapView_.addEntity(castleImg, castle.hex, ZOrder::OBJECT);
         castle.team = static_cast<Team>(i);
         castle.type = ObjectType::CASTLE;
-        objects_.push_back(castle);
+        game_.add_object(castle);
 
         // Draw a champion in the hex due south of each castle.
         GameObject champion;
@@ -311,7 +276,7 @@ void Anduran::load_players()
         champion.team = castle.team;
         champion.type = ObjectType::CHAMPION;
         playerObjectIds_.push_back(champion.entity);
-        objects_.push_back(champion);
+        game_.add_object(champion);
     }
 }
 
@@ -336,8 +301,7 @@ void Anduran::load_villages()
                                 ZOrder::OBJECT);
         village.secondary = rmapView_.addEntity(neutralFlag, village.hex, ZOrder::FLAG);
         village.type = ObjectType::VILLAGE;
-        visitableObjects_.emplace(village.hex, village.entity);
-        objects_.push_back(village);
+        game_.add_object(village);
     }
 }
 
@@ -352,8 +316,7 @@ void Anduran::load_objects()
         windmill.entity = rmapView_.addEntity(windmillImg, windmill.hex, ZOrder::OBJECT);
         windmill.secondary = rmapView_.addEntity(neutralFlag, windmill.hex, ZOrder::FLAG);
         windmill.type = ObjectType::WINDMILL;
-        visitableObjects_.emplace(hex, windmill.entity);
-        objects_.push_back(windmill);
+        game_.add_object(windmill);
     }
 
     // Draw different camp images depending on terrain.
@@ -368,7 +331,7 @@ void Anduran::load_objects()
         }
         obj.entity = rmapView_.addEntity(img, obj.hex, ZOrder::OBJECT);
         obj.type = ObjectType::CAMP;
-        objects_.push_back(obj);
+        game_.add_object(obj);
     }
 
     // The remaining object types have nothing special about them (yet).
@@ -386,26 +349,7 @@ void Anduran::load_simple_object(ObjectType type, const std::string &imgName)
         obj.hex = hex;
         obj.entity = rmapView_.addEntity(img, obj.hex, ZOrder::OBJECT);
         obj.type = type;
-        objects_.push_back(obj);
-    }
-}
-
-std::optional<GameObject> Anduran::get_object(int id)
-{
-    auto iter = lower_bound(std::begin(objects_), std::end(objects_), id);
-    if (iter != std::end(objects_)) {
-        return *iter;
-    }
-
-    assert(false);
-    return {};
-}
-
-void Anduran::update_object(const GameObject &obj)
-{
-    auto iter = lower_bound(std::begin(objects_), std::end(objects_), obj);
-    if (iter != std::end(objects_)) {
-        *iter = obj;
+        game_.add_object(obj);
     }
 }
 

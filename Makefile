@@ -49,7 +49,8 @@ MAPVIEW_OBJS = $(MAPVIEW_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-n
 MAPVIEW_DEPS = $(MAPVIEW_OBJS:%.o=%.d)
 
 ANDURAN = anduran.exe
-ANDURAN_SRC = MapDisplay.cpp \
+ANDURAN_SRC = GameState.cpp \
+	MapDisplay.cpp \
 	Pathfinder.cpp \
 	RandomMap.cpp \
 	SdlApp.cpp \
