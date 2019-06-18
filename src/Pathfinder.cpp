@@ -12,6 +12,7 @@
 */
 #include "Pathfinder.h"
 
+#include "GameState.h"
 #include "RandomMap.h"
 
 #include <algorithm>
@@ -30,16 +31,19 @@ bool operator>(const EstimatedPathCost &lhs, const EstimatedPathCost &rhs)
 }
 
 
-Pathfinder::Pathfinder(RandomMap &rmap)
+Pathfinder::Pathfinder(const RandomMap &rmap, const GameState &state)
     : rmap_(rmap),
+    game_(state),
     cameFrom_(),
     costSoFar_(),
     iSrc_(RandomMap::invalidIndex),
-    iDest_(RandomMap::invalidIndex)
+    iDest_(RandomMap::invalidIndex),
+    hDest_(),
+    team_(Team::NEUTRAL)
 {
 }
 
-std::vector<Hex> Pathfinder::find_path(const Hex &hSrc, const Hex &hDest)
+std::vector<Hex> Pathfinder::find_path(const Hex &hSrc, const Hex &hDest, Team team)
 {
     std::vector<Hex> path;
 
@@ -54,7 +58,9 @@ std::vector<Hex> Pathfinder::find_path(const Hex &hSrc, const Hex &hDest)
     cameFrom_.clear();
     costSoFar_.clear();
     iSrc_ = rmap_.intFromHex(hSrc);
+    hDest_ = hDest;
     iDest_ = rmap_.intFromHex(hDest);
+    team_ = team;
     
     frontier.push({iSrc_, 0});
     cameFrom_.emplace(iSrc_, RandomMap::invalidIndex);
@@ -125,11 +131,21 @@ Neighbors<int> Pathfinder::get_neighbors(int index) const
             continue;
         }
 
-        // TODO: game objects are only walkable if they're on the destination hex
-        // or if they match the player's team color.
         if (!rmap_.getWalkable(iNbrs[i])) {
             iNbrs[i] = RandomMap::invalidIndex;
             continue;
+        }
+
+        // Game objects are only walkable if they're on the destination hex or if
+        // they match the player's team color.
+        if (hNbrs[i] != hDest_ && game_.hex_occupied(hNbrs[i])) {
+            const auto objs = game_.objects_in_hex(hNbrs[i]);
+            if (std::any_of(std::begin(objs), std::end(objs),
+                            [this] (auto &obj) { return obj.team != team_; }))
+            {
+                iNbrs[i] = RandomMap::invalidIndex;
+                continue;
+            }
         }
     }
     return iNbrs;

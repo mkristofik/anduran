@@ -14,17 +14,19 @@
 #define PATHFINDER_H
 
 #include "hex_utils.h"
+#include "team_color.h"
 
 #include "boost/container/flat_map.hpp"
 #include <vector>
 
+class GameState;
 class RandomMap;
 
 
 class Pathfinder
 {
 public:
-    explicit Pathfinder(RandomMap &rmap);
+    explicit Pathfinder(const RandomMap &rmap, const GameState &state);
 
     Pathfinder(const Pathfinder &) = delete;
     Pathfinder(Pathfinder &&) = delete;
@@ -32,16 +34,19 @@ public:
     Pathfinder & operator=(Pathfinder &&) = delete;
     ~Pathfinder() = default;
 
-    std::vector<Hex> find_path(const Hex &hSrc, const Hex &hDest);
+    std::vector<Hex> find_path(const Hex &hSrc, const Hex &hDest, Team team);
 
 private:
     Neighbors<int> get_neighbors(int index) const;
 
-    RandomMap &rmap_;
+    const RandomMap &rmap_;
+    const GameState &game_;
     boost::container::flat_map<int, int> cameFrom_;
     boost::container::flat_map<int, int> costSoFar_;
     int iSrc_;
     int iDest_;
+    Hex hDest_;
+    Team team_;
 };
 
 #endif

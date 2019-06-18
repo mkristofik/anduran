@@ -86,7 +86,7 @@ Anduran::Anduran()
     curPlayerNum_(0),
     championSelected_(false),
     anims_(rmapView_),
-    pathfind_(rmap_),
+    pathfind_(rmap_, game_),
     units_("data/units.json", win_, images_),
     championImages_(),
     ellipseImages_(),
@@ -144,7 +144,7 @@ void Anduran::handle_lmouse_up()
         }
     }
     else if (championSelected_ && rmap_.getWalkable(mouseHex)) {
-        const auto path = pathfind_.find_path(player->hex, mouseHex);
+        const auto path = pathfind_.find_path(player->hex, mouseHex, player->team);
         if (!path.empty()) {
             auto champion = player->entity;
             auto ellipse = player->secondary;
