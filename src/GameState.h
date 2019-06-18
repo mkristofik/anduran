@@ -23,7 +23,6 @@
 #include "boost/multi_index/ordered_index.hpp"
 #include "boost/multi_index/tag.hpp"
 
-#include <mutex>
 #include <optional>
 
 
@@ -70,7 +69,6 @@ private:
             >
         >
     > objects_;
-    mutable std::mutex objectMx_;
 };
 
 #endif

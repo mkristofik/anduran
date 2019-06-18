@@ -17,13 +17,11 @@
 
 void GameState::add_object(const GameObject &obj)
 {
-    std::lock_guard guard(objectMx_);
     objects_.insert(std::move(obj));
 }
 
 std::optional<GameObject> GameState::get_object(int id) const
 {
-    std::lock_guard guard(objectMx_);
     auto iter = objects_.get<ByEntity>().find(id);
     if (iter == std::end(objects_)) {
         return {};
@@ -34,7 +32,6 @@ std::optional<GameObject> GameState::get_object(int id) const
 
 void GameState::update_object(const GameObject &obj)
 {
-    std::lock_guard guard(objectMx_);
     auto &entityIndex = objects_.get<ByEntity>();
     auto iter = entityIndex.find(obj.entity);
     if (iter != std::end(objects_)) {
@@ -44,7 +41,6 @@ void GameState::update_object(const GameObject &obj)
 
 ObjVector GameState::objects_in_hex(const Hex &hex) const
 {
-    std::lock_guard guard(objectMx_);
     auto range = objects_.get<ByHex>().equal_range(hex);
     assert(std::distance(range.first, range.second) <=
            static_cast<int>(ObjVector::static_capacity));
@@ -54,7 +50,6 @@ ObjVector GameState::objects_in_hex(const Hex &hex) const
 
 bool GameState::hex_occupied(const Hex &hex) const
 {
-    std::lock_guard guard(objectMx_);
     auto range = objects_.get<ByHex>().equal_range(hex);
     return range.first != range.second;
 }
