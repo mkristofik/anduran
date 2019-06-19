@@ -13,6 +13,7 @@
 #ifndef PATHFINDER_H
 #define PATHFINDER_H
 
+#include "PriorityQueue.h"
 #include "hex_utils.h"
 #include "team_color.h"
 
@@ -21,6 +22,14 @@
 
 class GameState;
 class RandomMap;
+
+struct EstimatedPathCost
+{
+    int index = -1;
+    int cost = 0;
+};
+
+bool operator>(const EstimatedPathCost &lhs, const EstimatedPathCost &rhs);
 
 
 class Pathfinder
@@ -34,6 +43,7 @@ public:
     Pathfinder & operator=(Pathfinder &&) = delete;
     ~Pathfinder() = default;
 
+    // TODO: eliminate allocation here
     std::vector<Hex> find_path(const Hex &hSrc, const Hex &hDest, Team team);
 
 private:
@@ -43,6 +53,7 @@ private:
     const GameState &game_;
     boost::container::flat_map<int, int> cameFrom_;
     boost::container::flat_map<int, int> costSoFar_;
+    PriorityQueue<EstimatedPathCost> frontier_;
     int iSrc_;
     int iDest_;
     Hex hDest_;

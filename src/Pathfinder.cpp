@@ -19,12 +19,6 @@
 #include <functional>
 #include <queue>
 
-struct EstimatedPathCost
-{
-    int index = -1;
-    int cost = 0;
-};
-
 bool operator>(const EstimatedPathCost &lhs, const EstimatedPathCost &rhs)
 {
     return lhs.cost > rhs.cost;
@@ -47,29 +41,21 @@ std::vector<Hex> Pathfinder::find_path(const Hex &hSrc, const Hex &hDest, Team t
 {
     std::vector<Hex> path;
 
-    // TODO: turn these into member variables to avoid allocating memory on each
-    // call. Will need to manually manage the priority queue to do that.
-    std::priority_queue<
-        EstimatedPathCost,
-        std::vector<EstimatedPathCost>,
-        std::greater<EstimatedPathCost>  // need > to get a min-queue, weird
-    > frontier;
-
     cameFrom_.clear();
     costSoFar_.clear();
+    frontier_.clear();
     iSrc_ = rmap_.intFromHex(hSrc);
     hDest_ = hDest;
     iDest_ = rmap_.intFromHex(hDest);
     team_ = team;
     
-    frontier.push({iSrc_, 0});
+    frontier_.push({iSrc_, 0});
     cameFrom_.emplace(iSrc_, RandomMap::invalidIndex);
     costSoFar_.emplace(iSrc_, 0);
 
     // source: https://www.redblobgames.com/pathfinding/a-star/introduction.html#astar
-    while (!frontier.empty()) {
-        auto current = frontier.top();
-        frontier.pop();
+    while (!frontier_.empty()) {
+        auto current = frontier_.pop();
 
         if (current.index == iDest_) {
             break;
@@ -96,7 +82,7 @@ std::vector<Hex> Pathfinder::find_path(const Hex &hSrc, const Hex &hDest, Team t
 
             // heuristic makes this A* instead of Dijkstra's
             const auto estimate = hexDistance(rmap_.hexFromInt(iNbr), hDest);
-            frontier.push({iNbr, newCost + estimate});
+            frontier_.push({iNbr, newCost + estimate});
             cameFrom_[iNbr] = current.index;
         }
     }
