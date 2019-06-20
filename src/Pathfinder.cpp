@@ -26,10 +26,12 @@ bool operator>(const EstimatedPathCost &lhs, const EstimatedPathCost &rhs)
 
 
 Pathfinder::Pathfinder(const RandomMap &rmap, const GameState &state)
-    : rmap_(rmap),
-    game_(state),
-    cameFrom_(),
+    : cameFrom_(),
     costSoFar_(),
+    frontier_(),
+    path_(),
+    rmap_(rmap),
+    game_(state),
     iSrc_(RandomMap::invalidIndex),
     iDest_(RandomMap::invalidIndex),
     hDest_(),
@@ -37,13 +39,14 @@ Pathfinder::Pathfinder(const RandomMap &rmap, const GameState &state)
 {
 }
 
-std::vector<Hex> Pathfinder::find_path(const Hex &hSrc, const Hex &hDest, Team team)
+const std::vector<Hex> & Pathfinder::find_path(const Hex &hSrc,
+                                               const Hex &hDest,
+                                               Team team)
 {
-    std::vector<Hex> path;
-
     cameFrom_.clear();
     costSoFar_.clear();
     frontier_.clear();
+    path_.clear();
     iSrc_ = rmap_.intFromHex(hSrc);
     hDest_ = hDest;
     iDest_ = rmap_.intFromHex(hDest);
@@ -91,12 +94,12 @@ std::vector<Hex> Pathfinder::find_path(const Hex &hSrc, const Hex &hDest, Team t
     // destination hex wasn't found, the path will be empty.
     auto fromIter = cameFrom_.find(iDest_);
     while (fromIter != cameFrom_.end() && fromIter->first != iSrc_) {
-        path.push_back(rmap_.hexFromInt(fromIter->first));
+        path_.push_back(rmap_.hexFromInt(fromIter->first));
         fromIter = cameFrom_.find(fromIter->second);
     }
-    std::reverse(path.begin(), path.end());
+    std::reverse(path_.begin(), path_.end());
 
-    return path;
+    return path_;
 }
 
 Neighbors<int> Pathfinder::get_neighbors(int index) const
