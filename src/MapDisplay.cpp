@@ -561,7 +561,7 @@ std::vector<int> MapDisplay::getEntityDrawOrder() const
         }
     }
 
-    stable_sort(std::begin(order), std::end(order), [this] (int lhs, int rhs) {
+    stable_sort(begin(order), end(order), [this] (int lhs, int rhs) {
                     return entities_[lhs].z < entities_[rhs].z;
                 });
     return order;

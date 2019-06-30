@@ -110,7 +110,7 @@ namespace
         constexpr auto numTeams = std::size(teamBaseColors);
         std::array<TeamColorPalette, numTeams> allColors;
 
-        for (auto i = 0u; i < std::size(allColors); ++i) {
+        for (auto i = 0u; i < size(allColors); ++i) {
             allColors[i] = makeTeamColors(teamBaseColors[i]);
         }
 

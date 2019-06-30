@@ -231,19 +231,19 @@ void Anduran::experiment()
 void Anduran::load_images()
 {
     const auto championSurfaces = applyTeamColors(images_.get_surface("champion"));
-    for (auto i = 0u; i < std::size(championSurfaces); ++i) {
+    for (auto i = 0u; i < size(championSurfaces); ++i) {
         championImages_[i] = SdlTexture::make_image(championSurfaces[i], win_);
     }
 
     const auto ellipse = images_.get_surface("ellipse");
     const auto ellipseSurfaces = applyTeamColors(ellipseToRefColor(ellipse));
-    for (auto i = 0u; i < std::size(ellipseSurfaces); ++i) {
+    for (auto i = 0u; i < size(ellipseSurfaces); ++i) {
         ellipseImages_[i] = SdlTexture::make_image(ellipseSurfaces[i], win_);
     }
 
     const auto flag = images_.get_surface("flag");
     const auto flagSurfaces = applyTeamColors(flagToRefColor(flag));
-    for (auto i = 0u; i < std::size(flagSurfaces); ++i) {
+    for (auto i = 0u; i < size(flagSurfaces); ++i) {
         flagImages_[i] = SdlTexture::make_image(flagSurfaces[i], win_);
     }
 }
@@ -252,11 +252,11 @@ void Anduran::load_players()
 {
     // Randomize the starting locations for each player.
     auto castles = rmap_.getCastleTiles();
-    assert(std::size(castles) <= NUM_TEAMS);
-    shuffle(std::begin(castles), std::end(castles), RandomMap::engine);
+    assert(size(castles) <= NUM_TEAMS);
+    shuffle(begin(castles), end(castles), RandomMap::engine);
 
     const auto castleImg = images_.make_texture("castle", win_);
-    for (auto i = 0u; i < std::size(castles); ++i) {
+    for (auto i = 0u; i < size(castles); ++i) {
         GameObject castle;
         castle.hex = castles[i];
         castle.entity = rmapView_.addEntity(castleImg, castle.hex, ZOrder::OBJECT);

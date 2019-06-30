@@ -60,7 +60,7 @@ SdlImageManager::SdlImageManager(const std::string &pathname)
 SdlImageData SdlImageManager::get(const std::string &name) const
 {
     const auto iter = images_.find(name);
-    if (iter == std::end(images_)) {
+    if (iter == end(images_)) {
         SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO, "Image not found: %s", name.c_str());
         return {};
     }

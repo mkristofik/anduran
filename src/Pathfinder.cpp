@@ -17,7 +17,6 @@
 
 #include <algorithm>
 #include <functional>
-#include <queue>
 
 bool operator>(const EstimatedPathCost &lhs, const EstimatedPathCost &rhs)
 {

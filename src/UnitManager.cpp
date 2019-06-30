@@ -38,7 +38,7 @@ UnitManager::UnitManager(const std::string &configFile,
     auto doc = jsonReadFile(configFile.c_str());
     for (auto m = doc.MemberBegin(); m != doc.MemberEnd(); ++m) {
         const std::string name = m->name.GetString();
-        ids_.emplace(name, std::size(ids_));
+        ids_.emplace(name, size(ids_));
 
         UnitMedia media;
         for (auto f = m->value.MemberBegin(); f != m->value.MemberEnd(); ++f) {
@@ -75,7 +75,7 @@ UnitManager::UnitManager(const std::string &configFile,
 int UnitManager::get_id(const std::string &key) const
 {
     const auto iter = ids_.find(key);
-    if (iter == std::end(ids_)) {
+    if (iter == end(ids_)) {
         SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Unit not found: %s", key.c_str());
         return -1;
     }
@@ -88,7 +88,7 @@ SdlTexture UnitManager::get_image(int id, ImageType imgType, Team team) const
     assert(in_bounds(media_, id));
 
     auto imgIter = media_[id].images.find(imgType);
-    const auto endIter = std::end(media_[id].images);
+    const auto endIter = end(media_[id].images);
     if (imgIter != endIter) {
         return enum_fetch(imgIter->second, team);
     }

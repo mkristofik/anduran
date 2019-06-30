@@ -40,9 +40,8 @@ namespace
             return {};
         }
 
-        auto iter = lower_bound(std::begin(frameList), std::end(frameList),
-                                elapsed_ms);
-        const auto col = std::min<int>(distance(std::begin(frameList), iter),
+        auto iter = lower_bound(begin(frameList), end(frameList), elapsed_ms);
+        const auto col = std::min<int>(distance(begin(frameList), iter),
                                        ssize(frameList) - 1);
         return {0, col};
     }
@@ -173,7 +172,7 @@ void AnimDisplay::start()
 AnimMove::AnimMove(MapDisplay &display,
                    int mover,
                    const std::vector<Hex> &path)
-    : AnimBase(display, MOVE_STEP_MS * std::size(path)),
+    : AnimBase(display, MOVE_STEP_MS * size(path)),
     entity_(mover),
     pathStep_(0),
     path_(path),
@@ -213,7 +212,7 @@ void AnimMove::update(Uint32 elapsed_ms)
         moverObj.offset = baseState_.offset;
         moverObj.hex = hCurrent;
         ++pathStep_;
-        if (pathStep_ < std::size(path_)) {
+        if (pathStep_ < size(path_)) {
             const auto &hNext = path_[pathStep_];
             distToMove_ = get_display().pixelDelta(hCurrent, hNext);
             moverObj.faceHex(hNext);

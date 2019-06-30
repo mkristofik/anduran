@@ -292,7 +292,7 @@ void RandomMap::generateRegions()
     // Start with a set of random hexes.  Don't worry if there are duplicates.
     numRegions_ = size_ / REGION_SIZE;
     std::vector<Hex> centers(numRegions_);
-    generate(std::begin(centers), std::end(centers), RandomHex(width_));
+    generate(begin(centers), end(centers), RandomHex(width_));
      
     // Find the closest center to each hex on the map.  The set of hexes
     // closest to center #0 will be region 0, etc.  Repeat this several times
@@ -425,8 +425,8 @@ std::vector<Hex> RandomMap::voronoi()
 
     // Erase any empty regions.  Repeated runs of the Voronoi algorithm sometimes
     // causes small regions to be absorbed by their neighbors.
-    centers.erase(remove(std::begin(centers), std::end(centers), Hex::invalid()),
-                  std::end(centers));
+    centers.erase(remove(begin(centers), end(centers), Hex::invalid()),
+                  end(centers));
 
     return centers;
 }

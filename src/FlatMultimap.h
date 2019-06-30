@@ -148,14 +148,14 @@ template <typename K, typename V>
 typename FlatMultimap<K, V>::const_iterator FlatMultimap<K, V>::begin()
 {
     sortAndPrune();
-    return std::cbegin(data_);
+    return cbegin(data_);
 }
 
 template <typename K, typename V>
 typename FlatMultimap<K, V>::const_iterator FlatMultimap<K, V>::end()
 {
     sortAndPrune();
-    return std::cend(data_);
+    return cend(data_);
 }
 
 template <typename K, typename V>
@@ -176,8 +176,6 @@ typename FlatMultimap<K, V>::ValueRange FlatMultimap<K, V>::find(const K &key)
 {
     sortAndPrune();
 
-    using std::cbegin;
-    using std::cend;
     const auto range = equal_range(cbegin(data_), cend(data_), key);
     return {range.first, range.second};
 }

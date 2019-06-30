@@ -195,11 +195,11 @@ int hexClosestIdx(const Hex &hSrc, const std::vector<Hex> &hexes)
         return -1;
     }
 
-    const auto closest = min_element(std::begin(hexes), std::end(hexes),
+    const auto closest = min_element(begin(hexes), end(hexes),
         [&hSrc] (const Hex &lhs, const Hex &rhs) {
             return hexDistance(hSrc, lhs) < hexDistance(hSrc, rhs);
         });
-    return static_cast<int>(distance(std::begin(hexes), closest));
+    return static_cast<int>(distance(begin(hexes), closest));
 }
 
 std::vector<Hex> hexCircle(const Hex &center, int radius)

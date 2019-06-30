@@ -59,12 +59,12 @@ T PriorityQueue<T>::pop()
     assert(!empty());
 
     if (isDirty_) {
-        make_heap(std::begin(q_), std::end(q_), std::greater<T>());
+        make_heap(begin(q_), end(q_), std::greater<T>());
         isDirty_ = false;
     }
 
     auto elem = q_.front();
-    pop_heap(std::begin(q_), std::end(q_), std::greater<T>());
+    pop_heap(begin(q_), end(q_), std::greater<T>());
     q_.pop_back();
     return elem;
 }

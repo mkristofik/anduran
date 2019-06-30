@@ -24,7 +24,7 @@ namespace
         const std::string rawObjNames[] = {OBJ_TYPES};
 #undef X
         for (auto str : rawObjNames) {
-            transform(std::begin(str), std::end(str), std::begin(str), ::tolower);
+            transform(begin(str), end(str), begin(str), ::tolower);
             names.push_back(str);
         }
 
@@ -50,11 +50,11 @@ const std::string & obj_name_from_type(ObjectType type)
 
 ObjectType obj_type_from_name(const std::string &name)
 {
-    auto iter = lower_bound(std::begin(objNames), std::end(objNames), name);
-    if (iter == std::end(objNames) || *iter != name) {
+    auto iter = lower_bound(begin(objNames), end(objNames), name);
+    if (iter == end(objNames) || *iter != name) {
         return ObjectType::INVALID;
     }
 
-    const auto index = distance(std::begin(objNames), iter);
+    const auto index = distance(begin(objNames), iter);
     return static_cast<ObjectType>(index);
 }
