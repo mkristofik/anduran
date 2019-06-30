@@ -34,7 +34,10 @@
 #include <iostream>
 #include <memory>
 #include <optional>
+#include <string>
 #include <vector>
+
+using namespace std::string_literals;
 
 
 class Anduran : public SdlApp
@@ -78,7 +81,7 @@ Anduran::Anduran()
     : SdlApp(),
     win_(1280, 720, "Champions of Anduran"),
     rmap_("test.json"),
-    images_("img/"),
+    images_("img/"s),
     rmapView_(win_, rmap_, images_),
     game_(),
     playerObjectIds_(),
@@ -87,7 +90,7 @@ Anduran::Anduran()
     championSelected_(false),
     anims_(rmapView_),
     pathfind_(rmap_, game_),
-    units_("data/units.json", win_, images_),
+    units_("data/units.json"s, win_, images_),
     championImages_(),
     ellipseImages_(),
     flagImages_()
@@ -186,15 +189,15 @@ void Anduran::experiment()
     // TODO: this is all temporary so I can experiment
     auto player = game_.get_object(curPlayerId_);
     const auto team = player->team;
-    const auto archerId = units_.get_id("archer");
+    const auto archerId = units_.get_id("archer"s);
     auto archer = units_.get_image(archerId, ImageType::IMG_IDLE, team);
     auto archerAttack = units_.get_image(archerId, ImageType::ANIM_RANGED, team);
-    const auto swordsmanId = units_.get_id("swordsman");
+    const auto swordsmanId = units_.get_id("swordsman"s);
     auto swordsman = units_.get_image(swordsmanId, ImageType::IMG_IDLE, team);
     auto swordsmanAttack = units_.get_image(swordsmanId, ImageType::ANIM_ATTACK, team);
     auto swordsmanDefend = units_.get_image(swordsmanId, ImageType::IMG_DEFEND, team);
 
-    const auto orcId = units_.get_id("orc");
+    const auto orcId = units_.get_id("orc"s);
     auto orc = units_.get_image(orcId, ImageType::IMG_IDLE, Team::NEUTRAL);
     auto orcAttack = units_.get_image(orcId, ImageType::ANIM_ATTACK, Team::NEUTRAL);
     auto orcDefend = units_.get_image(orcId, ImageType::IMG_DEFEND, Team::NEUTRAL);
@@ -230,18 +233,18 @@ void Anduran::experiment()
 
 void Anduran::load_images()
 {
-    const auto championSurfaces = applyTeamColors(images_.get_surface("champion"));
+    const auto championSurfaces = applyTeamColors(images_.get_surface("champion"s));
     for (auto i = 0u; i < size(championSurfaces); ++i) {
         championImages_[i] = SdlTexture::make_image(championSurfaces[i], win_);
     }
 
-    const auto ellipse = images_.get_surface("ellipse");
+    const auto ellipse = images_.get_surface("ellipse"s);
     const auto ellipseSurfaces = applyTeamColors(ellipseToRefColor(ellipse));
     for (auto i = 0u; i < size(ellipseSurfaces); ++i) {
         ellipseImages_[i] = SdlTexture::make_image(ellipseSurfaces[i], win_);
     }
 
-    const auto flag = images_.get_surface("flag");
+    const auto flag = images_.get_surface("flag"s);
     const auto flagSurfaces = applyTeamColors(flagToRefColor(flag));
     for (auto i = 0u; i < size(flagSurfaces); ++i) {
         flagImages_[i] = SdlTexture::make_image(flagSurfaces[i], win_);
@@ -255,7 +258,7 @@ void Anduran::load_players()
     assert(size(castles) <= NUM_TEAMS);
     shuffle(begin(castles), end(castles), RandomMap::engine);
 
-    const auto castleImg = images_.make_texture("castle", win_);
+    const auto castleImg = images_.make_texture("castle"s, win_);
     for (auto i = 0u; i < size(castles); ++i) {
         GameObject castle;
         castle.hex = castles[i];
@@ -284,11 +287,11 @@ void Anduran::load_villages()
 {
     std::array<SdlTexture, enum_size<Terrain>()> villageImages = {
         SdlTexture{},
-        images_.make_texture("village-desert", win_),
-        images_.make_texture("village-swamp", win_),
-        images_.make_texture("village-grass", win_),
-        images_.make_texture("village-dirt", win_),
-        images_.make_texture("village-snow", win_)
+        images_.make_texture("village-desert"s, win_),
+        images_.make_texture("village-swamp"s, win_),
+        images_.make_texture("village-grass"s, win_),
+        images_.make_texture("village-dirt"s, win_),
+        images_.make_texture("village-snow"s, win_)
     };
 
     auto &neutralFlag = enum_fetch(flagImages_, Team::NEUTRAL);
@@ -308,7 +311,7 @@ void Anduran::load_villages()
 void Anduran::load_objects()
 {
     // Windmills are ownable so draw flags on them.
-    const auto windmillImg = images_.make_texture("windmill", win_);
+    const auto windmillImg = images_.make_texture("windmill"s, win_);
     auto &neutralFlag = enum_fetch(flagImages_, Team::NEUTRAL);
     for (const auto &hex : rmap_.getObjectTiles(ObjectType::WINDMILL)) {
         GameObject windmill;
@@ -320,8 +323,8 @@ void Anduran::load_objects()
     }
 
     // Draw different camp images depending on terrain.
-    const auto campImg = images_.make_texture("camp", win_);
-    const auto leantoImg = images_.make_texture("leanto", win_);
+    const auto campImg = images_.make_texture("camp"s, win_);
+    const auto leantoImg = images_.make_texture("leanto"s, win_);
     for (const auto &hex : rmap_.getObjectTiles(ObjectType::CAMP)) {
         GameObject obj;
         obj.hex = hex;
@@ -335,10 +338,10 @@ void Anduran::load_objects()
     }
 
     // The remaining object types have nothing special about them (yet).
-    load_simple_object(ObjectType::CHEST, "chest");
-    load_simple_object(ObjectType::RESOURCE, "gold");
-    load_simple_object(ObjectType::OASIS, "oasis");
-    load_simple_object(ObjectType::SHIPWRECK, "shipwreck");
+    load_simple_object(ObjectType::CHEST, "chest"s);
+    load_simple_object(ObjectType::RESOURCE, "gold"s);
+    load_simple_object(ObjectType::OASIS, "oasis"s);
+    load_simple_object(ObjectType::SHIPWRECK, "shipwreck"s);
 }
 
 void Anduran::load_simple_object(ObjectType type, const std::string &imgName)

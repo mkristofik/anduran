@@ -19,6 +19,9 @@
 
 #include "boost/container/flat_map.hpp"
 #include <algorithm>
+#include <string>
+
+using namespace std::string_literals;
 
 namespace
 {
@@ -189,9 +192,9 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
     addBorderTiles();
     computeTileEdges();
 
-    const auto shadowImg = images_.make_texture("hex-shadow", window_);
+    const auto shadowImg = images_.make_texture("hex-shadow"s, window_);
     hexShadowId_ = addHiddenEntity(shadowImg, ZOrder::SHADOW);
-    const auto highlightImg = images_.make_texture("hex-yellow", window_);
+    const auto highlightImg = images_.make_texture("hex-yellow"s, window_);
     hexHighlightId_ = addHiddenEntity(highlightImg, ZOrder::HIGHLIGHT);
 }
 
