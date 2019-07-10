@@ -61,6 +61,7 @@ ANDURAN_SRC = GameState.cpp \
 	UnitManager.cpp \
 	anduran.cpp \
 	anim_utils.cpp \
+	battle_utils.cpp \
 	hex_utils.cpp \
 	json_utils.cpp \
 	object_types.cpp \

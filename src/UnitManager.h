@@ -43,6 +43,10 @@ struct UnitMedia
 
 struct UnitData
 {
+    int speed;
+    int minDmg;
+    int maxDmg;
+    int hp;
 };
 
 

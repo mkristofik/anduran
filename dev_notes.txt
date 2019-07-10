@@ -9,7 +9,7 @@
 
 # Pathfinding
 -------------
-- Game objects (towns, windmills, etc.) should not be walkable unless they're a
+* Game objects (towns, windmills, etc.) should not be walkable unless they're a
 destination hex
 - configurable walking speed
 
@@ -33,14 +33,50 @@ destination hex
 - images to match each terrain
 - number per region
 - flaggable?
-- map display needs to return multiple objects per tile (to allow flags and creatures)
+* map display needs to return multiple objects per tile (to allow flags and creatures)
 
 
 # Game state
 ------------
-- status of every game-relevant object
+* status of every game-relevant object
 - not every object needs a drawable entity
 - some objects represented by multiple entities (champions and their ellipses)
+
+
+# Thoughts on Combat
+--------------------
+- every battle is auto-combat
+- "color wheel": Flyer > Mounted > Melee > Ranged > Flyer
+- prevent gang-ups, maybe limit to 2 attackers per creature?
+- one retaliation per creature per round
+- keep it simple at first
+    - attack in descending speed order
+    - attacker chooses target
+    - no skips or waits
+    - few attributes: damage range, hp, speed
+- idea: Tactics phase before combat
+    - two rows of creatures
+    - mounted and melee can only attack from the front row to the front row
+    - flyers can attack front row from either row
+    - ranged can attack either row from either row
+    - ranged must use 1/2 damage melee attack if no friendly creatures in front of it
+    - champion skill affects who gets to place creatures last
+    - note that new rules will affect balance between creatures
+- other ideas
+    - elemental resistances
+    - damage types, armor types
+    - spells
+    - limited shots for ranged creatures
+    - luck, morale
+- additional traits
+    - steadfast, unlimited retaliation
+    - double strike
+    - first strike
+    - binding, lowers target speed to 0
+    - trample (probably more interesting with Tactics idea)
+    - regeneration
+    - life drain
+    - zombify
 
 
 # Image management
@@ -137,7 +173,6 @@ destination hex
     - minimize memory (de-)allocations
     - use a vector, keep index to the current front, add to the back
     - pop() should return by value to avoid invalidating references on push()
-        - I think we can move the return value too
     - if pop() makes the queue empty, start overwriting old elements
     - this one is probably just a fun experiment, std::queue is going to be fine
 * flat multimap
@@ -145,8 +180,8 @@ destination hex
     * insert, sort, then read-only
     * write a find() that returns a range so we can use range-for-loop
         * bonus points if this exposes values only, not pairs
-- priority heap
-    - use some of the ideas from compact queue here?
+* priority heap
+    * use some of the ideas from compact queue here?
 
 
 # Build system
