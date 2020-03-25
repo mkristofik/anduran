@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2020 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -46,7 +46,7 @@ private:
     virtual void update(Uint32 elapsed_ms) = 0;
     virtual void stop();
 
-    MapDisplay &display_;
+    MapDisplay *display_;
     Uint32 elapsed_ms_;
     Uint32 runtime_ms_;
     bool isRunning_;
@@ -188,7 +188,7 @@ public:
     void insert(T&&... args);
 
 private:
-    MapDisplay &display_;
+    MapDisplay *display_;
     std::vector<std::shared_ptr<AnimBase>> anims_;
     int currentAnim_;
 };
@@ -198,7 +198,7 @@ void AnimManager::insert(T&&... args)
 {
     static_assert(std::is_base_of_v<AnimBase, AnimType>,
                   "type to be inserted must inherit from AnimBase");
-    anims_.push_back(std::make_shared<AnimType>(display_, std::forward<T>(args)...));
+    anims_.push_back(std::make_shared<AnimType>(*display_, std::forward<T>(args)...));
 }
 
 #endif

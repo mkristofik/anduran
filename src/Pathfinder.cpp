@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2020 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -29,8 +29,8 @@ Pathfinder::Pathfinder(const RandomMap &rmap, const GameState &state)
     costSoFar_(),
     frontier_(),
     path_(),
-    rmap_(rmap),
-    game_(state),
+    rmap_(&rmap),
+    game_(&state),
     iSrc_(RandomMap::invalidIndex),
     iDest_(RandomMap::invalidIndex),
     hDest_(),
@@ -46,9 +46,9 @@ const std::vector<Hex> & Pathfinder::find_path(const Hex &hSrc,
     costSoFar_.clear();
     frontier_.clear();
     path_.clear();
-    iSrc_ = rmap_.intFromHex(hSrc);
+    iSrc_ = rmap_->intFromHex(hSrc);
     hDest_ = hDest;
-    iDest_ = rmap_.intFromHex(hDest);
+    iDest_ = rmap_->intFromHex(hDest);
     team_ = team;
     
     frontier_.push({iSrc_, 0});
@@ -66,7 +66,7 @@ const std::vector<Hex> & Pathfinder::find_path(const Hex &hSrc,
         // Assuming nonzero cost per tile, it will always be less efficient to
         // reach those tiles in two steps (i.e., through this tile) than one.
         for (auto iNbr : get_neighbors(current.index)) {
-            if (rmap_.offGrid(iNbr)) {
+            if (rmap_->offGrid(iNbr)) {
                 continue;
             }
 
@@ -83,7 +83,7 @@ const std::vector<Hex> & Pathfinder::find_path(const Hex &hSrc,
             }
 
             // heuristic makes this A* instead of Dijkstra's
-            const auto estimate = hexDistance(rmap_.hexFromInt(iNbr), hDest);
+            const auto estimate = hexDistance(rmap_->hexFromInt(iNbr), hDest);
             frontier_.push({iNbr, newCost + estimate});
             cameFrom_[iNbr] = current.index;
         }
@@ -93,7 +93,7 @@ const std::vector<Hex> & Pathfinder::find_path(const Hex &hSrc,
     // destination hex wasn't found, the path will be empty.
     auto fromIter = cameFrom_.find(iDest_);
     while (fromIter != cameFrom_.end() && fromIter->first != iSrc_) {
-        path_.push_back(rmap_.hexFromInt(fromIter->first));
+        path_.push_back(rmap_->hexFromInt(fromIter->first));
         fromIter = cameFrom_.find(fromIter->second);
     }
     std::reverse(path_.begin(), path_.end());
@@ -104,12 +104,12 @@ const std::vector<Hex> & Pathfinder::find_path(const Hex &hSrc,
 Neighbors<int> Pathfinder::get_neighbors(int index) const
 {
     Neighbors<int> iNbrs;
-    assert(!rmap_.offGrid(index));
+    assert(!rmap_->offGrid(index));
 
     // TODO: possible optimization to skip neighbors of the previous tile.
-    const auto hNbrs = rmap_.hexFromInt(index).getAllNeighbors();
+    const auto hNbrs = rmap_->hexFromInt(index).getAllNeighbors();
     for (auto i = 0u; i < hNbrs.size(); ++i) {
-        iNbrs[i] = rmap_.intFromHex(hNbrs[i]);
+        iNbrs[i] = rmap_->intFromHex(hNbrs[i]);
 
         // Every step has a nonzero cost so we'll never step back to the tile we
         // just came from.
@@ -119,15 +119,15 @@ Neighbors<int> Pathfinder::get_neighbors(int index) const
             continue;
         }
 
-        if (!rmap_.getWalkable(iNbrs[i])) {
+        if (!rmap_->getWalkable(iNbrs[i])) {
             iNbrs[i] = RandomMap::invalidIndex;
             continue;
         }
 
         // Game objects are only walkable if they're on the destination hex or if
         // they match the player's team color.
-        if (hNbrs[i] != hDest_ && game_.hex_occupied(hNbrs[i])) {
-            const auto objs = game_.objects_in_hex(hNbrs[i]);
+        if (hNbrs[i] != hDest_ && game_->hex_occupied(hNbrs[i])) {
+            const auto objs = game_->objects_in_hex(hNbrs[i]);
             if (std::any_of(std::begin(objs), std::end(objs),
                             [this] (auto &obj) { return obj.team != team_; }))
             {

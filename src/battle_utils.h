@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2020 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -63,28 +63,42 @@ struct UnitState
     bool alive() const;
     int total_hp() const;
     int speed() const;
+    void take_damage(int dmg);
 };
 
 using Army = std::array<ArmyUnit, ARMY_SIZE>;
 using ArmyState = std::array<UnitState, ARMY_SIZE>;
 
-struct BattleState
+class BattleState
 {
-    std::array<UnitState, ARMY_SIZE * 2> units;
-    int activeUnit;
-
+public:
     BattleState(const ArmyState &attacker, const ArmyState &defender);
 
-    void next_turn();
-    void next_round();
     bool done() const;
+    bool attackers_turn() const;
 
     // Try to evaluate how much the attacking team is winning.
     int score() const;
 
     // Vector of unit indexes the active unit may attack.
     auto possible_targets() const;
+
+    // Active unit attacks the given target and then we advance to the next turn.
+    // Simulated attacks always do average damage.
+    void simulated_attack(int target);
+    void attack(int target);
+
+private:
+    void next_turn();
+    void next_round();
+
+    std::array<UnitState, ARMY_SIZE * 2> units_;
+    int activeUnit_;
 };
+
+// Return the best target to attack and the resulting score after searching
+// 'depth' plies.
+std::pair<int, int> alpha_beta(const BattleState &state, int depth, int alpha, int beta);
 
 struct BattleResult
 {
@@ -97,13 +111,6 @@ class Battle
 {
 public:
     Battle(UnitManager &allUnits, const Army &attacker, const Army &defender);
-
-    // There is no good reason to make a copy of these.
-    Battle(const Battle &) = delete;
-    Battle & operator=(const Battle &) = delete;
-    Battle(Battle &&) = default;
-    Battle & operator=(Battle &&) = default;
-    ~Battle() = default;
 
     // Uses random numbers, every call will produce a different result.
     BattleResult run();
@@ -128,7 +135,7 @@ public:
     // - stop at predetermined search depth
 
 private:
-    UnitManager &units_;
+    UnitManager *units_;
     Army att_;
     Army def_;
 };

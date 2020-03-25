@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2020 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -157,14 +157,14 @@ void MapEntity::faceHex(const Hex &hDest)
 
 
 MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
-    : window_(win),
-    map_(rmap),
+    : window_(&win),
+    map_(&rmap),
     images_(imgMgr),
     tileImg_(),
     obstacleImg_(),
     edgeImg_(),
-    tiles_(map_.size()),
-    displayArea_(window_.getBounds()),
+    tiles_(map_->size()),
+    displayArea_(window_->getBounds()),
     displayOffset_(),
     entities_(),
     entityImg_(),
@@ -177,24 +177,24 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
     std::uniform_int_distribution<int> randTerrain(0, tileImg_[0].cols() - 1);
     std::uniform_int_distribution<int> randObstacle(0, obstacleImg_[0].cols() - 1);
 
-    for (int i = 0; i < map_.size(); ++i) {
-        tiles_[i].hex = map_.hexFromInt(i);
+    for (int i = 0; i < map_->size(); ++i) {
+        tiles_[i].hex = map_->hexFromInt(i);
         tiles_[i].basePixel = pixelFromHex(tiles_[i].hex);
         tiles_[i].curPixel = tiles_[i].basePixel;
-        tiles_[i].terrain = static_cast<int>(map_.getTerrain(i));
+        tiles_[i].terrain = static_cast<int>(map_->getTerrain(i));
         tiles_[i].terrainFrame = randTerrain(RandomMap::engine);
-        if (map_.getObstacle(i)) {
+        if (map_->getObstacle(i)) {
             tiles_[i].obstacle = randObstacle(RandomMap::engine);
         }
-        tiles_[i].region = map_.getRegion(i);
+        tiles_[i].region = map_->getRegion(i);
     }
 
     addBorderTiles();
     computeTileEdges();
 
-    const auto shadowImg = images_.make_texture("hex-shadow"s, window_);
+    const auto shadowImg = images_.make_texture("hex-shadow"s, *window_);
     hexShadowId_ = addHiddenEntity(shadowImg, ZOrder::SHADOW);
-    const auto highlightImg = images_.make_texture("hex-yellow"s, window_);
+    const auto highlightImg = images_.make_texture("hex-yellow"s, *window_);
     hexHighlightId_ = addHiddenEntity(highlightImg, ZOrder::HIGHLIGHT);
 }
 
@@ -289,7 +289,7 @@ void MapDisplay::handleMousePos(Uint32 elapsed_ms)
     // Move the hex shadow to the hex under the mouse.
     auto shadow = getEntity(hexShadowId_);
     const auto mouseHex = hexFromMousePos();
-    if (scrolling || map_.offGrid(mouseHex)) {
+    if (scrolling || map_->offGrid(mouseHex)) {
         shadow.visible = false;
     }
     else {
@@ -350,7 +350,7 @@ Hex MapDisplay::hexFromMousePos() const
 
 void MapDisplay::highlight(const Hex &hex)
 {
-    assert(!map_.offGrid(hex));
+    assert(!map_->offGrid(hex));
 
     auto e = getEntity(hexHighlightId_);
     e.hex = hex;
@@ -435,11 +435,11 @@ void MapDisplay::computeTileEdges()
 void MapDisplay::loadTerrainImages()
 {
     for (auto t : Terrain()) {
-        tileImg_.push_back(images_.make_texture(tileFilename(t), window_));
-        obstacleImg_.push_back(images_.make_texture(obstacleFilename(t), window_));
-        edgeImg_.push_back(images_.make_texture(edgeFilename(t), window_));
+        tileImg_.push_back(images_.make_texture(tileFilename(t), *window_));
+        obstacleImg_.push_back(images_.make_texture(obstacleFilename(t), *window_));
+        edgeImg_.push_back(images_.make_texture(edgeFilename(t), *window_));
     }
-    edgeImg_.push_back(images_.make_texture("edges-same-terrain", window_));
+    edgeImg_.push_back(images_.make_texture("edges-same-terrain", *window_));
 }
 
 void MapDisplay::addBorderTiles()
@@ -447,10 +447,10 @@ void MapDisplay::addBorderTiles()
     // Each border tile is a copy of another tile within the map grid.
 
     // Left edge
-    for (int y = 0; y < map_.width(); ++y) {
+    for (int y = 0; y < map_->width(); ++y) {
         const Hex pairedHex = {0, y};
-        const auto pairedIndex = map_.intFromHex(pairedHex);
-        assert(!map_.offGrid(pairedIndex));
+        const auto pairedIndex = map_->intFromHex(pairedHex);
+        assert(!map_->offGrid(pairedIndex));
 
         // Start with a copy of the paired tile.
         auto newTile = tiles_[pairedIndex];
@@ -462,10 +462,10 @@ void MapDisplay::addBorderTiles()
     }
 
     // Right edge
-    for (int y = 0; y < map_.width(); ++y) {
-        const Hex pairedHex = {map_.width() - 1, y};
-        const auto pairedIndex = map_.intFromHex(pairedHex);
-        assert(!map_.offGrid(pairedIndex));
+    for (int y = 0; y < map_->width(); ++y) {
+        const Hex pairedHex = {map_->width() - 1, y};
+        const auto pairedIndex = map_->intFromHex(pairedHex);
+        assert(!map_->offGrid(pairedIndex));
 
         auto newTile = tiles_[pairedIndex];
         ++newTile.hex.x;
@@ -474,10 +474,10 @@ void MapDisplay::addBorderTiles()
     }
 
     // Top edge
-    for (int x = 0; x < map_.width(); ++x) {
+    for (int x = 0; x < map_->width(); ++x) {
         const Hex pairedHex = {x, 0};
-        const auto pairedIndex = map_.intFromHex(pairedHex);
-        assert(!map_.offGrid(pairedIndex));
+        const auto pairedIndex = map_->intFromHex(pairedHex);
+        assert(!map_->offGrid(pairedIndex));
 
         auto newTile = tiles_[pairedIndex];
         --newTile.hex.y;
@@ -486,10 +486,10 @@ void MapDisplay::addBorderTiles()
     }
 
     // Bottom edge
-    for (int x = 0; x < map_.width(); ++x) {
-        const Hex pairedHex = {x, map_.width() - 1};
-        const auto pairedIndex = map_.intFromHex(pairedHex);
-        assert(!map_.offGrid(pairedIndex));
+    for (int x = 0; x < map_->width(); ++x) {
+        const Hex pairedHex = {x, map_->width() - 1};
+        const auto pairedIndex = map_->intFromHex(pairedHex);
+        assert(!map_->offGrid(pairedIndex));
 
         auto newTile = tiles_[pairedIndex];
         ++newTile.hex.y;
@@ -498,25 +498,25 @@ void MapDisplay::addBorderTiles()
     }
 
     // Top-left corner
-    auto newTile = tiles_[map_.intFromHex(Hex{0, 0})];
+    auto newTile = tiles_[map_->intFromHex(Hex{0, 0})];
     newTile.hex += Hex{-1, -1};
     newTile.basePixel = pixelFromHex(newTile.hex);
     tiles_.push_back(newTile);
 
     // Top-right corner
-    newTile = tiles_[map_.intFromHex(Hex{map_.width() - 1, 0})];
+    newTile = tiles_[map_->intFromHex(Hex{map_->width() - 1, 0})];
     newTile.hex += Hex{1, -1};
     newTile.basePixel = pixelFromHex(newTile.hex);
     tiles_.push_back(newTile);
 
     // Bottom-right corner
-    newTile = tiles_[map_.intFromHex(Hex{map_.width() - 1, map_.width() - 1})];
+    newTile = tiles_[map_->intFromHex(Hex{map_->width() - 1, map_->width() - 1})];
     newTile.hex += Hex{1, 1};
     newTile.basePixel = pixelFromHex(newTile.hex);
     tiles_.push_back(newTile);
 
     // Bottom-left corner
-    newTile = tiles_[map_.intFromHex(Hex{0, map_.width() - 1})];
+    newTile = tiles_[map_->intFromHex(Hex{0, map_->width() - 1})];
     newTile.hex += Hex{-1, 1};
     newTile.basePixel = pixelFromHex(newTile.hex);
     tiles_.push_back(newTile);
@@ -600,7 +600,8 @@ bool MapDisplay::scrollDisplay(Uint32 elapsed_ms)
     }
 
     // Stop scrolling when the lower right hex is just inside the window.
-    static const auto lowerRight = pixelFromHex(Hex{map_.width() - 1, map_.width() - 1});
+    static const auto lowerRight =
+        pixelFromHex(Hex{map_->width() - 1, map_->width() - 1});
     static const auto pMaxX = lowerRight.x - displayArea_.w + HEX_SIZE;
     static const auto pMaxY = lowerRight.y - displayArea_.h + HEX_SIZE;
 

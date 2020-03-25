@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2020 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -75,13 +75,6 @@ class MapDisplay
 public:
     MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr);
 
-    // There is no good reason to have more than one of these.
-    MapDisplay(const MapDisplay &) = delete;
-    MapDisplay & operator=(const MapDisplay &) = delete;
-    MapDisplay(MapDisplay &&) = default;
-    MapDisplay & operator=(MapDisplay &&) = default;
-    ~MapDisplay() = default;
-
     void draw();
 
     // Adding new entity returns the new entity id.
@@ -119,8 +112,8 @@ private:
     // map is moving.
     bool scrollDisplay(Uint32 elapsed_ms);
 
-    SdlWindow &window_;
-    RandomMap &map_;
+    SdlWindow *window_;
+    RandomMap *map_;
     SdlImageManager &images_;
     std::vector<SdlTexture> tileImg_;
     std::vector<SdlTexture> obstacleImg_;

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2020 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -22,8 +22,8 @@
 UnitManager::UnitManager(const std::string &configFile,
                          SdlWindow &win,
                          SdlImageManager &imgMgr)
-    : window_(win),
-    imgSource_(imgMgr),
+    : window_(&win),
+    imgSource_(&imgMgr),
     ids_(),
     media_()
 {
@@ -112,7 +112,7 @@ TeamColoredTextures UnitManager::load_image_set(const std::string &name)
 {
     TeamColoredTextures images;
     
-    const auto imgData = imgSource_.get(name);
+    const auto imgData = imgSource_->get(name);
     if (!imgData) {
         return {};
     }
@@ -120,7 +120,7 @@ TeamColoredTextures UnitManager::load_image_set(const std::string &name)
     const auto imgSet = applyTeamColors(imgData.surface);
     static_assert(images.size() == imgSet.size());
     for (auto i = 0u; i < imgSet.size(); ++i) {
-        images[i] = SdlTexture(imgSet[i], window_, imgData.frames, imgData.timing_ms);
+        images[i] = SdlTexture(imgSet[i], *window_, imgData.frames, imgData.timing_ms);
     }
 
     return images;
@@ -128,5 +128,5 @@ TeamColoredTextures UnitManager::load_image_set(const std::string &name)
 
 SdlTexture UnitManager::load_image(const std::string &name)
 {
-    return imgSource_.make_texture(name, window_);
+    return imgSource_->make_texture(name, *window_);
 }

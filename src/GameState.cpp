@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2020 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,7 @@
 
 void GameState::add_object(const GameObject &obj)
 {
-    objects_.insert(std::move(obj));
+    objects_.insert(obj);
 }
 
 std::optional<GameObject> GameState::get_object(int id) const

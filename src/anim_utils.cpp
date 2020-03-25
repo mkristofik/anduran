@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2020 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -49,7 +49,7 @@ namespace
 
 
 AnimBase::AnimBase(MapDisplay &display, Uint32 runtime_ms)
-    : display_(display),
+    : display_(&display),
     elapsed_ms_(0),
     runtime_ms_(runtime_ms),
     isRunning_(false),
@@ -99,12 +99,12 @@ void AnimBase::update_entity(const MapEntity &entity, const SdlTexture &img)
 
 MapDisplay & AnimBase::get_display()
 {
-    return display_;
+    return *display_;
 }
 
 const MapDisplay & AnimBase::get_display() const
 {
-    return display_;
+    return *display_;
 }
 
 void AnimBase::start()
@@ -455,7 +455,7 @@ void AnimRanged::stop()
 
 
 AnimManager::AnimManager(MapDisplay &display)
-    : display_(display),
+    : display_(&display),
     anims_(),
     currentAnim_(-1)
 {

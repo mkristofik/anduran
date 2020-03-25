@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2020 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -54,8 +54,8 @@ private:
     boost::container::flat_map<int, int> costSoFar_;
     PriorityQueue<EstimatedPathCost> frontier_;
     std::vector<Hex> path_;
-    const RandomMap &rmap_;
-    const GameState &game_;
+    const RandomMap *rmap_;
+    const GameState *game_;
     int iSrc_;
     int iDest_;
     Hex hDest_;

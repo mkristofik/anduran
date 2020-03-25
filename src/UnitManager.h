@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2020 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -57,13 +57,6 @@ public:
                 SdlWindow &win,
                 SdlImageManager &imgMgr);
 
-    // There is no good reason to have more than one of these.
-    UnitManager(const UnitManager &) = delete;
-    UnitManager & operator=(const UnitManager &) = delete;
-    UnitManager(UnitManager &&) = default;
-    UnitManager & operator=(UnitManager &&) = default;
-    ~UnitManager() = default;
-
     int get_id(const std::string &key) const;
     SdlTexture get_image(int id, ImageType imgType, Team team) const;
     SdlTexture get_projectile(int id) const;
@@ -72,8 +65,8 @@ private:
     TeamColoredTextures load_image_set(const std::string &name);
     SdlTexture load_image(const std::string &name);
 
-    SdlWindow &window_;
-    SdlImageManager &imgSource_;
+    SdlWindow *window_;
+    SdlImageManager *imgSource_;
     std::unordered_map<std::string, int> ids_;
     std::vector<UnitMedia> media_;
 };
