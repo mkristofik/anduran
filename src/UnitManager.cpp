@@ -45,19 +45,19 @@ UnitManager::UnitManager(const std::string &configFile,
             const std::string field = f->name.GetString();
             const std::string imgName = f->value.GetString();
             if (field == "img-idle") {
-                media.images.emplace(ImageType::IMG_IDLE, load_image_set(imgName));
+                media.images.emplace(ImageType::img_idle, load_image_set(imgName));
             }
             else if (field == "img-defend") {
-                media.images.emplace(ImageType::IMG_DEFEND, load_image_set(imgName));
+                media.images.emplace(ImageType::img_defend, load_image_set(imgName));
             }
             else if (field == "anim-attack") {
-                media.images.emplace(ImageType::ANIM_ATTACK, load_image_set(imgName));
+                media.images.emplace(ImageType::anim_attack, load_image_set(imgName));
             }
             else if (field == "anim-ranged") {
-                media.images.emplace(ImageType::ANIM_RANGED, load_image_set(imgName));
+                media.images.emplace(ImageType::anim_ranged, load_image_set(imgName));
             }
             else if (field == "anim-die") {
-                media.images.emplace(ImageType::ANIM_DIE, load_image_set(imgName));
+                media.images.emplace(ImageType::anim_die, load_image_set(imgName));
             }
             else if (field == "projectile") {
                 media.projectile = load_image(imgName);
@@ -94,7 +94,7 @@ SdlTexture UnitManager::get_image(int id, ImageType imgType, Team team) const
     }
 
     // Use the base image if the requested image type doesn't exist.
-    imgIter = media_[id].images.find(ImageType::IMG_IDLE);
+    imgIter = media_[id].images.find(ImageType::img_idle);
     if (imgIter != endIter) {
         return enum_fetch(imgIter->second, team);
     }

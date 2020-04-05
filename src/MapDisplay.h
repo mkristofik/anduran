@@ -42,14 +42,14 @@ struct TileDisplay
 };
 
 
-enum class ZOrder {ELLIPSE,
-                   OBJECT,
-                   UNIT,
-                   FLAG,
-                   SHADOW,
-                   HIGHLIGHT,
-                   PROJECTILE,
-                   ANIMATING};
+enum class ZOrder {ellipse,
+                   object,
+                   unit,
+                   flag,
+                   shadow,
+                   highlight,
+                   projectile,
+                   animating};
 
 
 struct MapEntity

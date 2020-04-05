@@ -19,10 +19,10 @@
 
 // Example usage:
 //
-// ITERABLE_ENUM_CLASS(Foo, BAR, BAZ, QUUX, XYZZY);
+// ITERABLE_ENUM_CLASS(Foo, bar, baz, quux, xyzzy);
 // /* this behaves as if you wrote:
 //  *
-//  * enum class Foo {BAR, BAZ, QUUX, XYZZY};
+//  * enum class Foo {bar, baz, quux, xyzzy};
 //  */
 // for (auto f : Foo()) {
 //     // doSomething(f);

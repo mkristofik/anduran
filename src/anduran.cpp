@@ -23,6 +23,7 @@
 #include "anim_utils.h"
 #include "container_utils.h"
 #include "hex_utils.h"
+#include "iterable_enum_class.h"
 #include "object_types.h"
 #include "team_color.h"
 
@@ -161,8 +162,8 @@ void Anduran::handle_lmouse_up()
                 // match the player's.
                 auto objectsHere = game_.objects_in_hex(mouseHex);
                 for (auto &obj : objectsHere) {
-                    if ((obj.type == ObjectType::VILLAGE ||
-                         obj.type == ObjectType::WINDMILL) &&
+                    if ((obj.type == ObjectType::village ||
+                         obj.type == ObjectType::windmill) &&
                         obj.team != player->team)
                     {
                         obj.team = player->team;
@@ -190,22 +191,22 @@ void Anduran::experiment()
     auto player = game_.get_object(curPlayerId_);
     const auto team = player->team;
     const auto archerId = units_.get_id("archer"s);
-    auto archer = units_.get_image(archerId, ImageType::IMG_IDLE, team);
-    auto archerAttack = units_.get_image(archerId, ImageType::ANIM_RANGED, team);
+    auto archer = units_.get_image(archerId, ImageType::img_idle, team);
+    auto archerAttack = units_.get_image(archerId, ImageType::anim_ranged, team);
     const auto swordsmanId = units_.get_id("swordsman"s);
-    auto swordsman = units_.get_image(swordsmanId, ImageType::IMG_IDLE, team);
-    auto swordsmanAttack = units_.get_image(swordsmanId, ImageType::ANIM_ATTACK, team);
-    auto swordsmanDefend = units_.get_image(swordsmanId, ImageType::IMG_DEFEND, team);
+    auto swordsman = units_.get_image(swordsmanId, ImageType::img_idle, team);
+    auto swordsmanAttack = units_.get_image(swordsmanId, ImageType::anim_attack, team);
+    auto swordsmanDefend = units_.get_image(swordsmanId, ImageType::img_defend, team);
 
     const auto orcId = units_.get_id("orc"s);
-    auto orc = units_.get_image(orcId, ImageType::IMG_IDLE, Team::NEUTRAL);
-    auto orcAttack = units_.get_image(orcId, ImageType::ANIM_ATTACK, Team::NEUTRAL);
-    auto orcDefend = units_.get_image(orcId, ImageType::IMG_DEFEND, Team::NEUTRAL);
-    auto orcDie = units_.get_image(orcId, ImageType::ANIM_DIE, Team::NEUTRAL);
+    auto orc = units_.get_image(orcId, ImageType::img_idle, Team::neutral);
+    auto orcAttack = units_.get_image(orcId, ImageType::anim_attack, Team::neutral);
+    auto orcDefend = units_.get_image(orcId, ImageType::img_defend, Team::neutral);
+    auto orcDie = units_.get_image(orcId, ImageType::anim_die, Team::neutral);
 
     auto arrow = units_.get_projectile(archerId);
-    const int enemy = rmapView_.addEntity(orc, Hex{5, 8}, ZOrder::OBJECT);
-    const int projectile = rmapView_.addHiddenEntity(arrow, ZOrder::PROJECTILE);
+    const int enemy = rmapView_.addEntity(orc, Hex{5, 8}, ZOrder::object);
+    const int projectile = rmapView_.addHiddenEntity(arrow, ZOrder::projectile);
     auto ellipse = player->secondary;
 
     anims_.insert<AnimMelee>(player->entity,
@@ -255,29 +256,29 @@ void Anduran::load_players()
 {
     // Randomize the starting locations for each player.
     auto castles = rmap_.getCastleTiles();
-    assert(size(castles) <= NUM_TEAMS);
+    assert(size(castles) <= enum_size<Team>());
     shuffle(begin(castles), end(castles), RandomMap::engine);
 
     const auto castleImg = images_.make_texture("castle"s, win_);
     for (auto i = 0u; i < size(castles); ++i) {
         GameObject castle;
         castle.hex = castles[i];
-        castle.entity = rmapView_.addEntity(castleImg, castle.hex, ZOrder::OBJECT);
+        castle.entity = rmapView_.addEntity(castleImg, castle.hex, ZOrder::object);
         castle.team = static_cast<Team>(i);
-        castle.type = ObjectType::CASTLE;
+        castle.type = ObjectType::castle;
         game_.add_object(castle);
 
         // Draw a champion in the hex due south of each castle.
         GameObject champion;
-        champion.hex = castles[i].getNeighbor(HexDir::S);
+        champion.hex = castles[i].getNeighbor(HexDir::s);
         champion.entity = rmapView_.addEntity(championImages_[i],
                                               champion.hex,
-                                              ZOrder::UNIT);
+                                              ZOrder::unit);
         champion.secondary = rmapView_.addEntity(ellipseImages_[i],
                                                  champion.hex,
-                                                 ZOrder::ELLIPSE);
+                                                 ZOrder::ellipse);
         champion.team = castle.team;
-        champion.type = ObjectType::CHAMPION;
+        champion.type = ObjectType::champion;
         playerObjectIds_.push_back(champion.entity);
         game_.add_object(champion);
     }
@@ -294,16 +295,16 @@ void Anduran::load_villages()
         images_.make_texture("village-snow"s, win_)
     };
 
-    auto &neutralFlag = enum_fetch(flagImages_, Team::NEUTRAL);
-    for (const auto &hex : rmap_.getObjectTiles(ObjectType::VILLAGE)) {
+    auto &neutralFlag = enum_fetch(flagImages_, Team::neutral);
+    for (const auto &hex : rmap_.getObjectTiles(ObjectType::village)) {
         GameObject village;
         village.hex = hex;
         village.entity =
             rmapView_.addEntity(enum_fetch(villageImages, rmap_.getTerrain(hex)),
                                 village.hex,
-                                ZOrder::OBJECT);
-        village.secondary = rmapView_.addEntity(neutralFlag, village.hex, ZOrder::FLAG);
-        village.type = ObjectType::VILLAGE;
+                                ZOrder::object);
+        village.secondary = rmapView_.addEntity(neutralFlag, village.hex, ZOrder::flag);
+        village.type = ObjectType::village;
         game_.add_object(village);
     }
 }
@@ -312,36 +313,36 @@ void Anduran::load_objects()
 {
     // Windmills are ownable so draw flags on them.
     const auto windmillImg = images_.make_texture("windmill"s, win_);
-    auto &neutralFlag = enum_fetch(flagImages_, Team::NEUTRAL);
-    for (const auto &hex : rmap_.getObjectTiles(ObjectType::WINDMILL)) {
+    auto &neutralFlag = enum_fetch(flagImages_, Team::neutral);
+    for (const auto &hex : rmap_.getObjectTiles(ObjectType::windmill)) {
         GameObject windmill;
         windmill.hex = hex;
-        windmill.entity = rmapView_.addEntity(windmillImg, windmill.hex, ZOrder::OBJECT);
-        windmill.secondary = rmapView_.addEntity(neutralFlag, windmill.hex, ZOrder::FLAG);
-        windmill.type = ObjectType::WINDMILL;
+        windmill.entity = rmapView_.addEntity(windmillImg, windmill.hex, ZOrder::object);
+        windmill.secondary = rmapView_.addEntity(neutralFlag, windmill.hex, ZOrder::flag);
+        windmill.type = ObjectType::windmill;
         game_.add_object(windmill);
     }
 
     // Draw different camp images depending on terrain.
     const auto campImg = images_.make_texture("camp"s, win_);
     const auto leantoImg = images_.make_texture("leanto"s, win_);
-    for (const auto &hex : rmap_.getObjectTiles(ObjectType::CAMP)) {
+    for (const auto &hex : rmap_.getObjectTiles(ObjectType::camp)) {
         GameObject obj;
         obj.hex = hex;
         auto img = campImg;
-        if (rmap_.getTerrain(obj.hex) == Terrain::SNOW) {
+        if (rmap_.getTerrain(obj.hex) == Terrain::snow) {
             img = leantoImg;
         }
-        obj.entity = rmapView_.addEntity(img, obj.hex, ZOrder::OBJECT);
-        obj.type = ObjectType::CAMP;
+        obj.entity = rmapView_.addEntity(img, obj.hex, ZOrder::object);
+        obj.type = ObjectType::camp;
         game_.add_object(obj);
     }
 
     // The remaining object types have nothing special about them (yet).
-    load_simple_object(ObjectType::CHEST, "chest"s);
-    load_simple_object(ObjectType::RESOURCE, "gold"s);
-    load_simple_object(ObjectType::OASIS, "oasis"s);
-    load_simple_object(ObjectType::SHIPWRECK, "shipwreck"s);
+    load_simple_object(ObjectType::chest, "chest"s);
+    load_simple_object(ObjectType::resource, "gold"s);
+    load_simple_object(ObjectType::oasis, "oasis"s);
+    load_simple_object(ObjectType::shipwreck, "shipwreck"s);
 }
 
 void Anduran::load_simple_object(ObjectType type, const std::string &imgName)
@@ -350,7 +351,7 @@ void Anduran::load_simple_object(ObjectType type, const std::string &imgName)
     for (const auto &hex : rmap_.getObjectTiles(type)) {
         GameObject obj;
         obj.hex = hex;
-        obj.entity = rmapView_.addEntity(img, obj.hex, ZOrder::OBJECT);
+        obj.entity = rmapView_.addEntity(img, obj.hex, ZOrder::object);
         obj.type = type;
         game_.add_object(obj);
     }

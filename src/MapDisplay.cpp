@@ -32,17 +32,17 @@ namespace
     const char * tileFilename(Terrain t)
     {
         switch(t) {
-            case Terrain::WATER:
+            case Terrain::water:
                 return "tiles-water";
-            case Terrain::DESERT:
+            case Terrain::desert:
                 return "tiles-desert";
-            case Terrain::SWAMP:
+            case Terrain::swamp:
                 return "tiles-swamp";
-            case Terrain::GRASS:
+            case Terrain::grass:
                 return "tiles-grass";
-            case Terrain::DIRT:
+            case Terrain::dirt:
                 return "tiles-dirt";
-            case Terrain::SNOW:
+            case Terrain::snow:
                 return "tiles-snow";
             default:
                 SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Unrecognized terrain %d",
@@ -54,17 +54,17 @@ namespace
     const char * obstacleFilename(Terrain t)
     {
         switch(t) {
-            case Terrain::WATER:
+            case Terrain::water:
                 return "obstacles-water";
-            case Terrain::DESERT:
+            case Terrain::desert:
                 return "obstacles-desert";
-            case Terrain::SWAMP:
+            case Terrain::swamp:
                 return "obstacles-swamp";
-            case Terrain::GRASS:
+            case Terrain::grass:
                 return "obstacles-grass";
-            case Terrain::DIRT:
+            case Terrain::dirt:
                 return "obstacles-dirt";
-            case Terrain::SNOW:
+            case Terrain::snow:
                 return "obstacles-snow";
             default:
                 SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Unrecognized terrain %d",
@@ -76,17 +76,17 @@ namespace
     const char * edgeFilename(Terrain t)
     {
         switch(t) {
-            case Terrain::WATER:
+            case Terrain::water:
                 return "edges-water";
-            case Terrain::DESERT:
+            case Terrain::desert:
                 return "edges-desert";
-            case Terrain::SWAMP:
+            case Terrain::swamp:
                 return "edges-swamp";
-            case Terrain::GRASS:
+            case Terrain::grass:
                 return "edges-grass";
-            case Terrain::DIRT:
+            case Terrain::dirt:
                 return "edges-dirt";
-            case Terrain::SNOW:
+            case Terrain::snow:
                 return "edges-snow";
             default:
                 SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Unrecognized terrain %d",
@@ -135,7 +135,7 @@ MapEntity::MapEntity()
     hex(),
     frame(),
     id(-1),
-    z(ZOrder::OBJECT),
+    z(ZOrder::object),
     visible(true),
     mirrored(false)
 {
@@ -193,9 +193,9 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
     computeTileEdges();
 
     const auto shadowImg = images_.make_texture("hex-shadow"s, *window_);
-    hexShadowId_ = addHiddenEntity(shadowImg, ZOrder::SHADOW);
+    hexShadowId_ = addHiddenEntity(shadowImg, ZOrder::shadow);
     const auto highlightImg = images_.make_texture("hex-yellow"s, *window_);
-    hexHighlightId_ = addHiddenEntity(highlightImg, ZOrder::HIGHLIGHT);
+    hexHighlightId_ = addHiddenEntity(highlightImg, ZOrder::highlight);
 }
 
 void MapDisplay::draw()
@@ -403,29 +403,29 @@ void MapDisplay::computeTileEdges()
             }
 
             // Grass always overlaps everything else.
-            if (myTerrain == Terrain::GRASS) {
+            if (myTerrain == Terrain::grass) {
                 continue;
             }
 
             // Set the edge of the tile to the terrain of the neighboring tile
             // if the neighboring terrain overlaps this one.
-            if (nbrTerrain == Terrain::GRASS || nbrTerrain == Terrain::SNOW) {
+            if (nbrTerrain == Terrain::grass || nbrTerrain == Terrain::snow) {
                 tile.edges[dirIndex] = nbrTile.terrain;
             }
-            else if ((myTerrain == Terrain::DIRT || myTerrain == Terrain::DESERT) &&
-                     nbrTerrain == Terrain::SWAMP)
+            else if ((myTerrain == Terrain::dirt || myTerrain == Terrain::desert) &&
+                     nbrTerrain == Terrain::swamp)
             {
                 tile.edges[dirIndex] = nbrTile.terrain;
             }
-            else if ((myTerrain == Terrain::SWAMP || myTerrain == Terrain::DESERT) &&
-                     nbrTerrain == Terrain::WATER)
+            else if ((myTerrain == Terrain::swamp || myTerrain == Terrain::desert) &&
+                     nbrTerrain == Terrain::water)
             {
                 tile.edges[dirIndex] = nbrTile.terrain;
             }
-            else if (myTerrain == Terrain::WATER && nbrTerrain == Terrain::DIRT) {
+            else if (myTerrain == Terrain::water && nbrTerrain == Terrain::dirt) {
                 tile.edges[dirIndex] = nbrTile.terrain;
             }
-            else if (myTerrain == Terrain::DIRT && nbrTerrain == Terrain::DESERT) {
+            else if (myTerrain == Terrain::dirt && nbrTerrain == Terrain::desert) {
                 tile.edges[dirIndex] = nbrTile.terrain;
             }
         }

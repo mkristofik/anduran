@@ -48,11 +48,11 @@ namespace
     {
         // Return the non-keep tiles of the castle.
         std::array<Hex, 5> hexes;
-        hexes[0] = startHex.getNeighbor(HexDir::N);
-        hexes[1] = startHex.getNeighbor(HexDir::NE);
-        hexes[2] = startHex.getNeighbor(HexDir::SE);
-        hexes[3] = startHex.getNeighbor(HexDir::SW);
-        hexes[4] = startHex.getNeighbor(HexDir::NW);
+        hexes[0] = startHex.getNeighbor(HexDir::n);
+        hexes[1] = startHex.getNeighbor(HexDir::ne);
+        hexes[2] = startHex.getNeighbor(HexDir::se);
+        hexes[3] = startHex.getNeighbor(HexDir::sw);
+        hexes[4] = startHex.getNeighbor(HexDir::nw);
 
         return hexes;
     }
@@ -344,9 +344,9 @@ void RandomMap::assignTerrain()
     std::uniform_int_distribution<int> dist2(0, 1);
     std::uniform_int_distribution<int> dist3(0, 2);
 
-    const Terrain lowAlt[] = {Terrain::WATER, Terrain::DESERT, Terrain::SWAMP};
-    const Terrain medAlt[] = {Terrain::GRASS, Terrain::DIRT};
-    const Terrain highAlt[] = {Terrain::SNOW, Terrain::DIRT};
+    const Terrain lowAlt[] = {Terrain::water, Terrain::desert, Terrain::swamp};
+    const Terrain medAlt[] = {Terrain::grass, Terrain::dirt};
+    const Terrain highAlt[] = {Terrain::snow, Terrain::dirt};
 
     regionTerrain_.resize(numRegions_);
     const auto altitude = randomAltitudes();
@@ -662,7 +662,7 @@ Hex RandomMap::findCastleSpot(int startTile)
         // if so, return that tile
         // if not, push the neighbors onto the queue
         const auto curRegion = tileRegions_[tile];
-        if (regionTerrain_[curRegion] != Terrain::WATER &&
+        if (regionTerrain_[curRegion] != Terrain::water &&
             !contains(castleRegions_, curRegion))
         {
             bool validSpot = true;
@@ -738,35 +738,35 @@ void RandomMap::placeObjects()
     std::uniform_int_distribution<int> dist2(0, 1);
 
     for (int r = 0; r < numRegions_; ++r) {
-        if (regionTerrain_[r] == Terrain::WATER) {
-            placeObject(ObjectType::SHIPWRECK, r);
+        if (regionTerrain_[r] == Terrain::water) {
+            placeObject(ObjectType::shipwreck, r);
             continue;
         }
 
         if (contains(castleRegions_, r)) {
-            placeObject(ObjectType::CHEST, r);
-            placeObject(ObjectType::CHEST, r);
-            placeObject(ObjectType::RESOURCE, r);
-            placeObject(ObjectType::RESOURCE, r);
+            placeObject(ObjectType::chest, r);
+            placeObject(ObjectType::chest, r);
+            placeObject(ObjectType::resource, r);
+            placeObject(ObjectType::resource, r);
         }
         else {
-            placeObject(ObjectType::CHEST, r);
-            placeObject(ObjectType::RESOURCE, r);
-            placeObject(ObjectType::VILLAGE, r);
+            placeObject(ObjectType::chest, r);
+            placeObject(ObjectType::resource, r);
+            placeObject(ObjectType::village, r);
         }
 
-        if (regionTerrain_[r] == Terrain::DESERT) {
-            placeObject(ObjectType::OASIS, r);
+        if (regionTerrain_[r] == Terrain::desert) {
+            placeObject(ObjectType::oasis, r);
         }
-        else if (regionTerrain_[r] == Terrain::GRASS) {
+        else if (regionTerrain_[r] == Terrain::grass) {
             if (dist2(engine) == 1) {
-                placeObject(ObjectType::WINDMILL, r);
+                placeObject(ObjectType::windmill, r);
             }
         }
-        else if (regionTerrain_[r] == Terrain::DIRT ||
-                 regionTerrain_[r] == Terrain::SNOW)
+        else if (regionTerrain_[r] == Terrain::dirt ||
+                 regionTerrain_[r] == Terrain::snow)
         {
-            placeObject(ObjectType::CAMP, r);
+            placeObject(ObjectType::camp, r);
         }
     }
 }

@@ -18,7 +18,7 @@
 #include <ostream>
 #include <vector>
 
-ITERABLE_ENUM_CLASS(HexDir, N, NE, SE, S, SW, NW);
+ITERABLE_ENUM_CLASS(HexDir, n, ne, se, s, sw, nw);
 
 
 // Convenience type for all neighbors of a hex, in HexDir order.

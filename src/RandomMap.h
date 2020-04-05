@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-ITERABLE_ENUM_CLASS(Terrain, WATER, DESERT, SWAMP, GRASS, DIRT, SNOW);
+ITERABLE_ENUM_CLASS(Terrain, water, desert, swamp, grass, dirt, snow);
 
 
 class RandomMap

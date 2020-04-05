@@ -34,7 +34,7 @@ Pathfinder::Pathfinder(const RandomMap &rmap, const GameState &state)
     iSrc_(RandomMap::invalidIndex),
     iDest_(RandomMap::invalidIndex),
     hDest_(),
-    team_(Team::NEUTRAL)
+    team_(Team::neutral)
 {
 }
 

@@ -56,32 +56,32 @@ Hex Hex::getNeighbor(HexDir d) const
     const bool evenCol = (x % 2 == 0);
 
     switch (d) {
-        case HexDir::N:
+        case HexDir::n:
             return *this + Hex(0, -1);
-        case HexDir::NE:
+        case HexDir::ne:
             if (evenCol) {
                 return *this + Hex(1, -1);
             }
             else {
                 return *this + Hex(1, 0);
             }
-        case HexDir::SE:
+        case HexDir::se:
             if (evenCol) {
                 return *this + Hex(1, 0);
             }
             else {
                 return *this + Hex(1, 1);
             }
-        case HexDir::S:
+        case HexDir::s:
             return *this + Hex(0, 1);
-        case HexDir::SW:
+        case HexDir::sw:
             if (evenCol) {
                 return *this + Hex(-1, 0);
             }
             else {
                 return *this + Hex(-1, 1);
             }
-        case HexDir::NW:
+        case HexDir::nw:
             if (evenCol) {
                 return *this + Hex(-1, -1);
             }

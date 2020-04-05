@@ -25,12 +25,10 @@ class SdlTexture;
 // reference.  Those colors are replaced at runtime with the corresponding
 // color for each team.
 
-ITERABLE_ENUM_CLASS(Team, BLUE, RED, GREEN, PURPLE, NEUTRAL);
+ITERABLE_ENUM_CLASS(Team, blue, red, green, purple, neutral);
 
-constexpr int NUM_TEAMS = enum_size<Team>();
-
-using TeamColoredSurfaces = std::array<SdlSurface, NUM_TEAMS>;
-using TeamColoredTextures = std::array<SdlTexture, NUM_TEAMS>;
+using TeamColoredSurfaces = std::array<SdlSurface, enum_size<Team>()>;
+using TeamColoredTextures = std::array<SdlTexture, enum_size<Team>()>;
 
 
 TeamColoredSurfaces applyTeamColors(const SdlSurface &src);

@@ -35,7 +35,7 @@ UnitState::UnitState(const UnitData &data, int quantity, BattleSide side)
     num(quantity),
     hpLeft(unit->hp),
     timesAttacked(0),
-    attacker(side == BattleSide::ATTACKER),
+    attacker(side == BattleSide::attacker),
     retaliated(false)
 {
 }

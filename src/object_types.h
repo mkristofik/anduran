@@ -17,21 +17,20 @@
 
 // Must keep these in alphabetical order.
 #define OBJ_TYPES \
-    X(CAMP) \
-    X(CASTLE) \
-    X(CHAMPION) \
-    X(CHEST) \
-    X(OASIS) \
-    X(RESOURCE) \
-    X(SHIPWRECK) \
-    X(VILLAGE) \
-    X(WINDMILL)
+    X(camp) \
+    X(castle) \
+    X(champion) \
+    X(chest) \
+    X(oasis) \
+    X(resource) \
+    X(shipwreck) \
+    X(village) \
+    X(windmill)
     
 #define X(str) str,
-enum class ObjectType {OBJ_TYPES INVALID};
+enum class ObjectType {OBJ_TYPES invalid};
 #undef X
 
-// Object names are lower-cased equivalents of the enums.
 const std::string & obj_name_from_type(ObjectType type);
 ObjectType obj_type_from_name(const std::string &name);
 

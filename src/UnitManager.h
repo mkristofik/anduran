@@ -26,11 +26,11 @@ class SdlImageManager;
 class SdlWindow;
 
 
-enum class ImageType {IMG_IDLE,
-                      IMG_DEFEND,
-                      ANIM_ATTACK,
-                      ANIM_RANGED,
-                      ANIM_DIE};
+enum class ImageType {img_idle,
+                      img_defend,
+                      anim_attack,
+                      anim_ranged,
+                      anim_die};
 
 
 struct UnitMedia

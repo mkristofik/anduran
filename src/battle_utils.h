@@ -47,7 +47,7 @@ struct ArmyUnit
     int num = 0;
 };
 
-enum class BattleSide {ATTACKER, DEFENDER}; 
+enum class BattleSide {attacker, defender}; 
 
 struct UnitState
 {

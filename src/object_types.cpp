@@ -12,26 +12,12 @@
 */
 #include "object_types.h"
 #include <algorithm>
-#include <cctype>
-#include <vector>
 
 namespace
 {
-    std::vector<std::string> init_obj_names()
-    {
-        std::vector<std::string> names;
 #define X(str) #str,
-        const std::string rawObjNames[] = {OBJ_TYPES};
+    const std::string objNames[] = {OBJ_TYPES};
 #undef X
-        for (auto str : rawObjNames) {
-            transform(begin(str), end(str), begin(str), ::tolower);
-            names.push_back(str);
-        }
-
-        return names;
-    }
-
-    const std::vector<std::string> objNames = init_obj_names();
 }
 
 
@@ -41,7 +27,7 @@ const std::string & obj_name_from_type(ObjectType type)
     static const std::string invalid;
 
     switch(type) {
-        case ObjectType::INVALID:
+        case ObjectType::invalid:
             return invalid;
         default:
             return objNames[static_cast<int>(type)];
@@ -52,7 +38,7 @@ ObjectType obj_type_from_name(const std::string &name)
 {
     auto iter = lower_bound(begin(objNames), end(objNames), name);
     if (iter == end(objNames) || *iter != name) {
-        return ObjectType::INVALID;
+        return ObjectType::invalid;
     }
 
     const auto index = distance(begin(objNames), iter);

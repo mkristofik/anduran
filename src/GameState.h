@@ -34,8 +34,8 @@ struct GameObject
     Hex hex;
     int entity = -1;
     int secondary = -1;  // embellishment such as a flag or ellipse
-    Team team = Team::NEUTRAL;
-    ObjectType type = ObjectType::INVALID;
+    Team team = Team::neutral;
+    ObjectType type = ObjectType::invalid;
 };
 
 // expect to never have more than 4 objects per hex

@@ -66,7 +66,7 @@ namespace
         {0x93, 0x00, 0x9D, SDL_ALPHA_OPAQUE},  // player 4 - purple
         {0x5A, 0x5A, 0x5A, SDL_ALPHA_OPAQUE},  // neutral - grey
     };
-    static_assert(std::size(teamBaseColors) == NUM_TEAMS);
+    static_assert(std::size(teamBaseColors) == enum_size<Team>());
 
     using TeamColorPalette = std::array<SDL_Color, std::size(refColors)>;
     auto makeTeamColors(const SDL_Color &baseColor)
@@ -183,15 +183,15 @@ namespace
         return imgCopy;
     }
 
-    const auto TEAM_COLORS = initColors();
+    const auto teamColors = initColors();
 }
 
 
 TeamColoredSurfaces applyTeamColors(const SdlSurface &src)
 {
     TeamColoredSurfaces images;
-    for (int i = 0; i < NUM_TEAMS; ++i) {
-        images[i] = applyColors(src, TEAM_COLORS[i]);
+    for (auto i = 0u; i < images.size(); ++i) {
+        images[i] = applyColors(src, teamColors[i]);
     }
 
     return images;

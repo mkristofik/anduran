@@ -189,7 +189,7 @@ void AnimMove::start()
     baseState_ = moverObj;
     distToMove_ = get_display().pixelDelta(baseState_.hex, path_[0]);
 
-    moverObj.z = ZOrder::ANIMATING;
+    moverObj.z = ZOrder::animating;
     moverObj.visible = true;
     moverObj.faceHex(path_[0]);
     // TODO: set image to the moving image if we have one
@@ -273,11 +273,11 @@ void AnimMelee::start()
     defBaseState_ = defObj;
     distToMove_ = get_display().pixelDelta(attBaseState_.hex, defBaseState_.hex) / 2;
 
-    attObj.z = ZOrder::ANIMATING;
+    attObj.z = ZOrder::animating;
     attObj.visible = true;
     attObj.faceHex(defBaseState_.hex);
     attObj.frame = Frame{0, 0};
-    defObj.z = ZOrder::ANIMATING;
+    defObj.z = ZOrder::animating;
     defObj.visible = true;
     defObj.faceHex(attBaseState_.hex);
 
@@ -382,11 +382,11 @@ void AnimRanged::start()
     // factor.
     distToMove_ = get_display().pixelDelta(attBaseState_.hex, defBaseState_.hex) * 0.9;
 
-    attObj.z = ZOrder::ANIMATING;
+    attObj.z = ZOrder::animating;
     attObj.visible = true;
     attObj.faceHex(defBaseState_.hex);
     attObj.frame = {0, 0};
-    defObj.z = ZOrder::ANIMATING;
+    defObj.z = ZOrder::animating;
     defObj.visible = true;
     defObj.faceHex(attBaseState_.hex);
     projObj.hex = attBaseState_.hex;
