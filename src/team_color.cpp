@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2020 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -14,6 +14,7 @@
 #include "team_color.h"
 
 #include "RandomMap.h"
+#include "container_utils.h"
 
 #include "SDL.h"
 #include <algorithm>
@@ -66,7 +67,7 @@ namespace
         {0x93, 0x00, 0x9D, SDL_ALPHA_OPAQUE},  // player 4 - purple
         {0x5A, 0x5A, 0x5A, SDL_ALPHA_OPAQUE},  // neutral - grey
     };
-    static_assert(std::size(teamBaseColors) == enum_size<Team>());
+    static_assert(ssize(teamBaseColors) == enum_size<Team>());
 
     using TeamColorPalette = std::array<SDL_Color, std::size(refColors)>;
     auto makeTeamColors(const SDL_Color &baseColor)

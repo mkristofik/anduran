@@ -1,0 +1,21 @@
+#    Copyright (C) 2016-2020 by Michael Kristofik <kristo605@gmail.com>
+#    Part of the Champions of Anduran project.
+# 
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License version 2
+#    or at your option any later version.
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY.
+# 
+#    See the COPYING.txt file for more details.
+
+# TODO: can I use this recipe on Windows too?  Probably need sdl2-config in PATH.
+CPPFLAGS := $(shell sdl2-config --cflags)
+
+LDLIBS := $(shell sdl2-config --libs) -lSDL2_image -lboost_system -lboost_filesystem
+
+BUILD_DIR = build
+EXE = 
+MKDIR_CMD = mkdir -p
+RM_DIR_CMD = rm -rf
+RM_CMD = rm

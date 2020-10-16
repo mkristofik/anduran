@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2020 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -87,7 +87,7 @@ SdlTexture SdlTexture::make_image(const SdlSurface &src, SdlWindow &win)
     impl->frameHeight = src->h;
     impl->texture = make_texture(impl->renderer, src.get());
 
-    return std::move(impl);
+    return impl;
 }
 
 SdlTexture SdlTexture::make_sprite_sheet(const SdlSurface &src,

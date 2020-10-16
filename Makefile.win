@@ -1,0 +1,33 @@
+#    Copyright (C) 2016-2020 by Michael Kristofik <kristo605@gmail.com>
+#    Part of the Champions of Anduran project.
+# 
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License version 2
+#    or at your option any later version.
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY.
+# 
+#    See the COPYING.txt file for more details.
+
+# I use Stefan T. Lavavej's 64-bit MinGW build, installed in C:/MinGW (also
+# includes boost)
+# C:/Libraries contains rapidjson and SDL
+CPPFLAGS = -Ic:/libraries \
+	-Ic:/MinGW/include \
+	-Ic:/libraries/SDL2-2.0.9/x86_64-w64-mingw32/include/SDL2 \
+	-Ic:/libraries/SDL2_image-2.0.4/x86_64-w64-mingw32/include/SDL2
+
+LDFLAGS = -Lc:/libraries/SDL2-2.0.9/x86_64-w64-mingw32/lib \
+	-Lc:/libraries/SDL2_image-2.0.4/x86_64-w64-mingw32/lib \
+	-Lc:/MinGW/lib
+
+LDLIBS = -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lboost_system -lboost_filesystem
+
+BUILD_DIR = build
+EXE = .exe
+
+# /NUL = testing for a nul file ensures we have an actual directory
+MKDIR_CMD = if not exist $(BUILD_DIR)/NUL mkdir
+
+RM_DIR_CMD = rmdir /q /s
+RM_CMD = del

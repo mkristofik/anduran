@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2020 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -256,7 +256,7 @@ void Anduran::load_players()
 {
     // Randomize the starting locations for each player.
     auto castles = rmap_.getCastleTiles();
-    assert(size(castles) <= enum_size<Team>());
+    assert(ssize(castles) <= enum_size<Team>());
     shuffle(begin(castles), end(castles), RandomMap::engine);
 
     const auto castleImg = images_.make_texture("castle"s, win_);

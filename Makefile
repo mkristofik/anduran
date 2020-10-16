@@ -1,4 +1,4 @@
-#    Copyright (C) 2016-2018 by Michael Kristofik <kristo605@gmail.com>
+#    Copyright (C) 2016-2020 by Michael Kristofik <kristo605@gmail.com>
 #    Part of the Champions of Anduran project.
 # 
 #    This program is free software; you can redistribute it and/or modify
@@ -9,22 +9,19 @@
 # 
 #    See the COPYING.txt file for more details.
 
+ifeq ($(OS),Windows_NT)
+include Makefile.win
+else
+include Makefile.lx
+endif
+
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror -O3
-CPPFLAGS = -Ic:/libraries \
-	-Ic:/MinGW/include \
-	-Ic:/libraries/SDL2-2.0.9/x86_64-w64-mingw32/include/SDL2 \
-	-Ic:/libraries/SDL2_image-2.0.4/x86_64-w64-mingw32/include/SDL2
 CXXFLAGS = -g -Wall -Wextra -Werror -std=c++17
-LDFLAGS = -Lc:/libraries/SDL2-2.0.9/x86_64-w64-mingw32/lib \
-	-Lc:/libraries/SDL2_image-2.0.4/x86_64-w64-mingw32/lib \
-	-Lc:/MinGW/lib
-LDLIBS = -lmingw32 -lSDL2main -lSDL2 -lSDL2_image -lboost_system -lboost_filesystem
 
-BUILD_DIR = build
 SRC_DIR = src
 
-RMAPGEN = rmapgen.exe
+RMAPGEN = rmapgen$(EXE)
 RMAPGEN_SRC = RandomMap.cpp hex_utils.cpp json_utils.cpp object_types.cpp rmapgen.cpp
 RMAPGEN_OBJS = $(RMAPGEN_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-noise.o
 RMAPGEN_DEPS = $(RMAPGEN_OBJS:%.o=%.d)
@@ -33,7 +30,7 @@ RMAPGEN_DEPS = $(RMAPGEN_OBJS:%.o=%.d)
 # the noise object file directly is good enough because the implicit rules
 # below will find open-simplex-noise.c.
 
-MAPVIEW = mapview.exe
+MAPVIEW = mapview$(EXE)
 MAPVIEW_SRC = MapDisplay.cpp \
 	RandomMap.cpp \
 	SdlApp.cpp \
@@ -48,7 +45,7 @@ MAPVIEW_SRC = MapDisplay.cpp \
 MAPVIEW_OBJS = $(MAPVIEW_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-noise.o
 MAPVIEW_DEPS = $(MAPVIEW_OBJS:%.o=%.d)
 
-ANDURAN = anduran.exe
+ANDURAN = anduran$(EXE)
 ANDURAN_SRC = GameState.cpp \
 	MapDisplay.cpp \
 	Pathfinder.cpp \
@@ -86,7 +83,6 @@ $(ANDURAN) : $(ANDURAN_OBJS)
 # directory to house all intermediate files. See example under "Automatic
 # Prerequisites" in the GNU make manual.
 #     leading '@' = run this command silently
-#     /NUL = testing for a nul file ensures we have an actual directory
 #     -MM = use compiler to write a rule for the file with build dependencies
 #     -MT #1 = substitute *.o for *.d, write the rule for the .o file target
 #     -MT #2 = also write the rule for the .d file target so it also depends on
@@ -94,11 +90,11 @@ $(ANDURAN) : $(ANDURAN_OBJS)
 #     $@ = path to the .d file
 #     $< = path to the .cpp file
 $(BUILD_DIR)/%.d : $(SRC_DIR)/%.cpp
-	@if not exist $(BUILD_DIR)/NUL mkdir $(BUILD_DIR)
+	@$(MKDIR_CMD) $(BUILD_DIR)
 	$(CXX) -MM -MT $(patsubst %.d,%.o,$@) -MT $@ $(CPPFLAGS) $< > $@
 
 $(BUILD_DIR)/%.d : $(SRC_DIR)/%.c
-	@if not exist $(BUILD_DIR)/NUL mkdir $(BUILD_DIR)
+	@$(MKDIR_CMD) $(BUILD_DIR)
 	$(CC) -MM -MT $(patsubst %.d,%.o,$@) -MT $@ $< > $@
 
 # Modify the standard implicit rule for building cpp files so the .o files land
@@ -122,5 +118,5 @@ endif
 # Remove intermediate build files and the executables.  Leading '-' means ignore
 # errors (e.g., if any files are already deleted).
 clean :
-	-rmdir /q /s $(BUILD_DIR)
-	-del $(RMAPGEN) $(MAPVIEW) $(ANDURAN)
+	-$(RM_DIR_CMD) $(BUILD_DIR)
+	-$(RM_CMD) $(RMAPGEN) $(MAPVIEW) $(ANDURAN)
