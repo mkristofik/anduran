@@ -9,6 +9,15 @@
 # 
 #    See the COPYING.txt file for more details.
 
+# Installed packages:
+# - libboost1.71-dev
+# - libboost-filesystem1.71-dev
+# - libsdl2-2.0-0
+# - libsdl2-dev
+# - libsdl2-image-2.0-0
+# - libsdl2-image-dev
+# - rapidjson-dev
+
 # TODO: can I use this recipe on Windows too?  Probably need sdl2-config in PATH.
 CPPFLAGS := $(shell sdl2-config --cflags)
 
