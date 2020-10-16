@@ -25,7 +25,8 @@ UnitManager::UnitManager(const std::string &configFile,
     : window_(&win),
     imgSource_(&imgMgr),
     ids_(),
-    media_()
+    media_(),
+    data_()
 {
     if (!boost::filesystem::exists(configFile)) {
         SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
@@ -40,27 +41,69 @@ UnitManager::UnitManager(const std::string &configFile,
         const std::string name = m->name.GetString();
         ids_.emplace(name, size(ids_));
 
+        UnitData data;
         UnitMedia media;
         for (auto f = m->value.MemberBegin(); f != m->value.MemberEnd(); ++f) {
             const std::string field = f->name.GetString();
-            const std::string imgName = f->value.GetString();
-            if (field == "img-idle") {
-                media.images.emplace(ImageType::img_idle, load_image_set(imgName));
+            if (f->value.IsString()) {
+                const std::string imgName = f->value.GetString();
+                if (field == "img-idle") {
+                    media.images.emplace(ImageType::img_idle, load_image_set(imgName));
+                }
+                else if (field == "img-defend") {
+                    media.images.emplace(ImageType::img_defend, load_image_set(imgName));
+                }
+                else if (field == "anim-attack") {
+                    media.images.emplace(ImageType::anim_attack, load_image_set(imgName));
+                }
+                else if (field == "anim-ranged") {
+                    media.images.emplace(ImageType::anim_ranged, load_image_set(imgName));
+                }
+                else if (field == "anim-die") {
+                    media.images.emplace(ImageType::anim_die, load_image_set(imgName));
+                }
+                else if (field == "projectile") {
+                    media.projectile = load_image(imgName);
+                }
+                else {
+                    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
+                                "Unrecognized unit string field [%s] : %s",
+                                name.c_str(), field.c_str());
+                }
             }
-            else if (field == "img-defend") {
-                media.images.emplace(ImageType::img_defend, load_image_set(imgName));
+            else if (f->value.IsInt()) {
+                const int val = f->value.GetInt();
+                if (field == "hp") {
+                    data.hp = val;
+                }
+                else if (field == "speed") {
+                    data.speed = val;
+                }
+                else {
+                    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
+                                "Unrecognized unit int field [%s] : %s",
+                                name.c_str(), field.c_str());
+                }
             }
-            else if (field == "anim-attack") {
-                media.images.emplace(ImageType::anim_attack, load_image_set(imgName));
-            }
-            else if (field == "anim-ranged") {
-                media.images.emplace(ImageType::anim_ranged, load_image_set(imgName));
-            }
-            else if (field == "anim-die") {
-                media.images.emplace(ImageType::anim_die, load_image_set(imgName));
-            }
-            else if (field == "projectile") {
-                media.projectile = load_image(imgName);
+            else if (f->value.IsArray()) {
+                const auto &ary = f->value.GetArray();
+                if (field == "damage") {
+                    if (ary.Capacity() == 2 && ary[0].IsInt() && ary[1].IsInt()) {
+                        data.minDmg = ary[0].GetInt();
+                        data.maxDmg = ary[1].GetInt();
+                    }
+                    else {
+                        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
+                                    "Unit damage field [%s] : %s",
+                                    name.c_str(),
+                                    "expected 2 integers");
+                    }
+                }
+                else {
+                    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
+                                "Unrecognized unit array field [%s] : %s",
+                                name.c_str(), field.c_str());
+                }
             }
             else {
                 SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
@@ -69,6 +112,7 @@ UnitManager::UnitManager(const std::string &configFile,
             }
         }
         media_.push_back(std::move(media));
+        data_.push_back(std::move(data));
     }
 }
 

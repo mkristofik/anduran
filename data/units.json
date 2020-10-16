@@ -1,16 +1,25 @@
 {
     "archer": {
+        "speed": 2,
+        "hp": 10,
+        "damage": [2, 3],
         "img-idle": "archer",
         "anim-ranged": "archer-attack-ranged",
         "projectile": "missile"
     },
     "orc": {
+        "speed": 4,
+        "hp": 20,
+        "damage": [4, 6],
         "img-idle": "orc-grunt",
         "img-defend": "orc-grunt-defend",
         "anim-attack": "orc-grunt-attack-melee",
         "anim-die": "orc-grunt-die"
     },
     "swordsman": {
+        "speed": 4,
+        "hp": 25,
+        "damage": [5, 9],
         "img-idle": "swordsman",
         "img-defend": "swordsman-defend",
         "anim-attack": "swordsman-attack-melee"

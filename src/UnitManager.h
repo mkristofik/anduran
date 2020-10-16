@@ -37,16 +37,15 @@ struct UnitMedia
 {
     boost::container::flat_map<ImageType, TeamColoredTextures> images;
     SdlTexture projectile;
-    int id;
 };
 
 
 struct UnitData
 {
-    int speed;
-    int minDmg;
-    int maxDmg;
-    int hp;
+    int speed = 0;
+    int minDmg = 0;
+    int maxDmg = 0;
+    int hp = 0;
 };
 
 
@@ -69,6 +68,7 @@ private:
     SdlImageManager *imgSource_;
     std::unordered_map<std::string, int> ids_;
     std::vector<UnitMedia> media_;
+    std::vector<UnitData> data_;
 };
 
 #endif
