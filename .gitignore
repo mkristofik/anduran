@@ -1,6 +1,8 @@
 *.exe
 build/
-test*.*
+test*.json
+test*.txt
 anduran
 mapview
 rmapgen
+unittests

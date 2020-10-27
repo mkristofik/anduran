@@ -9,7 +9,7 @@
 # 
 #    See the COPYING.txt file for more details.
 
-# I use Stefan T. Lavavej's 64-bit MinGW build, installed in C:/MinGW (also
+# I use Stephan T. Lavavej's 64-bit MinGW build, installed in C:/MinGW (also
 # includes boost)
 # C:/Libraries contains rapidjson and SDL
 CPPFLAGS = -Ic:/libraries \

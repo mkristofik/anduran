@@ -9,6 +9,10 @@
 # 
 #    See the COPYING.txt file for more details.
 
+# Import OS-specific stuff, notably:
+# - include and linker paths for libs we depend on
+# - build dir name
+# - shell commands
 ifeq ($(OS),Windows_NT)
 include Makefile.win
 else
@@ -66,9 +70,19 @@ ANDURAN_SRC = GameState.cpp \
 ANDURAN_OBJS = $(ANDURAN_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-noise.o
 ANDURAN_DEPS = $(ANDURAN_OBJS:%.o=%.d)
 
-.PHONY : all clean
+UNITTESTS = unittests$(EXE)
+UNITTESTS_SRC = battle_utils.cpp \
+	object_types.cpp \
+	test_objects.cpp \
+	test_units.cpp
+UNITTESTS_OBJS = $(UNITTESTS_SRC:%.cpp=$(BUILD_DIR)/%.o)
+UNITTESTS_DEPS = $(UNITTESTS_OBJS:%.o=%.d)
 
-all : $(RMAPGEN) $(MAPVIEW) $(ANDURAN)
+.PHONY : all clean test
+
+all : $(RMAPGEN) $(MAPVIEW) $(ANDURAN) $(UNITTESTS)
+
+test : $(UNITTESTS)
 
 $(RMAPGEN) : $(RMAPGEN_OBJS)
 	$(CXX) $(RMAPGEN_OBJS) -o $@
@@ -78,6 +92,10 @@ $(MAPVIEW) : $(MAPVIEW_OBJS)
 
 $(ANDURAN) : $(ANDURAN_OBJS)
 	$(CXX) $(ANDURAN_OBJS) $(LDFLAGS) $(LDLIBS) -o $@
+
+$(UNITTESTS) : $(UNITTESTS_OBJS)
+	$(CXX) $(UNITTESTS_OBJS) $(LDFLAGS) -o $@
+	@./$(UNITTESTS)
 
 # Auto-generate a dependency file for each cpp file. We first create a build
 # directory to house all intermediate files. See example under "Automatic
@@ -113,10 +131,11 @@ ifneq ($(MAKECMDGOALS),clean)
 include $(RMAPGEN_DEPS)
 include $(MAPVIEW_DEPS)
 include $(ANDURAN_DEPS)
+include $(UNITTESTS_DEPS)
 endif
 
 # Remove intermediate build files and the executables.  Leading '-' means ignore
 # errors (e.g., if any files are already deleted).
 clean :
 	-$(RM_DIR_CMD) $(BUILD_DIR)
-	-$(RM_CMD) $(RMAPGEN) $(MAPVIEW) $(ANDURAN)
+	-$(RM_CMD) $(RMAPGEN) $(MAPVIEW) $(ANDURAN) $(UNITTESTS)

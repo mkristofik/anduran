@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2020 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,6 @@ namespace
 }
 
 
-// TODO: these functions seem easily unit-testable
 const std::string & obj_name_from_type(ObjectType type)
 {
     static const std::string invalid;
