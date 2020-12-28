@@ -18,7 +18,6 @@
 # - libsdl2-image-dev
 # - rapidjson-dev
 
-# TODO: can I use this recipe on Windows too?  Probably need sdl2-config in PATH.
 CPPFLAGS := $(shell sdl2-config --cflags)
 
 LDLIBS := $(shell sdl2-config --libs) -lSDL2_image -lboost_system -lboost_filesystem

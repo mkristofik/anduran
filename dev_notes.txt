@@ -24,6 +24,7 @@ destination hex
 * draw the champion facing to the left when moving in that direction
 * hide the ellipse while the champion is moving
 * screen flashes white briefly when first loading
+- try to cap the framerate to save CPU
 
 
 # Data-driven map objects
