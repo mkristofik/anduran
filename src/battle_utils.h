@@ -14,6 +14,7 @@
 #define BATTLE_UTILS_H
 
 #include <array>
+#include "boost/container/static_vector.hpp"
 
 class UnitData;
 class UnitManager;
@@ -68,6 +69,8 @@ struct UnitState
 
 using Army = std::array<ArmyUnit, ARMY_SIZE>;
 using ArmyState = std::array<UnitState, ARMY_SIZE>;
+using BattleArray = std::array<UnitState, ARMY_SIZE * 2>;
+using TargetList = boost::container::static_vector<int, ARMY_SIZE>;
 
 class BattleState
 {
@@ -76,12 +79,14 @@ public:
 
     bool done() const;
     bool attackers_turn() const;
+    const BattleArray & view_units() const;
+    const UnitState * active_unit() const;
 
     // Try to evaluate how much the attacking team is winning.
     int score() const;
 
     // Vector of unit indexes the active unit may attack.
-    auto possible_targets() const;
+    TargetList possible_targets() const;
 
     // Active unit attacks the given target and then we advance to the next turn.
     // Simulated attacks always do average damage.
@@ -92,7 +97,7 @@ private:
     void next_turn();
     void next_round();
 
-    std::array<UnitState, ARMY_SIZE * 2> units_;
+    BattleArray units_;
     int activeUnit_;
 };
 

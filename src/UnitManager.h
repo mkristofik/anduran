@@ -42,6 +42,7 @@ struct UnitMedia
 
 struct UnitData
 {
+    std::string name;
     int speed = 0;
     int minDmg = 0;
     int maxDmg = 0;

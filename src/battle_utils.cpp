@@ -15,7 +15,6 @@
 #include "UnitManager.h"
 #include "container_utils.h"
 
-#include "boost/container/static_vector.hpp"
 #include <algorithm>
 #include <cassert>
 #include <limits>
@@ -116,6 +115,20 @@ bool BattleState::attackers_turn() const
     return !done() && units_[activeUnit_].attacker;
 }
 
+const BattleArray & BattleState::view_units() const
+{
+    return units_;
+}
+
+const UnitState * BattleState::active_unit() const
+{
+    if (done()) {
+        return nullptr;
+    }
+
+    return &units_[activeUnit_];
+}
+
 int BattleState::score() const
 {
     int attacker = 0;
@@ -137,11 +150,10 @@ int BattleState::score() const
     return score;
 }
 
-auto BattleState::possible_targets() const
+TargetList BattleState::possible_targets() const
 {
-    boost::container::static_vector<int, ARMY_SIZE> targets;
     if (done()) {
-        return targets;
+        return {};
     }
 
     // Try to prevent gang-ups.
@@ -152,6 +164,8 @@ auto BattleState::possible_targets() const
         }
         minTimesAttacked = std::min(unit.timesAttacked, minTimesAttacked);
     }
+
+    TargetList targets;
     for (int i = 0; i < ssize(units_); ++i) {
         auto &unit = units_[i];
         if (!unit.alive() || unit.attacker == attackers_turn()) {
