@@ -72,6 +72,8 @@ using ArmyState = std::array<UnitState, ARMY_SIZE>;
 using BattleArray = std::array<UnitState, ARMY_SIZE * 2>;
 using TargetList = boost::container::static_vector<int, ARMY_SIZE>;
 
+enum class AttackType {normal, simulated};
+
 class BattleState
 {
 public:
@@ -90,15 +92,17 @@ public:
 
     // Active unit attacks the given target and then we advance to the next turn.
     // Simulated attacks always do average damage.
-    void simulated_attack(int target);
-    void attack(int target);
+    void attack(int targetIndex, AttackType aType = AttackType::normal);
 
 private:
     void next_turn();
     void next_round();
+    void update_hp_totals();
 
     BattleArray units_;
     int activeUnit_;
+    int attackerHp_;
+    int defenderHp_;
 };
 
 // Return the best target to attack and the resulting score after searching

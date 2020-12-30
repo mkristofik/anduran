@@ -40,6 +40,28 @@ BOOST_AUTO_TEST_CASE(take_damage)
     BOOST_TEST(state.speed() == 0);
 }
 
+void print_battle_state(const BattleState &battle)
+{
+    for (auto &unit : battle.view_units()) {
+        if (unit.alive()) {
+            std::cout << unit.num << ' ' <<
+                unit.unit->name << ' ' <<
+                unit.total_hp() << ' ' <<
+                "attacked " << unit.timesAttacked << ' ' <<
+                "relatiated " << unit.retaliated <<
+                '\n';
+        }
+    }
+    std::cout << battle.score() << '\n';
+    if (!battle.done()) {
+        for (int t : battle.possible_targets()) {
+            std::cout << t << ' ';
+        }
+        std::cout << '\n' << battle.active_unit()->unit->name << '\n';
+    }
+    std::cout << '\n';
+}
+
 BOOST_AUTO_TEST_CASE(do_battle)
 {
     UnitData attacker1;
@@ -88,11 +110,7 @@ BOOST_AUTO_TEST_CASE(do_battle)
     BOOST_TEST(units[1].unit->name == "Swordsman");
     BOOST_TEST(units[2].unit->name == "Goblin");
     BOOST_TEST(units[3].unit->name == "Archer");
-    for (auto &unit : units) {
-        if (unit.alive()) {
-            std::cout << unit.num << ' ' << unit.unit->name << '\n';
-        }
-    }
+    //print_battle_state(battle);
 
     // Defender has the fastest unit so target list should contain only attacker
     // units.
@@ -100,12 +118,34 @@ BOOST_AUTO_TEST_CASE(do_battle)
     BOOST_TEST(targets.size() == 2);
     BOOST_TEST(units[targets[0]].unit->name == "Swordsman");
     BOOST_TEST(units[targets[1]].unit->name == "Archer");
-    for (int t : battle.possible_targets()) {
-        std::cout << t << ' ';
-    }
-    std::cout << '\n' << battle.score() << '\n';
 
     auto *active = battle.active_unit();
     BOOST_TEST(active);
     BOOST_TEST(active->unit->name == "Wolf");
+
+    // Run a full round and verify counters have reset.
+    for (int i = 0; i < 4; ++i) {
+        auto targets = battle.possible_targets();
+        battle.attack(targets[0], AttackType::simulated);
+        //print_battle_state(battle);
+    }
+    for (auto &unit : units) {
+        if (unit.alive()) {
+            BOOST_TEST(unit.timesAttacked == 0);
+            BOOST_TEST(!unit.retaliated);
+        }
+    }
+
+    // Run to completion and verify attacking team wins.
+    while (!battle.done()) {
+        auto targets = battle.possible_targets();
+        battle.attack(targets[0], AttackType::simulated);
+        //print_battle_state(battle);
+    }
+    BOOST_TEST(battle.score() > 0);
+    for (auto &unit : units) {
+        if (!unit.attacker) {
+            BOOST_TEST(!unit.alive());
+        }
+    }
 }

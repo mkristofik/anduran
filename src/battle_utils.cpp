@@ -89,8 +89,12 @@ void UnitState::take_damage(int dmg)
 
 BattleState::BattleState(const ArmyState &attacker, const ArmyState &defender)
     : units_(),
-    activeUnit_(-1)
+    activeUnit_(-1),
+    attackerHp_(0),
+    defenderHp_(0)
 {
+    // Interleave attacking and defending units so both sides get equal
+    // opportunity in case of ties.
     for (auto i = 0u; i < size(attacker); ++i) {
         units_[2 * i] = attacker[i];
         units_[2 * i + 1] = defender[i];
@@ -103,11 +107,12 @@ BattleState::BattleState(const ArmyState &attacker, const ArmyState &defender)
     if (units_[0].alive()) {
         activeUnit_ = 0;
     }
+    update_hp_totals();
 }
 
 bool BattleState::done() const
 {
-    return !in_bounds(units_, activeUnit_);
+    return !in_bounds(units_, activeUnit_) || attackerHp_ == 0 || defenderHp_ == 0;
 }
 
 bool BattleState::attackers_turn() const
@@ -131,19 +136,8 @@ const UnitState * BattleState::active_unit() const
 
 int BattleState::score() const
 {
-    int attacker = 0;
-    int defender = 0;
-    for (auto &unit : units_) {
-        if (unit.attacker) {
-            attacker += unit.total_hp();
-        }
-        else {
-            defender += unit.total_hp();
-        }
-    }
-
-    auto score = attacker - defender;
-    if (attacker == 0 || defender == 0) {
+    auto score = attackerHp_ - defenderHp_;
+    if (done()) {
         score *= 10;  // place an emphasis on winning
     }
 
@@ -176,18 +170,22 @@ TargetList BattleState::possible_targets() const
         }
     }
 
+    assert(!targets.empty());
     return targets;
 }
 
-void BattleState::simulated_attack(int target)
+void BattleState::attack(int targetIndex, __attribute__((unused)) AttackType aType)
 {
-    assert(!done() && units_[activeUnit_].attacker != units_[target].attacker);
+    assert(!done() && units_[activeUnit_].attacker != units_[targetIndex].attacker);
 
     auto &off = units_[activeUnit_];
-    auto &def = units_[target];
+    auto &def = units_[targetIndex];
+    // TODO: always do simulated attack for now
     def.take_damage(off.num * (off.unit->minDmg + off.unit->maxDmg) / 2);
     ++def.timesAttacked;
 
+    // TODO: may have to split this out to be able to log battle results and show
+    // proper animations.
     if (def.alive() && !def.retaliated) {
         off.take_damage(def.num * (def.unit->minDmg + def.unit->maxDmg) / 2);
         def.retaliated = true;
@@ -198,10 +196,13 @@ void BattleState::simulated_attack(int target)
 
 void BattleState::next_turn()
 {
+    update_hp_totals();
     if (done()) {
+        activeUnit_ = -1;
         return;
     }
 
+    ++activeUnit_;
     while (activeUnit_ < ssize(units_) && !units_[activeUnit_].alive()) {
         ++activeUnit_;
     }
@@ -212,34 +213,29 @@ void BattleState::next_turn()
 
 void BattleState::next_round()
 {
-    int firstAlive = -1;
-    int numAttackers = 0;
-    int numDefenders = 0;
-
+    activeUnit_ = -1;
     for (int i = 0; i < ssize(units_); ++i) {
         auto &unit = units_[i];
         unit.timesAttacked = 0;
         unit.retaliated = false;
 
-        if (!unit.alive()) {
-            continue;
+        if (activeUnit_ == -1 && unit.alive()) {
+            activeUnit_ = i;
         }
-        if (firstAlive == -1) {
-            firstAlive = i;
-        }
+    }
+}
+
+void BattleState::update_hp_totals()
+{
+    attackerHp_ = 0;
+    defenderHp_ = 0;
+    for (auto &unit : units_) {
         if (unit.attacker) {
-            ++numAttackers;
+            attackerHp_ += unit.total_hp();
         }
         else {
-            ++numDefenders;
+            defenderHp_ += unit.total_hp();
         }
-    }
-
-    if (numAttackers > 0 && numDefenders > 0) {
-        activeUnit_ = firstAlive;
-    }
-    else {
-        activeUnit_ = -1;
     }
 }
 
@@ -256,7 +252,7 @@ std::pair<int, int> alpha_beta(const BattleState &state, int depth, int alpha, i
 
     for (auto &t : state.possible_targets()) {
         BattleState newState(state);
-        newState.simulated_attack(t);
+        newState.attack(t, AttackType::simulated);
 
         auto [_, score] = alpha_beta(newState, depth - 1, alpha, beta);
         if (maximizingPlayer) {
