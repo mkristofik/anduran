@@ -14,6 +14,7 @@
 #define BATTLE_UTILS_H
 
 #include <array>
+#include <vector>
 #include "boost/container/static_vector.hpp"
 
 class UnitData;
@@ -53,6 +54,7 @@ enum class BattleSide {attacker, defender};
 struct UnitState
 {
     const UnitData *unit;
+    int id;  // entity id of the unit
     int num;
     int hpLeft;  // HP of top creature in the stack
     int timesAttacked;
@@ -67,9 +69,25 @@ struct UnitState
     void take_damage(int dmg);
 };
 
+enum class ActionType {attack, retaliate};
+
+struct BattleEvent
+{
+    ActionType action = ActionType::attack;
+    int attackerId = -1;
+    int attackerHp = 0;
+    int numAttackers = 0;
+    int defenderId = -1;
+    int defenderHp = 0;
+    int numDefenders = 0;
+    int damage = 0;
+    int losses = 0;
+};
+
 using Army = std::array<ArmyUnit, ARMY_SIZE>;
 using ArmyState = std::array<UnitState, ARMY_SIZE>;
 using BattleArray = std::array<UnitState, ARMY_SIZE * 2>;
+using BattleLog = std::vector<BattleEvent>;
 using TargetList = boost::container::static_vector<int, ARMY_SIZE>;
 
 enum class AttackType {normal, simulated};
@@ -78,6 +96,7 @@ class BattleState
 {
 public:
     BattleState(const ArmyState &attacker, const ArmyState &defender);
+    void set_log(BattleLog &log);
 
     bool done() const;
     bool attackers_turn() const;
@@ -100,6 +119,7 @@ private:
     void update_hp_totals();
 
     BattleArray units_;
+    BattleLog *log_;
     int activeUnit_;
     int attackerHp_;
     int defenderHp_;

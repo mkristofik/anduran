@@ -89,6 +89,7 @@ void UnitState::take_damage(int dmg)
 
 BattleState::BattleState(const ArmyState &attacker, const ArmyState &defender)
     : units_(),
+    log_(nullptr),
     activeUnit_(-1),
     attackerHp_(0),
     defenderHp_(0)
@@ -108,6 +109,11 @@ BattleState::BattleState(const ArmyState &attacker, const ArmyState &defender)
         activeUnit_ = 0;
     }
     update_hp_totals();
+}
+
+void BattleState::set_log(BattleLog &log)
+{
+    log_ = &log;
 }
 
 bool BattleState::done() const
@@ -165,6 +171,8 @@ TargetList BattleState::possible_targets() const
         if (!unit.alive() || unit.attacker == attackers_turn()) {
             continue;
         }
+        // TODO: lower this threshold to spread out attacks, remove it to allow
+        // one unit to be piled on.
         if (unit.timesAttacked < minTimesAttacked + 2) {
             targets.push_back(i);
         }
@@ -178,16 +186,52 @@ void BattleState::attack(int targetIndex, __attribute__((unused)) AttackType aTy
 {
     assert(!done() && units_[activeUnit_].attacker != units_[targetIndex].attacker);
 
-    auto &off = units_[activeUnit_];
+    auto &att = units_[activeUnit_];
     auto &def = units_[targetIndex];
     // TODO: always do simulated attack for now
-    def.take_damage(off.num * (off.unit->minDmg + off.unit->maxDmg) / 2);
+    int dmg = att.num * (att.unit->minDmg + att.unit->maxDmg) / 2;
+    if (log_) {
+        BattleEvent event;
+        event.action = ActionType::attack;
+        event.attackerId = att.id;
+        event.attackerHp = att.total_hp();
+        event.numAttackers = att.num;
+        event.defenderId = def.id;
+        event.defenderHp = def.total_hp();
+        event.numDefenders = def.num;
+        event.damage = dmg;
+
+        def.take_damage(dmg);
+        event.losses = event.numDefenders - def.num;
+        log_->push_back(event);
+    }
+    else {
+        def.take_damage(dmg);
+    }
     ++def.timesAttacked;
 
-    // TODO: may have to split this out to be able to log battle results and show
-    // proper animations.
+    // TODO: retaliation might needlessly complicate things.  Retaliation can make
+    // it appear that certain units get two turns back-to-back.
     if (def.alive() && !def.retaliated) {
-        off.take_damage(def.num * (def.unit->minDmg + def.unit->maxDmg) / 2);
+        dmg = def.num * (def.unit->minDmg + def.unit->maxDmg) / 2;
+        if (log_) {
+            BattleEvent event;
+            event.action = ActionType::retaliate;
+            event.attackerId = def.id;
+            event.attackerHp = def.total_hp();
+            event.numAttackers = def.num;
+            event.defenderId = att.id;
+            event.defenderHp = att.total_hp();
+            event.numDefenders = att.num;
+            event.damage = dmg;
+
+            att.take_damage(dmg);
+            event.losses = event.numDefenders - att.num;
+            log_->push_back(event);
+        }
+        else {
+            att.take_damage(dmg);
+        }
         def.retaliated = true;
     }
 

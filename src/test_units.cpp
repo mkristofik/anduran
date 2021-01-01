@@ -94,12 +94,18 @@ BOOST_AUTO_TEST_CASE(do_battle)
 
     ArmyState att;
     att[0] = UnitState(attacker1, 8, BattleSide::attacker);
+    att[0].id = 0;
     att[1] = UnitState(attacker2, 3, BattleSide::attacker);
+    att[1].id = 1;
     ArmyState def;
     def[0] = UnitState(defender1, 4, BattleSide::defender);
+    def[0].id = 2;
     def[1] = UnitState(defender2, 6, BattleSide::defender);
+    def[1].id = 3;
 
+    BattleLog log;
     BattleState battle(att, def);
+    battle.set_log(log);
     BOOST_TEST(!battle.done());
     BOOST_TEST(!battle.attackers_turn());
 
@@ -116,8 +122,9 @@ BOOST_AUTO_TEST_CASE(do_battle)
     // units.
     auto targets = battle.possible_targets();
     BOOST_TEST(targets.size() == 2);
-    BOOST_TEST(units[targets[0]].unit->name == "Swordsman");
-    BOOST_TEST(units[targets[1]].unit->name == "Archer");
+    for (auto t : targets) {
+        BOOST_TEST(units[t].attacker);
+    }
 
     auto *active = battle.active_unit();
     BOOST_TEST(active);
@@ -147,5 +154,18 @@ BOOST_AUTO_TEST_CASE(do_battle)
         if (!unit.attacker) {
             BOOST_TEST(!unit.alive());
         }
+    }
+
+    for (const auto &event : log) {
+        std::cout << "Event type " << static_cast<int>(event.action) <<
+            " Attacker " << event.attackerId <<
+            " units " << event.numAttackers <<
+            " HP " << event.attackerHp <<
+            " Defender " << event.defenderId <<
+            " units " << event.numDefenders <<
+            " HP " << event.defenderHp <<
+            " damage " << event.damage <<
+            " losses " << event.losses <<
+            '\n';
     }
 }
