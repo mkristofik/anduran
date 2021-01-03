@@ -14,6 +14,7 @@
 #define BATTLE_UTILS_H
 
 #include <array>
+#include <limits>
 #include <vector>
 #include "boost/container/static_vector.hpp"
 
@@ -69,7 +70,7 @@ struct UnitState
     void take_damage(int dmg);
 };
 
-enum class ActionType {attack, retaliate};
+enum class ActionType {attack, retaliate, next_round};
 
 struct BattleEvent
 {
@@ -96,7 +97,11 @@ class BattleState
 {
 public:
     BattleState(const ArmyState &attacker, const ArmyState &defender);
-    void set_log(BattleLog &log);
+
+    // Keep a running log of the battle's actions so they can be animated later.
+    // Turn it off for the AI when simulating a battle.
+    void enable_log(BattleLog &log);
+    void disable_log();
 
     bool done() const;
     bool attackers_turn() const;
@@ -126,8 +131,11 @@ private:
 };
 
 // Return the best target to attack and the resulting score after searching
-// 'depth' plies.
-std::pair<int, int> alpha_beta(const BattleState &state, int depth, int alpha, int beta);
+// 'depth' plies.  Testing suggests depth <= 2 is suboptimal because it can't
+// adequately consider defender responses to the attacker's chosen move.
+std::pair<int, int> alpha_beta(const BattleState &state, int depth,
+                               int alpha = std::numeric_limits<int>::min(),
+                               int beta = std::numeric_limits<int>::max());
 
 struct BattleResult
 {

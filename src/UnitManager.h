@@ -57,8 +57,9 @@ public:
                 SdlWindow &win,
                 SdlImageManager &imgMgr);
 
-    // TODO: this should generate a unique id for each time a unit is requested
-    // from the database.  Then you can look up the unit's info by its entity id.
+    // TODO: Should this generate a unique id for each time a unit is requested
+    // from the database?  Then you can look up the unit's info by its entity id?
+    // Or we have to provide an entity id that came from the map display?
     // TODO: should this unit id share the same address space as other entities?
     int get_id(const std::string &key) const;
     SdlTexture get_image(int id, ImageType imgType, Team team) const;

@@ -17,7 +17,6 @@
 
 #include <algorithm>
 #include <cassert>
-#include <limits>
 
 UnitState::UnitState()
     : unit(nullptr),
@@ -111,9 +110,14 @@ BattleState::BattleState(const ArmyState &attacker, const ArmyState &defender)
     update_hp_totals();
 }
 
-void BattleState::set_log(BattleLog &log)
+void BattleState::enable_log(BattleLog &log)
 {
     log_ = &log;
+}
+
+void BattleState::disable_log()
+{
+    log_ = nullptr;
 }
 
 bool BattleState::done() const
@@ -265,6 +269,14 @@ void BattleState::next_round()
 
         if (activeUnit_ == -1 && unit.alive()) {
             activeUnit_ = i;
+            if (log_) {
+                BattleEvent event;
+                event.action = ActionType::next_round;
+                // TODO: not bothering with move here because there's nothing to
+                // steal from the original object.  I have other such uses of move
+                // that are also suspect for this reason.
+                log_->push_back(event);
+            }
         }
     }
 }
@@ -296,6 +308,7 @@ std::pair<int, int> alpha_beta(const BattleState &state, int depth, int alpha, i
 
     for (auto &t : state.possible_targets()) {
         BattleState newState(state);
+        newState.disable_log();
         newState.attack(t, AttackType::simulated);
 
         auto [_, score] = alpha_beta(newState, depth - 1, alpha, beta);

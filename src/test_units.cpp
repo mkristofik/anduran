@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE(do_battle)
     defender2.speed = 4;
     defender2.minDmg = 2;
     defender2.maxDmg = 4;
-    defender2.hp = 10;
+    defender2.hp = 3;
 
     ArmyState att;
     att[0] = UnitState(attacker1, 8, BattleSide::attacker);
@@ -100,12 +100,12 @@ BOOST_AUTO_TEST_CASE(do_battle)
     ArmyState def;
     def[0] = UnitState(defender1, 4, BattleSide::defender);
     def[0].id = 2;
-    def[1] = UnitState(defender2, 6, BattleSide::defender);
+    def[1] = UnitState(defender2, 10, BattleSide::defender);
     def[1].id = 3;
 
     BattleLog log;
     BattleState battle(att, def);
-    battle.set_log(log);
+    battle.enable_log(log);
     BOOST_TEST(!battle.done());
     BOOST_TEST(!battle.attackers_turn());
 
@@ -145,8 +145,8 @@ BOOST_AUTO_TEST_CASE(do_battle)
 
     // Run to completion and verify attacking team wins.
     while (!battle.done()) {
-        auto targets = battle.possible_targets();
-        battle.attack(targets[0], AttackType::simulated);
+        auto [target, _] = alpha_beta(battle, 3);
+        battle.attack(target, AttackType::simulated);
         //print_battle_state(battle);
     }
     BOOST_TEST(battle.score() > 0);
@@ -157,15 +157,20 @@ BOOST_AUTO_TEST_CASE(do_battle)
     }
 
     for (const auto &event : log) {
-        std::cout << "Event type " << static_cast<int>(event.action) <<
-            " Attacker " << event.attackerId <<
-            " units " << event.numAttackers <<
-            " HP " << event.attackerHp <<
-            " Defender " << event.defenderId <<
-            " units " << event.numDefenders <<
-            " HP " << event.defenderHp <<
-            " damage " << event.damage <<
-            " losses " << event.losses <<
-            '\n';
+        if (event.action == ActionType::next_round) {
+            std::cout << "Next round begins\n";
+        }
+        else {
+            std::cout << "Event type " << static_cast<int>(event.action) <<
+                " Attacker " << event.attackerId <<
+                " units " << event.numAttackers <<
+                " HP " << event.attackerHp <<
+                " Defender " << event.defenderId <<
+                " units " << event.numDefenders <<
+                " HP " << event.defenderHp <<
+                " damage " << event.damage <<
+                " losses " << event.losses <<
+                '\n';
+        }
     }
 }
