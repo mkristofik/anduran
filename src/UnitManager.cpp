@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2020 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2021 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,7 @@
 #include "container_utils.h"
 #include "json_utils.h"
 
-#include "boost/filesystem.hpp"
+#include <filesystem>
 
 UnitManager::UnitManager(const std::string &configFile,
                          SdlWindow &win,
@@ -28,7 +28,7 @@ UnitManager::UnitManager(const std::string &configFile,
     media_(),
     data_()
 {
-    if (!boost::filesystem::exists(configFile)) {
+    if (!std::filesystem::exists(configFile)) {
         SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
                     "Unit config file not found: %s",
                     configFile.c_str());

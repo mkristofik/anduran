@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2021 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -14,7 +14,7 @@
 #include "SdlWindow.h"
 #include "json_utils.h"
 
-#include "boost/filesystem.hpp"
+#include <filesystem>
 #include <stdexcept>
 
 SdlImageData::SdlImageData()
@@ -33,8 +33,8 @@ SdlImageData::operator bool() const
 SdlImageManager::SdlImageManager(const std::string &pathname)
     : images_()
 {
-    const boost::filesystem::path dir(pathname);
-    if (!boost::filesystem::exists(dir) || !boost::filesystem::is_directory(dir)) {
+    const std::filesystem::path dir(pathname);
+    if (!std::filesystem::exists(dir) || !std::filesystem::is_directory(dir)) {
         SDL_LogCritical(SDL_LOG_CATEGORY_VIDEO,
                         "Image directory not found: %s",
                         pathname.c_str());
@@ -45,7 +45,7 @@ SdlImageManager::SdlImageManager(const std::string &pathname)
     configPath /= "imgconfig.json";
     load_config(configPath.generic_string());
 
-    for (auto &p : boost::filesystem::directory_iterator(dir)) {
+    for (auto &p : std::filesystem::directory_iterator(dir)) {
         if (p.path().extension() != ".png") {
             continue;
         }
@@ -85,7 +85,7 @@ SdlTexture SdlImageManager::make_texture(const std::string &name, SdlWindow &win
 
 void SdlImageManager::load_config(const std::string &filename)
 {
-    if (!boost::filesystem::exists(filename)) {
+    if (!std::filesystem::exists(filename)) {
         SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
                     "Image config file not found: %s",
                     filename.c_str());
