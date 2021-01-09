@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2021 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -89,8 +89,8 @@ private:
     // tile within that region.
     void avoidIsolatedRegions();
     void avoidIsolatedTiles();
-    void exploreWalkableTiles(int startTile, std::vector<char> &visited);
-    void connectIsolatedTiles(int startTile, const std::vector<char> &visited);
+    void exploreWalkableTiles(int startTile, std::vector<signed char> &visited);
+    void connectIsolatedTiles(int startTile, const std::vector<signed char> &visited);
 
     // Randomly place castles on the map, trying to be as far apart as possible.
     // Ensure the castle entrances are walkable.
@@ -108,9 +108,9 @@ private:
     int numRegions_;
     std::vector<int> tileRegions_;  // index of region each tile belongs to
     FlatMultimap<int, int> tileNeighbors_;
-    std::vector<char> tileObstacles_;
-    std::vector<char> tileOccupied_;
-    std::vector<char> tileWalkable_;
+    std::vector<signed char> tileObstacles_;
+    std::vector<signed char> tileOccupied_;
+    std::vector<signed char> tileWalkable_;
     FlatMultimap<int, int> regionNeighbors_;
     std::vector<Terrain> regionTerrain_;
     FlatMultimap<int, int> regionTiles_;  // which tiles belong to each region

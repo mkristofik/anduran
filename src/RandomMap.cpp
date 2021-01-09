@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2021 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -482,7 +482,7 @@ void RandomMap::clearObstacle(int index)
 
 void RandomMap::avoidIsolatedRegions()
 {
-    std::vector<char> regionVisited(numRegions_, 0);
+    std::vector<signed char> regionVisited(numRegions_, 0);
 
     // Clear obstacles from the first pair of hexes we see from each pair of
     // adjacent regions.
@@ -517,8 +517,8 @@ void RandomMap::avoidIsolatedRegions()
 
 void RandomMap::avoidIsolatedTiles()
 {
-    std::vector<char> tileVisited(size_, 0);
-    std::vector<char> regionVisited(numRegions_, 0);
+    std::vector<signed char> tileVisited(size_, 0);
+    std::vector<signed char> regionVisited(numRegions_, 0);
 
     for (int i = 0; i < size_; ++i) {
         if (!tileWalkable_[i]) {
@@ -539,7 +539,7 @@ void RandomMap::avoidIsolatedTiles()
     }
 }
 
-void RandomMap::exploreWalkableTiles(int startTile, std::vector<char> &visited)
+void RandomMap::exploreWalkableTiles(int startTile, std::vector<signed char> &visited)
 {
     const int region = tileRegions_[startTile];
     std::queue<int> bfsQ;
@@ -563,7 +563,8 @@ void RandomMap::exploreWalkableTiles(int startTile, std::vector<char> &visited)
     }
 }
 
-void RandomMap::connectIsolatedTiles(int startTile, const std::vector<char> &visited)
+void RandomMap::connectIsolatedTiles(int startTile,
+                                     const std::vector<signed char> &visited)
 {
     const int region = tileRegions_[startTile];
     std::queue<int> bfsQ;
@@ -646,7 +647,7 @@ Hex RandomMap::findCastleSpot(int startTile)
     assert(!offGrid(startTile));
 
     std::queue<int> bfsQ;
-    std::vector<char> visited(size_, 0);
+    std::vector<signed char> visited(size_, 0);
 
     // Breadth-first search to find a suitable location for each castle.
     bfsQ.push(startTile);
