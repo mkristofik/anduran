@@ -111,8 +111,8 @@ UnitManager::UnitManager(const std::string &configFile,
                             name.c_str(), field.c_str());
             }
         }
-        media_.push_back(std::move(media));
-        data_.push_back(std::move(data));
+        media_.push_back(media);
+        data_.push_back(data);
     }
 }
 

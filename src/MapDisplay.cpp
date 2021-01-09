@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2020 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2021 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -243,7 +243,7 @@ int MapDisplay::addEntity(const SdlTexture &img, const Hex &hex, ZOrder z)
     e.hex = hex;
     e.id = id;
     e.z = z;
-    entities_.push_back(std::move(e));
+    entities_.push_back(e);
     entityImg_.push_back(img);
 
     return id;
@@ -257,7 +257,7 @@ int MapDisplay::addHiddenEntity(const SdlTexture &img, ZOrder z)
     e.id = id;
     e.z = z;
     e.visible = false;
-    entities_.push_back(std::move(e));
+    entities_.push_back(e);
     entityImg_.push_back(img);
 
     return id;

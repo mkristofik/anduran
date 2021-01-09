@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2020 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2021 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -47,7 +47,7 @@ struct TextureData
 
 
 SdlTexture::SdlTexture()
-    : pimpl_(new TextureData)
+    : pimpl_(std::make_shared<TextureData>())
 {
 }
 
@@ -55,7 +55,7 @@ SdlTexture::SdlTexture(const SdlSurface &src,
                        SdlWindow &win,
                        const Frame &numFrames,
                        const std::vector<Uint32> &timing_ms)
-    : pimpl_(new TextureData)
+    : pimpl_(std::make_shared<TextureData>())
 {
     pimpl_->renderer = win.renderer();
     assert(numFrames.row > 0 && numFrames.col > 0 && pimpl_->renderer);
@@ -68,26 +68,21 @@ SdlTexture::SdlTexture(const SdlSurface &src,
     pimpl_->timing_ms = timing_ms;
 }
 
-SdlTexture::SdlTexture(std::shared_ptr<TextureData> &&data)
-    : pimpl_(data)
-{
-    assert(pimpl_);
-}
-
 SdlTexture SdlTexture::make_image(const SdlSurface &src, SdlWindow &win)
 {
-    auto impl = std::make_shared<TextureData>();
+    SdlTexture self;
+    auto &impl = *self.pimpl_;
 
-    impl->renderer = win.renderer();
-    assert(impl->renderer && src);
+    impl.renderer = win.renderer();
+    assert(impl.renderer && src);
 
-    impl->rows = 1;
-    impl->cols = 1;
-    impl->frameWidth = src->w;
-    impl->frameHeight = src->h;
-    impl->texture = make_texture(impl->renderer, src.get());
+    impl.rows = 1;
+    impl.cols = 1;
+    impl.frameWidth = src->w;
+    impl.frameHeight = src->h;
+    impl.texture = make_texture(impl.renderer, src.get());
 
-    return impl;
+    return self;
 }
 
 SdlTexture SdlTexture::make_sprite_sheet(const SdlSurface &src,

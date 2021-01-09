@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2021 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -85,7 +85,6 @@ public:
     void draw_mirrored(const SDL_Point &p, const Frame &frame = Frame());
 
 private:
-    SdlTexture(std::shared_ptr<TextureData> &&data);
     SDL_Rect get_frame_rect(const Frame &frame) const;
 
     std::shared_ptr<TextureData> pimpl_;

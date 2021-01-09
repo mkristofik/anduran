@@ -272,9 +272,6 @@ void BattleState::next_round()
             if (log_) {
                 BattleEvent event;
                 event.action = ActionType::next_round;
-                // TODO: not bothering with move here because there's nothing to
-                // steal from the original object.  I have other such uses of move
-                // that are also suspect for this reason.
                 log_->push_back(event);
             }
         }
