@@ -73,6 +73,7 @@ ANDURAN_DEPS = $(ANDURAN_OBJS:%.o=%.d)
 UNITTESTS = unittests$(EXE)
 UNITTESTS_SRC = battle_utils.cpp \
 	object_types.cpp \
+	test_multimap.cpp \
 	test_objects.cpp \
 	test_units.cpp
 UNITTESTS_OBJS = $(UNITTESTS_SRC:%.cpp=$(BUILD_DIR)/%.o)

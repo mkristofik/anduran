@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2017 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2021 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -75,9 +75,9 @@ public:
 
         // std::iterator_traits requires all of these to make std algorithms work.
         using difference_type = typename iter_type::difference_type;
-        using value_type = typename iter_type::value_type;
-        using pointer = typename iter_type::pointer;
-        using reference = typename iter_type::reference;
+        using value_type = V;
+        using pointer = V *;
+        using reference = V &;
         using iterator_category = typename iter_type::iterator_category;
 
         ValueIterator(iter_type i) : iter_(std::move(i)) {}
