@@ -89,7 +89,8 @@ UNITTESTS_DEPS = $(UNITTESTS_OBJS:%.o=%.d)
 
 .PHONY : all clean test
 
-all : $(RMAPGEN) $(MAPVIEW) $(ANDURAN) $(UNITTESTS)
+EVERYTHING = $(RMAPGEN) $(MAPVIEW) $(ANDURAN) $(UNITTESTS)
+all : $(EVERYTHING)
 
 test : $(UNITTESTS)
 
@@ -165,4 +166,4 @@ endif
 # errors (e.g., if any files are already deleted).
 clean :
 	-$(RM_DIR_CMD) $(BUILD_DIR)
-	-$(RM_CMD) $(RMAPGEN) $(MAPVIEW) $(ANDURAN) $(UNITTESTS)
+	-$(RM_CMD) $(EVERYTHING)

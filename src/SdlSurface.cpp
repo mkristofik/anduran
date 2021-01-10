@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2017 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2021 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -49,25 +49,9 @@ SdlSurface SdlSurface::clone() const
         return {};
     }
 
-    bool locked = false;
-    if (SDL_MUSTLOCK(orig)) {
-        if (SDL_LockSurface(orig) == 0) {
-            locked = true;
-        }
-        else {
-            SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
-                        "Warning, couldn't lock surface during clone: %s",
-                        SDL_GetError());
-        }
-    }
-
+    SdlLockSurface guard(*this);
     memcpy(dest->pixels, orig->pixels,
            orig->w * orig->h * orig->format->BytesPerPixel);
-
-    if (locked) {
-        SDL_UnlockSurface(orig);
-    }
-
     return dest;
 }
 
@@ -89,7 +73,7 @@ SdlSurface::operator bool() const
 }
 
 
-SdlLockSurface::SdlLockSurface(SdlSurface &img)
+SdlLockSurface::SdlLockSurface(const SdlSurface &img)
     : surf_(img.get()),
     isLocked_(false)
 {
