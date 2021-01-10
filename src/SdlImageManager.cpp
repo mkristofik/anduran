@@ -12,6 +12,7 @@
 */
 #include "SdlImageManager.h"
 #include "SdlWindow.h"
+#include "container_utils.h"
 #include "json_utils.h"
 
 #include <filesystem>
@@ -94,7 +95,6 @@ void SdlImageManager::load_config(const std::string &filename)
 
     auto doc = jsonReadFile(filename.c_str());
 
-    // TODO: are there any errors to report from this?
     std::vector<int> tmpFrames;
     for (auto m = doc.MemberBegin(); m != doc.MemberEnd(); ++m) {
         SdlImageData data;
@@ -107,6 +107,15 @@ void SdlImageManager::load_config(const std::string &filename)
         }
         jsonGetArray(m->value, "timing_ms", data.timing_ms);
 
-        images_.emplace(m->name.GetString(), data);
+        const std::string name = m->name.GetString();
+        if (data.timing_ms.empty() || ssize(data.timing_ms) == data.frames.col) {
+            images_.emplace(name, data);
+        }
+        else {
+            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
+                        "Image config [%s] : %s",
+                        name.c_str(),
+                        "Timing does not match number of frames");
+        }
     }
 }

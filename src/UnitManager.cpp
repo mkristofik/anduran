@@ -35,7 +35,6 @@ UnitManager::UnitManager(const std::string &configFile,
         return;
     }
 
-    // TODO: are there any errors to report from this?
     auto doc = jsonReadFile(configFile.c_str());
     for (auto m = doc.MemberBegin(); m != doc.MemberEnd(); ++m) {
         const std::string name = m->name.GetString();

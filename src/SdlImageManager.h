@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2021 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -36,7 +36,26 @@ struct SdlImageData
 
 // Load all the files where images are stored and embed sprite sheet and animation
 // timing information.
-// TODO: document the config file format and naming scheme
+
+/* Example config file:
+{
+    "archer-attack-ranged": {
+        "frames": [1, 6],
+        "timing_ms": [65, 140, 215, 315, 445, 510]
+    },
+    "edges-desert": {
+        "frames": [1, 6]
+    }
+}
+
+Each key must match the basename of a .png sprite sheet or animation.  Static
+images can be omitted.
+
+frames = # rows and columns of a sprite sheet
+timing_ms = Time in ms to switch to the next frame while animating.  Last value
+            represents the end of the animation.  Length of this array must match
+            number of columns.
+*/
 class SdlImageManager
 {
 public:
