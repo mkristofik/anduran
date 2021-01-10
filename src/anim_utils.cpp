@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2020 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2021 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -447,9 +447,13 @@ void AnimRanged::update(Uint32 elapsed_ms)
 
 void AnimRanged::stop()
 {
+    auto attObj = get_entity(attacker_);
     auto defObj = get_entity(defender_);
-    defObj = defBaseState_;
+
+    set_idle(attObj, attBaseState_);
+    set_idle(defObj, defBaseState_);
     defObj.visible = false;
+    update_entity(attObj, attImg_);
     update_entity(defObj, defImg_);
 }
 
