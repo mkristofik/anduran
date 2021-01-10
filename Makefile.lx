@@ -21,8 +21,6 @@ CPPFLAGS := $(shell sdl2-config --cflags)
 
 LDLIBS := $(shell sdl2-config --libs) -lSDL2_image
 
-BUILD_DIR = build
 EXE = 
-MKDIR_CMD = mkdir -p
 RM_DIR_CMD = rm -rf
 RM_CMD = rm

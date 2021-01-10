@@ -28,11 +28,6 @@ LDLIBS = -lmingw32 \
 	 -mwindows \
 	 -lSDL2_image
 
-BUILD_DIR = build
 EXE = .exe
-
-# /NUL = testing for a nul file ensures we have an actual directory
-MKDIR_CMD = if not exist $(BUILD_DIR)/NUL mkdir
-
 RM_DIR_CMD = rmdir /q /s
 RM_CMD = del

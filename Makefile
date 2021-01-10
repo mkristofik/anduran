@@ -22,9 +22,13 @@ endif
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror -O3
 CXXFLAGS = -g -Wall -Wextra -Werror -std=c++17
+
+BUILD_DIR = build
 SRC_DIR = src
 TEST_DIR = tests
 
+# Test files need to include files from the main source tree.  Don't want to
+# embed paths in there.
 CPPFLAGS += -I$(SRC_DIR)
 
 # Search these directories for any bare filenames that appear later.
@@ -103,24 +107,38 @@ $(UNITTESTS) : $(UNITTESTS_OBJS)
 	@./$(UNITTESTS)
 
 # Auto-generate a dependency file for each cpp file. We first create a build
-# directory to house all intermediate files. See example under "Automatic
-# Prerequisites" in the GNU make manual.
-#     leading '@' = run this command silently
+# directory to house all intermediate files. See examples under "Automatic
+# Prerequisites" and "Order-Only Prerequisites" in the GNU make manual, and
+# http://ismail.badawi.io/blog/2017/03/28/automatic-directory-creation-in-make/
 #     -MM = use compiler to write a rule for the file with build dependencies
 #     -MT #1 = substitute *.o for *.d, write the rule for the .o file target
 #     -MT #2 = also write the rule for the .d file target so it also depends on
 #              the same files as the .o file
 #     $@ = path to the .d file
-#     $(@D) = directory part of the .d file, must use quotes because Windows
-#             mkdir can't handle forward slashes without them
 #     $< = path to the .cpp file
-$(BUILD_DIR)/%.d : %.cpp
-	@$(MKDIR_CMD) "$(@D)"
+#     $$(@D) = directory part of the target filename.  Requires the extra $ and
+#              .SECONDEXPANSION: to expand the automatic variable in a
+#              prerequisite list
+.SECONDEXPANSION:
+
+$(BUILD_DIR)/%.d : %.cpp | $$(@D)/
 	$(CXX) -MM -MT $(patsubst %.d,%.o,$@) -MT $@ $(CPPFLAGS) $< > $@
 
-$(BUILD_DIR)/%.d : %.c
-	@$(MKDIR_CMD) "$(@D)"
+$(BUILD_DIR)/%.d : %.c | $$(@D)/
 	$(CC) -MM -MT $(patsubst %.d,%.o,$@) -MT $@ $< > $@
+
+# Rules for making the build directories.  Second rule matches all build
+# subdirectories.  Need the trailing slash to avoid matching all files.  Using
+# the build dirs as order-only prerequisites causes make to treat them as
+# intermediate files.  It wants to delete them after it's done building the .d
+# files.  .PRECIOUS prevents that.
+.PRECIOUS : $(BUILD_DIR)/ $(BUILD_DIR)%/
+
+$(BUILD_DIR)/ :
+	mkdir "$@"
+
+$(BUILD_DIR)%/ : | $(BUILD_DIR)/
+	mkdir "$@"
 
 # Modify the standard implicit rule for building cpp files so the .o files land
 # in our build directory.
