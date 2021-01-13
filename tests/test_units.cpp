@@ -11,7 +11,7 @@
     See the COPYING.txt file for more details.
 */
 #define BOOST_TEST_MODULE Anduran Tests
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include "UnitManager.h"
 #include "battle_utils.h"

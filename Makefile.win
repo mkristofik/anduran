@@ -13,14 +13,17 @@
 # includes boost)
 # C:/Libraries contains rapidjson and SDL
 # Must add bin directories for SDL libs to your PATH
-CPPFLAGS = -Ic:/libraries \
-	-Ic:/MinGW/include \
-	-Ic:/libraries/SDL2-2.0.12/x86_64-w64-mingw32/include/SDL2 \
-	-Ic:/libraries/SDL2_image-2.0.5/x86_64-w64-mingw32/include/SDL2
+LIB_ROOT = c:/libraries
+MINGW_DIR = c:/mingw
 
-LDFLAGS = -Lc:/libraries/SDL2-2.0.12/x86_64-w64-mingw32/lib \
-	-Lc:/libraries/SDL2_image-2.0.5/x86_64-w64-mingw32/lib \
-	-Lc:/MinGW/lib
+CPPFLAGS = -I$(LIB_ROOT) \
+	-I$(MINGW_DIR)/include \
+	-I$(LIB_ROOT)/SDL2-2.0.12/x86_64-w64-mingw32/include/SDL2 \
+	-I$(LIB_ROOT)/SDL2_image-2.0.5/x86_64-w64-mingw32/include/SDL2
+
+LDFLAGS = -L$(LIB_ROOT)/SDL2-2.0.12/x86_64-w64-mingw32/lib \
+	-L$(LIB_ROOT)/SDL2_image-2.0.5/x86_64-w64-mingw32/lib \
+	-L$(MINGW_DIR)/lib
 
 LDLIBS = -lmingw32 \
 	 -lSDL2main \
