@@ -18,24 +18,61 @@
 #include <algorithm>
 #include <cassert>
 
+namespace
+{
+    // Verify all units in a battle are assigned to unique slots in their
+    // original armies.
+    bool check_army_slots(const BattleArray &units)
+    {
+        std::array<bool, ARMY_SIZE> attSeen;
+        attSeen.fill(false);
+        std::array<bool, ARMY_SIZE> defSeen;
+        defSeen.fill(false);
+
+        for (auto &u : units) {
+            if (!u.unit) {
+                continue;
+            }
+            else if (u.attacker) {
+                if (attSeen[u.armyIndex]) {
+                    return false;
+                }
+                attSeen[u.armyIndex] = true;
+            }
+            else {
+                if (defSeen[u.armyIndex]) {
+                    return false;
+                }
+                defSeen[u.armyIndex] = true;
+            }
+        }
+
+        return true;
+    }
+}
+
+
 UnitState::UnitState()
     : unit(nullptr),
     num(0),
     hpLeft(0),
     timesAttacked(0),
+    armyIndex(-1),
     attacker(false),
     retaliated(false)
 {
 }
 
-UnitState::UnitState(const UnitData &data, int quantity, BattleSide side)
+UnitState::UnitState(const UnitData &data, int quantity, BattleSide side, int origIndex)
     : unit(&data),
     num(quantity),
     hpLeft(unit->hp),
     timesAttacked(0),
+    armyIndex(origIndex),
     attacker(side == BattleSide::attacker),
     retaliated(false)
 {
+    assert(armyIndex >= 0 && armyIndex < ARMY_SIZE);
 }
 
 int UnitState::type() const
@@ -102,6 +139,8 @@ BattleState::BattleState(const BattleArray &armies)
     attackerTotalHp_(0),
     defenderTotalHp_(0)
 {
+    assert(check_army_slots(armies));
+
     std::stable_sort(begin(units_), end(units_),
         [] (const auto &lhs, const auto &rhs) {
             return lhs.speed() > rhs.speed();
@@ -164,7 +203,7 @@ TargetList BattleState::possible_targets() const
     }
 
     // Try to prevent gang-ups.
-    int minTimesAttacked = std::numeric_limits<int>::max();
+    auto minTimesAttacked = std::numeric_limits<int>::max();
     for (auto &unit : units_) {
         if (!unit.alive() || unit.attacker == attackers_turn()) {
             continue;
@@ -324,18 +363,14 @@ std::pair<int, int> BattleState::alpha_beta(int depth, int alpha, int beta) cons
                 alpha = score;
                 bestTarget = t;
             }
-            if (beta <= alpha) {
-                break;
-            }
         }
-        else {
-            if (score < beta) {
-                beta = score;
-                bestTarget = t;
-            }
-            if (beta <= alpha) {
-                break;
-            }
+        else if (score < beta) {
+            beta = score;
+            bestTarget = t;
+        }
+
+        if (beta <= alpha) {
+            break;
         }
     }
 
@@ -343,43 +378,32 @@ std::pair<int, int> BattleState::alpha_beta(int depth, int alpha, int beta) cons
 }
 
 
-/*
-Battle::Battle(const UnitManager &units, const Army &attacker, const Army &defender)
-    : att_(attacker),
-    def_(defender),
-    log_(),
-    state_(units, att_, def_)
+BattleResult do_battle(const BattleArray &armies, AttackType aType)
 {
-    state_.enable_log(log_);
-    // TODO: run the battle to completion
-}
+    BattleResult result;
 
-const BattleLog & Battle::get_log() const
-{
-    return log_;
-}
-
-Army Battle::get_result(BattleSide side) const
-{
-    const bool isAttacker = (side == BattleSide::attacker);
-    Army result = isAttacker ? att_ : def_;
-
-    for (auto &unit : state_.view_units()) {
-        if (unit.attacker != isAttacker || unit.type() < 0) {
-            continue;
-        }
-        // Units in the battle state may be in different order from the starting
-        // army.  Find the one with matching unit type on the same side and update
-        // the number of units.  This assumes there's only one of each type of
-        // unit present.
-        auto iter = std::find_if(begin(result), end(result),
-            [&unit] (const ArmyUnit &elem) {
-                return elem.unitType == unit.type();
-            });
-        assert(iter != end(result));
-        iter->num = unit.num;
+    BattleState battle(armies);
+    battle.enable_log(result.log);
+    while (!battle.done()) {
+        battle.attack(battle.optimal_target(), aType);
     }
 
+    for (auto &unit : battle.view_units()) {
+        const auto unitType = unit.type();
+        if (unitType < 0) {
+            continue;
+        }
+        const auto i = unit.armyIndex;
+        if (unit.attacker) {
+            assert(in_bounds(result.attacker, i));
+            result.attacker[i] = {unitType, unit.num};
+        }
+        else {
+            assert(in_bounds(result.defender, i));
+            result.defender[i] = {unitType, unit.num};
+        }
+    }
+
+    result.attackerWins = (battle.score() > 0);
     return result;
 }
-*/

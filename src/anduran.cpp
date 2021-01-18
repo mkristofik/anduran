@@ -55,12 +55,18 @@ namespace
     {
         BattleArray units;
         for (auto i = 0u; i < size(attacker); ++i) {
-            units[2 * i] = UnitState(unitMgr.get_data(attacker[i].unitType),
-                                     attacker[i].num,
-                                     BattleSide::attacker);
-            units[2 * i + 1] = UnitState(unitMgr.get_data(defender[i].unitType),
-                                         defender[i].num,
-                                         BattleSide::defender);
+            if (attacker[i].unitType >= 0) {
+                units[2 * i] = UnitState(unitMgr.get_data(attacker[i].unitType),
+                                         attacker[i].num,
+                                         BattleSide::attacker,
+                                         i);
+            }
+            if (defender[i].unitType >= 0) {
+                units[2 * i + 1] = UnitState(unitMgr.get_data(defender[i].unitType),
+                                             defender[i].num,
+                                             BattleSide::defender,
+                                             i);
+            }
         }
 
         return units;

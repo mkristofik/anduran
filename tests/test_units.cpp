@@ -16,6 +16,7 @@
 #include "UnitManager.h"
 #include "battle_utils.h"
 
+#include <algorithm>
 #include <iostream>
 
 BOOST_AUTO_TEST_CASE(take_damage)
@@ -25,7 +26,7 @@ BOOST_AUTO_TEST_CASE(take_damage)
     unit.hp = 10;
     unit.speed = 4;
 
-    UnitState state(unit, 5, BattleSide::attacker);
+    UnitState state(unit, 5, BattleSide::attacker, 0);
     BOOST_TEST(state.type() == 1);
     BOOST_TEST(state.alive());
     BOOST_TEST(state.total_hp() == 50);
@@ -64,7 +65,7 @@ void print_battle_state(const BattleState &battle)
     std::cout << '\n';
 }
 
-BOOST_AUTO_TEST_CASE(do_battle)
+BOOST_AUTO_TEST_CASE(battle_testing)
 {
     UnitData attacker1;
     attacker1.type = 0;
@@ -99,10 +100,10 @@ BOOST_AUTO_TEST_CASE(do_battle)
     defender2.hp = 3;
 
     BattleArray armies;
-    armies[0] = UnitState(attacker1, 8, BattleSide::attacker);
-    armies[1] = UnitState(attacker2, 3, BattleSide::attacker);
-    armies[2] = UnitState(defender1, 4, BattleSide::defender);
-    armies[3] = UnitState(defender2, 10, BattleSide::defender);
+    armies[0] = UnitState(attacker1, 8, BattleSide::attacker, 0);
+    armies[1] = UnitState(attacker2, 3, BattleSide::attacker, 1);
+    armies[2] = UnitState(defender1, 4, BattleSide::defender, 1);
+    armies[3] = UnitState(defender2, 10, BattleSide::defender, 0);
 
     BattleLog log;
     BattleState battle(armies);
@@ -110,7 +111,7 @@ BOOST_AUTO_TEST_CASE(do_battle)
     BOOST_TEST(!battle.done());
     BOOST_TEST(!battle.attackers_turn());
 
-    // Check ordering of the units.  Attacker wins ties so the swordsmen should
+    // Check ordering of the units.  Attacker was listed first so the swordsmen should
     // sort ahead of the goblins.
     auto &units = battle.view_units();
     BOOST_TEST(units[0].unit->name == "Wolf");
@@ -173,4 +174,32 @@ BOOST_AUTO_TEST_CASE(do_battle)
                 '\n';
         }
     }
+
+    // Run a second battle using the starting armies.  Attacker does better this
+    // time when AI is allowed to choose the targets from the beginning.
+    const auto result = do_battle(armies);
+    std::cout << "\nAttacker:\n";
+    for (auto &unit : result.attacker) {
+        if (unit.unitType >= 0) {
+            std::cout << unit.num << " x unit type " << unit.unitType << '\n';
+        }
+    }
+    std::cout << "Defender:\n";
+    for (auto &unit : result.defender) {
+        if (unit.unitType >= 0) {
+            std::cout << unit.num << " x unit type " << unit.unitType << '\n';
+        }
+    }
+    std::cout << "Attacker wins? " << result.attackerWins << '\n';
+
+    // Verify units were assigned back to their original army slots.
+    BOOST_TEST(result.attacker[0].unitType == 0);
+    BOOST_TEST(result.attacker[1].unitType == 1);
+    BOOST_TEST(result.defender[0].unitType == 3);
+    BOOST_TEST(result.defender[1].unitType == 2);
+
+    BOOST_TEST(std::all_of(begin(result.defender), end(result.defender),
+        [] (const ArmyUnit &def) {
+            return def.unitType < 0 || def.num == 0;
+        }));
 }

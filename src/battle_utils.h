@@ -19,28 +19,7 @@
 #include "boost/container/static_vector.hpp"
 
 class UnitData;
-class UnitManager;
 
-// TODO: Unit state
-// - unit id (this won't change)
-// - quantity
-// - hp of top creature in stack
-// - number of times attacked this round
-// - has retaliated this round
-//
-// Unit info
-// - max hp
-// - min damage
-// - max damage
-// - speed
-// - traits
-//
-// Army, array of...
-// - unit id
-// - starting quantity
-//
-// Army state
-// - array of unit state
 
 constexpr int ARMY_SIZE = 6;
 
@@ -50,6 +29,9 @@ struct ArmyUnit
     int num = 0;
 };
 
+using Army = std::array<ArmyUnit, ARMY_SIZE>;
+
+
 enum class BattleSide {attacker, defender}; 
 
 struct UnitState
@@ -58,17 +40,21 @@ struct UnitState
     int num;
     int hpLeft;  // HP of top creature in the stack
     int timesAttacked;
+    int armyIndex;  // slot this unit occupies in its army
     bool attacker;  // unit is a member of the attacking team
     bool retaliated;
 
     UnitState();
-    UnitState(const UnitData &data, int quantity, BattleSide side);
+    UnitState(const UnitData &data, int quantity, BattleSide side, int origIndex);
     int type() const;
     bool alive() const;
     int total_hp() const;
     int speed() const;
     void take_damage(int dmg);
 };
+
+using BattleArray = std::array<UnitState, ARMY_SIZE * 2>;
+
 
 enum class ActionType {attack, retaliate, next_round};
 
@@ -85,12 +71,11 @@ struct BattleEvent
     int losses = 0;
 };
 
-using Army = std::array<ArmyUnit, ARMY_SIZE>;
-using BattleArray = std::array<UnitState, ARMY_SIZE * 2>;
 using BattleLog = std::vector<BattleEvent>;
-using TargetList = boost::container::static_vector<int, ARMY_SIZE>;
+
 
 enum class AttackType {normal, simulated};
+using TargetList = boost::container::static_vector<int, ARMY_SIZE>;
 
 class BattleState
 {
@@ -137,52 +122,16 @@ private:
     int defenderTotalHp_;
 };
 
+
 struct BattleResult
 {
     Army attacker;
     Army defender;
+    BattleLog log;
     bool attackerWins = true;
 };
 
-/* TODO: this can't be in here, unit tests need to avoid depending on SDL
-class Battle
-{
-public:
-    // TODO: run the battle on construction, should this just be a free function
-    // that returns all the results?
-    Battle(const UnitManager &units, const Army &attacker, const Army &defender);
-
-    // Uses random numbers, every call will produce a different result.
-    //BattleResult run();
-    // each round:
-    // - reset timesAttacked and retaliated
-    // - sort living creatures descending by speed
-    // - for each creature
-    //     - select best target to attack
-    //     - execute attack
-    //     - record what we did so we can animate it later
-    //
-    // selecting best target:
-    // - for each possible target:
-    //     - make a copy of enough state to keep track
-    //     - execute attack using average damage
-    //     - run the alpha beta algorithm to score the resulting battle state
-    //     - return the target with the best score
-    //
-    // alpha beta algorithm:
-    // - see wikipedia for algorithm details, research killer heuristic if needed
-    // - run through the battle rules on a copy of the data
-    // - stop at predetermined search depth
-
-    const BattleLog & get_log() const;
-    Army get_result(BattleSide side) const;
-
-private:
-    Army att_;
-    Army def_;
-    BattleLog log_;
-    BattleState state_;
-};
-*/
+// Run a battle to completion.
+BattleResult do_battle(const BattleArray &armies, AttackType aType = AttackType::normal);
 
 #endif
