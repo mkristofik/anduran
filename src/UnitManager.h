@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2020 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2021 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -43,6 +43,7 @@ struct UnitMedia
 struct UnitData
 {
     std::string name;
+    int type = -1;
     int speed = 0;
     int minDmg = 0;
     int maxDmg = 0;
@@ -57,13 +58,9 @@ public:
                 SdlWindow &win,
                 SdlImageManager &imgMgr);
 
-    // TODO: Should this generate a unique id for each time a unit is requested
-    // from the database?  Then you can look up the unit's info by its entity id?
-    // Or we have to provide an entity id that came from the map display?
-    // TODO: should this unit id share the same address space as other entities?
-    int get_id(const std::string &key) const;
-    SdlTexture get_image(int id, ImageType imgType, Team team) const;
-    SdlTexture get_projectile(int id) const;
+    int get_type(const std::string &key) const;
+    SdlTexture get_image(int unitType, ImageType imgType, Team team) const;
+    SdlTexture get_projectile(int unitType) const;
 
 private:
     TeamColoredTextures load_image_set(const std::string &name);
@@ -71,7 +68,7 @@ private:
 
     SdlWindow *window_;
     SdlImageManager *imgSource_;
-    std::unordered_map<std::string, int> ids_;
+    std::unordered_map<std::string, int> types_;
     std::vector<UnitMedia> media_;
     std::vector<UnitData> data_;
 };

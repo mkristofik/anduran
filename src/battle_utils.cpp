@@ -38,6 +38,15 @@ UnitState::UnitState(const UnitData &data, int quantity, BattleSide side)
 {
 }
 
+int UnitState::type() const
+{
+    if (!unit) {
+        return -1;
+    }
+
+    return unit->type;
+}
+
 bool UnitState::alive() const
 {
     return unit && num > 0;
@@ -90,8 +99,8 @@ BattleState::BattleState(const ArmyState &attacker, const ArmyState &defender)
     : units_(),
     log_(nullptr),
     activeUnit_(-1),
-    attackerHp_(0),
-    defenderHp_(0)
+    attackerTotalHp_(0),
+    defenderTotalHp_(0)
 {
     // Interleave attacking and defending units so both sides get equal
     // opportunity in case of ties.
@@ -110,6 +119,14 @@ BattleState::BattleState(const ArmyState &attacker, const ArmyState &defender)
     update_hp_totals();
 }
 
+BattleState::BattleState(const UnitManager &/*unitMgr*/,
+                         const Army &/*attacker*/,
+                         const Army &/*defender*/)
+{
+    // TODO: same algorithm as the above constructor, use the unit manager to look
+    // up each unit by id to create a unit state.
+}
+
 void BattleState::enable_log(BattleLog &log)
 {
     log_ = &log;
@@ -122,7 +139,7 @@ void BattleState::disable_log()
 
 bool BattleState::done() const
 {
-    return !in_bounds(units_, activeUnit_) || attackerHp_ == 0 || defenderHp_ == 0;
+    return !in_bounds(units_, activeUnit_) || attackerTotalHp_ == 0 || defenderTotalHp_ == 0;
 }
 
 bool BattleState::attackers_turn() const
@@ -146,7 +163,7 @@ const UnitState * BattleState::active_unit() const
 
 int BattleState::score() const
 {
-    auto score = attackerHp_ - defenderHp_;
+    auto score = attackerTotalHp_ - defenderTotalHp_;
     if (done()) {
         score *= 10;  // place an emphasis on winning
     }
@@ -197,10 +214,10 @@ void BattleState::attack(int targetIndex, __attribute__((unused)) AttackType aTy
     if (log_) {
         BattleEvent event;
         event.action = ActionType::attack;
-        event.attackerId = att.id;
+        event.attackerType = att.type();
         event.attackerHp = att.total_hp();
         event.numAttackers = att.num;
-        event.defenderId = def.id;
+        event.defenderType = def.type();
         event.defenderHp = def.total_hp();
         event.numDefenders = def.num;
         event.damage = dmg;
@@ -221,10 +238,10 @@ void BattleState::attack(int targetIndex, __attribute__((unused)) AttackType aTy
         if (log_) {
             BattleEvent event;
             event.action = ActionType::retaliate;
-            event.attackerId = def.id;
+            event.attackerType = def.type();
             event.attackerHp = def.total_hp();
             event.numAttackers = def.num;
-            event.defenderId = att.id;
+            event.defenderType = att.type();
             event.defenderHp = att.total_hp();
             event.numDefenders = att.num;
             event.damage = dmg;
@@ -280,14 +297,14 @@ void BattleState::next_round()
 
 void BattleState::update_hp_totals()
 {
-    attackerHp_ = 0;
-    defenderHp_ = 0;
+    attackerTotalHp_ = 0;
+    defenderTotalHp_ = 0;
     for (auto &unit : units_) {
         if (unit.attacker) {
-            attackerHp_ += unit.total_hp();
+            attackerTotalHp_ += unit.total_hp();
         }
         else {
-            defenderHp_ += unit.total_hp();
+            defenderTotalHp_ += unit.total_hp();
         }
     }
 }
@@ -330,4 +347,44 @@ std::pair<int, int> alpha_beta(const BattleState &state, int depth, int alpha, i
     }
 
     return {bestTarget, (maximizingPlayer) ? alpha : beta};
+}
+
+
+Battle::Battle(const UnitManager &units, const Army &attacker, const Army &defender)
+    : att_(attacker),
+    def_(defender),
+    log_(),
+    state_(units, att_, def_)
+{
+    state_.enable_log(log_);
+    // TODO: run the battle to completion
+}
+
+const BattleLog & Battle::get_log() const
+{
+    return log_;
+}
+
+Army Battle::get_result(BattleSide side) const
+{
+    const bool isAttacker = (side == BattleSide::attacker);
+    Army result = isAttacker ? att_ : def_;
+
+    for (auto &unit : state_.view_units()) {
+        if (unit.attacker != isAttacker) {
+            continue;
+        }
+        // Units in the battle state may be in different order from the starting
+        // army.  Find the one with matching unit type on the same side and update
+        // the number of units.  This assumes there's only one of each type of
+        // unit present.
+        for (auto &resultUnit : result) {
+            if (resultUnit.unitType == unit.type()) {
+                resultUnit.num = unit.num;
+                break;
+            }
+        }
+    }
+
+    return result;
 }

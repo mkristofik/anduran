@@ -46,7 +46,7 @@ constexpr int ARMY_SIZE = 6;
 
 struct ArmyUnit
 {
-    int id = -1;
+    int unitType = -1;
     int num = 0;
 };
 
@@ -55,7 +55,6 @@ enum class BattleSide {attacker, defender};
 struct UnitState
 {
     const UnitData *unit;
-    int id;  // entity id of the unit
     int num;
     int hpLeft;  // HP of top creature in the stack
     int timesAttacked;
@@ -64,6 +63,7 @@ struct UnitState
 
     UnitState();
     UnitState(const UnitData &data, int quantity, BattleSide side);
+    int type() const;
     bool alive() const;
     int total_hp() const;
     int speed() const;
@@ -75,10 +75,10 @@ enum class ActionType {attack, retaliate, next_round};
 struct BattleEvent
 {
     ActionType action = ActionType::attack;
-    int attackerId = -1;
+    int attackerType = -1;
     int attackerHp = 0;
     int numAttackers = 0;
-    int defenderId = -1;
+    int defenderType = -1;
     int defenderHp = 0;
     int numDefenders = 0;
     int damage = 0;
@@ -97,6 +97,8 @@ class BattleState
 {
 public:
     BattleState(const ArmyState &attacker, const ArmyState &defender);
+    // TODO: this should replace the above constructor.
+    BattleState(const UnitManager &unitMgr, const Army &attacker, const Army &defender);
 
     // Keep a running log of the battle's actions so they can be animated later.
     // Turn it off for the AI when simulating a battle.
@@ -126,8 +128,8 @@ private:
     BattleArray units_;
     BattleLog *log_;
     int activeUnit_;
-    int attackerHp_;
-    int defenderHp_;
+    int attackerTotalHp_;
+    int defenderTotalHp_;
 };
 
 // Return the best target to attack and the resulting score after searching
@@ -147,10 +149,12 @@ struct BattleResult
 class Battle
 {
 public:
-    Battle(UnitManager &allUnits, const Army &attacker, const Army &defender);
+    // TODO: run the battle on construction, should this just be a free function
+    // that returns all the results?
+    Battle(const UnitManager &units, const Army &attacker, const Army &defender);
 
     // Uses random numbers, every call will produce a different result.
-    BattleResult run();
+    //BattleResult run();
     // each round:
     // - reset timesAttacked and retaliated
     // - sort living creatures descending by speed
@@ -171,10 +175,14 @@ public:
     // - run through the battle rules on a copy of the data
     // - stop at predetermined search depth
 
+    const BattleLog & get_log() const;
+    Army get_result(BattleSide side) const;
+
 private:
-    UnitManager *units_;
     Army att_;
     Army def_;
+    BattleLog log_;
+    BattleState state_;
 };
 
 #endif

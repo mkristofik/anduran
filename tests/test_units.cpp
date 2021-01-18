@@ -21,10 +21,12 @@
 BOOST_AUTO_TEST_CASE(take_damage)
 {
     UnitData unit;
+    unit.type = 1;
     unit.hp = 10;
     unit.speed = 4;
 
     UnitState state(unit, 5, BattleSide::attacker);
+    BOOST_TEST(state.type() == 1);
     BOOST_TEST(state.alive());
     BOOST_TEST(state.total_hp() == 50);
     BOOST_TEST(state.speed() == 4);
@@ -65,6 +67,7 @@ void print_battle_state(const BattleState &battle)
 BOOST_AUTO_TEST_CASE(do_battle)
 {
     UnitData attacker1;
+    attacker1.type = 0;
     attacker1.name = "Archer";
     attacker1.speed = 2;
     attacker1.minDmg = 2;
@@ -72,6 +75,7 @@ BOOST_AUTO_TEST_CASE(do_battle)
     attacker1.hp = 10;
 
     UnitData attacker2;
+    attacker2.type = 1;
     attacker2.name = "Swordsman";
     attacker2.speed = 4;
     attacker2.minDmg = 5;
@@ -79,6 +83,7 @@ BOOST_AUTO_TEST_CASE(do_battle)
     attacker2.hp = 25;
 
     UnitData defender1;
+    defender1.type = 2;
     defender1.name = "Wolf";
     defender1.speed = 6;
     defender1.minDmg = 4;
@@ -86,6 +91,7 @@ BOOST_AUTO_TEST_CASE(do_battle)
     defender1.hp = 20;
 
     UnitData defender2;
+    defender2.type = 3;
     defender2.name = "Goblin";
     defender2.speed = 4;
     defender2.minDmg = 2;
@@ -94,14 +100,10 @@ BOOST_AUTO_TEST_CASE(do_battle)
 
     ArmyState att;
     att[0] = UnitState(attacker1, 8, BattleSide::attacker);
-    att[0].id = 0;
     att[1] = UnitState(attacker2, 3, BattleSide::attacker);
-    att[1].id = 1;
     ArmyState def;
     def[0] = UnitState(defender1, 4, BattleSide::defender);
-    def[0].id = 2;
     def[1] = UnitState(defender2, 10, BattleSide::defender);
-    def[1].id = 3;
 
     BattleLog log;
     BattleState battle(att, def);
@@ -162,11 +164,11 @@ BOOST_AUTO_TEST_CASE(do_battle)
         }
         else {
             std::cout << "Event type " << static_cast<int>(event.action) <<
-                " Attacker " << event.attackerId <<
-                " units " << event.numAttackers <<
+                " Attacker type " << event.attackerType <<
+                " # units " << event.numAttackers <<
                 " HP " << event.attackerHp <<
-                " Defender " << event.defenderId <<
-                " units " << event.numDefenders <<
+                " Defender type " << event.defenderType <<
+                " # units " << event.numDefenders <<
                 " HP " << event.defenderHp <<
                 " damage " << event.damage <<
                 " losses " << event.losses <<

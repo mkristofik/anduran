@@ -24,7 +24,7 @@ UnitManager::UnitManager(const std::string &configFile,
                          SdlImageManager &imgMgr)
     : window_(&win),
     imgSource_(&imgMgr),
-    ids_(),
+    types_(),
     media_(),
     data_()
 {
@@ -38,9 +38,11 @@ UnitManager::UnitManager(const std::string &configFile,
     auto doc = jsonReadFile(configFile.c_str());
     for (auto m = doc.MemberBegin(); m != doc.MemberEnd(); ++m) {
         const std::string name = m->name.GetString();
-        ids_.emplace(name, size(ids_));
+        const int newType = ssize(types_);
+        types_.emplace(name, newType);
 
         UnitData data;
+        data.type = newType;
         UnitMedia media;
         for (auto f = m->value.MemberBegin(); f != m->value.MemberEnd(); ++f) {
             const std::string field = f->name.GetString();
@@ -115,10 +117,10 @@ UnitManager::UnitManager(const std::string &configFile,
     }
 }
 
-int UnitManager::get_id(const std::string &key) const
+int UnitManager::get_type(const std::string &key) const
 {
-    const auto iter = ids_.find(key);
-    if (iter == end(ids_)) {
+    const auto iter = types_.find(key);
+    if (iter == end(types_)) {
         SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Unit not found: %s", key.c_str());
         return -1;
     }
@@ -126,18 +128,18 @@ int UnitManager::get_id(const std::string &key) const
     return iter->second;
 }
 
-SdlTexture UnitManager::get_image(int id, ImageType imgType, Team team) const
+SdlTexture UnitManager::get_image(int unitType, ImageType imgType, Team team) const
 {
-    assert(in_bounds(media_, id));
+    assert(in_bounds(media_, unitType));
 
-    auto imgIter = media_[id].images.find(imgType);
-    const auto endIter = end(media_[id].images);
+    auto imgIter = media_[unitType].images.find(imgType);
+    const auto endIter = end(media_[unitType].images);
     if (imgIter != endIter) {
         return enum_fetch(imgIter->second, team);
     }
 
     // Use the base image if the requested image type doesn't exist.
-    imgIter = media_[id].images.find(ImageType::img_idle);
+    imgIter = media_[unitType].images.find(ImageType::img_idle);
     if (imgIter != endIter) {
         return enum_fetch(imgIter->second, team);
     }
@@ -145,10 +147,10 @@ SdlTexture UnitManager::get_image(int id, ImageType imgType, Team team) const
     return {};
 }
 
-SdlTexture UnitManager::get_projectile(int id) const
+SdlTexture UnitManager::get_projectile(int unitType) const
 {
-    assert(in_bounds(media_, id));
-    return media_[id].projectile;
+    assert(in_bounds(media_, unitType));
+    return media_[unitType].projectile;
 }
 
 TeamColoredTextures UnitManager::load_image_set(const std::string &name)

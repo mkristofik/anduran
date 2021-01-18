@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2020 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2021 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -190,42 +190,42 @@ void Anduran::experiment()
     // TODO: this is all temporary so I can experiment
     auto player = game_.get_object(curPlayerId_);
     const auto team = player->team;
-    const auto archerId = units_.get_id("archer"s);
-    auto archer = units_.get_image(archerId, ImageType::img_idle, team);
-    auto archerAttack = units_.get_image(archerId, ImageType::anim_ranged, team);
-    const auto swordsmanId = units_.get_id("swordsman"s);
-    auto swordsman = units_.get_image(swordsmanId, ImageType::img_idle, team);
-    auto swordsmanAttack = units_.get_image(swordsmanId, ImageType::anim_attack, team);
-    auto swordsmanDefend = units_.get_image(swordsmanId, ImageType::img_defend, team);
+    const auto archer = units_.get_type("archer"s);
+    auto archerImg = units_.get_image(archer, ImageType::img_idle, team);
+    auto archerAttack = units_.get_image(archer, ImageType::anim_ranged, team);
+    const auto swordsman = units_.get_type("swordsman"s);
+    auto swordsmanImg = units_.get_image(swordsman, ImageType::img_idle, team);
+    auto swordsmanAttack = units_.get_image(swordsman, ImageType::anim_attack, team);
+    auto swordsmanDefend = units_.get_image(swordsman, ImageType::img_defend, team);
 
-    const auto orcId = units_.get_id("orc"s);
-    auto orc = units_.get_image(orcId, ImageType::img_idle, Team::neutral);
-    auto orcAttack = units_.get_image(orcId, ImageType::anim_attack, Team::neutral);
-    auto orcDefend = units_.get_image(orcId, ImageType::img_defend, Team::neutral);
-    auto orcDie = units_.get_image(orcId, ImageType::anim_die, Team::neutral);
+    const auto orc = units_.get_type("orc"s);
+    auto orcImg = units_.get_image(orc, ImageType::img_idle, Team::neutral);
+    auto orcAttack = units_.get_image(orc, ImageType::anim_attack, Team::neutral);
+    auto orcDefend = units_.get_image(orc, ImageType::img_defend, Team::neutral);
+    auto orcDie = units_.get_image(orc, ImageType::anim_die, Team::neutral);
 
-    auto arrow = units_.get_projectile(archerId);
-    const int enemy = rmapView_.addEntity(orc, Hex{5, 8}, ZOrder::object);
+    auto arrow = units_.get_projectile(archer);
+    const int enemy = rmapView_.addEntity(orcImg, Hex{5, 8}, ZOrder::object);
     const int projectile = rmapView_.addHiddenEntity(arrow, ZOrder::projectile);
     auto ellipse = player->secondary;
 
     anims_.insert<AnimMelee>(player->entity,
-                             swordsman,
+                             swordsmanImg,
                              swordsmanAttack,
                              enemy,
-                             orc,
+                             orcImg,
                              orcDefend);
     anims_.insert<AnimMelee>(enemy,
-                             orc,
+                             orcImg,
                              orcAttack,
                              player->entity,
-                             swordsman,
+                             swordsmanImg,
                              swordsmanDefend);
     anims_.insert<AnimRanged>(player->entity,
-                              archer,
+                              archerImg,
                               archerAttack,
                               enemy,
-                              orc,
+                              orcImg,
                               orcDie,
                               projectile);
     anims_.insert<AnimDisplay>(ellipse, player->hex);
