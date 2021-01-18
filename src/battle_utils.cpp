@@ -63,16 +63,15 @@ UnitState::UnitState()
 {
 }
 
-UnitState::UnitState(const UnitData &data, int quantity, BattleSide side, int origIndex)
+UnitState::UnitState(const UnitData &data, int quantity, BattleSide side)
     : unit(&data),
     num(quantity),
     hpLeft(unit->hp),
     timesAttacked(0),
-    armyIndex(origIndex),
+    armyIndex(-1),
     attacker(side == BattleSide::attacker),
     retaliated(false)
 {
-    assert(armyIndex >= 0 && armyIndex < ARMY_SIZE);
 }
 
 int UnitState::type() const
@@ -139,8 +138,6 @@ BattleState::BattleState(const BattleArray &armies)
     attackerTotalHp_(0),
     defenderTotalHp_(0)
 {
-    assert(check_army_slots(armies));
-
     std::stable_sort(begin(units_), end(units_),
         [] (const auto &lhs, const auto &rhs) {
             return lhs.speed() > rhs.speed();
@@ -231,7 +228,7 @@ TargetList BattleState::possible_targets() const
 int BattleState::optimal_target() const
 {
     // TODO: need continued testing to choose best amount of lookahead.
-    auto [target, _] = alpha_beta(3);
+    auto [target, _] = alpha_beta(8);
     return target;
 }
 
@@ -378,10 +375,22 @@ std::pair<int, int> BattleState::alpha_beta(int depth, int alpha, int beta) cons
 }
 
 
-BattleResult do_battle(const BattleArray &armies, AttackType aType)
+BattleResult do_battle(const ArmyArray &attacker,
+                       const ArmyArray &defender,
+                       AttackType aType)
 {
-    BattleResult result;
+    // Interleave attacking and defending units so both sides get equal
+    // opportunity in case of ties.
+    BattleArray armies;
+    for (int i = 0; i < ssize(attacker); ++i) {
+        armies[2 * i] = attacker[i];
+        armies[2 * i].armyIndex = i;
+        armies[2 * i + 1] = defender[i];
+        armies[2 * i + 1].armyIndex = i;
+    }
+    assert(check_army_slots(armies));
 
+    BattleResult result;
     BattleState battle(armies);
     battle.enable_log(result.log);
     while (!battle.done()) {

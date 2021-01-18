@@ -42,38 +42,6 @@
 using namespace std::string_literals;
 
 
-namespace
-{
-    // Interleave attacking and defending units so both sides get equal
-    // opportunity in case of ties.
-    // TODO: this is here because it's game logic I want to use but don't want
-    // battle_utils to depend on SDL.
-    [[maybe_unused]]
-    BattleArray interleave_armies(const UnitManager &unitMgr,
-                                  const Army &attacker,
-                                  const Army &defender)
-    {
-        BattleArray units;
-        for (auto i = 0u; i < size(attacker); ++i) {
-            if (attacker[i].unitType >= 0) {
-                units[2 * i] = UnitState(unitMgr.get_data(attacker[i].unitType),
-                                         attacker[i].num,
-                                         BattleSide::attacker,
-                                         i);
-            }
-            if (defender[i].unitType >= 0) {
-                units[2 * i + 1] = UnitState(unitMgr.get_data(defender[i].unitType),
-                                             defender[i].num,
-                                             BattleSide::defender,
-                                             i);
-            }
-        }
-
-        return units;
-    }
-}
-
-
 class Anduran : public SdlApp
 {
 public:

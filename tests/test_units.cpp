@@ -26,7 +26,7 @@ BOOST_AUTO_TEST_CASE(take_damage)
     unit.hp = 10;
     unit.speed = 4;
 
-    UnitState state(unit, 5, BattleSide::attacker, 0);
+    UnitState state(unit, 5, BattleSide::attacker);
     BOOST_TEST(state.type() == 1);
     BOOST_TEST(state.alive());
     BOOST_TEST(state.total_hp() == 50);
@@ -67,6 +67,7 @@ void print_battle_state(const BattleState &battle)
 
 BOOST_AUTO_TEST_CASE(battle_testing)
 {
+    // TODO: does Boost.Test have a test fixture for common data?
     UnitData attacker1;
     attacker1.type = 0;
     attacker1.name = "Archer";
@@ -100,10 +101,10 @@ BOOST_AUTO_TEST_CASE(battle_testing)
     defender2.hp = 3;
 
     BattleArray armies;
-    armies[0] = UnitState(attacker1, 8, BattleSide::attacker, 0);
-    armies[1] = UnitState(attacker2, 3, BattleSide::attacker, 1);
-    armies[2] = UnitState(defender1, 4, BattleSide::defender, 1);
-    armies[3] = UnitState(defender2, 10, BattleSide::defender, 0);
+    armies[0] = UnitState(attacker1, 8, BattleSide::attacker);
+    armies[1] = UnitState(attacker2, 3, BattleSide::attacker);
+    armies[2] = UnitState(defender1, 4, BattleSide::defender);
+    armies[3] = UnitState(defender2, 10, BattleSide::defender);
 
     BattleLog log;
     BattleState battle(armies);
@@ -175,9 +176,16 @@ BOOST_AUTO_TEST_CASE(battle_testing)
         }
     }
 
-    // Run a second battle using the starting armies.  Attacker does better this
+    // Run a second battle using the starting armies.  Defender does better this
     // time when AI is allowed to choose the targets from the beginning.
-    const auto result = do_battle(armies);
+    ArmyArray attArmy;
+    attArmy[0] = armies[0];
+    attArmy[1] = armies[1];
+    ArmyArray defArmy;
+    defArmy[0] = armies[3];  // note the special order
+    defArmy[1] = armies[2];
+
+    const auto result = do_battle(attArmy, defArmy);
     std::cout << "\nAttacker:\n";
     for (auto &unit : result.attacker) {
         if (unit.unitType >= 0) {

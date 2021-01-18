@@ -45,7 +45,7 @@ struct UnitState
     bool retaliated;
 
     UnitState();
-    UnitState(const UnitData &data, int quantity, BattleSide side, int origIndex);
+    UnitState(const UnitData &data, int quantity, BattleSide side);
     int type() const;
     bool alive() const;
     int total_hp() const;
@@ -53,6 +53,7 @@ struct UnitState
     void take_damage(int dmg);
 };
 
+using ArmyArray = std::array<UnitState, ARMY_SIZE>;
 using BattleArray = std::array<UnitState, ARMY_SIZE * 2>;
 
 
@@ -132,6 +133,8 @@ struct BattleResult
 };
 
 // Run a battle to completion.
-BattleResult do_battle(const BattleArray &armies, AttackType aType = AttackType::normal);
+BattleResult do_battle(const ArmyArray &attacker,
+                       const ArmyArray &defender,
+                       AttackType aType = AttackType::normal);
 
 #endif
