@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2020 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2021 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -112,6 +112,7 @@ public:
 
     // Vector of unit indexes the active unit may attack.
     TargetList possible_targets() const;
+    int optimal_target() const;
 
     // Active unit attacks the given target and then we advance to the next turn.
     // Simulated attacks always do average damage.
@@ -122,19 +123,19 @@ private:
     void next_round();
     void update_hp_totals();
 
+    // Return the best target to attack and the resulting score after searching
+    // 'depth' plies.  Testing suggests depth <= 2 is suboptimal because it can't
+    // adequately consider defender responses to the attacker's chosen move.
+    std::pair<int, int> alpha_beta(int depth,
+                                   int alpha = std::numeric_limits<int>::min(),
+                                   int beta = std::numeric_limits<int>::max()) const;
+
     BattleArray units_;
     BattleLog *log_;
     int activeUnit_;
     int attackerTotalHp_;
     int defenderTotalHp_;
 };
-
-// Return the best target to attack and the resulting score after searching
-// 'depth' plies.  Testing suggests depth <= 2 is suboptimal because it can't
-// adequately consider defender responses to the attacker's chosen move.
-std::pair<int, int> alpha_beta(const BattleState &state, int depth,
-                               int alpha = std::numeric_limits<int>::min(),
-                               int beta = std::numeric_limits<int>::max());
 
 struct BattleResult
 {

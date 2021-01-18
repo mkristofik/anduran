@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2020 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2020-2021 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -146,8 +146,7 @@ BOOST_AUTO_TEST_CASE(do_battle)
 
     // Run to completion and verify attacking team wins.
     while (!battle.done()) {
-        auto [target, _] = alpha_beta(battle, 3);
-        battle.attack(target, AttackType::simulated);
+        battle.attack(battle.optimal_target(), AttackType::simulated);
         //print_battle_state(battle);
     }
     BOOST_TEST(battle.score() > 0);
@@ -164,10 +163,10 @@ BOOST_AUTO_TEST_CASE(do_battle)
         else {
             std::cout << "Event type " << static_cast<int>(event.action) <<
                 " Attacker type " << event.attackerType <<
-                " # units " << event.numAttackers <<
+                " #units " << event.numAttackers <<
                 " HP " << event.attackerHp <<
                 " Defender type " << event.defenderType <<
-                " # units " << event.numDefenders <<
+                " #units " << event.numDefenders <<
                 " HP " << event.defenderHp <<
                 " damage " << event.damage <<
                 " losses " << event.losses <<

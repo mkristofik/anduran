@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2020 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2021 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -189,6 +189,13 @@ TargetList BattleState::possible_targets() const
     return targets;
 }
 
+int BattleState::optimal_target() const
+{
+    // TODO: need continued testing to choose best amount of lookahead.
+    auto [target, _] = alpha_beta(3);
+    return target;
+}
+
 void BattleState::attack(int targetIndex, __attribute__((unused)) AttackType aType)
 {
     assert(!done() && units_[activeUnit_].attacker != units_[targetIndex].attacker);
@@ -296,22 +303,22 @@ void BattleState::update_hp_totals()
 }
 
 // source: http://en.wikipedia.org/wiki/Alpha-beta_pruning
-std::pair<int, int> alpha_beta(const BattleState &state, int depth, int alpha, int beta)
+std::pair<int, int> BattleState::alpha_beta(int depth, int alpha, int beta) const
 {
     // If we've run out of search time or the battle has ended, stop.
-    if (depth <= 0 || state.done()) {
-        return {-1, state.score()};
+    if (depth <= 0 || done()) {
+        return {-1, score()};
     }
 
-    const bool maximizingPlayer = state.attackers_turn();
+    const bool maximizingPlayer = attackers_turn();
     int bestTarget = -1;
 
-    for (auto &t : state.possible_targets()) {
-        BattleState newState(state);
+    for (auto &t : possible_targets()) {
+        BattleState newState(*this);
         newState.disable_log();
         newState.attack(t, AttackType::simulated);
 
-        auto [_, score] = alpha_beta(newState, depth - 1, alpha, beta);
+        auto [_, score] = newState.alpha_beta(depth - 1, alpha, beta);
         if (maximizingPlayer) {
             if (score > alpha) {
                 alpha = score;
