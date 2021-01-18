@@ -95,19 +95,13 @@ void UnitState::take_damage(int dmg)
 }
 
 
-BattleState::BattleState(const ArmyState &attacker, const ArmyState &defender)
-    : units_(),
+BattleState::BattleState(const BattleArray &armies)
+    : units_(armies),
     log_(nullptr),
     activeUnit_(-1),
     attackerTotalHp_(0),
     defenderTotalHp_(0)
 {
-    // Interleave attacking and defending units so both sides get equal
-    // opportunity in case of ties.
-    for (auto i = 0u; i < size(attacker); ++i) {
-        units_[2 * i] = attacker[i];
-        units_[2 * i + 1] = defender[i];
-    }
     std::stable_sort(begin(units_), end(units_),
         [] (const auto &lhs, const auto &rhs) {
             return lhs.speed() > rhs.speed();
@@ -117,14 +111,6 @@ BattleState::BattleState(const ArmyState &attacker, const ArmyState &defender)
         activeUnit_ = 0;
     }
     update_hp_totals();
-}
-
-BattleState::BattleState(const UnitManager &/*unitMgr*/,
-                         const Army &/*attacker*/,
-                         const Army &/*defender*/)
-{
-    // TODO: same algorithm as the above constructor, use the unit manager to look
-    // up each unit by id to create a unit state.
 }
 
 void BattleState::enable_log(BattleLog &log)
@@ -350,6 +336,7 @@ std::pair<int, int> alpha_beta(const BattleState &state, int depth, int alpha, i
 }
 
 
+/*
 Battle::Battle(const UnitManager &units, const Army &attacker, const Army &defender)
     : att_(attacker),
     def_(defender),
@@ -371,20 +358,21 @@ Army Battle::get_result(BattleSide side) const
     Army result = isAttacker ? att_ : def_;
 
     for (auto &unit : state_.view_units()) {
-        if (unit.attacker != isAttacker) {
+        if (unit.attacker != isAttacker || unit.type() < 0) {
             continue;
         }
         // Units in the battle state may be in different order from the starting
         // army.  Find the one with matching unit type on the same side and update
         // the number of units.  This assumes there's only one of each type of
         // unit present.
-        for (auto &resultUnit : result) {
-            if (resultUnit.unitType == unit.type()) {
-                resultUnit.num = unit.num;
-                break;
-            }
-        }
+        auto iter = std::find_if(begin(result), end(result),
+            [&unit] (const ArmyUnit &elem) {
+                return elem.unitType == unit.type();
+            });
+        assert(iter != end(result));
+        iter->num = unit.num;
     }
 
     return result;
 }
+*/

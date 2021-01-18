@@ -59,8 +59,10 @@ public:
                 SdlImageManager &imgMgr);
 
     int get_type(const std::string &key) const;
+
     SdlTexture get_image(int unitType, ImageType imgType, Team team) const;
     SdlTexture get_projectile(int unitType) const;
+    const UnitData & get_data(int unitType) const;
 
 private:
     TeamColoredTextures load_image_set(const std::string &name);

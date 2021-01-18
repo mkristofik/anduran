@@ -86,7 +86,6 @@ struct BattleEvent
 };
 
 using Army = std::array<ArmyUnit, ARMY_SIZE>;
-using ArmyState = std::array<UnitState, ARMY_SIZE>;
 using BattleArray = std::array<UnitState, ARMY_SIZE * 2>;
 using BattleLog = std::vector<BattleEvent>;
 using TargetList = boost::container::static_vector<int, ARMY_SIZE>;
@@ -96,9 +95,7 @@ enum class AttackType {normal, simulated};
 class BattleState
 {
 public:
-    BattleState(const ArmyState &attacker, const ArmyState &defender);
-    // TODO: this should replace the above constructor.
-    BattleState(const UnitManager &unitMgr, const Army &attacker, const Army &defender);
+    BattleState(const BattleArray &armies);
 
     // Keep a running log of the battle's actions so they can be animated later.
     // Turn it off for the AI when simulating a battle.
@@ -146,6 +143,7 @@ struct BattleResult
     bool attackerWins = true;
 };
 
+/* TODO: this can't be in here, unit tests need to avoid depending on SDL
 class Battle
 {
 public:
@@ -184,5 +182,6 @@ private:
     BattleLog log_;
     BattleState state_;
 };
+*/
 
 #endif

@@ -153,6 +153,12 @@ SdlTexture UnitManager::get_projectile(int unitType) const
     return media_[unitType].projectile;
 }
 
+const UnitData & UnitManager::get_data(int unitType) const
+{
+    assert(in_bounds(data_, unitType));
+    return data_[unitType];
+}
+
 TeamColoredTextures UnitManager::load_image_set(const std::string &name)
 {
     TeamColoredTextures images;

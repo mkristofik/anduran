@@ -98,15 +98,14 @@ BOOST_AUTO_TEST_CASE(do_battle)
     defender2.maxDmg = 4;
     defender2.hp = 3;
 
-    ArmyState att;
-    att[0] = UnitState(attacker1, 8, BattleSide::attacker);
-    att[1] = UnitState(attacker2, 3, BattleSide::attacker);
-    ArmyState def;
-    def[0] = UnitState(defender1, 4, BattleSide::defender);
-    def[1] = UnitState(defender2, 10, BattleSide::defender);
+    BattleArray armies;
+    armies[0] = UnitState(attacker1, 8, BattleSide::attacker);
+    armies[1] = UnitState(attacker2, 3, BattleSide::attacker);
+    armies[2] = UnitState(defender1, 4, BattleSide::defender);
+    armies[3] = UnitState(defender2, 10, BattleSide::defender);
 
     BattleLog log;
-    BattleState battle(att, def);
+    BattleState battle(armies);
     battle.enable_log(log);
     BOOST_TEST(!battle.done());
     BOOST_TEST(!battle.attackers_turn());
