@@ -11,6 +11,7 @@
     See the COPYING.txt file for more details.
 */
 #include "RandomMap.h"
+#include "RandomRange.h"
 #include "container_utils.h"
 #include "json_utils.h"
 #include "open-simplex-noise.h"
@@ -27,7 +28,6 @@
 #include <iterator>
 #include <memory>
 #include <queue>
-#include <random>
 #include <tuple>
 
 namespace
@@ -61,7 +61,7 @@ namespace
 
 struct RandomHex
 {
-    std::uniform_int_distribution<int> dist_;
+    RandomRange dist_;
 
     explicit RandomHex(int mapWidth)
         : dist_(0, mapWidth - 1)
@@ -70,7 +70,7 @@ struct RandomHex
 
     Hex operator()()
     {
-        return {dist_(RandomMap::engine), dist_(RandomMap::engine)};
+        return {dist_.get(), dist_.get()};
     }
 };
 
@@ -106,7 +106,6 @@ double Noise::get(int x, int y)
 }
 
 
-std::default_random_engine RandomMap::engine(static_cast<unsigned int>(std::time(nullptr)));
 const int RandomMap::invalidIndex = -1;
 
 RandomMap::RandomMap(int width)
@@ -341,8 +340,8 @@ void RandomMap::buildNeighborGraphs()
 
 void RandomMap::assignTerrain()
 {
-    std::uniform_int_distribution<int> dist2(0, 1);
-    std::uniform_int_distribution<int> dist3(0, 2);
+    RandomRange dist2(0, 1);
+    RandomRange dist3(0, 2);
 
     const Terrain lowAlt[] = {Terrain::water, Terrain::desert, Terrain::swamp};
     const Terrain medAlt[] = {Terrain::grass, Terrain::dirt};
@@ -352,13 +351,13 @@ void RandomMap::assignTerrain()
     const auto altitude = randomAltitudes();
     for (int i = 0; i < numRegions_; ++i) {
         if (altitude[i] == 0) {
-            regionTerrain_[i] = lowAlt[dist3(engine)];
+            regionTerrain_[i] = lowAlt[dist3.get()];
         }
         else if (altitude[i] == MAX_ALTITUDE) {
-            regionTerrain_[i] = highAlt[dist2(engine)];
+            regionTerrain_[i] = highAlt[dist2.get()];
         }
         else {
-            regionTerrain_[i] = medAlt[dist2(engine)];
+            regionTerrain_[i] = medAlt[dist2.get()];
         }
     }
 }
@@ -377,7 +376,6 @@ void RandomMap::assignObstacles()
     }
 
     // Any value above the threshold gets an obstacle.
-    std::uniform_int_distribution<int> dist4(0, 3);
     for (int i = 0; i < size_; ++i) {
         if (values[i] > OBSTACLE_LEVEL && !tileOccupied_[i]) {
             setObstacle(i);
@@ -434,7 +432,7 @@ std::vector<Hex> RandomMap::voronoi()
 std::vector<int> RandomMap::randomAltitudes()
 {
     std::vector<int> altitude(numRegions_, -1);
-    std::uniform_int_distribution<int> step(-1, 1);
+    RandomRange step(-1, 1);
 
     // Start with an initial altitude for region 0, push it onto the stack.
     altitude[0] = 1;
@@ -451,7 +449,7 @@ std::vector<int> RandomMap::randomAltitudes()
                 continue;  // already visited
             }
 
-            const auto newAlt = altitude[curRegion] + step(engine);
+            const auto newAlt = altitude[curRegion] + step.get();
             altitude[nbrRegion] = std::clamp(newAlt, 0, MAX_ALTITUDE);
             regionStack.push_back(nbrRegion);
         }
@@ -697,8 +695,8 @@ int RandomMap::getRandomTile(int region)
 {
     const auto regTiles = regionTiles_.find(region);
     const auto regSize = std::distance(regTiles.first, regTiles.second);
-    std::uniform_int_distribution<int> dist(0, regSize - 1);
-    return *std::next(regTiles.first, dist(engine));
+    RandomRange dist(0, regSize - 1);
+    return *std::next(regTiles.first, dist.get());
 }
 
 int RandomMap::findObjectSpot(int startTile, int region)
@@ -736,7 +734,7 @@ int RandomMap::findObjectSpot(int startTile, int region)
 
 void RandomMap::placeObjects()
 {
-    std::uniform_int_distribution<int> dist2(0, 1);
+    RandomRange dist2(0, 1);
 
     for (int r = 0; r < numRegions_; ++r) {
         if (regionTerrain_[r] == Terrain::water) {
@@ -760,7 +758,7 @@ void RandomMap::placeObjects()
             placeObject(ObjectType::oasis, r);
         }
         else if (regionTerrain_[r] == Terrain::grass) {
-            if (dist2(engine) == 1) {
+            if (dist2.get() == 1) {
                 placeObject(ObjectType::windmill, r);
             }
         }

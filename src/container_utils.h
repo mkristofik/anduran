@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2021 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -12,6 +12,8 @@
 */
 #ifndef CONTAINER_UTILS_H
 #define CONTAINER_UTILS_H
+
+#include "RandomRange.h"
 
 #include <algorithm>
 #include <iterator>
@@ -40,6 +42,16 @@ bool contains(const C &cont, const T &val)
     using std::cend;
 
     return std::find(cbegin(cont), cend(cont), val) != cend(cont);
+}
+
+
+template <typename C>
+void randomize(C &cont)
+{
+    using std::begin;
+    using std::end;
+
+    shuffle(begin(cont), end(cont), RandomRange::engine);
 }
 
 #endif

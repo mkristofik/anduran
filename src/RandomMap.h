@@ -17,7 +17,6 @@
 #include "hex_utils.h"
 #include "iterable_enum_class.h"
 #include "object_types.h"
-#include <random>
 #include <string>
 #include <vector>
 
@@ -61,7 +60,6 @@ public:
     bool offGrid(int index) const;
     bool offGrid(const Hex &hex) const;
 
-    static std::default_random_engine engine;
     static const int invalidIndex;
 
 private:

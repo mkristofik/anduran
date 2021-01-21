@@ -258,7 +258,7 @@ void Anduran::load_players()
     // Randomize the starting locations for each player.
     auto castles = rmap_.getCastleTiles();
     assert(ssize(castles) <= enum_size<Team>());
-    shuffle(begin(castles), end(castles), RandomMap::engine);
+    randomize(castles);
 
     const auto castleImg = images_.make_texture("castle"s, win_);
     for (auto i = 0u; i < size(castles); ++i) {

@@ -13,6 +13,7 @@
 #include "MapDisplay.h"
 
 #include "RandomMap.h"
+#include "RandomRange.h"
 #include "SdlImageManager.h"
 #include "SdlWindow.h"
 #include "container_utils.h"
@@ -174,17 +175,17 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
     loadTerrainImages();
 
     // Assume all tile and obstacle images have the same number of frames.
-    std::uniform_int_distribution<int> randTerrain(0, tileImg_[0].cols() - 1);
-    std::uniform_int_distribution<int> randObstacle(0, obstacleImg_[0].cols() - 1);
+    RandomRange randTerrain(0, tileImg_[0].cols() - 1);
+    RandomRange randObstacle(0, obstacleImg_[0].cols() - 1);
 
     for (int i = 0; i < map_->size(); ++i) {
         tiles_[i].hex = map_->hexFromInt(i);
         tiles_[i].basePixel = pixelFromHex(tiles_[i].hex);
         tiles_[i].curPixel = tiles_[i].basePixel;
         tiles_[i].terrain = static_cast<int>(map_->getTerrain(i));
-        tiles_[i].terrainFrame = randTerrain(RandomMap::engine);
+        tiles_[i].terrainFrame = randTerrain.get();
         if (map_->getObstacle(i)) {
-            tiles_[i].obstacle = randObstacle(RandomMap::engine);
+            tiles_[i].obstacle = randObstacle.get();
         }
         tiles_[i].region = map_->getRegion(i);
     }

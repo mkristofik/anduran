@@ -36,7 +36,12 @@ vpath %.cpp $(SRC_DIR)
 vpath %.c $(SRC_DIR)
 
 RMAPGEN = rmapgen$(EXE)
-RMAPGEN_SRC = RandomMap.cpp hex_utils.cpp json_utils.cpp object_types.cpp rmapgen.cpp
+RMAPGEN_SRC = RandomMap.cpp \
+	RandomRange.cpp \
+	hex_utils.cpp \
+	json_utils.cpp \
+	object_types.cpp \
+	rmapgen.cpp
 RMAPGEN_OBJS = $(RMAPGEN_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-noise.o
 RMAPGEN_DEPS = $(RMAPGEN_OBJS:%.o=%.d)
 # note: don't want to list open-simplex-noise.c here. We only list the cpp
@@ -47,6 +52,7 @@ RMAPGEN_DEPS = $(RMAPGEN_OBJS:%.o=%.d)
 MAPVIEW = mapview$(EXE)
 MAPVIEW_SRC = MapDisplay.cpp \
 	RandomMap.cpp \
+	RandomRange.cpp \
 	SdlApp.cpp \
 	SdlImageManager.cpp \
 	SdlSurface.cpp \
@@ -64,6 +70,7 @@ ANDURAN_SRC = GameState.cpp \
 	MapDisplay.cpp \
 	Pathfinder.cpp \
 	RandomMap.cpp \
+	RandomRange.cpp \
 	SdlApp.cpp \
 	SdlImageManager.cpp \
 	SdlSurface.cpp \
@@ -81,7 +88,8 @@ ANDURAN_OBJS = $(ANDURAN_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-n
 ANDURAN_DEPS = $(ANDURAN_OBJS:%.o=%.d)
 
 UNITTESTS = unittests$(EXE)
-UNITTESTS_SRC = battle_utils.cpp \
+UNITTESTS_SRC = RandomRange.cpp \
+	battle_utils.cpp \
 	object_types.cpp \
 	$(wildcard $(TEST_DIR)/*.cpp)
 UNITTESTS_OBJS = $(UNITTESTS_SRC:%.cpp=$(BUILD_DIR)/%.o)
