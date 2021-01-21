@@ -43,6 +43,48 @@ BOOST_AUTO_TEST_CASE(take_damage)
     BOOST_TEST(state.speed() == 0);
 }
 
+
+struct TestUnitConfig
+{
+    UnitData att1_, att2_, def1_, def2_;
+    UnitState attacker1_, attacker2_, defender1_, defender2_;
+
+    TestUnitConfig() {
+        att1_.type = 0;
+        att1_.name = "Archer";
+        att1_.speed = 2;
+        att1_.minDmg = 2;
+        att1_.maxDmg = 3;
+        att1_.hp = 10;
+
+        att2_.type = 1;
+        att2_.name = "Swordsman";
+        att2_.speed = 4;
+        att2_.minDmg = 5;
+        att2_.maxDmg = 9;
+        att2_.hp = 25;
+
+        def1_.type = 2;
+        def1_.name = "Wolf";
+        def1_.speed = 6;
+        def1_.minDmg = 4;
+        def1_.maxDmg = 8;
+        def1_.hp = 20;
+
+        def2_.type = 3;
+        def2_.name = "Goblin";
+        def2_.speed = 4;
+        def2_.minDmg = 2;
+        def2_.maxDmg = 4;
+        def2_.hp = 3;
+
+        attacker1_ = UnitState(att1_, 8, BattleSide::attacker);
+        attacker2_ = UnitState(att2_, 3, BattleSide::attacker);
+        defender1_ = UnitState(def1_, 4, BattleSide::defender);
+        defender2_ = UnitState(def2_, 10, BattleSide::defender);
+    }
+};
+
 void print_battle_state(const BattleState &battle)
 {
     for (auto &unit : battle.view_units()) {
@@ -65,46 +107,15 @@ void print_battle_state(const BattleState &battle)
     std::cout << '\n';
 }
 
-BOOST_AUTO_TEST_CASE(battle_testing)
+BOOST_FIXTURE_TEST_SUITE(battle_testing, TestUnitConfig)
+
+BOOST_AUTO_TEST_CASE(manual_battle_state)
 {
-    // TODO: does Boost.Test have a test fixture for common data?
-    UnitData attacker1;
-    attacker1.type = 0;
-    attacker1.name = "Archer";
-    attacker1.speed = 2;
-    attacker1.minDmg = 2;
-    attacker1.maxDmg = 3;
-    attacker1.hp = 10;
-
-    UnitData attacker2;
-    attacker2.type = 1;
-    attacker2.name = "Swordsman";
-    attacker2.speed = 4;
-    attacker2.minDmg = 5;
-    attacker2.maxDmg = 9;
-    attacker2.hp = 25;
-
-    UnitData defender1;
-    defender1.type = 2;
-    defender1.name = "Wolf";
-    defender1.speed = 6;
-    defender1.minDmg = 4;
-    defender1.maxDmg = 8;
-    defender1.hp = 20;
-
-    UnitData defender2;
-    defender2.type = 3;
-    defender2.name = "Goblin";
-    defender2.speed = 4;
-    defender2.minDmg = 2;
-    defender2.maxDmg = 4;
-    defender2.hp = 3;
-
     BattleArray armies;
-    armies[0] = UnitState(attacker1, 8, BattleSide::attacker);
-    armies[1] = UnitState(attacker2, 3, BattleSide::attacker);
-    armies[2] = UnitState(defender1, 4, BattleSide::defender);
-    armies[3] = UnitState(defender2, 10, BattleSide::defender);
+    armies[0] = attacker1_;
+    armies[1] = attacker2_;
+    armies[2] = defender1_;
+    armies[3] = defender2_;
 
     BattleLog log;
     BattleState battle(armies);
@@ -175,15 +186,18 @@ BOOST_AUTO_TEST_CASE(battle_testing)
                 '\n';
         }
     }
+}
 
+BOOST_AUTO_TEST_CASE(battle_function)
+{
     // Run a second battle using the starting armies.  Defender does better this
     // time when AI is allowed to choose the targets from the beginning.
     ArmyArray attArmy;
-    attArmy[0] = armies[0];
-    attArmy[1] = armies[1];
+    attArmy[0] = attacker1_;
+    attArmy[1] = attacker2_;
     ArmyArray defArmy;
-    defArmy[0] = armies[3];  // note the special order
-    defArmy[1] = armies[2];
+    defArmy[0] = defender2_;  // note the special order
+    defArmy[1] = defender1_;
 
     const auto result = do_battle(attArmy, defArmy);
     std::cout << "\nAttacker:\n";
@@ -211,3 +225,5 @@ BOOST_AUTO_TEST_CASE(battle_testing)
             return def.unitType < 0 || def.num == 0;
         }));
 }
+
+BOOST_AUTO_TEST_SUITE_END()
