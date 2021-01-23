@@ -107,6 +107,15 @@ int UnitState::speed() const
     return unit->speed;
 }
 
+int UnitState::damage(AttackType aType) const
+{
+    if (aType == AttackType::simulated) {
+        return num * (unit->damage.min() + unit->damage.max()) / 2;
+    }
+
+    return num * unit->damage.get();
+}
+
 void UnitState::take_damage(int dmg)
 {
     // TODO: allow for healing actions (negative damage)
@@ -233,14 +242,13 @@ int BattleState::optimal_target() const
     return target;
 }
 
-void BattleState::attack(int targetIndex, __attribute__((unused)) AttackType aType)
+void BattleState::attack(int targetIndex, AttackType aType)
 {
     assert(!done() && units_[activeUnit_].attacker != units_[targetIndex].attacker);
 
     auto &att = units_[activeUnit_];
     auto &def = units_[targetIndex];
-    // TODO: always do simulated attack for now
-    int dmg = att.num * (att.unit->damage.min() + att.unit->damage.max()) / 2;
+    int dmg = att.damage(aType);
     if (log_) {
         BattleEvent event;
         event.action = ActionType::attack;
@@ -264,7 +272,7 @@ void BattleState::attack(int targetIndex, __attribute__((unused)) AttackType aTy
     // TODO: retaliation might needlessly complicate things.  Retaliation can make
     // it appear that certain units get two turns back-to-back.
     if (def.alive() && !def.retaliated) {
-        dmg = def.num * (def.unit->damage.min() + def.unit->damage.max()) / 2;
+        dmg = def.damage(aType);
         if (log_) {
             BattleEvent event;
             event.action = ActionType::retaliate;

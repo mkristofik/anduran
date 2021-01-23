@@ -16,21 +16,23 @@
 std::mt19937 RandomRange::engine(static_cast<unsigned int>(std::time(nullptr)));
 
 RandomRange::RandomRange(int minVal, int maxVal)
-    : dist_(minVal, maxVal)
+    : min_(minVal),
+    max_(maxVal)
 {
 }
 
 int RandomRange::min() const
 {
-    return dist_.min();
+    return min_;
 }
 
 int RandomRange::max() const
 {
-    return dist_.max();
+    return max_;
 }
 
-int RandomRange::get()
+int RandomRange::get() const
 {
-    return dist_(engine);
+    std::uniform_int_distribution<int> dist(min_, max_);
+    return dist(engine);
 }

@@ -32,6 +32,7 @@ struct ArmyUnit
 using Army = std::array<ArmyUnit, ARMY_SIZE>;
 
 
+enum class AttackType {normal, simulated};
 enum class BattleSide {attacker, defender}; 
 
 struct UnitState
@@ -50,6 +51,7 @@ struct UnitState
     bool alive() const;
     int total_hp() const;
     int speed() const;
+    int damage(AttackType aType = AttackType::normal) const;
     void take_damage(int dmg);
 };
 
@@ -75,7 +77,6 @@ struct BattleEvent
 using BattleLog = std::vector<BattleEvent>;
 
 
-enum class AttackType {normal, simulated};
 using TargetList = boost::container::static_vector<int, ARMY_SIZE>;
 
 class BattleState

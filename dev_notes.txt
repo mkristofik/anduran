@@ -46,15 +46,15 @@ destination hex
 
 # Thoughts on Combat
 --------------------
-- every battle is auto-combat
+* every battle is auto-combat
 - "color wheel": Flyer > Mounted > Melee > Ranged > Flyer
-- prevent gang-ups, maybe limit to 2 attackers per creature?
-- one retaliation per creature per round
-- keep it simple at first
-    - attack in descending speed order
-    - attacker chooses target
-    - no skips or waits
-    - few attributes: damage range, hp, speed
+* prevent gang-ups, maybe limit to 2 attackers per creature?
+* one retaliation per creature per round
+* keep it simple at first
+    * attack in descending speed order
+    * attacker chooses target
+    * no skips or waits
+    * few attributes: damage range, hp, speed
 - idea: Tactics phase before combat
     - two rows of creatures
     - mounted and melee can only attack from the front row to the front row

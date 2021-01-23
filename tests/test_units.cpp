@@ -196,7 +196,7 @@ BOOST_AUTO_TEST_CASE(battle_function)
     defArmy[0] = defender2_;  // note the special order
     defArmy[1] = defender1_;
 
-    const auto result = do_battle(attArmy, defArmy);
+    const auto result = do_battle(attArmy, defArmy, AttackType::simulated);
     std::cout << "\nAttacker:\n";
     for (auto &unit : result.attacker) {
         if (unit.unitType >= 0) {

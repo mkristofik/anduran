@@ -25,12 +25,13 @@ public:
     int max() const;
 
     // Generate one random number in the closed range [min(), max()].
-    int get();
+    int get() const;
 
     static std::mt19937 engine;
 
 private:
-    std::uniform_int_distribution<int> dist_;
+    int min_;
+    int max_;
 };
 
 #endif
