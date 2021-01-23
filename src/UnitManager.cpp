@@ -90,8 +90,7 @@ UnitManager::UnitManager(const std::string &configFile,
                 const auto &ary = f->value.GetArray();
                 if (field == "damage") {
                     if (ary.Capacity() == 2 && ary[0].IsInt() && ary[1].IsInt()) {
-                        data.minDmg = ary[0].GetInt();
-                        data.maxDmg = ary[1].GetInt();
+                        data.damage = {ary[0].GetInt(), ary[1].GetInt()};
                     }
                     else {
                         SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,

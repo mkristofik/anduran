@@ -13,6 +13,7 @@
 #define BOOST_TEST_MODULE Anduran Tests
 #include <boost/test/unit_test.hpp>
 
+#include "UnitData.h"
 #include "UnitManager.h"
 #include "battle_utils.h"
 
@@ -53,29 +54,25 @@ struct TestUnitConfig
         att1_.type = 0;
         att1_.name = "Archer";
         att1_.speed = 2;
-        att1_.minDmg = 2;
-        att1_.maxDmg = 3;
+        att1_.damage = {2, 3};
         att1_.hp = 10;
 
         att2_.type = 1;
         att2_.name = "Swordsman";
         att2_.speed = 4;
-        att2_.minDmg = 5;
-        att2_.maxDmg = 9;
+        att2_.damage = {5, 9};
         att2_.hp = 25;
 
         def1_.type = 2;
         def1_.name = "Wolf";
         def1_.speed = 6;
-        def1_.minDmg = 4;
-        def1_.maxDmg = 8;
+        def1_.damage = {4, 8};
         def1_.hp = 20;
 
         def2_.type = 3;
         def2_.name = "Goblin";
         def2_.speed = 4;
-        def2_.minDmg = 2;
-        def2_.maxDmg = 4;
+        def2_.damage = {2, 4};
         def2_.hp = 3;
 
         attacker1_ = UnitState(att1_, 8, BattleSide::attacker);

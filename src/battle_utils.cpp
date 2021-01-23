@@ -12,6 +12,7 @@
 */
 #include "battle_utils.h"
 
+#include "UnitData.h"
 #include "UnitManager.h"
 #include "container_utils.h"
 
@@ -239,7 +240,7 @@ void BattleState::attack(int targetIndex, __attribute__((unused)) AttackType aTy
     auto &att = units_[activeUnit_];
     auto &def = units_[targetIndex];
     // TODO: always do simulated attack for now
-    int dmg = att.num * (att.unit->minDmg + att.unit->maxDmg) / 2;
+    int dmg = att.num * (att.unit->damage.min() + att.unit->damage.max()) / 2;
     if (log_) {
         BattleEvent event;
         event.action = ActionType::attack;
@@ -263,7 +264,7 @@ void BattleState::attack(int targetIndex, __attribute__((unused)) AttackType aTy
     // TODO: retaliation might needlessly complicate things.  Retaliation can make
     // it appear that certain units get two turns back-to-back.
     if (def.alive() && !def.retaliated) {
-        dmg = def.num * (def.unit->minDmg + def.unit->maxDmg) / 2;
+        dmg = def.num * (def.unit->damage.min() + def.unit->damage.max()) / 2;
         if (log_) {
             BattleEvent event;
             event.action = ActionType::retaliate;

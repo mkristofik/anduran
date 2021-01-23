@@ -14,7 +14,7 @@
 #define UNIT_MANAGER_H
 
 #include "SdlTexture.h"
-#include "iterable_enum_class.h"
+#include "UnitData.h"
 #include "team_color.h"
 
 #include "boost/container/flat_map.hpp"
@@ -37,17 +37,6 @@ struct UnitMedia
 {
     boost::container::flat_map<ImageType, TeamColoredTextures> images;
     SdlTexture projectile;
-};
-
-
-struct UnitData
-{
-    std::string name;
-    int type = -1;
-    int speed = 0;
-    int minDmg = 0;
-    int maxDmg = 0;
-    int hp = 0;
 };
 
 

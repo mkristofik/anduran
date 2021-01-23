@@ -76,6 +76,7 @@ ANDURAN_SRC = GameState.cpp \
 	SdlSurface.cpp \
 	SdlTexture.cpp \
 	SdlWindow.cpp \
+	UnitData.cpp \
 	UnitManager.cpp \
 	anduran.cpp \
 	anim_utils.cpp \
@@ -89,6 +90,7 @@ ANDURAN_DEPS = $(ANDURAN_OBJS:%.o=%.d)
 
 UNITTESTS = unittests$(EXE)
 UNITTESTS_SRC = RandomRange.cpp \
+	UnitData.cpp \
 	battle_utils.cpp \
 	object_types.cpp \
 	$(wildcard $(TEST_DIR)/*.cpp)
