@@ -14,25 +14,24 @@
 #include <ctime>
 
 std::mt19937 RandomRange::engine(static_cast<unsigned int>(std::time(nullptr)));
+RandomRange::DistType RandomRange::dist;
 
 RandomRange::RandomRange(int minVal, int maxVal)
-    : min_(minVal),
-    max_(maxVal)
+    : range_(minVal, maxVal)
 {
 }
 
 int RandomRange::min() const
 {
-    return min_;
+    return range_.a();
 }
 
 int RandomRange::max() const
 {
-    return max_;
+    return range_.b();
 }
 
 int RandomRange::get() const
 {
-    std::uniform_int_distribution<int> dist(min_, max_);
-    return dist(engine);
+    return dist(engine, range_);
 }

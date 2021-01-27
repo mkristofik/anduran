@@ -30,8 +30,9 @@ public:
     static std::mt19937 engine;
 
 private:
-    int min_;
-    int max_;
+    using DistType = std::uniform_int_distribution<int>;
+    static DistType dist;
+    DistType::param_type range_;
 };
 
 #endif
