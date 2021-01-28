@@ -30,6 +30,7 @@ namespace
         const auto isMirrored = entity.mirrored;
         entity = baseState;
         entity.mirrored = isMirrored;
+        entity.visible = true;
     }
 
     // Choose the animation frame to show based on elapsed time.  Show the last
@@ -229,7 +230,6 @@ void AnimMove::stop()
 
     set_idle(moverObj, baseState_);
     moverObj.hex = hDest;
-    moverObj.visible = true;
 
     update_entity(moverObj);
 }
@@ -329,7 +329,9 @@ void AnimMelee::stop()
     auto defObj = get_entity(defender_);
 
     set_idle(attObj, attBaseState_);
+    attObj.visible = false;
     set_idle(defObj, defBaseState_);
+    defObj.visible = false;
     update_entity(attObj, attImg_);
     update_entity(defObj, defImg_);
 }
@@ -451,6 +453,7 @@ void AnimRanged::stop()
     auto defObj = get_entity(defender_);
 
     set_idle(attObj, attBaseState_);
+    attObj.visible = false;
     set_idle(defObj, defBaseState_);
     defObj.visible = false;
     update_entity(attObj, attImg_);

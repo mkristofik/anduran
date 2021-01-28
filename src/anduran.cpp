@@ -47,11 +47,13 @@ class Anduran : public SdlApp
 public:
     Anduran();
 
+    // TODO: virtual keyword unnecessary when you have override
     virtual void update_frame(Uint32 elapsed_ms) override;
     virtual void handle_lmouse_up() override;
 
 private:
     void experiment();
+    void experiment2();
 
     // Load images that aren't tied to units.
     void load_images();
@@ -61,6 +63,9 @@ private:
     void load_villages();
     void load_objects();
     void load_simple_object(ObjectType type, const std::string &imgName);
+
+    ArmyArray make_army_state(const Army &army, BattleSide side) const;
+    BattleResult run_battle(const Army &attacker, const Army &defender) const;
 
     SdlWindow win_;
     RandomMap rmap_;
@@ -180,7 +185,7 @@ void Anduran::handle_lmouse_up()
             rmapView_.clearHighlight();
 
             if (mouseHex == Hex{4, 8}) {
-                experiment();
+                experiment2();
             }
         }
     }
@@ -229,6 +234,67 @@ void Anduran::experiment()
                               orcImg,
                               orcDie,
                               projectile);
+    anims_.insert<AnimDisplay>(ellipse, player->hex);
+    anims_.insert<AnimDisplay>(player->entity, championImages_[curPlayerNum_]);
+}
+
+void Anduran::experiment2()
+{
+    auto player = game_.get_object(curPlayerId_);
+    const auto team = player->team;
+    const auto swordsman = units_.get_type("swordsman"s);
+    auto swordsmanImg = units_.get_image(swordsman, ImageType::img_idle, team);
+    auto swordsmanAttack = units_.get_image(swordsman, ImageType::anim_attack, team);
+    auto swordsmanDefend = units_.get_image(swordsman, ImageType::img_defend, team);
+
+    const auto orc = units_.get_type("orc"s);
+    auto orcImg = units_.get_image(orc, ImageType::img_idle, Team::neutral);
+    auto orcAttack = units_.get_image(orc, ImageType::anim_attack, Team::neutral);
+    auto orcDefend = units_.get_image(orc, ImageType::img_defend, Team::neutral);
+    auto orcDie = units_.get_image(orc, ImageType::anim_die, Team::neutral);
+
+    const int enemy = rmapView_.addEntity(orcImg, Hex{5, 8}, ZOrder::object);
+    auto ellipse = player->secondary;
+
+    Army attacker;
+    attacker[0] = {swordsman, 4};
+    Army defender;
+    defender[0] = {orc, 4};
+    const auto result = run_battle(attacker, defender);
+
+    for (const auto &event : result.log) {
+        if (event.action == ActionType::next_round) {
+            continue;
+        }
+        if (event.numDefenders > event.losses) {
+            if (event.attackerType == swordsman) {
+                anims_.insert<AnimMelee>(player->entity,
+                                         swordsmanImg,
+                                         swordsmanAttack,
+                                         enemy,
+                                         orcImg,
+                                         orcDefend);
+            }
+            else {
+                anims_.insert<AnimMelee>(enemy,
+                                         orcImg,
+                                         orcAttack,
+                                         player->entity,
+                                         swordsmanImg,
+                                         swordsmanDefend);
+            }
+        }
+        else {
+            // We know the orc will lose this fight.
+            anims_.insert<AnimMelee>(player->entity,
+                                     swordsmanImg,
+                                     swordsmanAttack,
+                                     enemy,
+                                     orcImg,
+                                     orcDie);
+        }
+    }
+
     anims_.insert<AnimDisplay>(ellipse, player->hex);
     anims_.insert<AnimDisplay>(player->entity, championImages_[curPlayerNum_]);
 }
@@ -356,6 +422,24 @@ void Anduran::load_simple_object(ObjectType type, const std::string &imgName)
         obj.type = type;
         game_.add_object(obj);
     }
+}
+
+ArmyArray Anduran::make_army_state(const Army &army, BattleSide side) const
+{
+    ArmyArray ret;
+    for (int i = 0; i < ssize(army); ++i) {
+        if (army[i].unitType >= 0) {
+            ret[i] = UnitState(units_.get_data(army[i].unitType), army[i].num, side);
+        }
+    }
+
+    return ret;
+}
+
+BattleResult Anduran::run_battle(const Army &attacker, const Army &defender) const
+{
+    return do_battle(make_army_state(attacker, BattleSide::attacker),
+                     make_army_state(defender, BattleSide::defender));
 }
 
 
