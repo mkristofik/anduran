@@ -259,6 +259,7 @@ void BattleState::attack(int targetIndex, AttackType aType)
         event.defenderHp = def.total_hp();
         event.numDefenders = def.num;
         event.damage = dmg;
+        event.attackingTeam = att.attacker;
 
         def.take_damage(dmg);
         event.losses = event.numDefenders - def.num;

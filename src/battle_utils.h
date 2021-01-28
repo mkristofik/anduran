@@ -72,6 +72,7 @@ struct BattleEvent
     int numDefenders = 0;
     int damage = 0;
     int losses = 0;
+    bool attackingTeam = true;  // attacker is in attacking army
 };
 
 using BattleLog = std::vector<BattleEvent>;

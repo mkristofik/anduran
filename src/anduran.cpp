@@ -240,63 +240,56 @@ void Anduran::experiment()
 
 void Anduran::experiment2()
 {
-    auto player = game_.get_object(curPlayerId_);
-    const auto team = player->team;
-    const auto swordsman = units_.get_type("swordsman"s);
-    auto swordsmanImg = units_.get_image(swordsman, ImageType::img_idle, team);
-    auto swordsmanAttack = units_.get_image(swordsman, ImageType::anim_attack, team);
-    auto swordsmanDefend = units_.get_image(swordsman, ImageType::img_defend, team);
-
-    const auto orc = units_.get_type("orc"s);
-    auto orcImg = units_.get_image(orc, ImageType::img_idle, Team::neutral);
-    auto orcAttack = units_.get_image(orc, ImageType::anim_attack, Team::neutral);
-    auto orcDefend = units_.get_image(orc, ImageType::img_defend, Team::neutral);
-    auto orcDie = units_.get_image(orc, ImageType::anim_die, Team::neutral);
-
-    const int enemy = rmapView_.addEntity(orcImg, Hex{5, 8}, ZOrder::object);
-    auto ellipse = player->secondary;
+    GameObject player = *game_.get_object(curPlayerId_);
+    GameObject enemy;
+    for (auto &obj : game_.objects_in_hex(Hex{5, 8})) {
+        if (obj.type == ObjectType::champion) {
+            enemy = obj;
+            break;
+        }
+    }
 
     Army attacker;
-    attacker[0] = {swordsman, 4};
+    attacker[0] = {units_.get_type("swordsman"s), 4};
     Army defender;
-    defender[0] = {orc, 4};
+    defender[0] = {units_.get_type("orc"s), 4};
     const auto result = run_battle(attacker, defender);
 
     for (const auto &event : result.log) {
         if (event.action == ActionType::next_round) {
             continue;
         }
-        if (event.numDefenders > event.losses) {
-            if (event.attackerType == swordsman) {
-                anims_.insert<AnimMelee>(player->entity,
-                                         swordsmanImg,
-                                         swordsmanAttack,
-                                         enemy,
-                                         orcImg,
-                                         orcDefend);
-            }
-            else {
-                anims_.insert<AnimMelee>(enemy,
-                                         orcImg,
-                                         orcAttack,
-                                         player->entity,
-                                         swordsmanImg,
-                                         swordsmanDefend);
-            }
+
+        auto attEntity = player.entity;
+        auto attTeam = player.team;
+        auto defEntity = enemy.entity;
+        auto defTeam = enemy.team;
+        if (!event.attackingTeam) {
+            std::swap(attTeam, defTeam);
+            std::swap(attEntity, defEntity);
         }
-        else {
-            // We know the orc will lose this fight.
-            anims_.insert<AnimMelee>(player->entity,
-                                     swordsmanImg,
-                                     swordsmanAttack,
-                                     enemy,
-                                     orcImg,
-                                     orcDie);
+
+        const auto attType = event.attackerType;
+        const auto attIdle = units_.get_image(attType, ImageType::img_idle, attTeam);
+        const auto attAnim = units_.get_image(attType, ImageType::anim_attack, attTeam);
+
+        const auto defType = event.defenderType;
+        const auto defIdle = units_.get_image(defType, ImageType::img_idle, defTeam);
+        auto defAnim = units_.get_image(defType, ImageType::img_defend, defTeam);
+        if (event.numDefenders == event.losses) {
+            defAnim = units_.get_image(defType, ImageType::anim_die, defTeam);
         }
+
+        // TODO: what if it's a ranged attack?
+        anims_.insert<AnimMelee>(attEntity, attIdle, attAnim,
+                                 defEntity, defIdle, defAnim);
     }
 
-    anims_.insert<AnimDisplay>(ellipse, player->hex);
-    anims_.insert<AnimDisplay>(player->entity, championImages_[curPlayerNum_]);
+    // TODO: We know the player is going to win, but what if we don't?  Have to
+    // restore the winning team's starting image (and ellipse if needed).
+    auto ellipse = player.secondary;
+    anims_.insert<AnimDisplay>(ellipse, player.hex);
+    anims_.insert<AnimDisplay>(player.entity, championImages_[curPlayerNum_]);
 }
 
 void Anduran::load_images()
@@ -349,6 +342,16 @@ void Anduran::load_players()
         playerObjectIds_.push_back(champion.entity);
         game_.add_object(champion);
     }
+
+    // TODO: add a wandering army to attack
+    const auto orc = units_.get_type("orc"s);
+    auto orcImg = units_.get_image(orc, ImageType::img_idle, Team::neutral);
+    GameObject enemy;
+    enemy.hex = {5, 8};
+    enemy.entity = rmapView_.addEntity(orcImg, enemy.hex, ZOrder::unit);
+    enemy.team = Team::neutral;
+    enemy.type = ObjectType::champion;
+    game_.add_object(enemy);
 }
 
 void Anduran::load_villages()
