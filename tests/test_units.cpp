@@ -78,7 +78,7 @@ struct TestUnitConfig
         attacker1_ = UnitState(att1_, 8, BattleSide::attacker);
         attacker2_ = UnitState(att2_, 3, BattleSide::attacker);
         defender1_ = UnitState(def1_, 4, BattleSide::defender);
-        defender2_ = UnitState(def2_, 10, BattleSide::defender);
+        defender2_ = UnitState(def2_, 8, BattleSide::defender);
     }
 };
 

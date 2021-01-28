@@ -271,6 +271,7 @@ void BattleState::attack(int targetIndex, AttackType aType)
 
     // TODO: retaliation might needlessly complicate things.  Retaliation can make
     // it appear that certain units get two turns back-to-back.
+    /*
     if (def.alive() && !def.retaliated) {
         dmg = def.damage(aType);
         if (log_) {
@@ -293,6 +294,7 @@ void BattleState::attack(int targetIndex, AttackType aType)
         }
         def.retaliated = true;
     }
+    */
 
     next_turn();
 }
