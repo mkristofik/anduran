@@ -114,7 +114,7 @@ $(ANDURAN) : $(ANDURAN_OBJS)
 	$(CXX) $(ANDURAN_OBJS) $(LDFLAGS) $(LDLIBS) -o $@
 
 $(UNITTESTS) : $(UNITTESTS_OBJS)
-	$(CXX) $(UNITTESTS_OBJS) $(LDFLAGS) -lboost_unit_test_framework -o $@
+	$(CXX) $(UNITTESTS_OBJS) $(LDFLAGS) -static -lboost_unit_test_framework -o $@
 	@./$(UNITTESTS)
 
 # Auto-generate a dependency file for each cpp file. We first create a build
