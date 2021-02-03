@@ -18,7 +18,6 @@
 
 #include "SDL.h"
 #include <algorithm>
-#include <cassert>
 #include <iterator>
 #include <tuple>
 
@@ -137,7 +136,7 @@ namespace
     // struct.  Assumes 32-bit colors.
     SDL_Color getColor(Uint32 pixel, const SDL_PixelFormat *fmt)
     {
-        assert(fmt->BytesPerPixel == 4);
+        SDL_assert(fmt->BytesPerPixel == 4);
         SDL_Color color;
         SDL_GetRGBA(pixel, fmt, &color.r, &color.g, &color.b, &color.a);
         return color;
@@ -145,7 +144,7 @@ namespace
 
     Uint32 setColor(const SDL_Color &color, const SDL_PixelFormat *fmt)
     {
-        assert(fmt->BytesPerPixel == 4);
+        SDL_assert(fmt->BytesPerPixel == 4);
         return SDL_MapRGBA(fmt, color.r, color.g, color.b, color.a);
     }
 
@@ -162,7 +161,7 @@ namespace
         SdlLockSurface guard(imgCopy);
 
         auto surf = imgCopy.get();
-        assert(surf->format->BytesPerPixel == 4);
+        SDL_assert(surf->format->BytesPerPixel == 4);
 
         auto pixel = static_cast<Uint32 *>(surf->pixels);
         const auto endPixels = pixel + surf->w * surf->h;
@@ -208,7 +207,7 @@ SdlSurface ellipseToRefColor(const SdlSurface &src)
     SdlLockSurface guard(imgCopy);
 
     auto surf = imgCopy.get();
-    assert(surf->format->BytesPerPixel == 4);
+    SDL_assert(surf->format->BytesPerPixel == 4);
 
     auto pixel = static_cast<Uint32 *>(surf->pixels);
     const auto endPixels = pixel + surf->w * surf->h;
@@ -235,7 +234,7 @@ SdlSurface flagToRefColor(const SdlSurface &src)
     SdlLockSurface guard(imgCopy);
 
     auto surf = imgCopy.get();
-    assert(surf->format->BytesPerPixel == 4);
+    SDL_assert(surf->format->BytesPerPixel == 4);
 
     auto pixel = static_cast<Uint32 *>(surf->pixels);
     const auto endPixels = pixel + surf->w * surf->h;

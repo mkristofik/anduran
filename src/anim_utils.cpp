@@ -14,7 +14,6 @@
 
 #include "container_utils.h"
 #include <algorithm>
-#include <cassert>
 
 namespace
 {
@@ -180,7 +179,7 @@ AnimMove::AnimMove(MapDisplay &display,
     baseState_(),
     distToMove_()
 {
-    assert(!path.empty());
+    SDL_assert(!path.empty());
 }
 
 void AnimMove::start()

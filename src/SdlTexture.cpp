@@ -15,7 +15,8 @@
 #include "SdlWindow.h"
 #include "container_utils.h"
 #include "pixel_utils.h"
-#include <cassert>
+
+#include "SDL.h"
 
 namespace
 {
@@ -58,7 +59,7 @@ SdlTexture::SdlTexture(const SdlSurface &src,
     : pimpl_(std::make_shared<TextureData>())
 {
     pimpl_->renderer = win.renderer();
-    assert(numFrames.row > 0 && numFrames.col > 0 && pimpl_->renderer);
+    SDL_assert(numFrames.row > 0 && numFrames.col > 0 && pimpl_->renderer);
 
     pimpl_->rows = numFrames.row;
     pimpl_->cols = numFrames.col;
@@ -74,7 +75,7 @@ SdlTexture SdlTexture::make_image(const SdlSurface &src, SdlWindow &win)
     auto &impl = *self.pimpl_;
 
     impl.renderer = win.renderer();
-    assert(impl.renderer && src);
+    SDL_assert(impl.renderer && src);
 
     impl.rows = 1;
     impl.cols = 1;
@@ -89,7 +90,7 @@ SdlTexture SdlTexture::make_sprite_sheet(const SdlSurface &src,
                                          SdlWindow &win,
                                          const Frame &numFrames)
 {
-    assert(numFrames.row > 0 && numFrames.col > 0);
+    SDL_assert(numFrames.row > 0 && numFrames.col > 0);
 
     auto self = make_image(src, win);
     auto &impl = *self.pimpl_;
@@ -106,7 +107,7 @@ SdlTexture SdlTexture::make_animation(const SdlSurface &src,
                                       const Frame &numFrames,
                                       const std::vector<Uint32> &timing_ms)
 {
-    assert(ssize(timing_ms) == numFrames.col);
+    SDL_assert(ssize(timing_ms) == numFrames.col);
 
     auto self = make_sprite_sheet(src, win, numFrames);
     self.pimpl_->timing_ms = timing_ms;
@@ -174,7 +175,7 @@ SDL_Rect SdlTexture::get_dest_rect(const SDL_Point &p) const
 
 void SdlTexture::draw(const SDL_Point &p, const Frame &frame)
 {
-    assert(*this);
+    SDL_assert(*this);
 
     const auto src = get_frame_rect(frame);
     const auto dest = get_dest_rect(p);
@@ -192,7 +193,7 @@ void SdlTexture::draw_centered(const SDL_Point &p, const Frame &frame)
 
 void SdlTexture::draw_mirrored(const SDL_Point &p, const Frame &frame)
 {
-    assert(*this);
+    SDL_assert(*this);
 
     const auto src = get_frame_rect(frame);
     const auto dest = get_dest_rect(p);
@@ -211,8 +212,8 @@ void SdlTexture::draw_mirrored(const SDL_Point &p, const Frame &frame)
 
 SDL_Rect SdlTexture::get_frame_rect(const Frame &frame) const
 {
-    assert(frame.row >= 0 && frame.row < rows() &&
-           frame.col >= 0 && frame.col < cols());
+    SDL_assert(frame.row >= 0 && frame.row < rows() &&
+               frame.col >= 0 && frame.col < cols());
 
     const auto fwidth = frame_width();
     const auto fheight = frame_height();

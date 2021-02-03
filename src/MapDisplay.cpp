@@ -266,20 +266,20 @@ int MapDisplay::addHiddenEntity(const SdlTexture &img, ZOrder z)
 
 MapEntity MapDisplay::getEntity(int id) const
 {
-    assert(in_bounds(entities_, id));
+    SDL_assert(in_bounds(entities_, id));
     return entities_[id];
 }
 
 void MapDisplay::updateEntity(const MapEntity &newState)
 {
     const int id = newState.id;
-    assert(in_bounds(entities_, id));
+    SDL_assert(in_bounds(entities_, id));
     entities_[id] = newState;
 }
 
 void MapDisplay::setEntityImage(int id, const SdlTexture &img)
 {
-    assert(in_bounds(entityImg_, id));
+    SDL_assert(in_bounds(entityImg_, id));
     entityImg_[id] = img;
 }
 
@@ -351,7 +351,7 @@ Hex MapDisplay::hexFromMousePos() const
 
 void MapDisplay::highlight(const Hex &hex)
 {
-    assert(!map_->offGrid(hex));
+    SDL_assert(!map_->offGrid(hex));
 
     auto e = getEntity(hexHighlightId_);
     e.hex = hex;
@@ -451,7 +451,7 @@ void MapDisplay::addBorderTiles()
     for (int y = 0; y < map_->width(); ++y) {
         const Hex pairedHex = {0, y};
         const auto pairedIndex = map_->intFromHex(pairedHex);
-        assert(!map_->offGrid(pairedIndex));
+        SDL_assert(!map_->offGrid(pairedIndex));
 
         // Start with a copy of the paired tile.
         auto newTile = tiles_[pairedIndex];
@@ -466,7 +466,7 @@ void MapDisplay::addBorderTiles()
     for (int y = 0; y < map_->width(); ++y) {
         const Hex pairedHex = {map_->width() - 1, y};
         const auto pairedIndex = map_->intFromHex(pairedHex);
-        assert(!map_->offGrid(pairedIndex));
+        SDL_assert(!map_->offGrid(pairedIndex));
 
         auto newTile = tiles_[pairedIndex];
         ++newTile.hex.x;
@@ -478,7 +478,7 @@ void MapDisplay::addBorderTiles()
     for (int x = 0; x < map_->width(); ++x) {
         const Hex pairedHex = {x, 0};
         const auto pairedIndex = map_->intFromHex(pairedHex);
-        assert(!map_->offGrid(pairedIndex));
+        SDL_assert(!map_->offGrid(pairedIndex));
 
         auto newTile = tiles_[pairedIndex];
         --newTile.hex.y;
@@ -490,7 +490,7 @@ void MapDisplay::addBorderTiles()
     for (int x = 0; x < map_->width(); ++x) {
         const Hex pairedHex = {x, map_->width() - 1};
         const auto pairedIndex = map_->intFromHex(pairedHex);
-        assert(!map_->offGrid(pairedIndex));
+        SDL_assert(!map_->offGrid(pairedIndex));
 
         auto newTile = tiles_[pairedIndex];
         ++newTile.hex.y;

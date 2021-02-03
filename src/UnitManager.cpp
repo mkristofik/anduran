@@ -17,6 +17,7 @@
 #include "container_utils.h"
 #include "json_utils.h"
 
+#include "SDL.h"
 #include <filesystem>
 
 UnitManager::UnitManager(const std::string &configFile,
@@ -129,7 +130,7 @@ int UnitManager::get_type(const std::string &key) const
 
 SdlTexture UnitManager::get_image(int unitType, ImageType imgType, Team team) const
 {
-    assert(in_bounds(media_, unitType));
+    SDL_assert(in_bounds(media_, unitType));
 
     auto imgIter = media_[unitType].images.find(imgType);
     const auto endIter = end(media_[unitType].images);
@@ -148,13 +149,13 @@ SdlTexture UnitManager::get_image(int unitType, ImageType imgType, Team team) co
 
 SdlTexture UnitManager::get_projectile(int unitType) const
 {
-    assert(in_bounds(media_, unitType));
+    SDL_assert(in_bounds(media_, unitType));
     return media_[unitType].projectile;
 }
 
 const UnitData & UnitManager::get_data(int unitType) const
 {
-    assert(in_bounds(data_, unitType));
+    SDL_assert(in_bounds(data_, unitType));
     return data_[unitType];
 }
 

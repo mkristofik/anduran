@@ -31,7 +31,6 @@
 #include "SDL.h"
 #include "SDL_image.h"
 #include <algorithm>
-#include <cassert>
 #include <cstdlib>
 #include <iostream>
 #include <memory>
@@ -317,8 +316,7 @@ void Anduran::load_players()
 {
     // Randomize the starting locations for each player.
     auto castles = rmap_.getCastleTiles();
-    // TODO: use SDL_assert wherever possible
-    assert(ssize(castles) <= enum_size<Team>());
+    SDL_assert(ssize(castles) <= enum_size<Team>());
     randomize(castles);
 
     const auto castleImg = images_.make_texture("castle"s, win_);

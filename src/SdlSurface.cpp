@@ -13,7 +13,6 @@
 #include "SdlSurface.h"
 
 #include "SDL_image.h"
-#include <cassert>
 #include <stdexcept>
 
 SdlSurface::SdlSurface(SDL_Surface *surf)
@@ -57,13 +56,13 @@ SdlSurface SdlSurface::clone() const
 
 SDL_Surface * SdlSurface::get() const
 {
-    assert(*this);
+    SDL_assert(*this);
     return surf_.get();
 }
 
 SDL_Surface * SdlSurface::operator->() const
 {
-    assert(*this);
+    SDL_assert(*this);
     return get();
 }
 
