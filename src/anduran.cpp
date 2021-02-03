@@ -64,6 +64,9 @@ private:
 
     ArmyArray make_army_state(const Army &army, BattleSide side) const;
     BattleResult run_battle(const Army &attacker, const Army &defender) const;
+    void animate(const GameObject &attacker,
+                 const GameObject &defender,
+                 const BattleEvent &event);
 
     SdlWindow win_;
     RandomMap rmap_;
@@ -253,36 +256,17 @@ void Anduran::experiment2()
     defender[0] = {units_.get_type("orc"s), 4};
     const auto result = run_battle(attacker, defender);
 
-    // TODO: break this into a generic animate function. Need two game objects for
-    // attacker and defender, and the battle log.
     for (const auto &event : result.log) {
         if (event.action == ActionType::next_round) {
             continue;
         }
 
-        auto attEntity = player.entity;
-        auto attTeam = player.team;
-        auto defEntity = enemy.entity;
-        auto defTeam = enemy.team;
-        if (!event.attackingTeam) {
-            std::swap(attTeam, defTeam);
-            std::swap(attEntity, defEntity);
+        if (event.attackingTeam) {
+            animate(player, enemy, event);
         }
-
-        const auto attType = event.attackerType;
-        const auto attIdle = units_.get_image(attType, ImageType::img_idle, attTeam);
-        const auto attAnim = units_.get_image(attType, ImageType::anim_attack, attTeam);
-
-        const auto defType = event.defenderType;
-        const auto defIdle = units_.get_image(defType, ImageType::img_idle, defTeam);
-        auto defAnim = units_.get_image(defType, ImageType::img_defend, defTeam);
-        if (event.numDefenders == event.losses) {
-            defAnim = units_.get_image(defType, ImageType::anim_die, defTeam);
+        else {
+            animate(enemy, player, event);
         }
-
-        // TODO: what if it's a ranged attack?
-        anims_.insert<AnimMelee>(attEntity, attIdle, attAnim,
-                                 defEntity, defIdle, defAnim);
     }
 
     // TODO: We know the player is going to win, but what if we don't?  Have to
@@ -343,7 +327,7 @@ void Anduran::load_players()
         game_.add_object(champion);
     }
 
-    // TODO: add a wandering army to attack
+    // Add a wandering army to attack.
     const auto orc = units_.get_type("orc"s);
     auto orcImg = units_.get_image(orc, ImageType::img_idle, Team::neutral);
     GameObject enemy;
@@ -443,6 +427,30 @@ BattleResult Anduran::run_battle(const Army &attacker, const Army &defender) con
 {
     return do_battle(make_army_state(attacker, BattleSide::attacker),
                      make_army_state(defender, BattleSide::defender));
+}
+
+void Anduran::animate(const GameObject &attacker,
+                      const GameObject &defender,
+                      const BattleEvent &event)
+{
+    SDL_assert(event.attackerType >= 0 && event.defenderType >= 0);
+
+    const auto attUnitType = event.attackerType;
+    const auto attTeam = attacker.team;
+    const auto attIdle = units_.get_image(attUnitType, ImageType::img_idle, attTeam);
+    const auto attAnim = units_.get_image(attUnitType, ImageType::anim_attack, attTeam);
+
+    const auto defUnitType = event.defenderType;
+    const auto defTeam = defender.team;
+    const auto defIdle = units_.get_image(defUnitType, ImageType::img_idle, defTeam);
+    auto defAnim = units_.get_image(defUnitType, ImageType::img_defend, defTeam);
+    if (event.numDefenders == event.losses) {
+        defAnim = units_.get_image(defUnitType, ImageType::anim_die, defTeam);
+    }
+
+    // TODO: what if it's a ranged attack?
+    anims_.insert<AnimMelee>(attacker.entity, attIdle, attAnim,
+                             defender.entity, defIdle, defAnim);
 }
 
 
