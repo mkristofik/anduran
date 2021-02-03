@@ -85,6 +85,7 @@ public:
     // from the map display.
     MapEntity getEntity(int id) const;
     void updateEntity(const MapEntity &newState);
+    // TODO: need to be able to get entity image too
     void setEntityImage(int id, const SdlTexture &img);
 
     void handleMousePos(Uint32 elapsed_ms);

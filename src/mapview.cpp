@@ -22,7 +22,7 @@ class MapViewApp : public SdlApp
 public:
     MapViewApp();
 
-    virtual void update_frame(Uint32 elapsed_ms) override;
+    void update_frame(Uint32 elapsed_ms) override;
 
 private:
     SdlWindow win_;

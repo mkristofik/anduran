@@ -60,8 +60,8 @@ public:
     AnimHide(MapDisplay &display, int entity);
 
 private:
-    virtual void start() override;
-    virtual void update(Uint32) override {}
+    void start() override;
+    void update(Uint32) override {}
 
     int entity_;
 };
@@ -75,8 +75,8 @@ public:
     AnimDisplay(MapDisplay &display, int entity, const SdlTexture &img, const Hex &hex);
 
 private:
-    virtual void start() override;
-    virtual void update(Uint32) override {}
+    void start() override;
+    void update(Uint32) override {}
 
     int entity_;
     SdlTexture imgToChange_;
@@ -90,9 +90,9 @@ public:
     AnimMove(MapDisplay &display, int mover, const std::vector<Hex> &path);
 
 private:
-    virtual void start() override;
-    virtual void update(Uint32 elapsed_ms) override;
-    virtual void stop() override;
+    void start() override;
+    void update(Uint32 elapsed_ms) override;
+    void stop() override;
 
     int entity_;
     unsigned int pathStep_;
@@ -116,9 +116,9 @@ public:
 private:
     static Uint32 total_runtime_ms(const SdlTexture &defenderAnim);
 
-    virtual void start() override;
-    virtual void update(Uint32 elapsed_ms) override;
-    virtual void stop() override;
+    void start() override;
+    void update(Uint32 elapsed_ms) override;
+    void stop() override;
 
     int attacker_;
     MapEntity attBaseState_;
@@ -150,9 +150,9 @@ private:
     static Uint32 total_runtime_ms(const SdlTexture &attackerAnim,
                                    const SdlTexture &defenderAnim);
 
-    virtual void start() override;
-    virtual void update(Uint32 elapsed_ms) override;
-    virtual void stop() override;
+    void start() override;
+    void update(Uint32 elapsed_ms) override;
+    void stop() override;
 
     int attacker_;
     MapEntity attBaseState_;

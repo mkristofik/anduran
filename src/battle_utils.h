@@ -32,6 +32,7 @@ struct ArmyUnit
 using Army = std::array<ArmyUnit, ARMY_SIZE>;
 
 
+// TODO: rename this to DamageType, want AttackType for units (melee or ranged).
 enum class AttackType {normal, simulated};
 enum class BattleSide {attacker, defender}; 
 

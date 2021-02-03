@@ -47,9 +47,8 @@ class Anduran : public SdlApp
 public:
     Anduran();
 
-    // TODO: virtual keyword unnecessary when you have override
-    virtual void update_frame(Uint32 elapsed_ms) override;
-    virtual void handle_lmouse_up() override;
+    void update_frame(Uint32 elapsed_ms) override;
+    void handle_lmouse_up() override;
 
 private:
     void experiment();
@@ -255,6 +254,8 @@ void Anduran::experiment2()
     defender[0] = {units_.get_type("orc"s), 4};
     const auto result = run_battle(attacker, defender);
 
+    // TODO: break this into a generic animate function. Need two game objects for
+    // attacker and defender, and the battle log.
     for (const auto &event : result.log) {
         if (event.action == ActionType::next_round) {
             continue;
@@ -316,6 +317,7 @@ void Anduran::load_players()
 {
     // Randomize the starting locations for each player.
     auto castles = rmap_.getCastleTiles();
+    // TODO: use SDL_assert wherever possible
     assert(ssize(castles) <= enum_size<Team>());
     randomize(castles);
 
