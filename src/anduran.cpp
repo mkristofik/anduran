@@ -269,11 +269,16 @@ void Anduran::experiment2()
         }
     }
 
-    // TODO: We know the player is going to win, but what if we don't?  Have to
+    // Losing team's last unit was hidden at the end of the battle.  Have to
     // restore the winning team's starting image (and ellipse if needed).
-    auto ellipse = player.secondary;
-    anims_.insert<AnimDisplay>(ellipse, player.hex);
-    anims_.insert<AnimDisplay>(player.entity, championImages_[curPlayerNum_]);
+    const GameObject *winner = &player;
+    if (!result.attackerWins) {
+        winner = &enemy;
+    }
+    anims_.insert<AnimDisplay>(winner->entity, rmapView_.getEntityImage(winner->entity));
+    if (winner->secondary >= 0) {
+        anims_.insert<AnimDisplay>(winner->secondary, winner->hex);
+    }
 }
 
 void Anduran::load_images()

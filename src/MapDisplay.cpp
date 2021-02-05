@@ -277,6 +277,12 @@ void MapDisplay::updateEntity(const MapEntity &newState)
     entities_[id] = newState;
 }
 
+SdlTexture MapDisplay::getEntityImage(int id) const
+{
+    SDL_assert(in_bounds(entityImg_, id));
+    return entityImg_[id];
+}
+
 void MapDisplay::setEntityImage(int id, const SdlTexture &img)
 {
     SDL_assert(in_bounds(entityImg_, id));
