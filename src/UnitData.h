@@ -16,15 +16,26 @@
 #include "RandomRange.h"
 #include <string>
 
-// TODO: enum AttackType with X macro: melee, ranged, or invalid
+#define ATT_TYPES \
+    X(melee) \
+    X(ranged)
+
+#define X(str) str,
+    enum class AttackType {ATT_TYPES invalid};
+#undef X
+
+const std::string & att_name_from_type(AttackType type);
+AttackType att_type_from_name(const std::string &name);
+
 
 struct UnitData
 {
     std::string name;
     RandomRange damage;
-    int type = -1;
-    int speed = 0;
-    int hp = 0;
+    int type;
+    int speed;
+    int hp;
+    AttackType attack;
 
     UnitData();
 };

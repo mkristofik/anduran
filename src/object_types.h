@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2021 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -15,7 +15,6 @@
 
 #include <string>
 
-// Must keep these in alphabetical order.
 #define OBJ_TYPES \
     X(camp) \
     X(castle) \
@@ -28,7 +27,7 @@
     X(windmill)
     
 #define X(str) str,
-enum class ObjectType {OBJ_TYPES invalid};
+    enum class ObjectType {OBJ_TYPES invalid};
 #undef X
 
 const std::string & obj_name_from_type(ObjectType type);
