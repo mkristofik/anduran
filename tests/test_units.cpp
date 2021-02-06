@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE(manual_battle_state)
     // Run a full round and verify counters have reset.
     for (int i = 0; i < 4; ++i) {
         auto targets = battle.possible_targets();
-        battle.attack(targets[0], AttackType::simulated);
+        battle.attack(targets[0], DamageType::simulated);
         //print_battle_state(battle);
     }
     for (auto &unit : units) {
@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE(manual_battle_state)
 
     // Run to completion and verify attacking team wins.
     while (!battle.done()) {
-        battle.attack(battle.optimal_target(), AttackType::simulated);
+        battle.attack(battle.optimal_target(), DamageType::simulated);
         //print_battle_state(battle);
     }
     BOOST_TEST(battle.score() > 0);
@@ -196,7 +196,7 @@ BOOST_AUTO_TEST_CASE(battle_function)
     defArmy[0] = defender2_;  // note the special order
     defArmy[1] = defender1_;
 
-    const auto result = do_battle(attArmy, defArmy, AttackType::simulated);
+    const auto result = do_battle(attArmy, defArmy, DamageType::simulated);
     std::cout << "\nAttacker:\n";
     for (auto &unit : result.attacker) {
         if (unit.unitType >= 0) {

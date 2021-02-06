@@ -275,6 +275,7 @@ void Anduran::experiment2()
     if (!result.attackerWins) {
         winner = &enemy;
     }
+    // TODO: this shows the player and ellipse in separate frames.
     anims_.insert<AnimDisplay>(winner->entity, rmapView_.getEntityImage(winner->entity));
     if (winner->secondary >= 0) {
         anims_.insert<AnimDisplay>(winner->secondary, winner->hex);

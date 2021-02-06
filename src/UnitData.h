@@ -16,6 +16,8 @@
 #include "RandomRange.h"
 #include <string>
 
+// TODO: enum AttackType with X macro: melee, ranged, or invalid
+
 struct UnitData
 {
     std::string name;

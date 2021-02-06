@@ -32,8 +32,7 @@ struct ArmyUnit
 using Army = std::array<ArmyUnit, ARMY_SIZE>;
 
 
-// TODO: rename this to DamageType, want AttackType for units (melee or ranged).
-enum class AttackType {normal, simulated};
+enum class DamageType {normal, simulated};
 enum class BattleSide {attacker, defender}; 
 
 struct UnitState
@@ -52,7 +51,7 @@ struct UnitState
     bool alive() const;
     int total_hp() const;
     int speed() const;
-    int damage(AttackType aType = AttackType::normal) const;
+    int damage(DamageType dType = DamageType::normal) const;
     void take_damage(int dmg);
 };
 
@@ -105,7 +104,7 @@ public:
 
     // Active unit attacks the given target and then we advance to the next turn.
     // Simulated attacks always do average damage.
-    void attack(int targetIndex, AttackType aType = AttackType::normal);
+    void attack(int targetIndex, DamageType dType = DamageType::normal);
 
 private:
     void next_turn();
@@ -138,6 +137,6 @@ struct BattleResult
 // Run a battle to completion.
 BattleResult do_battle(const ArmyArray &attacker,
                        const ArmyArray &defender,
-                       AttackType aType = AttackType::normal);
+                       DamageType dType = DamageType::normal);
 
 #endif

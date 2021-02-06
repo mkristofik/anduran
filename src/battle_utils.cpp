@@ -107,9 +107,9 @@ int UnitState::speed() const
     return unit->speed;
 }
 
-int UnitState::damage(AttackType aType) const
+int UnitState::damage(DamageType dType) const
 {
-    if (aType == AttackType::simulated) {
+    if (dType == DamageType::simulated) {
         return num * (unit->damage.min() + unit->damage.max()) / 2;
     }
 
@@ -242,13 +242,13 @@ int BattleState::optimal_target() const
     return target;
 }
 
-void BattleState::attack(int targetIndex, AttackType aType)
+void BattleState::attack(int targetIndex, DamageType dType)
 {
     assert(!done() && units_[activeUnit_].attacker != units_[targetIndex].attacker);
 
     auto &att = units_[activeUnit_];
     auto &def = units_[targetIndex];
-    int dmg = att.damage(aType);
+    int dmg = att.damage(dType);
     if (log_) {
         BattleEvent event;
         event.action = ActionType::attack;
@@ -274,7 +274,7 @@ void BattleState::attack(int targetIndex, AttackType aType)
     // it appear that certain units get two turns back-to-back.
     /*
     if (def.alive() && !def.retaliated) {
-        dmg = def.damage(aType);
+        dmg = def.damage(dType);
         if (log_) {
             BattleEvent event;
             event.action = ActionType::retaliate;
@@ -364,7 +364,7 @@ std::pair<int, int> BattleState::alpha_beta(int depth, int alpha, int beta) cons
     for (auto &t : possible_targets()) {
         BattleState newState(*this);
         newState.disable_log();
-        newState.attack(t, AttackType::simulated);
+        newState.attack(t, DamageType::simulated);
 
         auto [_, score] = newState.alpha_beta(depth - 1, alpha, beta);
         if (maximizingPlayer) {
@@ -389,7 +389,7 @@ std::pair<int, int> BattleState::alpha_beta(int depth, int alpha, int beta) cons
 
 BattleResult do_battle(const ArmyArray &attacker,
                        const ArmyArray &defender,
-                       AttackType aType)
+                       DamageType dType)
 {
     // Interleave attacking and defending units so both sides get equal
     // opportunity in case of ties.
@@ -406,7 +406,7 @@ BattleResult do_battle(const ArmyArray &attacker,
     BattleState battle(armies);
     battle.enable_log(result.log);
     while (!battle.done()) {
-        battle.attack(battle.optimal_target(), aType);
+        battle.attack(battle.optimal_target(), dType);
     }
 
     for (auto &unit : battle.view_units()) {

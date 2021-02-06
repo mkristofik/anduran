@@ -47,6 +47,8 @@ UnitManager::UnitManager(const std::string &configFile,
         UnitMedia media;
         for (auto f = m->value.MemberBegin(); f != m->value.MemberEnd(); ++f) {
             const std::string field = f->name.GetString();
+            // TODO: Add a field to read attack-type.  Anything not set is assumed
+            // to be melee by default.  Warn for invalid values.
             if (f->value.IsString()) {
                 const std::string imgName = f->value.GetString();
                 if (field == "img-idle") {
