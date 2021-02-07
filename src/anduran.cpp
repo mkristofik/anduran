@@ -77,6 +77,7 @@ private:
     int curPlayerId_;
     int curPlayerNum_;
     bool championSelected_;
+    int projectileId_;
     AnimManager anims_;
     Pathfinder pathfind_;
     UnitManager units_;
@@ -96,6 +97,7 @@ Anduran::Anduran()
     curPlayerId_(0),
     curPlayerNum_(0),
     championSelected_(false),
+    projectileId_(-1),
     anims_(rmapView_),
     pathfind_(rmap_, game_),
     units_("data/units.json"s, win_, images_),
@@ -252,6 +254,7 @@ void Anduran::experiment2()
 
     Army attacker;
     attacker[0] = {units_.get_type("swordsman"s), 4};
+    attacker[1] = {units_.get_type("archer"s), 4};
     Army defender;
     defender[0] = {units_.get_type("orc"s), 4};
     const auto result = run_battle(attacker, defender);
@@ -342,6 +345,10 @@ void Anduran::load_players()
     enemy.team = Team::neutral;
     enemy.type = ObjectType::champion;
     game_.add_object(enemy);
+
+    // Add a placeholder projectile for ranged units.
+    auto arrow = images_.make_texture("arrow"s, win_);
+    projectileId_ = rmapView_.addHiddenEntity(arrow, ZOrder::projectile);
 }
 
 void Anduran::load_villages()
@@ -444,7 +451,6 @@ void Anduran::animate(const GameObject &attacker,
     const auto attUnitType = event.attackerType;
     const auto attTeam = attacker.team;
     const auto attIdle = units_.get_image(attUnitType, ImageType::img_idle, attTeam);
-    const auto attAnim = units_.get_image(attUnitType, ImageType::anim_attack, attTeam);
 
     const auto defUnitType = event.defenderType;
     const auto defTeam = defender.team;
@@ -454,9 +460,19 @@ void Anduran::animate(const GameObject &attacker,
         defAnim = units_.get_image(defUnitType, ImageType::anim_die, defTeam);
     }
 
-    // TODO: what if it's a ranged attack?
-    anims_.insert<AnimMelee>(attacker.entity, attIdle, attAnim,
-                             defender.entity, defIdle, defAnim);
+    SdlTexture attAnim;
+    if (units_.get_data(attUnitType).attack == AttackType::melee) {
+        attAnim = units_.get_image(attUnitType, ImageType::anim_attack, attTeam);
+        anims_.insert<AnimMelee>(attacker.entity, attIdle, attAnim,
+                                 defender.entity, defIdle, defAnim);
+    }
+    else {
+        attAnim = units_.get_image(attUnitType, ImageType::anim_ranged, attTeam);
+        rmapView_.setEntityImage(projectileId_, units_.get_projectile(attUnitType));
+        anims_.insert<AnimRanged>(attacker.entity, attIdle, attAnim,
+                                  defender.entity, defIdle, defAnim,
+                                  projectileId_);
+    }
 }
 
 

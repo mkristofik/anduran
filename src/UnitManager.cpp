@@ -47,27 +47,36 @@ UnitManager::UnitManager(const std::string &configFile,
         UnitMedia media;
         for (auto f = m->value.MemberBegin(); f != m->value.MemberEnd(); ++f) {
             const std::string field = f->name.GetString();
-            // TODO: Add a field to read attack-type.  Anything not set is assumed
-            // to be melee by default.  Warn for invalid values.
             if (f->value.IsString()) {
-                const std::string imgName = f->value.GetString();
+                const std::string value = f->value.GetString();
                 if (field == "img-idle") {
-                    media.images.emplace(ImageType::img_idle, load_image_set(imgName));
+                    media.images.emplace(ImageType::img_idle, load_image_set(value));
                 }
                 else if (field == "img-defend") {
-                    media.images.emplace(ImageType::img_defend, load_image_set(imgName));
+                    media.images.emplace(ImageType::img_defend, load_image_set(value));
                 }
                 else if (field == "anim-attack") {
-                    media.images.emplace(ImageType::anim_attack, load_image_set(imgName));
+                    media.images.emplace(ImageType::anim_attack, load_image_set(value));
                 }
                 else if (field == "anim-ranged") {
-                    media.images.emplace(ImageType::anim_ranged, load_image_set(imgName));
+                    media.images.emplace(ImageType::anim_ranged, load_image_set(value));
                 }
                 else if (field == "anim-die") {
-                    media.images.emplace(ImageType::anim_die, load_image_set(imgName));
+                    media.images.emplace(ImageType::anim_die, load_image_set(value));
                 }
                 else if (field == "projectile") {
-                    media.projectile = load_image(imgName);
+                    media.projectile = load_image(value);
+                }
+                else if (field == "attack-type") {
+                    auto attType = att_type_from_name(value);
+                    if (attType != AttackType::invalid) {
+                        data.attack = attType;
+                    }
+                    else {
+                        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
+                                    "Unexpected attack-type value [%s]: %s",
+                                    name.c_str(), value.c_str());
+                    }
                 }
                 else {
                     SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,

@@ -3,6 +3,7 @@
         "speed": 2,
         "hp": 10,
         "damage": [2, 3],
+        "attack-type": "ranged",
         "img-idle": "archer",
         "anim-ranged": "archer-attack-ranged",
         "projectile": "missile"

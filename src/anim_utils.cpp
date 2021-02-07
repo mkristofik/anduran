@@ -450,13 +450,17 @@ void AnimRanged::stop()
 {
     auto attObj = get_entity(attacker_);
     auto defObj = get_entity(defender_);
+    auto projObj = get_entity(projectile_);
 
     set_idle(attObj, attBaseState_);
     attObj.visible = false;
     set_idle(defObj, defBaseState_);
     defObj.visible = false;
+    projObj = projectileBaseState_;
+    projObj.visible = false;
     update_entity(attObj, attImg_);
     update_entity(defObj, defImg_);
+    update_entity(projObj);
 }
 
 
