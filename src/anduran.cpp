@@ -50,7 +50,6 @@ public:
     void handle_lmouse_up() override;
 
 private:
-    void experiment();
     void experiment2();
 
     // Load images that aren't tied to units.
@@ -73,7 +72,7 @@ private:
     SdlImageManager images_;
     MapDisplay rmapView_;
     GameState game_;
-    std::vector<int> playerObjectIds_;
+    std::vector<int> playerEntityIds_;
     int curPlayerId_;
     int curPlayerNum_;
     bool championSelected_;
@@ -93,7 +92,7 @@ Anduran::Anduran()
     images_("img/"s),
     rmapView_(win_, rmap_, images_),
     game_(),
-    playerObjectIds_(),
+    playerEntityIds_(),
     curPlayerId_(0),
     curPlayerNum_(0),
     championSelected_(false),
@@ -134,12 +133,12 @@ void Anduran::handle_lmouse_up()
     // - user clicks on a walkable hex
     // - champion moves to the new hex
     const auto mouseHex = rmapView_.hexFromMousePos();
-    for (auto i = 0; i < ssize(playerObjectIds_); ++i) {
-        if (auto player = game_.get_object(playerObjectIds_[i]); player->hex == mouseHex) {
+    for (auto i = 0; i < ssize(playerEntityIds_); ++i) {
+        if (auto player = game_.get_object(playerEntityIds_[i]); player->hex == mouseHex) {
             if (curPlayerNum_ != i) {
                 championSelected_ = false;
             }
-            curPlayerId_ = playerObjectIds_[i];
+            curPlayerId_ = playerEntityIds_[i];
             curPlayerNum_ = i;
             break;
         }
@@ -194,55 +193,9 @@ void Anduran::handle_lmouse_up()
     }
 }
 
-void Anduran::experiment()
-{
-    // TODO: this is all temporary so I can experiment
-    auto player = game_.get_object(curPlayerId_);
-    const auto team = player->team;
-    const auto archer = units_.get_type("archer"s);
-    auto archerImg = units_.get_image(archer, ImageType::img_idle, team);
-    auto archerAttack = units_.get_image(archer, ImageType::anim_ranged, team);
-    const auto swordsman = units_.get_type("swordsman"s);
-    auto swordsmanImg = units_.get_image(swordsman, ImageType::img_idle, team);
-    auto swordsmanAttack = units_.get_image(swordsman, ImageType::anim_attack, team);
-    auto swordsmanDefend = units_.get_image(swordsman, ImageType::img_defend, team);
-
-    const auto orc = units_.get_type("orc"s);
-    auto orcImg = units_.get_image(orc, ImageType::img_idle, Team::neutral);
-    auto orcAttack = units_.get_image(orc, ImageType::anim_attack, Team::neutral);
-    auto orcDefend = units_.get_image(orc, ImageType::img_defend, Team::neutral);
-    auto orcDie = units_.get_image(orc, ImageType::anim_die, Team::neutral);
-
-    auto arrow = units_.get_projectile(archer);
-    const int enemy = rmapView_.addEntity(orcImg, Hex{5, 8}, ZOrder::object);
-    const int projectile = rmapView_.addHiddenEntity(arrow, ZOrder::projectile);
-    auto ellipse = player->secondary;
-
-    anims_.insert<AnimMelee>(player->entity,
-                             swordsmanImg,
-                             swordsmanAttack,
-                             enemy,
-                             orcImg,
-                             orcDefend);
-    anims_.insert<AnimMelee>(enemy,
-                             orcImg,
-                             orcAttack,
-                             player->entity,
-                             swordsmanImg,
-                             swordsmanDefend);
-    anims_.insert<AnimRanged>(player->entity,
-                              archerImg,
-                              archerAttack,
-                              enemy,
-                              orcImg,
-                              orcDie,
-                              projectile);
-    anims_.insert<AnimDisplay>(ellipse, player->hex);
-    anims_.insert<AnimDisplay>(player->entity, championImages_[curPlayerNum_]);
-}
-
 void Anduran::experiment2()
 {
+    // TODO: this is all temporary so I can experiment
     GameObject player = *game_.get_object(curPlayerId_);
     GameObject enemy;
     for (auto &obj : game_.objects_in_hex(Hex{5, 8})) {
@@ -332,7 +285,7 @@ void Anduran::load_players()
                                                  ZOrder::ellipse);
         champion.team = castle.team;
         champion.type = ObjectType::champion;
-        playerObjectIds_.push_back(champion.entity);
+        playerEntityIds_.push_back(champion.entity);
         game_.add_object(champion);
     }
 
