@@ -365,6 +365,7 @@ AnimRanged::AnimRanged(MapDisplay &display,
 Uint32 AnimRanged::total_runtime_ms(const SdlTexture &attackerAnim,
                                     const SdlTexture &defenderAnim)
 {
+    // TODO: this ends too quickly when defender just shows img-defend
     return std::max(attackerAnim.duration_ms(),
                     RANGED_HIT_MS + defenderAnim.duration_ms());
 }
@@ -401,6 +402,7 @@ void AnimRanged::start()
 
 void AnimRanged::update(Uint32 elapsed_ms)
 {
+    // TODO: could this be composed of individual separate animations?
     // Attacker
     if (elapsed_ms < attAnim_.duration_ms()) {
         auto attObj = get_entity(attacker_);

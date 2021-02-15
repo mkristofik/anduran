@@ -18,10 +18,10 @@ MINGW_DIR = c:/mingw
 
 CPPFLAGS = -I$(LIB_ROOT) \
 	-I$(MINGW_DIR)/include \
-	-I$(LIB_ROOT)/SDL2-2.0.12/x86_64-w64-mingw32/include/SDL2 \
+	-I$(LIB_ROOT)/SDL2-2.0.14/x86_64-w64-mingw32/include/SDL2 \
 	-I$(LIB_ROOT)/SDL2_image-2.0.5/x86_64-w64-mingw32/include/SDL2
 
-LDFLAGS = -L$(LIB_ROOT)/SDL2-2.0.12/x86_64-w64-mingw32/lib \
+LDFLAGS = -L$(LIB_ROOT)/SDL2-2.0.14/x86_64-w64-mingw32/lib \
 	-L$(LIB_ROOT)/SDL2_image-2.0.5/x86_64-w64-mingw32/lib \
 	-L$(MINGW_DIR)/lib
 
