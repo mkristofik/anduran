@@ -12,6 +12,8 @@
 * Game objects (towns, windmills, etc.) should not be walkable unless they're a
 destination hex
 - configurable walking speed
+- move one hex less to land in ZoC to attack
+- region boundary stops movement
 
 
 # Polish
@@ -40,8 +42,14 @@ destination hex
 # Game state
 ------------
 * status of every game-relevant object
-- not every object needs a drawable entity
-- some objects represented by multiple entities (champions and their ellipses)
+- not every object needs a drawable entity (why?)
+* some objects represented by multiple entities (champions and their ellipses)
+- keep track of armies
+- zone of control, one hex radius points to the army controlling it
+    - ZoC is not walkable unless it's a destination hex
+    - update all of them any time somebody moves
+- remove objects after they've been picked up
+    - move to the invalid hex instead of deleting it?
 
 
 # Thoughts on Combat

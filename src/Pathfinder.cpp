@@ -50,8 +50,11 @@ const std::vector<Hex> & Pathfinder::find_path(const Hex &hSrc,
     hDest_ = hDest;
     iDest_ = rmap_->intFromHex(hDest);
     team_ = team;
-    
-    frontier_.push({iSrc_, 0});
+
+    // Optimization: skip everything if the destination hex isn't reachable.
+    if (rmap_->getWalkable(iDest_)) {
+        frontier_.push({iSrc_, 0});
+    }
     cameFrom_.emplace(iSrc_, RandomMap::invalidIndex);
     costSoFar_.emplace(iSrc_, 0);
 
@@ -119,7 +122,9 @@ Neighbors<int> Pathfinder::get_neighbors(int index) const
             continue;
         }
 
-        if (!rmap_->getWalkable(iNbrs[i])) {
+        if (!rmap_->getWalkable(iNbrs[i]) ||
+            rmap_->getTerrain(iNbrs[i]) == Terrain::water)
+        {
             iNbrs[i] = RandomMap::invalidIndex;
             continue;
         }
