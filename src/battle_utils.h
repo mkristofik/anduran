@@ -22,16 +22,6 @@ class UnitData;
 
 
 constexpr int ARMY_SIZE = 6;
-
-struct ArmyUnit
-{
-    int unitType = -1;
-    int num = 0;
-};
-
-using Army = std::array<ArmyUnit, ARMY_SIZE>;
-
-
 enum class DamageType {normal, simulated};
 enum class BattleSide {attacker, defender}; 
 
@@ -55,8 +45,23 @@ struct UnitState
     void take_damage(int dmg);
 };
 
-using ArmyArray = std::array<UnitState, ARMY_SIZE>;
-using BattleArray = std::array<UnitState, ARMY_SIZE * 2>;
+using ArmyState = std::array<UnitState, ARMY_SIZE>;
+using BattleState = std::array<UnitState, ARMY_SIZE * 2>;
+
+
+struct Army
+{
+    struct Unit
+    {
+        int type = -1;
+        int num = 0;
+    };
+
+    std::array<Unit, ARMY_SIZE> units;
+    int entity = -1;
+
+    void update(const ArmyState &state);
+};
 
 
 enum class ActionType {attack, retaliate, next_round};
@@ -80,10 +85,10 @@ using BattleLog = std::vector<BattleEvent>;
 
 using TargetList = boost::container::static_vector<int, ARMY_SIZE>;
 
-class BattleState
+class Battle
 {
 public:
-    BattleState(const BattleArray &armies);
+    Battle(const BattleState &armies);
 
     // Keep a running log of the battle's actions so they can be animated later.
     // Turn it off for the AI when simulating a battle.
@@ -92,7 +97,7 @@ public:
 
     bool done() const;
     bool attackers_turn() const;
-    const BattleArray & view_units() const;
+    const BattleState & view_units() const;
     const UnitState * active_unit() const;
 
     // Try to evaluate how much the attacking team is winning.
@@ -118,7 +123,7 @@ private:
                                    int alpha = std::numeric_limits<int>::min(),
                                    int beta = std::numeric_limits<int>::max()) const;
 
-    BattleArray units_;
+    BattleState units_;
     BattleLog *log_;
     int activeUnit_;
     int attackerTotalHp_;
@@ -128,15 +133,15 @@ private:
 
 struct BattleResult
 {
-    Army attacker;
-    Army defender;
+    ArmyState attacker;
+    ArmyState defender;
     BattleLog log;
     bool attackerWins = true;
 };
 
 // Run a battle to completion.
-BattleResult do_battle(const ArmyArray &attacker,
-                       const ArmyArray &defender,
+BattleResult do_battle(const ArmyState &attacker,
+                       const ArmyState &defender,
                        DamageType dType = DamageType::normal);
 
 #endif

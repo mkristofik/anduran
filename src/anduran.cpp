@@ -61,7 +61,7 @@ private:
     void load_objects();
     void load_simple_object(ObjectType type, const std::string &imgName);
 
-    ArmyArray make_army_state(const Army &army, BattleSide side) const;
+    ArmyState make_army_state(const Army &army, BattleSide side) const;
     BattleResult run_battle(const Army &attacker, const Army &defender) const;
     void animate(const GameObject &attacker,
                  const GameObject &defender,
@@ -206,10 +206,10 @@ void Anduran::experiment2()
     }
 
     Army attacker;
-    attacker[0] = {units_.get_type("swordsman"s), 4};
-    attacker[1] = {units_.get_type("archer"s), 4};
+    attacker.units[0] = {units_.get_type("swordsman"s), 4};
+    attacker.units[1] = {units_.get_type("archer"s), 4};
     Army defender;
-    defender[0] = {units_.get_type("orc"s), 4};
+    defender.units[0] = {units_.get_type("orc"s), 4};
     const auto result = run_battle(attacker, defender);
 
     for (const auto &event : result.log) {
@@ -377,12 +377,14 @@ void Anduran::load_simple_object(ObjectType type, const std::string &imgName)
     }
 }
 
-ArmyArray Anduran::make_army_state(const Army &army, BattleSide side) const
+ArmyState Anduran::make_army_state(const Army &army, BattleSide side) const
 {
-    ArmyArray ret;
-    for (int i = 0; i < ssize(army); ++i) {
-        if (army[i].unitType >= 0) {
-            ret[i] = UnitState(units_.get_data(army[i].unitType), army[i].num, side);
+    ArmyState ret;
+    for (int i = 0; i < ssize(army.units); ++i) {
+        if (army.units[i].type >= 0) {
+            ret[i] = UnitState(units_.get_data(army.units[i].type),
+                               army.units[i].num,
+                               side);
         }
     }
 

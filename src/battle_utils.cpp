@@ -23,7 +23,7 @@ namespace
 {
     // Verify all units in a battle are assigned to unique slots in their
     // original armies.
-    bool check_army_slots(const BattleArray &units)
+    bool check_army_slots(const BattleState &units)
     {
         std::array<bool, ARMY_SIZE> attSeen;
         attSeen.fill(false);
@@ -141,7 +141,17 @@ void UnitState::take_damage(int dmg)
 }
 
 
-BattleState::BattleState(const BattleArray &armies)
+void Army::update(const ArmyState &state)
+{
+    assert(ssize(units) == ssize(state));
+    for (int i = 0; i < ssize(units); ++i) {
+        assert(units[i].type == state[i].type());
+        units[i].num = state[i].num;
+    }
+}
+
+
+Battle::Battle(const BattleState &armies)
     : units_(armies),
     log_(nullptr),
     activeUnit_(-1),
@@ -159,32 +169,32 @@ BattleState::BattleState(const BattleArray &armies)
     update_hp_totals();
 }
 
-void BattleState::enable_log(BattleLog &log)
+void Battle::enable_log(BattleLog &log)
 {
     log_ = &log;
 }
 
-void BattleState::disable_log()
+void Battle::disable_log()
 {
     log_ = nullptr;
 }
 
-bool BattleState::done() const
+bool Battle::done() const
 {
     return !in_bounds(units_, activeUnit_) || attackerTotalHp_ == 0 || defenderTotalHp_ == 0;
 }
 
-bool BattleState::attackers_turn() const
+bool Battle::attackers_turn() const
 {
     return !done() && units_[activeUnit_].attacker;
 }
 
-const BattleArray & BattleState::view_units() const
+const BattleState & Battle::view_units() const
 {
     return units_;
 }
 
-const UnitState * BattleState::active_unit() const
+const UnitState * Battle::active_unit() const
 {
     if (done()) {
         return nullptr;
@@ -193,7 +203,7 @@ const UnitState * BattleState::active_unit() const
     return &units_[activeUnit_];
 }
 
-int BattleState::score() const
+int Battle::score() const
 {
     auto score = attackerTotalHp_ - defenderTotalHp_;
     if (done()) {
@@ -203,7 +213,7 @@ int BattleState::score() const
     return score;
 }
 
-TargetList BattleState::possible_targets() const
+TargetList Battle::possible_targets() const
 {
     if (done()) {
         return {};
@@ -235,14 +245,14 @@ TargetList BattleState::possible_targets() const
     return targets;
 }
 
-int BattleState::optimal_target() const
+int Battle::optimal_target() const
 {
     // TODO: need continued testing to choose best amount of lookahead.
     auto [target, _] = alpha_beta(8);
     return target;
 }
 
-void BattleState::attack(int targetIndex, DamageType dType)
+void Battle::attack(int targetIndex, DamageType dType)
 {
     assert(!done() && units_[activeUnit_].attacker != units_[targetIndex].attacker);
 
@@ -300,7 +310,7 @@ void BattleState::attack(int targetIndex, DamageType dType)
     next_turn();
 }
 
-void BattleState::next_turn()
+void Battle::next_turn()
 {
     update_hp_totals();
     if (done()) {
@@ -317,7 +327,7 @@ void BattleState::next_turn()
     }
 }
 
-void BattleState::next_round()
+void Battle::next_round()
 {
     activeUnit_ = -1;
     for (int i = 0; i < ssize(units_); ++i) {
@@ -336,7 +346,7 @@ void BattleState::next_round()
     }
 }
 
-void BattleState::update_hp_totals()
+void Battle::update_hp_totals()
 {
     attackerTotalHp_ = 0;
     defenderTotalHp_ = 0;
@@ -351,7 +361,7 @@ void BattleState::update_hp_totals()
 }
 
 // source: http://en.wikipedia.org/wiki/Alpha-beta_pruning
-std::pair<int, int> BattleState::alpha_beta(int depth, int alpha, int beta) const
+std::pair<int, int> Battle::alpha_beta(int depth, int alpha, int beta) const
 {
     // If we've run out of search time or the battle has ended, stop.
     if (depth <= 0 || done()) {
@@ -362,7 +372,7 @@ std::pair<int, int> BattleState::alpha_beta(int depth, int alpha, int beta) cons
     int bestTarget = -1;
 
     for (auto &t : possible_targets()) {
-        BattleState newState(*this);
+        Battle newState(*this);
         newState.disable_log();
         newState.attack(t, DamageType::simulated);
 
@@ -387,13 +397,13 @@ std::pair<int, int> BattleState::alpha_beta(int depth, int alpha, int beta) cons
 }
 
 
-BattleResult do_battle(const ArmyArray &attacker,
-                       const ArmyArray &defender,
+BattleResult do_battle(const ArmyState &attacker,
+                       const ArmyState &defender,
                        DamageType dType)
 {
     // Interleave attacking and defending units so both sides get equal
     // opportunity in case of ties.
-    BattleArray armies;
+    BattleState armies;
     for (int i = 0; i < ssize(attacker); ++i) {
         armies[2 * i] = attacker[i];
         armies[2 * i].armyIndex = i;
@@ -403,7 +413,7 @@ BattleResult do_battle(const ArmyArray &attacker,
     assert(check_army_slots(armies));
 
     BattleResult result;
-    BattleState battle(armies);
+    Battle battle(armies);
     battle.enable_log(result.log);
     while (!battle.done()) {
         battle.attack(battle.optimal_target(), dType);
@@ -417,11 +427,11 @@ BattleResult do_battle(const ArmyArray &attacker,
         const auto i = unit.armyIndex;
         if (unit.attacker) {
             assert(in_bounds(result.attacker, i));
-            result.attacker[i] = {unitType, unit.num};
+            result.attacker[i] = unit;
         }
         else {
             assert(in_bounds(result.defender, i));
-            result.defender[i] = {unitType, unit.num};
+            result.defender[i] = unit;
         }
     }
 

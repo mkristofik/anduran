@@ -82,7 +82,7 @@ struct TestUnitConfig
     }
 };
 
-void print_battle_state(const BattleState &battle)
+void print_battle_state(const Battle &battle)
 {
     for (auto &unit : battle.view_units()) {
         if (unit.alive()) {
@@ -108,14 +108,14 @@ BOOST_FIXTURE_TEST_SUITE(battle_testing, TestUnitConfig)
 
 BOOST_AUTO_TEST_CASE(manual_battle_state)
 {
-    BattleArray armies;
+    BattleState armies;
     armies[0] = attacker1_;
     armies[1] = attacker2_;
     armies[2] = defender1_;
     armies[3] = defender2_;
 
     BattleLog log;
-    BattleState battle(armies);
+    Battle battle(armies);
     battle.enable_log(log);
     BOOST_TEST(!battle.done());
     BOOST_TEST(!battle.attackers_turn());
@@ -189,37 +189,47 @@ BOOST_AUTO_TEST_CASE(battle_function)
 {
     // Run a second battle using the starting armies.  Defender does better this
     // time when AI is allowed to choose the targets from the beginning.
-    ArmyArray attArmy;
+    ArmyState attArmy;
     attArmy[0] = attacker1_;
     attArmy[1] = attacker2_;
-    ArmyArray defArmy;
+    ArmyState defArmy;
     defArmy[0] = defender2_;  // note the special order
     defArmy[1] = defender1_;
 
     const auto result = do_battle(attArmy, defArmy, DamageType::simulated);
     std::cout << "\nAttacker:\n";
     for (auto &unit : result.attacker) {
-        if (unit.unitType >= 0) {
-            std::cout << unit.num << " x unit type " << unit.unitType << '\n';
+        if (unit.type() >= 0) {
+            std::cout << unit.num << " x unit type " << unit.type() << '\n';
         }
     }
     std::cout << "Defender:\n";
     for (auto &unit : result.defender) {
-        if (unit.unitType >= 0) {
-            std::cout << unit.num << " x unit type " << unit.unitType << '\n';
+        if (unit.type() >= 0) {
+            std::cout << unit.num << " x unit type " << unit.type() << '\n';
         }
     }
     std::cout << "Attacker wins? " << result.attackerWins << '\n';
 
     // Verify units were assigned back to their original army slots.
-    BOOST_TEST(result.attacker[0].unitType == 0);
-    BOOST_TEST(result.attacker[1].unitType == 1);
-    BOOST_TEST(result.defender[0].unitType == 3);
-    BOOST_TEST(result.defender[1].unitType == 2);
+    BOOST_TEST(result.attacker[0].type() == 0);
+    BOOST_TEST(result.attacker[1].type() == 1);
+    BOOST_TEST(result.defender[0].type() == 3);
+    BOOST_TEST(result.defender[1].type() == 2);
 
     BOOST_TEST(std::all_of(begin(result.defender), end(result.defender),
-        [] (const ArmyUnit &def) {
-            return def.unitType < 0 || def.num == 0;
+        [] (const UnitState &def) {
+            return def.type() < 0 || def.num == 0;
+        }));
+
+    // Verify updating the starting army with the battle losses.
+    Army startingArmy;
+    startingArmy.units[0] = {attArmy[0].type(), attArmy[0].num};
+    startingArmy.units[1] = {attArmy[1].type(), attArmy[1].num};
+    startingArmy.update(result.attacker);
+    BOOST_TEST(std::all_of(begin(startingArmy.units), end(startingArmy.units),
+        [] (const Army::Unit &unit) {
+            return unit.type < 0 || unit.num >= 0;
         }));
 }
 
