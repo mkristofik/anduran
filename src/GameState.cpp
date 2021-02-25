@@ -20,12 +20,10 @@ void GameState::add_object(const GameObject &obj)
     objects_.insert(obj);
 }
 
-std::optional<GameObject> GameState::get_object(int id) const
+GameObject GameState::get_object(int id) const
 {
     auto iter = objects_.get<ByEntity>().find(id);
-    if (iter == std::end(objects_)) {
-        return {};
-    }
+    assert(iter != std::end(objects_));
 
     return *iter;
 }
@@ -52,4 +50,17 @@ bool GameState::hex_occupied(const Hex &hex) const
 {
     auto range = objects_.get<ByHex>().equal_range(hex);
     return range.first != range.second;
+}
+
+void GameState::add_army(const Army &army)
+{
+    armies_.push_back(army);
+    sort(begin(armies_), end(armies_));
+}
+
+Army GameState::get_army(int id) const
+{
+    auto iter = lower_bound(begin(armies_), end(armies_), id);
+    assert(iter->entity == id);
+    return *iter;
 }

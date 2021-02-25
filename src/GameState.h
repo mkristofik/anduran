@@ -13,6 +13,7 @@
 #ifndef GAME_STATE_H
 #define GAME_STATE_H
 
+#include "battle_utils.h"
 #include "hex_utils.h"
 #include "object_types.h"
 #include "team_color.h"
@@ -24,6 +25,7 @@
 #include "boost/multi_index/tag.hpp"
 
 #include <optional>
+#include <vector>
 
 
 namespace bmi = boost::multi_index;
@@ -48,10 +50,13 @@ public:
     // Fetch/modify objects by value like we do for map entities. Object id is the
     // same as the map entity id.
     void add_object(const GameObject &obj);
-    std::optional<GameObject> get_object(int id) const;
+    GameObject get_object(int id) const;
     void update_object(const GameObject &obj);
     ObjVector objects_in_hex(const Hex &hex) const;
     bool hex_occupied(const Hex &hex) const;
+
+    void add_army(const Army &army);
+    Army get_army(int id) const;
 
 private:
     struct ByEntity {};
@@ -69,6 +74,8 @@ private:
             >
         >
     > objects_;
+
+    std::vector<Army> armies_;
 };
 
 #endif

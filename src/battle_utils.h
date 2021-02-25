@@ -63,6 +63,10 @@ struct Army
     void update(const ArmyState &state);
 };
 
+// Compare armies by entity id.
+bool operator<(const Army &lhs, const Army &rhs);
+bool operator<(const Army &lhs, int rhs);
+
 
 enum class ActionType {attack, retaliate, next_round};
 

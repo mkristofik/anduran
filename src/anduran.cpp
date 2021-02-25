@@ -134,7 +134,7 @@ void Anduran::handle_lmouse_up()
     // - champion moves to the new hex
     const auto mouseHex = rmapView_.hexFromMousePos();
     for (auto i = 0; i < ssize(playerEntityIds_); ++i) {
-        if (auto player = game_.get_object(playerEntityIds_[i]); player->hex == mouseHex) {
+        if (auto player = game_.get_object(playerEntityIds_[i]); player.hex == mouseHex) {
             if (curPlayerNum_ != i) {
                 championSelected_ = false;
             }
@@ -145,7 +145,7 @@ void Anduran::handle_lmouse_up()
     }
 
     auto player = game_.get_object(curPlayerId_);
-    if (mouseHex == player->hex) {
+    if (mouseHex == player.hex) {
         if (!championSelected_) {
             rmapView_.highlight(mouseHex);
             championSelected_ = true;
@@ -156,10 +156,10 @@ void Anduran::handle_lmouse_up()
         }
     }
     else if (championSelected_) {
-        auto &path = pathfind_.find_path(player->hex, mouseHex, player->team);
+        auto &path = pathfind_.find_path(player.hex, mouseHex, player.team);
         if (!path.empty()) {
-            auto champion = player->entity;
-            auto ellipse = player->secondary;
+            auto champion = player.entity;
+            auto ellipse = player.secondary;
 
             anims_.insert<AnimHide>(ellipse);
             anims_.insert<AnimMove>(champion, path);
@@ -172,17 +172,17 @@ void Anduran::handle_lmouse_up()
                 for (auto &obj : objectsHere) {
                     if ((obj.type == ObjectType::village ||
                          obj.type == ObjectType::windmill) &&
-                        obj.team != player->team)
+                        obj.team != player.team)
                     {
-                        obj.team = player->team;
+                        obj.team = player.team;
                         game_.update_object(obj);
                         anims_.insert<AnimDisplay>(obj.secondary,
                                                    flagImages_[curPlayerNum_]);
                     }
                 }
             }
-            player->hex = mouseHex;
-            game_.update_object(*player);
+            player.hex = mouseHex;
+            game_.update_object(player);
             championSelected_ = false;
             rmapView_.clearHighlight();
 
@@ -196,7 +196,7 @@ void Anduran::handle_lmouse_up()
 void Anduran::experiment2()
 {
     // TODO: this is all temporary so I can experiment
-    GameObject player = *game_.get_object(curPlayerId_);
+    GameObject player = game_.get_object(curPlayerId_);
     GameObject enemy;
     for (auto &obj : game_.objects_in_hex(Hex{5, 8})) {
         if (obj.type == ObjectType::champion) {
@@ -208,8 +208,7 @@ void Anduran::experiment2()
     Army attacker;
     attacker.units[0] = {units_.get_type("swordsman"s), 4};
     attacker.units[1] = {units_.get_type("archer"s), 4};
-    Army defender;
-    defender.units[0] = {units_.get_type("orc"s), 4};
+    Army defender = game_.get_army(enemy.entity);
     const auto result = run_battle(attacker, defender);
 
     for (const auto &event : result.log) {
@@ -298,6 +297,11 @@ void Anduran::load_players()
     enemy.team = Team::neutral;
     enemy.type = ObjectType::champion;
     game_.add_object(enemy);
+
+    Army orcArmy;
+    orcArmy.units[0] = {orc, 4};
+    orcArmy.entity = enemy.entity;
+    game_.add_army(orcArmy);
 
     // Add a placeholder projectile for ranged units.
     auto arrow = images_.make_texture("arrow"s, win_);

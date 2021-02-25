@@ -150,6 +150,16 @@ void Army::update(const ArmyState &state)
     }
 }
 
+bool operator<(const Army &lhs, const Army &rhs)
+{
+    return lhs.entity < rhs.entity;
+}
+
+bool operator<(const Army &lhs, int rhs)
+{
+    return lhs.entity < rhs;
+}
+
 
 Battle::Battle(const BattleState &armies)
     : units_(armies),
