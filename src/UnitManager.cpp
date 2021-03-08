@@ -49,7 +49,10 @@ UnitManager::UnitManager(const std::string &configFile,
             const std::string field = f->name.GetString();
             if (f->value.IsString()) {
                 const std::string value = f->value.GetString();
-                if (field == "img-idle") {
+                if (field == "name") {
+                    data.name = value;
+                }
+                else if (field == "img-idle") {
                     media.images.emplace(ImageType::img_idle, load_image_set(value));
                 }
                 else if (field == "img-defend") {

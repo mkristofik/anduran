@@ -32,7 +32,6 @@
 #include "SDL_image.h"
 #include <algorithm>
 #include <cstdlib>
-#include <iostream>
 #include <memory>
 #include <optional>
 #include <string>
@@ -61,6 +60,8 @@ private:
     void load_objects();
     void load_simple_object(ObjectType type, const std::string &imgName);
 
+    void debug_print_army(const Army &army) const;
+    void debug_print_losses(const Army &before, const ArmyState &after) const;
     ArmyState make_army_state(const Army &army, BattleSide side) const;
     BattleResult run_battle(const Army &attacker, const Army &defender) const;
     void animate(const GameObject &attacker,
@@ -104,6 +105,7 @@ Anduran::Anduran()
     ellipseImages_(),
     flagImages_()
 {
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_VERBOSE);
     load_images();
     load_players();
     load_villages();
@@ -205,10 +207,12 @@ void Anduran::experiment2()
         }
     }
 
-    Army attacker;
-    attacker.units[0] = {units_.get_type("swordsman"s), 4};
-    attacker.units[1] = {units_.get_type("archer"s), 4};
-    Army defender = game_.get_army(enemy.entity);
+    auto attacker = game_.get_army(player.entity);
+    auto defender = game_.get_army(enemy.entity);
+    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Battle:");
+    debug_print_army(attacker);
+    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "vs.");
+    debug_print_army(defender);
     const auto result = run_battle(attacker, defender);
 
     for (const auto &event : result.log) {
@@ -235,6 +239,21 @@ void Anduran::experiment2()
     if (winner->secondary >= 0) {
         anims_.insert<AnimDisplay>(winner->secondary, winner->hex);
     }
+
+    if (result.attackerWins) {
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Attacker wins");
+        debug_print_losses(attacker, result.attacker);
+    }
+    else {
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Defender wins");
+        debug_print_losses(defender, result.defender);
+    }
+    attacker.update(result.attacker);
+    defender.update(result.defender);
+    game_.update_army(attacker);
+    game_.update_army(defender);
+
+    // TODO: remove the losing entity from the game
 }
 
 void Anduran::load_images()
@@ -286,6 +305,13 @@ void Anduran::load_players()
         champion.type = ObjectType::champion;
         playerEntityIds_.push_back(champion.entity);
         game_.add_object(champion);
+
+        // Each player gets the same starting army for now.
+        Army army;
+        army.units[0] = {units_.get_type("swordsman"s), 4};
+        army.units[1] = {units_.get_type("archer"s), 4};
+        army.entity = champion.entity;
+        game_.add_army(army);
     }
 
     // Add a wandering army to attack.
@@ -299,7 +325,7 @@ void Anduran::load_players()
     game_.add_object(enemy);
 
     Army orcArmy;
-    orcArmy.units[0] = {orc, 4};
+    orcArmy.units[0] = {orc, 6};
     orcArmy.entity = enemy.entity;
     game_.add_army(orcArmy);
 
@@ -378,6 +404,39 @@ void Anduran::load_simple_object(ObjectType type, const std::string &imgName)
         obj.entity = rmapView_.addEntity(img, obj.hex, ZOrder::object);
         obj.type = type;
         game_.add_object(obj);
+    }
+}
+
+void Anduran::debug_print_army(const Army &army) const
+{
+    for (auto &unit : army.units) {
+        if (unit.type < 0) {
+            continue;
+        }
+
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "%d %s",
+                     unit.num,
+                     units_.get_data(unit.type).name.c_str());
+    }
+}
+
+void Anduran::debug_print_losses(const Army &before, const ArmyState &after) const
+{
+    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Losses:");
+
+    for (int i = 0; i < ssize(before.units); ++i) {
+        const int unitType = before.units[i].type;
+        SDL_assert(unitType == after[i].type());
+        if (unitType < 0) {
+            continue;
+        }
+
+        const int losses = before.units[i].num - after[i].num;
+        if (losses > 0) {
+            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "%d %s",
+                         losses,
+                         units_.get_data(unitType).name.c_str());
+        }
     }
 }
 

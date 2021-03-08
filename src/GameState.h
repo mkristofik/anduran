@@ -57,6 +57,7 @@ public:
 
     void add_army(const Army &army);
     Army get_army(int id) const;
+    void update_army(const Army &army);
 
 private:
     struct ByEntity {};

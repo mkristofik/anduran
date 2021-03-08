@@ -64,3 +64,10 @@ Army GameState::get_army(int id) const
     assert(iter->entity == id);
     return *iter;
 }
+
+void GameState::update_army(const Army &army)
+{
+    auto iter = lower_bound(begin(armies_), end(armies_), army.entity);
+    assert(iter->entity == army.entity);
+    *iter = army;
+}

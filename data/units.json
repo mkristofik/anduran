@@ -1,5 +1,6 @@
 {
     "archer": {
+        "name": "Archer",
         "speed": 2,
         "hp": 10,
         "damage": [2, 3],
@@ -9,6 +10,7 @@
         "projectile": "missile"
     },
     "orc": {
+        "name": "Orc",
         "speed": 4,
         "hp": 20,
         "damage": [4, 6],
@@ -18,6 +20,7 @@
         "anim-die": "orc-grunt-die"
     },
     "swordsman": {
+        "name": "Swordsman",
         "speed": 4,
         "hp": 25,
         "damage": [5, 9],
