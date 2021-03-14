@@ -16,6 +16,7 @@
 #include <string>
 
 #define OBJ_TYPES \
+    X(army) \
     X(camp) \
     X(castle) \
     X(champion) \

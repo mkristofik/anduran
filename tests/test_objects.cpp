@@ -16,6 +16,8 @@
 #include "object_types.h"
 BOOST_TEST_DONT_PRINT_LOG_VALUE(ObjectType)
 
+#include <algorithm>
+
 
 BOOST_AUTO_TEST_CASE(names)
 {
@@ -28,16 +30,28 @@ BOOST_AUTO_TEST_CASE(add_and_remove)
 {
     GameState game;
     GameObject obj;
-    obj.hex = Hex{0, 0};
+    obj.hex = Hex{5, 5};
     obj.entity = 42;
+    obj.type = ObjectType::army;
     game.add_object(obj);
 
-    auto obj2 = game.get_object(42);
+    auto obj2 = game.get_object(obj.entity);
+    BOOST_TEST(obj.hex == obj2.hex);
     BOOST_TEST(obj.entity == obj2.entity);
-    auto objsHere = game.objects_in_hex(Hex{0, 0});
+    BOOST_TEST(obj.type == obj2.type);
+
+    auto objsHere = game.objects_in_hex(obj.hex);
     BOOST_TEST(objsHere.size() == 1);
     BOOST_TEST(objsHere[0].entity == obj.entity);
 
-    game.remove_object(42);
-    BOOST_TEST(game.objects_in_hex(Hex{0, 0}).empty());
+    // Verify zone of control.
+    auto hNbrs = obj.hex.getAllNeighbors();
+    BOOST_TEST(std::all_of(begin(hNbrs), end(hNbrs),
+        [&game, &obj] (const Hex &hex) {
+            return game.hex_controller(hex) == obj.entity;
+        }));
+    BOOST_TEST(game.hex_controller(obj.hex) == obj.entity);
+
+    game.remove_object(obj.entity);
+    BOOST_TEST(game.objects_in_hex(obj.hex).empty());
 }

@@ -18,6 +18,7 @@
 void GameState::add_object(const GameObject &obj)
 {
     objects_.insert(obj);
+    update_zoc();
 }
 
 GameObject GameState::get_object(int id) const
@@ -35,12 +36,14 @@ void GameState::update_object(const GameObject &obj)
     if (iter != std::end(objects_)) {
         entityIndex.replace(iter, obj);
     }
+    update_zoc();
 }
 
 void GameState::remove_object(int id)
 {
     const int numRemoved = objects_.erase(id);
     assert(numRemoved == 1);
+    update_zoc();
 }
 
 ObjVector GameState::objects_in_hex(const Hex &hex) const
@@ -56,6 +59,16 @@ bool GameState::hex_occupied(const Hex &hex) const
 {
     auto range = objects_.get<ByHex>().equal_range(hex);
     return range.first != range.second;
+}
+
+int GameState::hex_controller(const Hex &hex) const
+{
+    auto iter = zoc_.find(hex);
+    if (iter == std::end(zoc_)) {
+        return -1;
+    }
+
+    return iter->second;
 }
 
 void GameState::add_army(const Army &army)
@@ -76,4 +89,22 @@ void GameState::update_army(const Army &army)
     auto iter = lower_bound(begin(armies_), end(armies_), army.entity);
     assert(iter->entity == army.entity);
     *iter = army;
+}
+
+void GameState::update_zoc()
+{
+    zoc_.clear();
+
+    auto range = objects_.get<ByType>().equal_range(ObjectType::army);
+    for (auto i = range.first; i != range.second; ++i) {
+        for (auto &hex : i->hex.getAllNeighbors()) {
+            zoc_.insert_or_assign(hex, i->entity);
+        }
+    }
+
+    // Second pass just in case two armies are next to each other.  Make sure
+    // each army has control over its own hex.
+    for (auto i = range.first; i != range.second; ++i) {
+        zoc_.insert_or_assign(i->hex, i->entity);
+    }
 }
