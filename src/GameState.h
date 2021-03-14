@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2021 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -52,6 +52,8 @@ public:
     void add_object(const GameObject &obj);
     GameObject get_object(int id) const;
     void update_object(const GameObject &obj);
+    void remove_object(int id);
+
     ObjVector objects_in_hex(const Hex &hex) const;
     bool hex_occupied(const Hex &hex) const;
 

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2020 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2021 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -35,6 +35,12 @@ void GameState::update_object(const GameObject &obj)
     if (iter != std::end(objects_)) {
         entityIndex.replace(iter, obj);
     }
+}
+
+void GameState::remove_object(int id)
+{
+    const int numRemoved = objects_.erase(id);
+    assert(numRemoved == 1);
 }
 
 ObjVector GameState::objects_in_hex(const Hex &hex) const

@@ -206,6 +206,10 @@ void Anduran::experiment2()
             break;
         }
     }
+    if (enemy.entity < 0) {
+        // Enemy was previously defeated.
+        return;
+    }
 
     auto attacker = game_.get_army(player.entity);
     auto defender = game_.get_army(enemy.entity);
@@ -243,17 +247,18 @@ void Anduran::experiment2()
     if (result.attackerWins) {
         SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Attacker wins");
         debug_print_losses(attacker, result.attacker);
+        game_.remove_object(enemy.entity);
     }
     else {
         SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Defender wins");
         debug_print_losses(defender, result.defender);
+        // TODO: game can't yet handle a player being defeated
+        game_.remove_object(player.entity);
     }
     attacker.update(result.attacker);
     defender.update(result.defender);
     game_.update_army(attacker);
     game_.update_army(defender);
-
-    // TODO: remove the losing entity from the game
 }
 
 void Anduran::load_images()

@@ -89,9 +89,11 @@ ANDURAN_OBJS = $(ANDURAN_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-n
 ANDURAN_DEPS = $(ANDURAN_OBJS:%.o=%.d)
 
 UNITTESTS = unittests$(EXE)
-UNITTESTS_SRC = RandomRange.cpp \
+UNITTESTS_SRC = GameState.cpp \
+	RandomRange.cpp \
 	UnitData.cpp \
 	battle_utils.cpp \
+	hex_utils.cpp \
 	object_types.cpp \
 	$(wildcard $(TEST_DIR)/*.cpp)
 UNITTESTS_OBJS = $(UNITTESTS_SRC:%.cpp=$(BUILD_DIR)/%.o)
