@@ -28,27 +28,27 @@ Pathfinder::Pathfinder(const RandomMap &rmap, const GameState &state)
     : cameFrom_(),
     costSoFar_(),
     frontier_(),
-    path_(),
     rmap_(&rmap),
     game_(&state),
     iSrc_(RandomMap::invalidIndex),
     iDest_(RandomMap::invalidIndex),
     hDest_(),
+    destZoc_(-1),
     team_(Team::neutral)
 {
 }
 
-const std::vector<Hex> & Pathfinder::find_path(const Hex &hSrc,
-                                               const Hex &hDest,
-                                               Team team)
+std::vector<Hex> Pathfinder::find_path(const Hex &hSrc, const Hex &hDest, Team team)
 {
+    std::vector<Hex> path;
+
     cameFrom_.clear();
     costSoFar_.clear();
     frontier_.clear();
-    path_.clear();
     iSrc_ = rmap_->intFromHex(hSrc);
     hDest_ = hDest;
-    iDest_ = rmap_->intFromHex(hDest);
+    iDest_ = rmap_->intFromHex(hDest_);
+    destZoc_ = game_->hex_controller(hDest_);
     team_ = team;
 
     // Optimization: skip everything if the destination hex isn't reachable.
@@ -96,12 +96,12 @@ const std::vector<Hex> & Pathfinder::find_path(const Hex &hSrc,
     // destination hex wasn't found, the path will be empty.
     auto fromIter = cameFrom_.find(iDest_);
     while (fromIter != cameFrom_.end() && fromIter->first != iSrc_) {
-        path_.push_back(rmap_->hexFromInt(fromIter->first));
+        path.push_back(rmap_->hexFromInt(fromIter->first));
         fromIter = cameFrom_.find(fromIter->second);
     }
-    std::reverse(path_.begin(), path_.end());
+    std::reverse(path.begin(), path.end());
 
-    return path_;
+    return path;
 }
 
 Neighbors<int> Pathfinder::get_neighbors(int index) const
@@ -125,6 +125,14 @@ Neighbors<int> Pathfinder::get_neighbors(int index) const
         if (!rmap_->getWalkable(iNbrs[i]) ||
             rmap_->getTerrain(iNbrs[i]) == Terrain::water)
         {
+            iNbrs[i] = RandomMap::invalidIndex;
+            continue;
+        }
+
+        // ZoC hexes aren't walkable unless they match the ZoC of the destination
+        // hex (either within that army's ZoC or empty)
+        const int zoc = game_->hex_controller(hNbrs[i]);
+        if (zoc >= 0 && zoc != destZoc_) {
             iNbrs[i] = RandomMap::invalidIndex;
             continue;
         }

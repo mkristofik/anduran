@@ -32,20 +32,13 @@ struct EstimatedPathCost
 bool operator>(const EstimatedPathCost &lhs, const EstimatedPathCost &rhs);
 
 
-// Holds internal state to manage its own memory, including the path that's
-// returned. Each thread should have its own one of these.
+// Each thread should have its own one of these due to internal state.
 class Pathfinder
 {
 public:
-    explicit Pathfinder(const RandomMap &rmap, const GameState &state);
+    Pathfinder(const RandomMap &rmap, const GameState &state);
 
-    Pathfinder(const Pathfinder &) = delete;
-    Pathfinder(Pathfinder &&) = delete;
-    Pathfinder & operator=(const Pathfinder &) = delete;
-    Pathfinder & operator=(Pathfinder &&) = delete;
-    ~Pathfinder() = default;
-
-    const std::vector<Hex> & find_path(const Hex &hSrc, const Hex &hDest, Team team);
+    std::vector<Hex> find_path(const Hex &hSrc, const Hex &hDest, Team team);
 
 private:
     Neighbors<int> get_neighbors(int index) const;
@@ -53,12 +46,12 @@ private:
     boost::container::flat_map<int, int> cameFrom_;
     boost::container::flat_map<int, int> costSoFar_;
     PriorityQueue<EstimatedPathCost> frontier_;
-    std::vector<Hex> path_;
     const RandomMap *rmap_;
     const GameState *game_;
     int iSrc_;
     int iDest_;
     Hex hDest_;
+    int destZoc_;
     Team team_;
 };
 

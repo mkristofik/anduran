@@ -158,19 +158,36 @@ void Anduran::handle_lmouse_up()
         }
     }
     else if (championSelected_) {
-        auto &path = pathfind_.find_path(player.hex, mouseHex, player.team);
+        auto path = pathfind_.find_path(player.hex, mouseHex, player.team);
         if (!path.empty()) {
+            // Path must stop early at first hex inside a zone of control.
+            // TODO: using Path = std::vector<Hex>?
+            auto i = find_if(begin(path), end(path),
+                [this] (const auto &hex) {
+                    return game_.hex_controller(hex) >= 0;
+                });
+            if (i != end(path)) {
+                path.erase(next(i), end(path));
+            }
+            SDL_assert(!path.empty());
+            auto destHex = path.back();
+
+            player.hex = destHex;
+            game_.update_object(player);
+            championSelected_ = false;
+            rmapView_.clearHighlight();
+
             auto champion = player.entity;
             auto ellipse = player.secondary;
 
             anims_.insert<AnimHide>(ellipse);
             anims_.insert<AnimMove>(champion, path);
-            if (mouseHex != Hex{4, 8}) {
-                anims_.insert<AnimDisplay>(ellipse, mouseHex);
+            if (game_.hex_controller(destHex) < 0) {
+                anims_.insert<AnimDisplay>(ellipse, destHex);
 
                 // If we land on an object with a flag, change the flag color to
                 // match the player's.
-                auto objectsHere = game_.objects_in_hex(mouseHex);
+                auto objectsHere = game_.objects_in_hex(destHex);
                 for (auto &obj : objectsHere) {
                     if ((obj.type == ObjectType::village ||
                          obj.type == ObjectType::windmill) &&
@@ -183,12 +200,7 @@ void Anduran::handle_lmouse_up()
                     }
                 }
             }
-            player.hex = mouseHex;
-            game_.update_object(player);
-            championSelected_ = false;
-            rmapView_.clearHighlight();
-
-            if (mouseHex == Hex{4, 8}) {
+            else {
                 experiment2();
             }
         }
@@ -200,11 +212,9 @@ void Anduran::experiment2()
     // TODO: this is all temporary so I can experiment
     GameObject player = game_.get_object(curPlayerId_);
     GameObject enemy;
-    for (auto &obj : game_.objects_in_hex(Hex{5, 8})) {
-        if (obj.type == ObjectType::champion) {
-            enemy = obj;
-            break;
-        }
+    const int orcEntity = game_.hex_controller(Hex{5, 8});
+    if (orcEntity > 0) {
+        enemy = game_.get_object(orcEntity);
     }
     if (enemy.entity < 0) {
         // Enemy was previously defeated.
@@ -326,7 +336,7 @@ void Anduran::load_players()
     enemy.hex = {5, 8};
     enemy.entity = rmapView_.addEntity(orcImg, enemy.hex, ZOrder::unit);
     enemy.team = Team::neutral;
-    enemy.type = ObjectType::champion;
+    enemy.type = ObjectType::army;
     game_.add_object(enemy);
 
     Army orcArmy;
