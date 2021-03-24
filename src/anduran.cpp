@@ -60,6 +60,8 @@ private:
     void load_objects();
     void load_simple_object(ObjectType type, const std::string &imgName);
 
+    Path find_path(const GameObject &obj, const Hex &hDest);
+
     void debug_print_army(const Army &army) const;
     void debug_print_losses(const Army &before, const ArmyState &after) const;
     ArmyState make_army_state(const Army &army, BattleSide side) const;
@@ -158,20 +160,9 @@ void Anduran::handle_lmouse_up()
         }
     }
     else if (championSelected_) {
-        auto path = pathfind_.find_path(player.hex, mouseHex, player.team);
+        auto path = find_path(player, mouseHex);
         if (!path.empty()) {
-            // Path must stop early at first hex inside a zone of control.
-            // TODO: using Path = std::vector<Hex>?
-            auto i = find_if(begin(path), end(path),
-                [this] (const auto &hex) {
-                    return game_.hex_controller(hex) >= 0;
-                });
-            if (i != end(path)) {
-                path.erase(next(i), end(path));
-            }
-            SDL_assert(!path.empty());
             auto destHex = path.back();
-
             player.hex = destHex;
             game_.update_object(player);
             championSelected_ = false;
@@ -179,9 +170,9 @@ void Anduran::handle_lmouse_up()
 
             auto champion = player.entity;
             auto ellipse = player.secondary;
-
             anims_.insert<AnimHide>(ellipse);
             anims_.insert<AnimMove>(champion, path);
+
             if (game_.hex_controller(destHex) < 0) {
                 anims_.insert<AnimDisplay>(ellipse, destHex);
 
@@ -420,6 +411,22 @@ void Anduran::load_simple_object(ObjectType type, const std::string &imgName)
         obj.type = type;
         game_.add_object(obj);
     }
+}
+
+Path Anduran::find_path(const GameObject &obj, const Hex &hDest)
+{
+    auto path = pathfind_.find_path(obj.hex, hDest, obj.team);
+
+    // Path must stop early at first hex inside a zone of control.
+    auto stopAt = find_if(begin(path), end(path),
+        [this] (const auto &hex) {
+            return game_.hex_controller(hex) >= 0;
+        });
+    if (stopAt != end(path)) {
+        path.erase(next(stopAt), end(path));
+    }
+
+    return path;
 }
 
 void Anduran::debug_print_army(const Army &army) const

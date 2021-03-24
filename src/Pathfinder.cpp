@@ -38,9 +38,9 @@ Pathfinder::Pathfinder(const RandomMap &rmap, const GameState &state)
 {
 }
 
-std::vector<Hex> Pathfinder::find_path(const Hex &hSrc, const Hex &hDest, Team team)
+Path Pathfinder::find_path(const Hex &hSrc, const Hex &hDest, Team team)
 {
-    std::vector<Hex> path;
+    Path path;
 
     cameFrom_.clear();
     costSoFar_.clear();

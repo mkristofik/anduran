@@ -32,13 +32,15 @@ struct EstimatedPathCost
 bool operator>(const EstimatedPathCost &lhs, const EstimatedPathCost &rhs);
 
 
+using Path = std::vector<Hex>;
+
 // Each thread should have its own one of these due to internal state.
 class Pathfinder
 {
 public:
     Pathfinder(const RandomMap &rmap, const GameState &state);
 
-    std::vector<Hex> find_path(const Hex &hSrc, const Hex &hDest, Team team);
+    Path find_path(const Hex &hSrc, const Hex &hDest, Team team);
 
 private:
     Neighbors<int> get_neighbors(int index) const;
