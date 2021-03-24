@@ -61,11 +61,12 @@ private:
     void load_simple_object(ObjectType type, const std::string &imgName);
 
     Path find_path(const GameObject &obj, const Hex &hDest);
+    void move_action(GameObject &player, const Path &path);
+    void battle_action(GameObject &player, GameObject &enemy);
 
     void debug_print_army(const Army &army) const;
     void debug_print_losses(const Army &before, const ArmyState &after) const;
     ArmyState make_army_state(const Army &army, BattleSide side) const;
-    BattleResult run_battle(const Army &attacker, const Army &defender) const;
     void animate(const GameObject &attacker,
                  const GameObject &defender,
                  const BattleEvent &event);
@@ -135,7 +136,7 @@ void Anduran::handle_lmouse_up()
     // - user selects the champion hex (clicking again deselects it)
     // - highlight that hex when selected
     // - user clicks on a walkable hex
-    // - champion moves to the new hex
+    // - champion moves to the new hex, engages in battle if appropriate
     const auto mouseHex = rmapView_.hexFromMousePos();
     for (auto i = 0; i < ssize(playerEntityIds_); ++i) {
         if (auto player = game_.get_object(playerEntityIds_[i]); player.hex == mouseHex) {
@@ -162,104 +163,11 @@ void Anduran::handle_lmouse_up()
     else if (championSelected_) {
         auto path = find_path(player, mouseHex);
         if (!path.empty()) {
-            auto destHex = path.back();
-            player.hex = destHex;
-            game_.update_object(player);
             championSelected_ = false;
             rmapView_.clearHighlight();
-
-            auto champion = player.entity;
-            auto ellipse = player.secondary;
-            anims_.insert<AnimHide>(ellipse);
-            anims_.insert<AnimMove>(champion, path);
-
-            if (game_.hex_controller(destHex) < 0) {
-                anims_.insert<AnimDisplay>(ellipse, destHex);
-
-                // If we land on an object with a flag, change the flag color to
-                // match the player's.
-                auto objectsHere = game_.objects_in_hex(destHex);
-                for (auto &obj : objectsHere) {
-                    if ((obj.type == ObjectType::village ||
-                         obj.type == ObjectType::windmill) &&
-                        obj.team != player.team)
-                    {
-                        obj.team = player.team;
-                        game_.update_object(obj);
-                        anims_.insert<AnimDisplay>(obj.secondary,
-                                                   flagImages_[curPlayerNum_]);
-                    }
-                }
-            }
-            else {
-                experiment2();
-            }
+            move_action(player, path);
         }
     }
-}
-
-void Anduran::experiment2()
-{
-    // TODO: this is all temporary so I can experiment
-    GameObject player = game_.get_object(curPlayerId_);
-    GameObject enemy;
-    const int orcEntity = game_.hex_controller(Hex{5, 8});
-    if (orcEntity > 0) {
-        enemy = game_.get_object(orcEntity);
-    }
-    if (enemy.entity < 0) {
-        // Enemy was previously defeated.
-        return;
-    }
-
-    auto attacker = game_.get_army(player.entity);
-    auto defender = game_.get_army(enemy.entity);
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Battle:");
-    debug_print_army(attacker);
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "vs.");
-    debug_print_army(defender);
-    const auto result = run_battle(attacker, defender);
-
-    for (const auto &event : result.log) {
-        if (event.action == ActionType::next_round) {
-            continue;
-        }
-
-        if (event.attackingTeam) {
-            animate(player, enemy, event);
-        }
-        else {
-            animate(enemy, player, event);
-        }
-    }
-
-    // Losing team's last unit was hidden at the end of the battle.  Have to
-    // restore the winning team's starting image (and ellipse if needed).
-    const GameObject *winner = &player;
-    if (!result.attackerWins) {
-        winner = &enemy;
-    }
-    // TODO: this shows the player and ellipse in separate frames.
-    anims_.insert<AnimDisplay>(winner->entity, rmapView_.getEntityImage(winner->entity));
-    if (winner->secondary >= 0) {
-        anims_.insert<AnimDisplay>(winner->secondary, winner->hex);
-    }
-
-    if (result.attackerWins) {
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Attacker wins");
-        debug_print_losses(attacker, result.attacker);
-        game_.remove_object(enemy.entity);
-    }
-    else {
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Defender wins");
-        debug_print_losses(defender, result.defender);
-        // TODO: game can't yet handle a player being defeated
-        game_.remove_object(player.entity);
-    }
-    attacker.update(result.attacker);
-    defender.update(result.defender);
-    game_.update_army(attacker);
-    game_.update_army(defender);
 }
 
 void Anduran::load_images()
@@ -429,6 +337,97 @@ Path Anduran::find_path(const GameObject &obj, const Hex &hDest)
     return path;
 }
 
+void Anduran::move_action(GameObject &player, const Path &path)
+{
+    SDL_assert(!path.empty());
+
+    auto destHex = path.back();
+    player.hex = destHex;
+    game_.update_object(player);
+
+    auto champion = player.entity;
+    auto ellipse = player.secondary;
+    anims_.insert<AnimHide>(ellipse);
+    anims_.insert<AnimMove>(champion, path);
+
+    const int zoc = game_.hex_controller(destHex);
+    if (zoc < 0) {
+        anims_.insert<AnimDisplay>(ellipse, destHex);
+
+        // If we land on an object with a flag, change the flag color to
+        // match the player's.
+        auto objectsHere = game_.objects_in_hex(destHex);
+        for (auto &obj : objectsHere) {
+            if ((obj.type == ObjectType::village ||
+                 obj.type == ObjectType::windmill) &&
+                obj.team != player.team)
+            {
+                obj.team = player.team;
+                game_.update_object(obj);
+                anims_.insert<AnimDisplay>(obj.secondary,
+                                           flagImages_[curPlayerNum_]);
+            }
+        }
+    }
+    else {
+        auto enemy = game_.get_object(zoc);
+        battle_action(player, enemy);
+    }
+}
+
+void Anduran::battle_action(GameObject &player, GameObject &enemy)
+{
+    auto attacker = game_.get_army(player.entity);
+    auto defender = game_.get_army(enemy.entity);
+    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Battle:");
+    debug_print_army(attacker);
+    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "vs.");
+    debug_print_army(defender);
+
+    const auto result = do_battle(make_army_state(attacker, BattleSide::attacker),
+                                  make_army_state(defender, BattleSide::defender));
+    for (const auto &event : result.log) {
+        if (event.action == ActionType::next_round) {
+            continue;
+        }
+
+        if (event.attackingTeam) {
+            animate(player, enemy, event);
+        }
+        else {
+            animate(enemy, player, event);
+        }
+    }
+
+    // Losing team's last unit was hidden at the end of the battle.  Have to
+    // restore the winning team's starting image (and ellipse if needed).
+    const GameObject *winner = &player;
+    if (!result.attackerWins) {
+        winner = &enemy;
+    }
+    // TODO: this shows the player and ellipse in separate frames.
+    anims_.insert<AnimDisplay>(winner->entity, rmapView_.getEntityImage(winner->entity));
+    if (winner->secondary >= 0) {
+        anims_.insert<AnimDisplay>(winner->secondary, winner->hex);
+    }
+
+    if (result.attackerWins) {
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Attacker wins");
+        debug_print_losses(attacker, result.attacker);
+        game_.remove_object(enemy.entity);
+    }
+    else {
+        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Defender wins");
+        debug_print_losses(defender, result.defender);
+        // TODO: game can't yet handle a player being defeated
+        game_.remove_object(player.entity);
+    }
+    attacker.update(result.attacker);
+    defender.update(result.defender);
+    game_.update_army(attacker);
+    game_.update_army(defender);
+}
+
 void Anduran::debug_print_army(const Army &army) const
 {
     for (auto &unit : army.units) {
@@ -474,12 +473,6 @@ ArmyState Anduran::make_army_state(const Army &army, BattleSide side) const
     }
 
     return ret;
-}
-
-BattleResult Anduran::run_battle(const Army &attacker, const Army &defender) const
-{
-    return do_battle(make_army_state(attacker, BattleSide::attacker),
-                     make_army_state(defender, BattleSide::defender));
 }
 
 void Anduran::animate(const GameObject &attacker,
