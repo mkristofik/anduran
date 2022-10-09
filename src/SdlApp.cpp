@@ -15,6 +15,12 @@
 #include "SDL_image.h"
 #include <stdexcept>
 
+namespace
+{
+    const Uint32 MIN_FRAME_MS = 10;
+}
+
+
 SdlApp::SdlApp()
     : prevFrameTime_ms_(0),
     mouseInWindow_(true)
@@ -69,7 +75,12 @@ void SdlApp::do_game_loop()
             return;
         }
         update_frame(elapsed_ms);
-        SDL_Delay(1);
+
+        // Limit to a max frame rate to try to minimize CPU usage.
+        auto frame_ms = SDL_GetTicks() - prevFrameTime_ms_;
+        if (frame_ms < MIN_FRAME_MS) {
+            SDL_Delay(MIN_FRAME_MS - frame_ms);
+        }
     }
 }
 
