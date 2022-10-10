@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2022 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anudran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -216,4 +216,11 @@ std::vector<Hex> hexCircle(const Hex &center, int radius)
     }
 
     return hexes;
+}
+
+HexDir oppositeHexDir(HexDir d)
+{
+    int sz = enum_size<HexDir>();
+    int opposite = (static_cast<int>(d) + sz / 2) % sz;
+    return static_cast<HexDir>(opposite);
 }

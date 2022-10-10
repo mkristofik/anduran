@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2022 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -69,5 +69,9 @@ int hexClosestIdx(const Hex &hSrc, const std::vector<Hex> &hexes);
 
 // Set of all hexes within 'radius' distance of the center.
 std::vector<Hex> hexCircle(const Hex &center, int radius);
+
+// Return the opposite direction (when viewed from the neighbor hex in that
+// direction).
+HexDir oppositeHexDir(HexDir d);
 
 #endif

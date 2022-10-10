@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2021 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2022 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -387,24 +387,29 @@ void MapDisplay::computeTileEdges()
     }
 
     for (auto &tile : tiles_) {
-        const auto myTerrain = static_cast<Terrain>(tile.terrain);
+        auto myTerrain = static_cast<Terrain>(tile.terrain);
         for (auto d : HexDir()) {
+            auto dirIndex = static_cast<int>(d);
             // We can look up logical neighbors to every tile, even those on the
             // border outside the map grid.
-            const auto dirIndex = static_cast<int>(d);
-            const auto nbr = tile.hex.getNeighbor(d);
-            const auto nbrIter = hexmap.find(nbr);
+            auto hNbr = tile.hex.getNeighbor(d);
+            auto nbrIter = hexmap.find(hNbr);
             if (nbrIter == std::cend(hexmap)) {
                 continue;
             }
 
-            const auto &nbrTile = tiles_[nbrIter->second];
-            const auto nbrTerrain = static_cast<Terrain>(nbrTile.terrain);
+            auto &nbrTile = tiles_[nbrIter->second];
+            auto nbrTerrain = static_cast<Terrain>(nbrTile.terrain);
             if (myTerrain == nbrTerrain) {
                 // Special transition between neighboring regions with the same
                 // terrain type.
                 if (tile.region != nbrTile.region) {
                     tile.edges[dirIndex] = edgeImg_.size() - 1;
+
+                    // Make sure we only draw the transition once per adjacent
+                    // pair of hexes.
+                    auto opposite = static_cast<int>(oppositeHexDir(d));
+                    nbrTile.edges[opposite] = -1;
                 }
                 continue;
             }
