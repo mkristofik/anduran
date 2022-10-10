@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2022 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anudran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -32,6 +32,7 @@
 #define ITERABLE_ENUM_CLASS_H
 
 #include <array>
+#include <cstddef>
 #include <type_traits>
 
 #define ITERABLE_ENUM_CLASS(T, ...) \
