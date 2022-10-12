@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2021 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2022 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -14,6 +14,7 @@
 #define FLAT_MULTIMAP_H
 
 #include <algorithm>
+#include <compare>
 #include <tuple>
 #include <vector>
 
@@ -28,6 +29,8 @@ public:
     {
         K key;
         V value;
+
+        auto operator<=>(const KeyValue &rhs) const = default;
     };
 
     using container_type = std::vector<KeyValue>;
@@ -116,11 +119,6 @@ public:
     };
 
 private:
-    friend bool operator<(const KeyValue &lhs, const KeyValue &rhs)
-    {
-        return std::tie(lhs.key, lhs.value) < std::tie(rhs.key, rhs.value);
-    }
-
     friend bool operator<(const KeyValue &lhs, const K &rhs)
     {
         return lhs.key < rhs;
@@ -129,11 +127,6 @@ private:
     friend bool operator<(const K &lhs, const KeyValue &rhs)
     {
         return lhs < rhs.key;
-    }
-
-    friend bool operator==(const KeyValue &lhs, const KeyValue &rhs)
-    {
-        return lhs.key == rhs.key && lhs.value == rhs.value;
     }
 };
 

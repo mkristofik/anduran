@@ -131,36 +131,6 @@ Hex operator/(const Hex &lhs, int rhs)
     return {lhs.x / rhs, lhs.y / rhs};
 }
 
-bool operator==(const Hex &lhs, const Hex &rhs)
-{
-    return lhs.x == rhs.x && lhs.y == rhs.y;
-}
-
-bool operator!=(const Hex &lhs, const Hex &rhs)
-{
-    return !(lhs == rhs);
-}
-
-bool operator<(const Hex &lhs, const Hex &rhs)
-{
-    return std::tie(lhs.x, lhs.y) < std::tie(rhs.x, rhs.y);
-}
-
-bool operator>(const Hex &lhs, const Hex &rhs)
-{
-    return rhs < lhs;
-}
-
-bool operator<=(const Hex &lhs, const Hex &rhs)
-{
-    return !(lhs > rhs);
-}
-
-bool operator>=(const Hex &lhs, const Hex &rhs)
-{
-    return !(lhs < rhs);
-}
-
 std::ostream & operator<<(std::ostream &os, const Hex &rhs)
 {
     os << '(' << rhs.x << ',' << rhs.y << ')';
