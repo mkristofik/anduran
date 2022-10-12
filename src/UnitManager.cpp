@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2021 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2022 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -146,16 +146,18 @@ SdlTexture UnitManager::get_image(int unitType, ImageType imgType, Team team) co
 {
     SDL_assert(in_bounds(media_, unitType));
 
-    auto imgIter = media_[unitType].images.find(imgType);
-    const auto endIter = end(media_[unitType].images);
-    if (imgIter != endIter) {
-        return enum_fetch(imgIter->second, team);
+    const auto &unitImages = media_[unitType].images;
+    auto imgIter = unitImages.find(imgType);
+    if (imgIter != end(unitImages)) {
+        const auto &textures = imgIter->second;
+        return textures[team];
     }
 
     // Use the base image if the requested image type doesn't exist.
-    imgIter = media_[unitType].images.find(ImageType::img_idle);
-    if (imgIter != endIter) {
-        return enum_fetch(imgIter->second, team);
+    imgIter = unitImages.find(ImageType::img_idle);
+    if (imgIter != end(unitImages)) {
+        const auto &textures = imgIter->second;
+        return textures[team];
     }
 
     return {};

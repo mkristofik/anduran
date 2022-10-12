@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2017 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2022 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -27,8 +27,8 @@ class SdlTexture;
 
 ITERABLE_ENUM_CLASS(Team, blue, red, green, purple, neutral);
 
-using TeamColoredSurfaces = std::array<SdlSurface, enum_size<Team>()>;
-using TeamColoredTextures = std::array<SdlTexture, enum_size<Team>()>;
+using TeamColoredSurfaces = EnumSizedArray<SdlSurface, Team>;
+using TeamColoredTextures = EnumSizedArray<SdlTexture, Team>;
 
 
 TeamColoredSurfaces applyTeamColors(const SdlSurface &src);

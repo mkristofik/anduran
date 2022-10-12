@@ -63,15 +63,6 @@ constexpr int enum_size()
     return U(T::_last) - U(T::_first);
 }
 
-// Index into an array with an iterable enum without casting.  Intended for
-// arrays defined with enum_size as the template argument.  You can get away with
-// any iterable enum as long as the sizes match, but please don't.
-template <typename T, size_t N, typename U>
-constexpr const T & enum_fetch(const std::array<T, N> &ary, U enumValue)
-{
-    static_assert(enum_size<U>() == N, "array must have same size as iterable enum");
-    return ary[static_cast<int>(enumValue)];
-}
 
 // Convenience type for an array that uses an iterable enum for its indexes.
 template <typename T, typename E>
@@ -87,13 +78,15 @@ public:
 template <typename T, typename E>
 T & EnumSizedArray<T, E>::operator[](E index)
 {
-    return operator[](static_cast<int>(index));
+    using U = typename std::underlying_type_t<E>;
+    return operator[](static_cast<U>(index));
 }
 
 template <typename T, typename E>
 const T & EnumSizedArray<T, E>::operator[](E index) const
 {
-    return operator[](static_cast<int>(index));
+    using U = typename std::underlying_type_t<E>;
+    return operator[](static_cast<U>(index));
 }
 
 #endif

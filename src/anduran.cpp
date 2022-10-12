@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2021 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2022 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -250,7 +250,7 @@ void Anduran::load_players()
 
 void Anduran::load_villages()
 {
-    std::array<SdlTexture, enum_size<Terrain>()> villageImages = {
+    EnumSizedArray<SdlTexture, Terrain> villageImages = {
         SdlTexture{},
         images_.make_texture("village-desert"s, win_),
         images_.make_texture("village-swamp"s, win_),
@@ -259,12 +259,12 @@ void Anduran::load_villages()
         images_.make_texture("village-snow"s, win_)
     };
 
-    auto &neutralFlag = enum_fetch(flagImages_, Team::neutral);
+    auto &neutralFlag = flagImages_[Team::neutral];
     for (const auto &hex : rmap_.getObjectTiles(ObjectType::village)) {
         GameObject village;
         village.hex = hex;
         village.entity =
-            rmapView_.addEntity(enum_fetch(villageImages, rmap_.getTerrain(hex)),
+            rmapView_.addEntity(villageImages[rmap_.getTerrain(hex)],
                                 village.hex,
                                 ZOrder::object);
         village.secondary = rmapView_.addEntity(neutralFlag, village.hex, ZOrder::flag);
@@ -277,7 +277,7 @@ void Anduran::load_objects()
 {
     // Windmills are ownable so draw flags on them.
     const auto windmillImg = images_.make_texture("windmill"s, win_);
-    auto &neutralFlag = enum_fetch(flagImages_, Team::neutral);
+    auto &neutralFlag = flagImages_[Team::neutral];
     for (const auto &hex : rmap_.getObjectTiles(ObjectType::windmill)) {
         GameObject windmill;
         windmill.hex = hex;
