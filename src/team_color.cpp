@@ -66,7 +66,7 @@ namespace
         {0x93, 0x00, 0x9D, SDL_ALPHA_OPAQUE},  // player 4 - purple
         {0x5A, 0x5A, 0x5A, SDL_ALPHA_OPAQUE},  // neutral - grey
     };
-    static_assert(ssize(teamBaseColors) == enum_size<Team>());
+    static_assert(std::ssize(teamBaseColors) == enum_size<Team>());
 
     using TeamColorPalette = std::array<SDL_Color, std::size(refColors)>;
     auto makeTeamColors(const SDL_Color &baseColor)

@@ -1,4 +1,4 @@
-#    Copyright (C) 2016-2021 by Michael Kristofik <kristo605@gmail.com>
+#    Copyright (C) 2016-2022 by Michael Kristofik <kristo605@gmail.com>
 #    Part of the Champions of Anduran project.
 # 
 #    This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@ endif
 
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror -O3
-CXXFLAGS = -g -Wall -Wextra -Werror -std=c++17
+CXXFLAGS = -g -Wall -Wextra -Werror -std=c++20
 
 BUILD_DIR = build
 SRC_DIR = src

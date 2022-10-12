@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2021 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2022 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -17,16 +17,6 @@
 
 #include <algorithm>
 #include <iterator>
-
-// Convenience function for getting the size of something as an int. Casting to
-// avoid a compiler warning is annoying.  This was proposed for C++20.
-template <typename C>
-constexpr int ssize(const C &cont)
-{
-    using std::size;
-    return static_cast<int>(size(cont));
-}
-
 
 template <typename C>
 constexpr bool in_bounds(const C &cont, int index)
