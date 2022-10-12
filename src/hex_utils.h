@@ -23,7 +23,7 @@ ITERABLE_ENUM_CLASS(HexDir, n, ne, se, s, sw, nw);
 
 // Convenience type for all neighbors of a hex, in HexDir order.
 template <typename T>
-using Neighbors = std::array<T, enum_size<HexDir>()>;
+using Neighbors = EnumSizedArray<T, HexDir>;
 
 
 struct Hex

@@ -215,10 +215,10 @@ void MapDisplay::draw()
         if (!t.visible) {
             continue;
         }
-        for (int d = 0; d < enum_size<HexDir>(); ++d) {
+        for (auto d : HexDir()) {
             if (t.edges[d] != -1) {
-                const auto edgeIndex = t.edges[d];
-                edgeImg_[edgeIndex].draw(t.curPixel, Frame{0, d});
+                auto edgeIndex = t.edges[d];
+                edgeImg_[edgeIndex].draw(t.curPixel, Frame{0, static_cast<int>(d)});
             }
         }
     }
@@ -398,7 +398,6 @@ void MapDisplay::computeTileEdges()
     for (auto &tile : tiles_) {
         auto myTerrain = static_cast<Terrain>(tile.terrain);
         for (auto d : HexDir()) {
-            auto dirIndex = static_cast<int>(d);
             // We can look up logical neighbors to every tile, even those on the
             // border outside the map grid.
             auto hNbr = tile.hex.getNeighbor(d);
@@ -413,12 +412,11 @@ void MapDisplay::computeTileEdges()
                 // Special transition between neighboring regions with the same
                 // terrain type.
                 if (tile.region != nbrTile.region) {
-                    tile.edges[dirIndex] = edgeImg_.size() - 1;
+                    tile.edges[d] = edgeImg_.size() - 1;
 
                     // Make sure we only draw the transition once per adjacent
                     // pair of hexes.
-                    auto opposite = static_cast<int>(oppositeHexDir(d));
-                    nbrTile.edges[opposite] = -1;
+                    nbrTile.edges[oppositeHexDir(d)] = -1;
                 }
                 continue;
             }
@@ -426,7 +424,7 @@ void MapDisplay::computeTileEdges()
             // Set the edge of the tile to the terrain of the neighboring tile
             // if the neighboring terrain overlaps this one.
             if (priority[nbrTerrain] > priority[myTerrain]) {
-                tile.edges[dirIndex] = nbrTile.terrain;
+                tile.edges[d] = nbrTile.terrain;
             }
         }
     }

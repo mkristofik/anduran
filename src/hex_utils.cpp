@@ -98,7 +98,7 @@ Neighbors<Hex> Hex::getAllNeighbors() const
     Neighbors<Hex> nbrs;
 
     for (auto d : HexDir()) {
-        nbrs[static_cast<int>(d)] = getNeighbor(d);
+        nbrs[d] = getNeighbor(d);
     }
     return nbrs;
 }
