@@ -379,6 +379,15 @@ SDL_Point MapDisplay::pixelDelta(const Hex &hSrc, const Hex &hDest) const
 
 void MapDisplay::computeTileEdges()
 {
+    // Define how the terrain types overlap.
+    EnumSizedArray<int, Terrain> priority;
+    priority[Terrain::water] = 0;
+    priority[Terrain::dirt] = 1;
+    priority[Terrain::swamp] = 2;
+    priority[Terrain::desert] = 3;
+    priority[Terrain::snow] = 4;
+    priority[Terrain::grass] = 5;
+
     // Map all hexes, including those on the outside border, to their location in
     // the tile list.
     boost::container::flat_map<Hex, int> hexmap;
@@ -414,30 +423,9 @@ void MapDisplay::computeTileEdges()
                 continue;
             }
 
-            // Grass always overlaps everything else.
-            if (myTerrain == Terrain::grass) {
-                continue;
-            }
-
             // Set the edge of the tile to the terrain of the neighboring tile
             // if the neighboring terrain overlaps this one.
-            if (nbrTerrain == Terrain::grass || nbrTerrain == Terrain::snow) {
-                tile.edges[dirIndex] = nbrTile.terrain;
-            }
-            else if ((myTerrain == Terrain::dirt || myTerrain == Terrain::desert) &&
-                     nbrTerrain == Terrain::swamp)
-            {
-                tile.edges[dirIndex] = nbrTile.terrain;
-            }
-            else if ((myTerrain == Terrain::swamp || myTerrain == Terrain::desert) &&
-                     nbrTerrain == Terrain::water)
-            {
-                tile.edges[dirIndex] = nbrTile.terrain;
-            }
-            else if (myTerrain == Terrain::water && nbrTerrain == Terrain::dirt) {
-                tile.edges[dirIndex] = nbrTile.terrain;
-            }
-            else if (myTerrain == Terrain::dirt && nbrTerrain == Terrain::desert) {
+            if (priority[nbrTerrain] > priority[myTerrain]) {
                 tile.edges[dirIndex] = nbrTile.terrain;
             }
         }

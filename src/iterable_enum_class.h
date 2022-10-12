@@ -73,4 +73,27 @@ constexpr const T & enum_fetch(const std::array<T, N> &ary, U enumValue)
     return ary[static_cast<int>(enumValue)];
 }
 
+// Convenience type for an array that uses an iterable enum for its indexes.
+template <typename T, typename E>
+class EnumSizedArray : public std::array<T, enum_size<E>()>
+{
+public:
+    using std::array<T, enum_size<E>()>::operator[];
+
+    T & operator[](E index);
+    const T & operator[](E index) const;
+};
+
+template <typename T, typename E>
+T & EnumSizedArray<T, E>::operator[](E index)
+{
+    return operator[](static_cast<int>(index));
+}
+
+template <typename T, typename E>
+const T & EnumSizedArray<T, E>::operator[](E index) const
+{
+    return operator[](static_cast<int>(index));
+}
+
 #endif
