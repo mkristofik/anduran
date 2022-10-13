@@ -9,13 +9,22 @@
     "edges-dirt": {
         "frames": [1, 6]
     },
+    "edges-dirt-water": {
+        "frames": [1, 6]
+    },
     "edges-grass": {
+        "frames": [1, 6]
+    },
+    "edges-grass-water": {
         "frames": [1, 6]
     },
     "edges-same-terrain": {
         "frames": [1, 6]
     },
     "edges-snow": {
+        "frames": [1, 6]
+    },
+    "edges-snow-water": {
         "frames": [1, 6]
     },
     "edges-swamp": {

@@ -424,7 +424,21 @@ void MapDisplay::computeTileEdges()
             // Set the edge of the tile to the terrain of the neighboring tile
             // if the neighboring terrain overlaps this one.
             if (priority[nbrTerrain] > priority[myTerrain]) {
-                tile.edges[d] = nbrTile.terrain;
+                // Use special edge transitions to water.
+                if (myTerrain == Terrain::water) {
+                    if (nbrTerrain == Terrain::desert || nbrTerrain == Terrain::swamp) {
+                        // These don't have a special transition, use the
+                        // normal one.
+                        tile.edges[d] = nbrTile.terrain;
+                    }
+                    else {
+                        // See loadTerrainImages() for why this number.
+                        tile.edges[d] = nbrTile.terrain + 3;
+                    }
+                }
+                else {
+                    tile.edges[d] = nbrTile.terrain;
+                }
             }
         }
     }
@@ -437,6 +451,13 @@ void MapDisplay::loadTerrainImages()
         obstacleImg_.push_back(images_.make_texture(obstacleFilename(t), *window_));
         edgeImg_.push_back(images_.make_texture(edgeFilename(t), *window_));
     }
+
+    // Special edge transitions to water.
+    edgeImg_.push_back(images_.make_texture("edges-grass-water", *window_));
+    edgeImg_.push_back(images_.make_texture("edges-dirt-water", *window_));
+    edgeImg_.push_back(images_.make_texture("edges-snow-water", *window_));
+
+    // Edge transition between two regions with the same terrain type.
     edgeImg_.push_back(images_.make_texture("edges-same-terrain", *window_));
 }
 
