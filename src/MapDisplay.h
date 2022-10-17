@@ -26,6 +26,13 @@ class SdlImageManager;
 class SdlWindow;
 
 
+struct TileEdge
+{
+    int index = -1;
+    int numSides = 0;
+};
+
+
 struct TileDisplay
 {
     Hex hex;
@@ -34,7 +41,7 @@ struct TileDisplay
     int terrain;
     int terrainFrame;
     int obstacle;
-    Neighbors<int> edges;
+    Neighbors<TileEdge> edges;
     int region;
     bool visible;
 

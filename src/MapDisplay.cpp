@@ -127,7 +127,6 @@ TileDisplay::TileDisplay()
     edges(),
     visible(false)
 {
-    edges.fill(-1);
 }
 
 
@@ -216,9 +215,10 @@ void MapDisplay::draw()
             continue;
         }
         for (auto d : HexDir()) {
-            if (t.edges[d] != -1) {
-                auto edgeIndex = t.edges[d];
-                edgeImg_[edgeIndex].draw(t.curPixel, Frame{0, static_cast<int>(d)});
+            if (t.edges[d].index != -1) {
+                auto edgeIndex = t.edges[d].index;
+                Frame frame(t.edges[d].numSides -  1, static_cast<int>(d));
+                edgeImg_[edgeIndex].draw(t.curPixel, frame);
             }
         }
     }
@@ -412,11 +412,11 @@ void MapDisplay::computeTileEdges()
                 // Special transition between neighboring regions with the same
                 // terrain type.
                 if (tile.region != nbrTile.region) {
-                    tile.edges[d] = edgeImg_.size() - 1;
+                    tile.edges[d].index = edgeImg_.size() - 1;
 
                     // Make sure we only draw the transition once per adjacent
                     // pair of hexes.
-                    nbrTile.edges[oppositeHexDir(d)] = -1;
+                    nbrTile.edges[oppositeHexDir(d)].index = -1;
                 }
                 continue;
             }
@@ -429,15 +429,71 @@ void MapDisplay::computeTileEdges()
                     if (nbrTerrain == Terrain::desert || nbrTerrain == Terrain::swamp) {
                         // These don't have a special transition, use the
                         // normal one.
-                        tile.edges[d] = nbrTile.terrain;
+                        tile.edges[d].index = nbrTile.terrain;
                     }
                     else {
                         // See loadTerrainImages() for why this number.
-                        tile.edges[d] = nbrTile.terrain + 3;
+                        tile.edges[d].index = nbrTile.terrain + 3;
                     }
                 }
                 else {
-                    tile.edges[d] = nbrTile.terrain;
+                    tile.edges[d].index = nbrTile.terrain;
+                }
+            }
+        }
+
+        // Identify sequences of the same terrain types in adjacent edges.
+        constexpr int numEdges = enum_size<HexDir>();
+        for (int i = 0; i < numEdges; ++i) {
+            auto curEdge = tile.edges[i].index;
+            if (curEdge < 0) {
+                continue;
+            }
+            // Limit to the number of multi-edge transitions we have for this
+            // particular terrain type.
+            auto maxSides = edgeImg_[curEdge].rows();
+            int numSides = 1;
+            while (numSides < maxSides &&
+                   tile.edges[(i + numSides) % numEdges].index == curEdge)
+            {
+                ++numSides;
+            }
+            tile.edges[i].numSides = numSides;
+        }
+
+        // Consolidate overlapping sequences by clearing out the following edges.
+        // Start with the larger sequences first.  There are no terrains with more
+        // than 4 multi-edge transitions.
+        // Example 1, above:
+        //   x
+        // x/ \x  (SE, 4)
+        // x\_/
+        //
+        // Example 2, above:
+        //   x
+        // x/ \x  (N, 2), (NW, 1)
+        //  \_/
+        //
+        for (int seqLen = 4; seqLen >= 2; --seqLen) {
+            for (int i = 0; i < numEdges; ++i) {
+                if (tile.edges[i].numSides != seqLen) {
+                    continue;
+                }
+
+                // If there are two consecutive sequences of the same length, one
+                // has to be shortened to 1.  It means we could have had a
+                // sequence one longer, but there isn't a multi-edge transition of
+                // that size.
+                //auto firstNbr = (i + 1) % numEdges;
+                //if (tile.edges[firstNbr].numSides == seqLen) {
+                if (i + 1 == numEdges && tile.edges[0].numSides == seqLen) {
+                    tile.edges[i].numSides = 1;
+                    continue;
+                }
+
+                // Clear out the following edges.
+                for (int j = 1; j < seqLen; ++j) {
+                    tile.edges[(i + j) % numEdges] = TileEdge();
                 }
             }
         }
