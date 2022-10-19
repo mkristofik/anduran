@@ -384,9 +384,9 @@ void MapDisplay::computeTileEdges()
     priority[Terrain::water] = 0;
     priority[Terrain::dirt] = 1;
     priority[Terrain::swamp] = 2;
-    priority[Terrain::desert] = 3;
-    priority[Terrain::snow] = 4;
-    priority[Terrain::grass] = 5;
+    priority[Terrain::grass] = 3;
+    priority[Terrain::desert] = 4;
+    priority[Terrain::snow] = 5;
 
     // Map all hexes, including those on the outside border, to their location in
     // the tile list.
@@ -442,59 +442,72 @@ void MapDisplay::computeTileEdges()
             }
         }
 
-        // Identify sequences of the same terrain types in adjacent edges.
-        constexpr int numEdges = enum_size<HexDir>();
+        doMultiEdges(tile.edges);
+    }
+}
+
+void MapDisplay::doMultiEdges(Neighbors<TileEdge> &edges)
+{
+    // For each edge, find how many consecutive edges have the same terrain.
+    // Example:
+    //   x
+    // x/ \x  (N, 2), (NE, 1), (SE, 4), (NW, 3)
+    // x\_/
+    //
+    // Second example, with a terrain having only 1- or 2-edge transitions.
+    //   x
+    // x/ \x  (N, 2), (NE, 1), (NW, 2)
+    //  \_/
+    //
+    constexpr int numEdges = enum_size<HexDir>();
+    for (int i = 0; i < numEdges; ++i) {
+        auto curEdge = edges[i].index;
+        if (curEdge < 0) {
+            continue;
+        }
+        // Limit to the number of multi-edge transitions we have for this
+        // particular terrain type.
+        auto maxSides = edgeImg_[curEdge].rows();
+        int numSides = 1;
+        while (numSides < maxSides &&
+               edges[(i + numSides) % numEdges].index == curEdge)
+        {
+            ++numSides;
+        }
+        edges[i].numSides = numSides;
+    }
+
+    // Consolidate overlapping sequences by clearing out the following edges.
+    // Start with the larger sequences first.  There are no terrains with more
+    // than 4 multi-edge transitions.
+    // Example 1, above:
+    //   x
+    // x/ \x  (SE, 4)
+    // x\_/
+    //
+    // Example 2, above:
+    //   x
+    // x/ \x  (N, 2), (NW, 1)
+    //  \_/
+    //
+    for (int seqLen = 4; seqLen >= 2; --seqLen) {
         for (int i = 0; i < numEdges; ++i) {
-            auto curEdge = tile.edges[i].index;
-            if (curEdge < 0) {
+            if (edges[i].numSides != seqLen) {
                 continue;
             }
-            // Limit to the number of multi-edge transitions we have for this
-            // particular terrain type.
-            auto maxSides = edgeImg_[curEdge].rows();
-            int numSides = 1;
-            while (numSides < maxSides &&
-                   tile.edges[(i + numSides) % numEdges].index == curEdge)
-            {
-                ++numSides;
+
+            // If there are two consecutive sequences of the same length, one
+            // has to be shortened to 1.  It means we could have had a
+            // sequence one longer, but there isn't a multi-edge transition of
+            // that size.  (Only relevant if it wraps around.)
+            if (i + 1 == numEdges && edges[0].numSides == seqLen) {
+                edges[i].numSides = 1;
+                continue;
             }
-            tile.edges[i].numSides = numSides;
-        }
 
-        // Consolidate overlapping sequences by clearing out the following edges.
-        // Start with the larger sequences first.  There are no terrains with more
-        // than 4 multi-edge transitions.
-        // Example 1, above:
-        //   x
-        // x/ \x  (SE, 4)
-        // x\_/
-        //
-        // Example 2, above:
-        //   x
-        // x/ \x  (N, 2), (NW, 1)
-        //  \_/
-        //
-        for (int seqLen = 4; seqLen >= 2; --seqLen) {
-            for (int i = 0; i < numEdges; ++i) {
-                if (tile.edges[i].numSides != seqLen) {
-                    continue;
-                }
-
-                // If there are two consecutive sequences of the same length, one
-                // has to be shortened to 1.  It means we could have had a
-                // sequence one longer, but there isn't a multi-edge transition of
-                // that size.
-                //auto firstNbr = (i + 1) % numEdges;
-                //if (tile.edges[firstNbr].numSides == seqLen) {
-                if (i + 1 == numEdges && tile.edges[0].numSides == seqLen) {
-                    tile.edges[i].numSides = 1;
-                    continue;
-                }
-
-                // Clear out the following edges.
-                for (int j = 1; j < seqLen; ++j) {
-                    tile.edges[(i + j) % numEdges] = TileEdge();
-                }
+            // Clear out the following edges.
+            for (int j = 1; j < seqLen; ++j) {
+                edges[(i + j) % numEdges] = TileEdge();
             }
         }
     }

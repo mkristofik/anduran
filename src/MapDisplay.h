@@ -105,6 +105,7 @@ public:
 
 private:
     void computeTileEdges();
+    void doMultiEdges(Neighbors<TileEdge> &edges);
     void loadTerrainImages();
 
     // Add duplicate tiles around the map border so there aren't jagged edges.

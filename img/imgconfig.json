@@ -4,10 +4,10 @@
         "timing_ms": [65, 140, 215, 315, 445, 510]
     },
     "edges-desert": {
-        "frames": [1, 6]
+        "frames": [4, 6]
     },
     "edges-dirt": {
-        "frames": [1, 6]
+        "frames": [4, 6]
     },
     "edges-dirt-water": {
         "frames": [2, 6]
@@ -22,7 +22,7 @@
         "frames": [1, 6]
     },
     "edges-snow": {
-        "frames": [1, 6]
+        "frames": [4, 6]
     },
     "edges-snow-water": {
         "frames": [2, 6]

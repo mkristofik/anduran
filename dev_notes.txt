@@ -26,7 +26,37 @@ destination hex
 * draw the champion facing to the left when moving in that direction
 * hide the ellipse while the champion is moving
 * screen flashes white briefly when first loading
-- try to cap the framerate to save CPU
+* try to cap the framerate to save CPU
+
+
+# Improving edge transitions
+----------------------------
+* water to desert looks bad
+    * desert over water looks a lot better
+* grass over everything
+* snow over everything but grass
+* desert over swamp and dirt
+* swamp over dirt (debatable)
+* everything over water
+* grass > snow > desert > swamp > dirt > water
+* C:\Program Files\Wesnoth\data\core\images\terrain\hills\regular-to-water looks good
+for grass
+    * dry-to-water for dirt?
+* try C:\Program Files\Wesnoth\data\core\images\terrain\swamp\mud-long for
+swamp-to-water
+* C:\Program Files\Wesnoth\data\core\images\terrain\frozen\snow-to-water
+* mark tiles when they're included in the same terrain transition so only one side
+gets drawn
+* multi-edge transition artwork
+    * C:\Program Files\Wesnoth\data\core\images\terrain\grass\green-medium only has 1
+    * C:\Program Files\Wesnoth\data\core\images\terrain\flat\dirt has up to 4
+    * C:\Program Files\Wesnoth\data\core\images\terrain\sand\desert has up to 4
+    * mud-long and mud-to-land only has 1
+    * snow has 4, snow-to-water has 2
+    * dry-to-water, regular-to-water both have 2
+    * add to the edges sprite sheet, the 2s go in the second row, 3s in third etc.
+        * starting direction in same order as first row
+- draw multi-edge transitions for same terrain?
 
 
 # Data-driven map objects
