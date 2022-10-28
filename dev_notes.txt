@@ -61,24 +61,14 @@ gets drawn
 
 # Draw castles automatically
 ----------------------------
-- castle walls relative to the center castle tile
-    - N concave-tl
-    - N concave-tr
-    - N+NE convex-bl, 126x160, middle right
-    - N+NW convex-br, 126x144, top left
-    - NW concave-tl
-    - NW concave-l
-    - NE concave-tr, 126x144, bottom left
-    - NE concave-r, 126x180, bottom right (SE neighbor)
-    - SW concave-tl, 126x180, bottom right
-    - SW concave-l, 126x144, middle right
-    - SW concave-br, 126x144, top left
-    - SW concave-bl, 126x160, hex aligned middle right
-    - SE concave-tr
-    - SE concave-r
-    - SE concave-br
-    - SE concave-bl
-- where to draw the wall images relative to its hex
+* castle walls relative to the center castle tile
+* where to draw the wall images relative to its hex
+- if a unit is inside the castle
+    - lower its y-offset by 15, along with its ellipse
+    - front walls need to be drawn at a higher ZOrder, but only if unit is inside
+- option #2: higher ZOrder for castle walls, but even higher one for when a unit
+is next to or in front of a castle
+- option #3: lower ZOrder when a unit is inside or behind the castle
 
 
 # Data-driven map objects
