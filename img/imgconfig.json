@@ -3,6 +3,9 @@
         "frames": [1, 6],
         "timing_ms": [65, 140, 215, 315, 445, 510]
     },
+    "castle-walls-desert": {
+        "frames": [3, 6]
+    },
     "castle-walls-dirt": {
         "frames": [3, 6]
     },

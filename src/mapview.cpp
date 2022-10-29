@@ -17,15 +17,14 @@
 #include "SdlWindow.h"
 #include <cstdlib>
 
-// Ordering here is based on how the sprite sheet gets built.  Wesnoth's wall
-// images aren't all the same size.  SpriteSheetPacker arranges them
-// largest-to-smallest, then alphabetically.
+// Must edit Wesnoth's castle wall images so they're all the same size.
+// SpriteSheetPacker will then arrange them alphabetically.
 // Images used:
 // - castle-concave-*
 // - castle-convex-*
 // - keep-castle-ccw-bl, -br
 // - keep-castle-convex-tl, -tr, -l, -r
-enum class WallCorner {right, top_left, bottom_left, bottom_right, left, top_right};
+enum class WallCorner {bottom_left, bottom_right, left, right, top_left, top_right};
 
 enum class WallShape {concave, convex, keep};
 
@@ -60,9 +59,16 @@ MapViewApp::MapViewApp()
     rmapView_(win_, rmap_, images_)
 {
     SDL_LogSetPriority(SDL_LOG_CATEGORY_VIDEO, SDL_LOG_PRIORITY_VERBOSE);
-    auto castles = rmap_.getCastleTiles(); // TODO: rename to castle hexes?
+    auto castles = rmap_.getCastleTiles();
     SdlTexture walls = images_.make_texture("castle-walls-dirt", win_);
-    rmapView_.addEntity(images_.make_texture("cobbles-keep", win_), castles[0], ZOrder::ellipse);
+    auto floor2 = images_.make_texture("cobbles-keep", win_);
+    rmapView_.addEntity(floor2, castles[0], ZOrder::ellipse);
+    //auto floor = images_.make_texture("dirt", win_);
+    rmapView_.addEntity(floor2, castles[0].getNeighbor(HexDir::n), ZOrder::ellipse);
+    rmapView_.addEntity(floor2, castles[0].getNeighbor(HexDir::nw), ZOrder::ellipse);
+    rmapView_.addEntity(floor2, castles[0].getNeighbor(HexDir::sw), ZOrder::ellipse);
+    rmapView_.addEntity(floor2, castles[0].getNeighbor(HexDir::ne), ZOrder::ellipse);
+    rmapView_.addEntity(floor2, castles[0].getNeighbor(HexDir::se), ZOrder::ellipse);
 
     // These four walls are drawn on the N neighbor of castle center
     Hex h1 = castles[0].getNeighbor(HexDir::nw).getNeighbor(HexDir::n).getNeighbor(HexDir::n);
