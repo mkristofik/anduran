@@ -16,6 +16,7 @@
 #include "iterable_enum_class.h"
 #include <array>
 #include <compare>
+#include <concepts>
 #include <ostream>
 #include <vector>
 
@@ -41,9 +42,10 @@ struct Hex
     Hex & operator-=(const Hex &rhs);
     auto operator<=>(const Hex &rhs) const = default;
 
-    // Return the hex adjacent to the source hex in the given direction. No bounds
+    // Return the hex adjacent to the source hex in the given direction(s). No bounds
     // checking.
     Hex getNeighbor(HexDir d) const;
+    Hex getNeighbor(HexDir d, std::same_as<HexDir> auto... dirs) const;
 
     // Return all the hexes adjacent to the source hex. No bounds checking.
     Neighbors<Hex> getAllNeighbors() const;
@@ -69,5 +71,14 @@ std::vector<Hex> hexCircle(const Hex &center, int radius);
 // Return the opposite direction (when viewed from the neighbor hex in that
 // direction).
 HexDir oppositeHexDir(HexDir d);
+
+
+// Use Concepts to fake a non-templated parameter pack.
+// source: https://stackoverflow.com/a/66716679/46821
+Hex Hex::getNeighbor(HexDir d, std::same_as<HexDir> auto... dirs) const
+{
+    Hex hNbr = getNeighbor(d);
+    return hNbr.getNeighbor(dirs...);
+}
 
 #endif

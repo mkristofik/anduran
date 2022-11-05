@@ -101,14 +101,14 @@ MapViewApp::MapViewApp()
     }
 
     // These four walls are drawn on the N neighbor of castle center
-    Hex h1 = castles[0].getNeighbor(HexDir::nw).getNeighbor(HexDir::n).getNeighbor(HexDir::n);
+    Hex h1 = castles[0].getNeighbor(HexDir::nw, HexDir::n, HexDir::n);
     // castle-concave-tl
     int w1 = rmapView_.addEntity(walls, h1, ZOrder::object);
     auto entity1 = rmapView_.getEntity(w1);
     entity1.offset = {0, 0};
     entity1.frame = wall_frame(WallShape::concave, WallCorner::top_left);
     rmapView_.updateEntity(entity1);
-    Hex h2 = castles[0].getNeighbor(HexDir::n).getNeighbor(HexDir::n);
+    Hex h2 = castles[0].getNeighbor(HexDir::n, HexDir::n);
     // castle-concave-tr
     int w2 = rmapView_.addEntity(walls, h2, ZOrder::object);
     auto entity2 = rmapView_.getEntity(w2);
@@ -121,7 +121,7 @@ MapViewApp::MapViewApp()
     entity3.offset = {0, 0};
     entity3.frame = wall_frame(WallShape::convex, WallCorner::bottom_left);
     rmapView_.updateEntity(entity3);
-    Hex h4 = castles[0].getNeighbor(HexDir::n).getNeighbor(HexDir::nw);
+    Hex h4 = castles[0].getNeighbor(HexDir::n, HexDir::nw);
     // castle-convex-br, goes on the left corner
     int w4 = rmapView_.addEntity(walls, h4, ZOrder::object);
     auto entity4 = rmapView_.getEntity(w4);
@@ -130,14 +130,14 @@ MapViewApp::MapViewApp()
     rmapView_.updateEntity(entity4);
 
     // These three walls are drawn on the NW neighbor of castle center
-    Hex h5 = castles[0].getNeighbor(HexDir::nw).getNeighbor(HexDir::nw).getNeighbor(HexDir::n);
+    Hex h5 = castles[0].getNeighbor(HexDir::nw, HexDir::nw, HexDir::n);
     // castle-concave-tl
     int w5 = rmapView_.addEntity(walls, h5, ZOrder::object);
     auto entity5 = rmapView_.getEntity(w5);
     entity5.offset = {0, 0};
     entity5.frame = wall_frame(WallShape::concave, WallCorner::top_left);
     rmapView_.updateEntity(entity5);
-    Hex h6 = castles[0].getNeighbor(HexDir::nw).getNeighbor(HexDir::nw);
+    Hex h6 = castles[0].getNeighbor(HexDir::nw, HexDir::nw);
     // castle-concave-l
     int w6 = rmapView_.addEntity(walls, h6, ZOrder::object);
     auto entity6 = rmapView_.getEntity(w6);
@@ -152,7 +152,7 @@ MapViewApp::MapViewApp()
     rmapView_.updateEntity(entity9);
 
     // These two walls are drawn on the NE neighbor of castle center
-    Hex h7 = castles[0].getNeighbor(HexDir::ne).getNeighbor(HexDir::n);
+    Hex h7 = castles[0].getNeighbor(HexDir::ne, HexDir::n);
     // castle-concave-tr
     int w7 = rmapView_.addEntity(walls, h7, ZOrder::object);
     auto entity7 = rmapView_.getEntity(w7);
@@ -167,7 +167,7 @@ MapViewApp::MapViewApp()
     rmapView_.updateEntity(entity8);
 
     // These two walls are drawn on the SW neighbor of castle center
-    Hex h10 = castles[0].getNeighbor(HexDir::sw).getNeighbor(HexDir::nw);
+    Hex h10 = castles[0].getNeighbor(HexDir::sw, HexDir::nw);
     // castle-concave-l
     int w10 = rmapView_.addEntity(walls, h10, ZOrder::object);
     auto entity10 = rmapView_.getEntity(w10);
