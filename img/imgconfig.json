@@ -18,6 +18,9 @@
     "castle-walls-swamp": {
         "frames": [3, 6]
     },
+    "castle-walls-water": {
+        "frames": [3, 6]
+    },
     "edges-desert": {
         "frames": [4, 6]
     },
