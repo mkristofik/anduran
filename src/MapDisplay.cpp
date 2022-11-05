@@ -641,8 +641,8 @@ void MapDisplay::addCastleFloors()
 {
     auto floor = images_->make_texture("tiles-castle", *window_);
 
-    for (auto hCastle : map_->getCastleTiles()) {
-        int terrain = tiles_[map_->intFromHex(hCastle)].terrain;
+    for (auto &hCastle : map_->getCastleTiles()) {
+        int terrain = static_cast<int>(map_->getTerrain(hCastle));
 
         // Draw the floor on the castle hex and all its neighbors.
         int id = addEntity(floor, hCastle, ZOrder::floor);
@@ -665,9 +665,9 @@ void MapDisplay::addCastleWalls()
         walls[t] = images_->make_texture(castleFilename(t), *window_);
     }
 
-    for (auto hCastle : map_->getCastleTiles()) {
-        int terrain = tiles_[map_->intFromHex(hCastle)].terrain;
-        const SdlTexture &img = walls[terrain];
+    for (auto &hCastle : map_->getCastleTiles()) {
+        Terrain terrain = map_->getTerrain(hCastle);
+        SdlTexture &img = walls[terrain];
 
         // The Wesnoth artwork for castle walls is larger than one hex.  We have
         // to draw them relative to a series of hexes to get them to all line up.

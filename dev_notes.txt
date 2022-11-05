@@ -14,6 +14,7 @@ destination hex
 - configurable walking speed
 - move one hex less to land in ZoC to attack
 - region boundary stops movement
+- highlight current path
 
 
 # Polish
@@ -184,6 +185,7 @@ is next to or in front of a castle
 * Window needs to report its own boundary
 * pick one village image per terrain
 - placeholder art for villages and castles
+    - GameState currently requires a drawable entity so an object can be flaggable
 
 
 # Random Map
