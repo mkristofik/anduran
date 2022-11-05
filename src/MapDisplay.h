@@ -13,6 +13,7 @@
 #ifndef MAP_DISPLAY_H
 #define MAP_DISPLAY_H
 
+#include "RandomMap.h"
 #include "SdlTexture.h"
 #include "hex_utils.h"
 #include "object_types.h"
@@ -21,7 +22,6 @@
 #include "SDL.h"
 #include <vector>
 
-class RandomMap;
 class SdlImageManager;
 class SdlWindow;
 
@@ -112,6 +112,24 @@ private:
     // Add duplicate tiles around the map border so there aren't jagged edges.
     void addBorderTiles();
 
+    // Types to help with drawing castle walls.  I had to edit Wesnoth's castle
+    // wall images so they're all the same size.  SpriteSheetPacker will then
+    // arrange them alphabetically.
+    // Images used:
+    // - castle-concave-*
+    // - castle-convex-*
+    // - keep-castle-ccw-bl, -br
+    // - keep-castle-convex-tl, -tr, -l, -r
+    enum class WallCorner {bottom_left, bottom_right, left, right, top_left, top_right};
+    enum class WallShape {concave, convex, keep};
+
+    void addCastleFloors();
+    void addCastleWalls();
+    void addCastleWall(const SdlTexture &img,
+                       const Hex &hex,
+                       WallShape shape,
+                       WallCorner corner);
+
     void setTileVisibility();
     void drawEntities();
 
@@ -124,9 +142,9 @@ private:
 
     SdlWindow *window_;
     RandomMap *map_;
-    SdlImageManager &images_;
-    std::vector<SdlTexture> tileImg_;
-    std::vector<SdlTexture> obstacleImg_;
+    SdlImageManager *images_;
+    EnumSizedArray<SdlTexture, Terrain> tileImg_;
+    EnumSizedArray<SdlTexture, Terrain> obstacleImg_;
     std::vector<SdlTexture> edgeImg_;
     std::vector<TileDisplay> tiles_;
     SDL_Rect displayArea_;

@@ -68,7 +68,8 @@ namespace
             case Terrain::snow:
                 return "obstacles-snow";
             default:
-                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Unrecognized terrain %d",
+                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
+                            "Unrecognized obstacle terrain %d",
                             static_cast<int>(t));
                 return "obstacles-water";
         }
@@ -90,9 +91,33 @@ namespace
             case Terrain::snow:
                 return "edges-snow";
             default:
-                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Unrecognized terrain %d",
+                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
+                            "Unrecognized edge terrain %d",
                             static_cast<int>(t));
                 return "edges-water";
+        }
+    }
+
+    const char * castleFilename(Terrain t)
+    {
+        switch(t) {
+            case Terrain::water:
+                return "castle-walls-water";
+            case Terrain::desert:
+                return "castle-walls-desert";
+            case Terrain::swamp:
+                return "castle-walls-swamp";
+            case Terrain::grass:
+                return "castle-walls-grass";
+            case Terrain::dirt:
+                return "castle-walls-dirt";
+            case Terrain::snow:
+                return "castle-walls-snow";
+            default:
+                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
+                            "Unsupported castle terrain %d",
+                            static_cast<int>(t));
+                return "castle-walls-dirt";
         }
     }
     
@@ -159,7 +184,7 @@ void MapEntity::faceHex(const Hex &hDest)
 MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
     : window_(&win),
     map_(&rmap),
-    images_(imgMgr),
+    images_(&imgMgr),
     tileImg_(),
     obstacleImg_(),
     edgeImg_(),
@@ -191,10 +216,12 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
 
     addBorderTiles();
     computeTileEdges();
+    addCastleFloors();
+    addCastleWalls();
 
-    const auto shadowImg = images_.make_texture("hex-shadow"s, *window_);
+    const auto shadowImg = images_->make_texture("hex-shadow"s, *window_);
     hexShadowId_ = addHiddenEntity(shadowImg, ZOrder::shadow);
-    const auto highlightImg = images_.make_texture("hex-yellow"s, *window_);
+    const auto highlightImg = images_->make_texture("hex-yellow"s, *window_);
     hexHighlightId_ = addHiddenEntity(highlightImg, ZOrder::highlight);
 }
 
@@ -516,18 +543,18 @@ void MapDisplay::doMultiEdges(Neighbors<TileEdge> &edges)
 void MapDisplay::loadTerrainImages()
 {
     for (auto t : Terrain()) {
-        tileImg_.push_back(images_.make_texture(tileFilename(t), *window_));
-        obstacleImg_.push_back(images_.make_texture(obstacleFilename(t), *window_));
-        edgeImg_.push_back(images_.make_texture(edgeFilename(t), *window_));
+        tileImg_[t] = images_->make_texture(tileFilename(t), *window_);
+        obstacleImg_[t] = images_->make_texture(obstacleFilename(t), *window_);
+        edgeImg_.push_back(images_->make_texture(edgeFilename(t), *window_));
     }
 
     // Special edge transitions to water.
-    edgeImg_.push_back(images_.make_texture("edges-grass-water", *window_));
-    edgeImg_.push_back(images_.make_texture("edges-dirt-water", *window_));
-    edgeImg_.push_back(images_.make_texture("edges-snow-water", *window_));
+    edgeImg_.push_back(images_->make_texture("edges-grass-water", *window_));
+    edgeImg_.push_back(images_->make_texture("edges-dirt-water", *window_));
+    edgeImg_.push_back(images_->make_texture("edges-snow-water", *window_));
 
     // Edge transition between two regions with the same terrain type.
-    edgeImg_.push_back(images_.make_texture("edges-same-terrain", *window_));
+    edgeImg_.push_back(images_->make_texture("edges-same-terrain", *window_));
 }
 
 void MapDisplay::addBorderTiles()
@@ -608,6 +635,103 @@ void MapDisplay::addBorderTiles()
     newTile.hex += Hex{-1, 1};
     newTile.basePixel = pixelFromHex(newTile.hex);
     tiles_.push_back(newTile);
+}
+
+void MapDisplay::addCastleFloors()
+{
+    auto floor = images_->make_texture("tiles-castle", *window_);
+
+    for (auto hCastle : map_->getCastleTiles()) {
+        int terrain = tiles_[map_->intFromHex(hCastle)].terrain;
+
+        // Draw the floor on the castle hex and all its neighbors.
+        int id = addEntity(floor, hCastle, ZOrder::floor);
+        entities_[id].frame = {0, terrain};
+        for (HexDir d : HexDir()) {
+            // South neighbor of the castle tile is open
+            if (d == HexDir::s) {
+                continue;
+            }
+            id = addEntity(floor, hCastle.getNeighbor(d), ZOrder::floor);
+            entities_[id].frame = {0, terrain};
+        }
+    }
+}
+
+void MapDisplay::addCastleWalls()
+{
+    EnumSizedArray<SdlTexture, Terrain> walls;
+    for (Terrain t : Terrain()) {
+        walls[t] = images_->make_texture(castleFilename(t), *window_);
+    }
+
+    for (auto hCastle : map_->getCastleTiles()) {
+        int terrain = tiles_[map_->intFromHex(hCastle)].terrain;
+        const SdlTexture &img = walls[terrain];
+
+        // The Wesnoth artwork for castle walls is larger than one hex.  We have
+        // to draw them relative to a series of hexes to get them to all line up.
+
+        // These four walls are drawn on the N neighbor of castle center
+        Hex relHex = hCastle.getNeighbor(HexDir::nw, HexDir::n, HexDir::n);
+        addCastleWall(img, relHex, WallShape::concave, WallCorner::top_left);
+        relHex = hCastle.getNeighbor(HexDir::n, HexDir::n);
+        addCastleWall(img, relHex, WallShape::concave, WallCorner::top_right);
+        addCastleWall(img, relHex, WallShape::convex, WallCorner::bottom_left);
+        relHex = hCastle.getNeighbor(HexDir::n, HexDir::nw);
+        addCastleWall(img, relHex, WallShape::convex, WallCorner::bottom_right);
+
+        // These three walls are drawn on the NW neighbor of castle center
+        relHex = hCastle.getNeighbor(HexDir::nw, HexDir::nw, HexDir::n);
+        addCastleWall(img, relHex, WallShape::concave, WallCorner::top_left);
+        relHex = hCastle.getNeighbor(HexDir::nw, HexDir::nw);
+        addCastleWall(img, relHex, WallShape::concave, WallCorner::left);
+        addCastleWall(img, relHex, WallShape::convex, WallCorner::right);
+
+        // These two walls are drawn on the NE neighbor of castle center
+        relHex = hCastle.getNeighbor(HexDir::ne, HexDir::n);
+        addCastleWall(img, relHex, WallShape::concave, WallCorner::top_right);
+        addCastleWall(img, relHex, WallShape::concave, WallCorner::right);
+
+        // These two walls are drawn on the SW neighbor of castle center
+        relHex = hCastle.getNeighbor(HexDir::sw, HexDir::nw);
+        addCastleWall(img, relHex, WallShape::concave, WallCorner::left);
+        addCastleWall(img, relHex, WallShape::concave, WallCorner::bottom_left);
+
+        // These three walls are drawn on the SE neighbor of castle center
+        relHex = hCastle.getNeighbor(HexDir::ne);
+        addCastleWall(img, relHex, WallShape::convex, WallCorner::left);
+        addCastleWall(img, relHex, WallShape::concave, WallCorner::right);
+        relHex = hCastle.getNeighbor(HexDir::se);
+        addCastleWall(img, relHex, WallShape::concave, WallCorner::bottom_right);
+
+        // These six walls form the keep around the castle center
+        relHex = hCastle.getNeighbor(HexDir::n, HexDir::nw);
+        addCastleWall(img, relHex, WallShape::keep, WallCorner::top_left);
+        relHex = hCastle.getNeighbor(HexDir::n);
+        addCastleWall(img, relHex, WallShape::keep, WallCorner::top_right);
+        addCastleWall(img, relHex, WallShape::keep, WallCorner::right);
+        relHex = hCastle.getNeighbor(HexDir::nw);
+        addCastleWall(img, relHex, WallShape::keep, WallCorner::left);
+        addCastleWall(img, relHex, WallShape::keep, WallCorner::bottom_left);
+        addCastleWall(img, hCastle, WallShape::keep, WallCorner::bottom_right);
+
+        // Now draw the front-most walls on the SW and SE neighbors so they overlap
+        // the keep.
+        relHex = hCastle.getNeighbor(HexDir::sw);
+        addCastleWall(img, relHex, WallShape::concave, WallCorner::bottom_right);
+        addCastleWall(img, hCastle, WallShape::concave, WallCorner::bottom_left);
+    }
+}
+
+void MapDisplay::addCastleWall(const SdlTexture &img,
+                               const Hex &hex,
+                               WallShape shape,
+                               WallCorner corner)
+{
+    int id = addEntity(img, hex, ZOrder::object);
+    entities_[id].offset = {0, 0};
+    entities_[id].frame = {static_cast<int>(shape), static_cast<int>(corner)};
 }
 
 void MapDisplay::setTileVisibility()

@@ -245,3 +245,8 @@ is next to or in front of a castle
 * how does Wesnoth build on Windows?
 * connect to GitHub
 * GitHub two-factor auth?  (probably not worth the effort)
+
+
+# C++ features
+--------------
+- use concepts to eliminate static_asserts

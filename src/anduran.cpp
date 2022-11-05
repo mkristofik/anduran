@@ -197,11 +197,11 @@ void Anduran::load_players()
     SDL_assert(ssize(castles) <= enum_size<Team>());
     randomize(castles);
 
-    const auto castleImg = images_.make_texture("castle"s, win_);
     for (auto i = 0u; i < size(castles); ++i) {
         GameObject castle;
         castle.hex = castles[i];
-        castle.entity = rmapView_.addEntity(castleImg, castle.hex, ZOrder::object);
+        // No need for drawable entity, map view builds castle artwork.
+        // TODO: use a flag as the castle entity?
         castle.team = static_cast<Team>(i);
         castle.type = ObjectType::castle;
         game_.add_object(castle);
