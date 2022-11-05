@@ -78,6 +78,9 @@
         "frames": [1, 4],
         "timing_ms": [75, 150, 300, 400]
     },
+    "tiles-castle": {
+        "frames": [1, 6]
+    },
     "tiles-desert": {
         "frames": [1, 3]
     },

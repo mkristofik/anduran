@@ -49,7 +49,8 @@ struct TileDisplay
 };
 
 
-enum class ZOrder {ellipse,
+enum class ZOrder {floor,
+                   ellipse,
                    object,
                    unit,
                    flag,

@@ -17,22 +17,41 @@
 #include "SdlWindow.h"
 #include <cstdlib>
 
-// Must edit Wesnoth's castle wall images so they're all the same size.
-// SpriteSheetPacker will then arrange them alphabetically.
-// Images used:
-// - castle-concave-*
-// - castle-convex-*
-// - keep-castle-ccw-bl, -br
-// - keep-castle-convex-tl, -tr, -l, -r
-enum class WallCorner {bottom_left, bottom_right, left, right, top_left, top_right};
-
-enum class WallShape {concave, convex, keep};
-
 namespace
 {
+    // Must edit Wesnoth's castle wall images so they're all the same size.
+    // SpriteSheetPacker will then arrange them alphabetically.
+    // Images used:
+    // - castle-concave-*
+    // - castle-convex-*
+    // - keep-castle-ccw-bl, -br
+    // - keep-castle-convex-tl, -tr, -l, -r
+    enum class WallCorner {bottom_left, bottom_right, left, right, top_left, top_right};
+    enum class WallShape {concave, convex, keep};
+
     Frame wall_frame(WallShape shape, WallCorner corner)
     {
         return {static_cast<int>(shape), static_cast<int>(corner)};
+    }
+
+    const char * castle_filename(Terrain t)
+    {
+        switch(t) {
+            case Terrain::desert:
+                return "castle-walls-desert";
+            case Terrain::swamp:
+                return "castle-walls-swamp";
+            case Terrain::grass:
+                return "castle-walls-grass";
+            case Terrain::dirt:
+                return "castle-walls-dirt";
+            case Terrain::snow:
+                return "castle-walls-snow";
+            default:
+                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Unsupported castle terrain %d",
+                            static_cast<int>(t));
+                return "castle-walls-dirt";
+        }
     }
 }
 
@@ -60,15 +79,26 @@ MapViewApp::MapViewApp()
 {
     SDL_LogSetPriority(SDL_LOG_CATEGORY_VIDEO, SDL_LOG_PRIORITY_VERBOSE);
     auto castles = rmap_.getCastleTiles();
-    SdlTexture walls = images_.make_texture("castle-walls-dirt", win_);
-    auto floor2 = images_.make_texture("cobbles-dirt", win_);
-    rmapView_.addEntity(floor2, castles[0], ZOrder::ellipse);
-    //auto floor = images_.make_texture("grounds", win_);
-    rmapView_.addEntity(floor2, castles[0].getNeighbor(HexDir::n), ZOrder::ellipse);
-    rmapView_.addEntity(floor2, castles[0].getNeighbor(HexDir::nw), ZOrder::ellipse);
-    rmapView_.addEntity(floor2, castles[0].getNeighbor(HexDir::sw), ZOrder::ellipse);
-    rmapView_.addEntity(floor2, castles[0].getNeighbor(HexDir::ne), ZOrder::ellipse);
-    rmapView_.addEntity(floor2, castles[0].getNeighbor(HexDir::se), ZOrder::ellipse);
+    Terrain t = Terrain::dirt;
+    const char *wallsFile = castle_filename(t);
+    SdlTexture walls = images_.make_texture(wallsFile, win_);
+
+    // Draw the castle floor for the given terrain type.
+    auto floor = images_.make_texture("tiles-castle", win_);
+    int fl = rmapView_.addEntity(floor, castles[0], ZOrder::floor);
+    auto entityFloor = rmapView_.getEntity(fl);
+    entityFloor.frame = {0, static_cast<int>(t)};
+    rmapView_.updateEntity(entityFloor);
+    for (HexDir d : HexDir()) {
+        // South neighbor of the castle tile is open
+        if (d == HexDir::s) {
+            continue;
+        }
+        fl = rmapView_.addEntity(floor, castles[0].getNeighbor(d), ZOrder::floor);
+        entityFloor = rmapView_.getEntity(fl);
+        entityFloor.frame = {0, static_cast<int>(t)};
+        rmapView_.updateEntity(entityFloor);
+    }
 
     // These four walls are drawn on the N neighbor of castle center
     Hex h1 = castles[0].getNeighbor(HexDir::nw).getNeighbor(HexDir::n).getNeighbor(HexDir::n);
