@@ -9,6 +9,15 @@
     "castle-walls-dirt": {
         "frames": [3, 6]
     },
+    "castle-walls-grass": {
+        "frames": [3, 6]
+    },
+    "castle-walls-snow": {
+        "frames": [3, 6]
+    },
+    "castle-walls-swamp": {
+        "frames": [3, 6]
+    },
     "edges-desert": {
         "frames": [4, 6]
     },

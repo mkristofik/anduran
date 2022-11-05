@@ -61,9 +61,9 @@ MapViewApp::MapViewApp()
     SDL_LogSetPriority(SDL_LOG_CATEGORY_VIDEO, SDL_LOG_PRIORITY_VERBOSE);
     auto castles = rmap_.getCastleTiles();
     SdlTexture walls = images_.make_texture("castle-walls-dirt", win_);
-    auto floor2 = images_.make_texture("cobbles-keep", win_);
+    auto floor2 = images_.make_texture("cobbles-dirt", win_);
     rmapView_.addEntity(floor2, castles[0], ZOrder::ellipse);
-    //auto floor = images_.make_texture("dirt", win_);
+    //auto floor = images_.make_texture("grounds", win_);
     rmapView_.addEntity(floor2, castles[0].getNeighbor(HexDir::n), ZOrder::ellipse);
     rmapView_.addEntity(floor2, castles[0].getNeighbor(HexDir::nw), ZOrder::ellipse);
     rmapView_.addEntity(floor2, castles[0].getNeighbor(HexDir::sw), ZOrder::ellipse);
