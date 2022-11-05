@@ -17,7 +17,6 @@
 #include "SdlWindow.h"
 #include <cstdlib>
 
-
 class MapViewApp : public SdlApp
 {
 public:
