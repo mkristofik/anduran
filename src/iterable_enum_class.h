@@ -32,6 +32,7 @@
 #define ITERABLE_ENUM_CLASS_H
 
 #include <array>
+#include <concepts>
 #include <cstddef>
 #include <type_traits>
 
@@ -50,22 +51,25 @@
 // Learned how to make a custom type trait from here:
 // https://akrzemi1.wordpress.com/2017/12/02/your-own-type-predicate/.  The macro
 // specializes this type to be true for iterable enum classes and false for any
-// other type.  This allows for better error messages with the static_asserts
-// below.
+// other type.  Then we add a concept to check for this type trait to constrain
+// templates that use it.
 template <typename T>
 struct IsIterableEnumClass : std::false_type {};
 
 template <typename T>
+concept IterableEnum = IsIterableEnumClass<T>::value;
+
+
+template <IterableEnum T>
 constexpr int enum_size()
 {
-    static_assert(IsIterableEnumClass<T>::value, "requires iterable enum class");
     using U = typename std::underlying_type_t<T>;
     return U(T::_last) - U(T::_first);
 }
 
 
 // Convenience type for an array that uses an iterable enum for its indexes.
-template <typename T, typename E>
+template <typename T, IterableEnum E>
 class EnumSizedArray : public std::array<T, enum_size<E>()>
 {
 public:
@@ -75,14 +79,14 @@ public:
     const T & operator[](E index) const;
 };
 
-template <typename T, typename E>
+template <typename T, IterableEnum E>
 T & EnumSizedArray<T, E>::operator[](E index)
 {
     using U = typename std::underlying_type_t<E>;
     return operator[](static_cast<U>(index));
 }
 
-template <typename T, typename E>
+template <typename T, IterableEnum E>
 const T & EnumSizedArray<T, E>::operator[](E index) const
 {
     using U = typename std::underlying_type_t<E>;

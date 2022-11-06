@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2020 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2022 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -19,8 +19,8 @@
 #include "pixel_utils.h"
 
 #include "SDL.h"
+#include <concepts>
 #include <memory>
-#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -184,8 +184,8 @@ public:
     // Skip having to specify the display on every call (because laziness), I
     // don't have to modify this function if the argument list ever changes, and I
     // don't have to write a new one for a new animation type.
-    template <typename AnimType, typename... T>
-    void insert(T&&... args);
+    template <std::derived_from<AnimBase> T, typename... U>
+    void insert(U&&... args);
 
 private:
     MapDisplay *display_;
@@ -193,12 +193,10 @@ private:
     int currentAnim_;
 };
 
-template <typename AnimType, typename... T>
-void AnimManager::insert(T&&... args)
+template <std::derived_from<AnimBase> T, typename... U>
+void AnimManager::insert(U&&... args)
 {
-    static_assert(std::is_base_of_v<AnimBase, AnimType>,
-                  "type to be inserted must inherit from AnimBase");
-    anims_.push_back(std::make_shared<AnimType>(*display_, std::forward<T>(args)...));
+    anims_.push_back(std::make_shared<T>(*display_, std::forward<U>(args)...));
 }
 
 #endif

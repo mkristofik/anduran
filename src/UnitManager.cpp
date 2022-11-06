@@ -185,7 +185,6 @@ TeamColoredTextures UnitManager::load_image_set(const std::string &name)
     }
 
     const auto imgSet = applyTeamColors(imgData.surface);
-    static_assert(images.size() == imgSet.size());
     for (auto i = 0u; i < imgSet.size(); ++i) {
         images[i] = SdlTexture(imgSet[i], *window_, imgData.frames, imgData.timing_ms);
     }

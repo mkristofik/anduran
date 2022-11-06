@@ -59,14 +59,13 @@ namespace
     };
 
     // source: Battle for Wesnoth data/core/team_colors.cfg
-    const SDL_Color teamBaseColors[] = {
-        {0x2E, 0x41, 0x9B, SDL_ALPHA_OPAQUE},  // player 1 - blue
-        {0xFF, 0x00, 0x00, SDL_ALPHA_OPAQUE},  // player 2 - red
-        {0x62, 0xB6, 0x64, SDL_ALPHA_OPAQUE},  // player 3 - green
-        {0x93, 0x00, 0x9D, SDL_ALPHA_OPAQUE},  // player 4 - purple
-        {0x5A, 0x5A, 0x5A, SDL_ALPHA_OPAQUE},  // neutral - grey
+    const EnumSizedArray<SDL_Color, Team> teamBaseColors = {
+        SDL_Color{0x2E, 0x41, 0x9B, SDL_ALPHA_OPAQUE},  // player 1 - blue
+        SDL_Color{0xFF, 0x00, 0x00, SDL_ALPHA_OPAQUE},  // player 2 - red
+        SDL_Color{0x62, 0xB6, 0x64, SDL_ALPHA_OPAQUE},  // player 3 - green
+        SDL_Color{0x93, 0x00, 0x9D, SDL_ALPHA_OPAQUE},  // player 4 - purple
+        SDL_Color{0x5A, 0x5A, 0x5A, SDL_ALPHA_OPAQUE},  // neutral - grey
     };
-    static_assert(std::ssize(teamBaseColors) == enum_size<Team>());
 
     using TeamColorPalette = std::array<SDL_Color, std::size(refColors)>;
     auto makeTeamColors(const SDL_Color &baseColor)
@@ -107,9 +106,7 @@ namespace
 
     auto initColors()
     {
-        constexpr auto numTeams = std::size(teamBaseColors);
-        std::array<TeamColorPalette, numTeams> allColors;
-
+        EnumSizedArray<TeamColorPalette, Team> allColors;
         for (auto i = 0u; i < size(allColors); ++i) {
             allColors[i] = makeTeamColors(teamBaseColors[i]);
         }

@@ -251,4 +251,4 @@ is next to or in front of a castle
 
 # C++ features
 --------------
-- use concepts to eliminate static_asserts
+* use concepts to eliminate static_asserts

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2022 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -16,12 +16,16 @@
 #include "FlatMultimap.h"
 #include "rapidjson/document.h"
 
+#include <concepts>
 #include <string>
 #include <type_traits>
 #include <vector>
 
+template <typename T>
+concept IntOrEnum = std::is_integral_v<T> || std::is_enum_v<T>;
+
 // Fetch a JSON integer array and force all values to be type T.
-template <typename T, size_t N>
+template <IntOrEnum T, size_t N>
 void jsonGetArray(rapidjson::Value &obj, const char (&name)[N], std::vector<T> &outVec);
 
 // Cast all elements of the given container to type T before inserting into a JSON
@@ -31,7 +35,7 @@ void jsonSetArray(rapidjson::Document &doc, const char (&name)[N], const C &cont
 
 // Fetch a nested JSON object containing arrays. Insert the elements into a
 // multimap using the array names as the keys.
-template <typename T, size_t N>
+template <std::integral T, size_t N>
 void jsonGetMultimap(rapidjson::Value &obj,
                      const char (&name)[N],
                      FlatMultimap<std::string, T> &outMap);
@@ -48,12 +52,9 @@ rapidjson::Document jsonReadFile(const char *filename);
 void jsonWriteFile(const char *filename, const rapidjson::Document &doc);
 
 
-template <typename T, size_t N>
+template <IntOrEnum T, size_t N>
 void jsonGetArray(rapidjson::Value &obj, const char (&name)[N], std::vector<T> &outVec)
 {
-    static_assert(std::is_integral_v<T> || std::is_enum_v<T>,
-                  "Only supports fetching arrays with integer type");
-
     if (!obj.HasMember(name)) {
         return;
     }
@@ -81,14 +82,11 @@ void jsonSetArray(rapidjson::Document &doc, const char (&name)[N], const C &cont
     doc.AddMember(Value(name), ary, alloc);
 }
 
-template <typename T, size_t N>
+template <std::integral T, size_t N>
 void jsonGetMultimap(rapidjson::Value &obj,
                      const char (&name)[N],
                      FlatMultimap<std::string, T> &outMap)
 {
-    static_assert(std::is_integral_v<T>,
-                  "Only supports de-serializing maps of string to integer type");
-
     if (!obj.HasMember(name)) {
         return;
     }
