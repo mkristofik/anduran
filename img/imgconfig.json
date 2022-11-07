@@ -101,5 +101,8 @@
     },
     "tiles-water": {
         "frames": [1, 3]
+    },
+    "villages": {
+        "frames": [1, 6]
     }
 }

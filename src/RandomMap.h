@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2021 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2022 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+// Order matters here, there are sprite sheets with frames in terrain order.
 ITERABLE_ENUM_CLASS(Terrain, water, desert, swamp, grass, dirt, snow);
 
 

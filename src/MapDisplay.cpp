@@ -30,94 +30,94 @@ namespace
     const int SCROLL_PX_SEC = 500;  // map scroll rate in pixels per second
     const int BORDER_WIDTH = 20;
 
-    const char * tileFilename(Terrain t)
+    std::string tileFilename(Terrain t)
     {
         switch(t) {
             case Terrain::water:
-                return "tiles-water";
+                return "tiles-water"s;
             case Terrain::desert:
-                return "tiles-desert";
+                return "tiles-desert"s;
             case Terrain::swamp:
-                return "tiles-swamp";
+                return "tiles-swamp"s;
             case Terrain::grass:
-                return "tiles-grass";
+                return "tiles-grass"s;
             case Terrain::dirt:
-                return "tiles-dirt";
+                return "tiles-dirt"s;
             case Terrain::snow:
-                return "tiles-snow";
+                return "tiles-snow"s;
             default:
                 SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Unrecognized terrain %d",
                             static_cast<int>(t));
-                return "tiles-water";
+                return "tiles-water"s;
         }
     }
 
-    const char * obstacleFilename(Terrain t)
+    std::string obstacleFilename(Terrain t)
     {
         switch(t) {
             case Terrain::water:
-                return "obstacles-water";
+                return "obstacles-water"s;
             case Terrain::desert:
-                return "obstacles-desert";
+                return "obstacles-desert"s;
             case Terrain::swamp:
-                return "obstacles-swamp";
+                return "obstacles-swamp"s;
             case Terrain::grass:
-                return "obstacles-grass";
+                return "obstacles-grass"s;
             case Terrain::dirt:
-                return "obstacles-dirt";
+                return "obstacles-dirt"s;
             case Terrain::snow:
-                return "obstacles-snow";
+                return "obstacles-snow"s;
             default:
                 SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
                             "Unrecognized obstacle terrain %d",
                             static_cast<int>(t));
-                return "obstacles-water";
+                return "obstacles-water"s;
         }
     }
 
-    const char * edgeFilename(Terrain t)
+    std::string edgeFilename(Terrain t)
     {
         switch(t) {
             case Terrain::water:
-                return "edges-water";
+                return "edges-water"s;
             case Terrain::desert:
-                return "edges-desert";
+                return "edges-desert"s;
             case Terrain::swamp:
-                return "edges-swamp";
+                return "edges-swamp"s;
             case Terrain::grass:
-                return "edges-grass";
+                return "edges-grass"s;
             case Terrain::dirt:
-                return "edges-dirt";
+                return "edges-dirt"s;
             case Terrain::snow:
-                return "edges-snow";
+                return "edges-snow"s;
             default:
                 SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
                             "Unrecognized edge terrain %d",
                             static_cast<int>(t));
-                return "edges-water";
+                return "edges-water"s;
         }
     }
 
-    const char * castleFilename(Terrain t)
+    std::string castleFilename(Terrain t)
     {
         switch(t) {
             case Terrain::water:
-                return "castle-walls-water";
+                return "castle-walls-water"s;
             case Terrain::desert:
-                return "castle-walls-desert";
+                return "castle-walls-desert"s;
             case Terrain::swamp:
-                return "castle-walls-swamp";
+                return "castle-walls-swamp"s;
             case Terrain::grass:
-                return "castle-walls-grass";
+                return "castle-walls-grass"s;
             case Terrain::dirt:
-                return "castle-walls-dirt";
+                return "castle-walls-dirt"s;
             case Terrain::snow:
-                return "castle-walls-snow";
+                return "castle-walls-snow"s;
             default:
                 SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
                             "Unsupported castle terrain %d",
                             static_cast<int>(t));
-                return "castle-walls-dirt";
+                return "castle-walls-dirt"s;
         }
     }
     
@@ -549,12 +549,12 @@ void MapDisplay::loadTerrainImages()
     }
 
     // Special edge transitions to water.
-    edgeImg_.push_back(images_->make_texture("edges-grass-water", *window_));
-    edgeImg_.push_back(images_->make_texture("edges-dirt-water", *window_));
-    edgeImg_.push_back(images_->make_texture("edges-snow-water", *window_));
+    edgeImg_.push_back(images_->make_texture("edges-grass-water"s, *window_));
+    edgeImg_.push_back(images_->make_texture("edges-dirt-water"s, *window_));
+    edgeImg_.push_back(images_->make_texture("edges-snow-water"s, *window_));
 
     // Edge transition between two regions with the same terrain type.
-    edgeImg_.push_back(images_->make_texture("edges-same-terrain", *window_));
+    edgeImg_.push_back(images_->make_texture("edges-same-terrain"s, *window_));
 }
 
 void MapDisplay::addBorderTiles()
@@ -639,7 +639,7 @@ void MapDisplay::addBorderTiles()
 
 void MapDisplay::addCastleFloors()
 {
-    auto floor = images_->make_texture("tiles-castle", *window_);
+    auto floor = images_->make_texture("tiles-castle"s, *window_);
 
     for (auto &hCastle : map_->getCastleTiles()) {
         int terrain = static_cast<int>(map_->getTerrain(hCastle));

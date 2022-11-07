@@ -250,26 +250,21 @@ void Anduran::load_players()
 
 void Anduran::load_villages()
 {
-    EnumSizedArray<SdlTexture, Terrain> villageImages = {
-        SdlTexture{},
-        images_.make_texture("village-desert"s, win_),
-        images_.make_texture("village-swamp"s, win_),
-        images_.make_texture("village-grass"s, win_),
-        images_.make_texture("village-dirt"s, win_),
-        images_.make_texture("village-snow"s, win_)
-    };
+    SdlTexture villageImage = images_.make_texture("villages"s, win_);
 
     auto &neutralFlag = flagImages_[Team::neutral];
     for (const auto &hex : rmap_.getObjectTiles(ObjectType::village)) {
+        int terrain = static_cast<int>(rmap_.getTerrain(hex));
         GameObject village;
         village.hex = hex;
-        village.entity =
-            rmapView_.addEntity(villageImages[rmap_.getTerrain(hex)],
-                                village.hex,
-                                ZOrder::object);
+        village.entity = rmapView_.addEntity(villageImage, village.hex, ZOrder::object);
         village.secondary = rmapView_.addEntity(neutralFlag, village.hex, ZOrder::flag);
         village.type = ObjectType::village;
         game_.add_object(village);
+
+        auto entity = rmapView_.getEntity(village.entity);
+        entity.frame = {0, terrain};
+        rmapView_.updateEntity(entity);
     }
 }
 

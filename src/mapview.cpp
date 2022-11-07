@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2018 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2022 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -15,7 +15,12 @@
 #include "SdlApp.h"
 #include "SdlImageManager.h"
 #include "SdlWindow.h"
+
 #include <cstdlib>
+#include <string>
+
+using namespace std::string_literals;
+
 
 class MapViewApp : public SdlApp
 {
@@ -38,6 +43,17 @@ MapViewApp::MapViewApp()
     images_("img/"),
     rmapView_(win_, rmap_, images_)
 {
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_VERBOSE);
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_VIDEO, SDL_LOG_PRIORITY_VERBOSE);
+
+    auto village = images_.make_texture("villages"s, win_);
+    for (auto &hex : rmap_.getObjectTiles(ObjectType::village)) {
+        int id = rmapView_.addEntity(village, hex, ZOrder::object);
+        int terrain = static_cast<int>(rmap_.getTerrain(hex));
+        auto entity = rmapView_.getEntity(id);
+        entity.frame = {0, terrain};
+        rmapView_.updateEntity(entity);
+    }
 }
 
 void MapViewApp::update_frame(Uint32 elapsed_ms)

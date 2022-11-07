@@ -163,6 +163,8 @@ is next to or in front of a castle
     * skip if not shown
     * convert base hex to pixel, compute the draw target
     * get bounding rect, determine whether within screen bounds
+- should addEntity return the entity object instead?
+- easier way to set the initial image frame?
 
 
 # Map viewer
