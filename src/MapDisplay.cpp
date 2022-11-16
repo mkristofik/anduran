@@ -179,6 +179,11 @@ void MapEntity::faceHex(const Hex &hDest)
     }
 }
 
+void MapEntity::alignCentered(const SdlTexture &img)
+{
+    offset.x = HEX_SIZE / 2 - img.frame_width() / 2.0;
+    offset.y = HEX_SIZE / 2 - img.frame_height() / 2.0;
+}
 
 
 MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
@@ -261,34 +266,33 @@ void MapDisplay::draw()
     drawEntities();
 }
 
-int MapDisplay::addEntity(const SdlTexture &img, const Hex &hex, ZOrder z)
+int MapDisplay::addEntity(const SdlTexture &img, MapEntity entity)
 {
-    const int id = entities_.size();
-
-    MapEntity e;
-    e.offset.x = HEX_SIZE / 2 - img.frame_width() / 2.0;
-    e.offset.y = HEX_SIZE / 2 - img.frame_height() / 2.0;
-    e.hex = hex;
-    e.id = id;
-    e.z = z;
-    entities_.push_back(e);
+    int id = entities_.size();
+    entity.id = id;
+    entities_.push_back(entity);
     entityImg_.push_back(img);
 
     return id;
 }
 
+int MapDisplay::addEntity(const SdlTexture &img, const Hex &hex, ZOrder z)
+{
+    MapEntity e;
+    e.alignCentered(img);
+    e.hex = hex;
+    e.z = z;
+
+    return addEntity(img, e);
+}
+
 int MapDisplay::addHiddenEntity(const SdlTexture &img, ZOrder z)
 {
-    const int id = entities_.size();
-
     MapEntity e;
-    e.id = id;
     e.z = z;
     e.visible = false;
-    entities_.push_back(e);
-    entityImg_.push_back(img);
 
-    return id;
+    return addEntity(img, e);
 }
 
 MapEntity MapDisplay::getEntity(int id) const

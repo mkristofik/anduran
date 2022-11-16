@@ -48,11 +48,13 @@ MapViewApp::MapViewApp()
 
     auto village = images_.make_texture("villages"s, win_);
     for (auto &hex : rmap_.getObjectTiles(ObjectType::village)) {
-        int id = rmapView_.addEntity(village, hex, ZOrder::object);
-        int terrain = static_cast<int>(rmap_.getTerrain(hex));
-        auto entity = rmapView_.getEntity(id);
-        entity.frame = {0, terrain};
-        rmapView_.updateEntity(entity);
+        MapEntity entity;
+        entity.hex = hex;
+        entity.frame = {0, static_cast<int>(rmap_.getTerrain(hex))};
+        entity.z = ZOrder::object;
+        entity.alignCentered(village);
+
+        rmapView_.addEntity(village, entity);
     }
 }
 

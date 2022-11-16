@@ -62,7 +62,7 @@ enum class ZOrder {floor,
 
 struct MapEntity
 {
-    PartialPixel offset;  // base offset will draw the image centered on hex
+    PartialPixel offset;
     Hex hex;
     Frame frame;
     int id;
@@ -75,6 +75,9 @@ struct MapEntity
     // All unit sprites are drawn looking to the right. A unit walking to the left
     // should face left so it always walks forward.
     void faceHex(const Hex &hDest);
+
+    // Set the image offset to draw it centered on a hex.
+    void alignCentered(const SdlTexture &img);
 };
 
 
@@ -86,6 +89,7 @@ public:
     void draw();
 
     // Adding new entity returns the new entity id.
+    int addEntity(const SdlTexture &img, MapEntity entity);
     int addEntity(const SdlTexture &img, const Hex &hex, ZOrder z);
     int addHiddenEntity(const SdlTexture &img, ZOrder z);
 

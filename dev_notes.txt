@@ -93,6 +93,7 @@ is next to or in front of a castle
     - update all of them any time somebody moves
 - remove objects after they've been picked up
     - move to the invalid hex instead of deleting it?
+- currently requires a drawable entity so an object can be flaggable
 
 
 # Thoughts on Combat
@@ -163,8 +164,8 @@ is next to or in front of a castle
     * skip if not shown
     * convert base hex to pixel, compute the draw target
     * get bounding rect, determine whether within screen bounds
-- should addEntity return the entity object instead?
-- easier way to set the initial image frame?
+* should addEntity return the entity object instead?
+* easier way to set the initial image frame?
 
 
 # Map viewer
@@ -186,8 +187,7 @@ is next to or in front of a castle
 * need to draw dotted line between grass regions
 * Window needs to report its own boundary
 * pick one village image per terrain
-- placeholder art for villages and castles
-    - GameState currently requires a drawable entity so an object can be flaggable
+* placeholder art for villages and castles
 
 
 # Random Map
