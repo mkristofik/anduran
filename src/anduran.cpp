@@ -109,6 +109,8 @@ Anduran::Anduran()
     flagImages_()
 {
     SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_VERBOSE);
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_VIDEO, SDL_LOG_PRIORITY_VERBOSE);
+
     load_images();
     load_players();
     load_villages();
@@ -244,7 +246,7 @@ void Anduran::load_players()
     game_.add_army(orcArmy);
 
     // Add a placeholder projectile for ranged units.
-    auto arrow = images_.make_texture("arrow"s, win_);
+    auto arrow = images_.make_texture("missile"s, win_);
     projectileId_ = rmapView_.addHiddenEntity(arrow, ZOrder::projectile);
 }
 

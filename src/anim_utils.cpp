@@ -392,8 +392,8 @@ void AnimRanged::start()
     defObj.visible = true;
     defObj.faceHex(attBaseState_.hex);
     projObj.hex = attBaseState_.hex;
+    projObj.frame = {0, static_cast<int>(projectile_angle())};
     projObj.visible = false;
-    // TODO: compute projectile angle
 
     update_entity(attObj, attAnim_);
     update_entity(defObj, defImg_);
@@ -463,6 +463,17 @@ void AnimRanged::stop()
     update_entity(attObj, attImg_);
     update_entity(defObj, defImg_);
     update_entity(projObj);
+}
+
+HexDir AnimRanged::projectile_angle() const
+{
+    for (HexDir d : HexDir()) {
+        if (attBaseState_.hex.getNeighbor(d) == defBaseState_.hex) {
+            return d;
+        }
+    }
+
+    return HexDir::n;
 }
 
 

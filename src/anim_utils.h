@@ -154,6 +154,10 @@ private:
     void update(Uint32 elapsed_ms) override;
     void stop() override;
 
+    // Compute the direction between attacker and defender's hexes to pick the
+    // projectile frame to draw.  Return N if the hexes aren't neighbors.
+    HexDir projectile_angle() const;
+
     int attacker_;
     MapEntity attBaseState_;
     SdlTexture attImg_;
