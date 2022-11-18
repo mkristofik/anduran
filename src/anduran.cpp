@@ -402,11 +402,15 @@ void Anduran::battle_action(GameObject &player, GameObject &enemy)
     if (!result.attackerWins) {
         winner = &enemy;
     }
-    // TODO: this shows the player and ellipse in separate frames.
-    anims_.insert<AnimDisplay>(winner->entity, rmapView_.getEntityImage(winner->entity));
+
+    AnimArray ary;
+    ary[0] = AnimDisplay(rmapView_,
+                         winner->entity,
+                         rmapView_.getEntityImage(winner->entity));
     if (winner->secondary >= 0) {
-        anims_.insert<AnimDisplay>(winner->secondary, winner->hex);
+        ary[1] = AnimDisplay(rmapView_, winner->secondary, winner->hex);
     }
+    anims_.insert<AnimGroup>(ary);
 
     if (result.attackerWins) {
         SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Attacker wins");

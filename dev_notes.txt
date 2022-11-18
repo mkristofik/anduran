@@ -5,6 +5,14 @@
     * map display can convert pixel to hex
     * game display controls the highlights
 * flag all villages and windmills
+- all animations inserted to AnimManager are AnimArrays
+    - add convenience function for one-element arrays
+    - AnimGroup can go away
+    - AnimBase::get_runtime_ms() probably no longer needed
+- AnimManager::update() needs rewriting
+    - add visitor for finished()
+- fancy insert becomes a fancy create
+    - insert then takes the AnimType variant instead
 
 
 # Pathfinding

@@ -22,6 +22,7 @@
 #include <concepts>
 #include <memory>
 #include <utility>
+#include <variant>
 #include <vector>
 
 class AnimBase
@@ -30,7 +31,8 @@ public:
     AnimBase(MapDisplay &display, Uint32 runtime_ms);
     virtual ~AnimBase() = default;
 
-    void run(Uint32 frame_ms);
+    virtual void run(Uint32 frame_ms);
+    Uint32 get_runtime_ms() const;
     bool finished() const;
 
 protected:
@@ -172,6 +174,29 @@ private:
     MapEntity projectileBaseState_;
     bool projectileReset_;
     PartialPixel distToMove_;
+};
+
+
+// List of all animation types, to try to build a polymorphic array without
+// dynamic memory allocation.  The monostate serves as the null animation, so
+// the array's elements can be default constructible.
+using AnimType = std::variant<std::monostate, AnimDisplay>;
+using AnimArray = std::array<AnimType, 4>;  // keep this small for now
+
+
+// Set of animations to be run in parallel, such as the parts of a battle.
+class AnimGroup : public AnimBase
+{
+public:
+    AnimGroup(MapDisplay &display, const AnimArray &anims);
+
+    void run(Uint32 frame_ms) override;
+
+private:
+    static Uint32 total_runtime_ms(const AnimArray &anims);
+    void update(Uint32) override {}
+
+    AnimArray anims_;
 };
 
 

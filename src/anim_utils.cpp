@@ -75,6 +75,11 @@ void AnimBase::run(Uint32 frame_ms)
     }
 }
 
+Uint32 AnimBase::get_runtime_ms() const
+{
+    return runtime_ms_;
+}
+
 bool AnimBase::finished() const
 {
     return isDone_;
@@ -475,6 +480,49 @@ HexDir AnimRanged::projectile_angle() const
 
     return HexDir::n;
 }
+
+
+// Visitors to help with generic execution of each animation in a group.
+struct AnimRunner
+{
+    Uint32 elapsed_ms_;
+
+    AnimRunner(Uint32 elapsed_ms) : elapsed_ms_(elapsed_ms) {}
+    void operator()(AnimBase &anim) { anim.run(elapsed_ms_); }
+    void operator()(std::monostate &) {}
+};
+
+struct AnimRuntime
+{
+    Uint32 operator()(const AnimBase &anim) { return anim.get_runtime_ms(); }
+    Uint32 operator()(const std::monostate &) { return 0; }
+};
+
+AnimGroup::AnimGroup(MapDisplay &display, const AnimArray &anims)
+    : AnimBase(display, total_runtime_ms(anims)),
+    anims_(anims)
+{
+}
+
+void AnimGroup::run(Uint32 frame_ms)
+{
+    AnimBase::run(frame_ms);
+    for (auto &anim : anims_) {
+        std::visit(AnimRunner(frame_ms), anim);
+    }
+}
+
+Uint32 AnimGroup::total_runtime_ms(const AnimArray &anims)
+{
+    Uint32 runtime_ms = 0;
+
+    for (auto &anim : anims) {
+        runtime_ms += std::visit(AnimRuntime(), anim);
+    }
+
+    return runtime_ms;
+}
+
 
 
 AnimManager::AnimManager(MapDisplay &display)
