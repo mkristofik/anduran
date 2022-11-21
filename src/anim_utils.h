@@ -138,31 +138,58 @@ class AnimRanged : public AnimBase
 {
 public:
     AnimRanged(MapDisplay &display,
-               int attackerId,
-               const SdlTexture &attackerImg,
-               const SdlTexture &attackerAnim,
-               int defenderId,
-               const SdlTexture &defenderImg,
-               const SdlTexture &defenderAnim);
+               int entityId,
+               const SdlTexture &idleImg,
+               const SdlTexture &anim,
+               const Hex &hDefender);
 
 private:
-    static Uint32 total_runtime_ms(const SdlTexture &attackerAnim,
-                                   const SdlTexture &defenderAnim);
+    void start() override;
+    void update(Uint32 elapsed_ms) override;
+    void stop() override;
+
+    int entity_;
+    MapEntity baseState_;
+    SdlTexture idleImg_;
+    SdlTexture anim_;
+    Hex hFacing_;
+};
+
+
+class AnimDefend : public AnimBase
+{
+public:
+    static AnimDefend from_melee(MapDisplay &display,
+                                 int entityId,
+                                 const SdlTexture &idleImg,
+                                 const SdlTexture &anim,
+                                 const Hex &hAttacker);
+
+    static AnimDefend from_ranged(MapDisplay &display,
+                                  int entityId,
+                                  const SdlTexture &idleImg,
+                                  const SdlTexture &anim,
+                                  const Hex &hAttacker);
+
+private:
+    AnimDefend(MapDisplay &display,
+               int entityId,
+               const SdlTexture &idleImg,
+               const SdlTexture &anim,
+               const Hex &hAttacker,
+               Uint32 hitTime_ms);
 
     void start() override;
     void update(Uint32 elapsed_ms) override;
     void stop() override;
 
-    int attacker_;
-    MapEntity attBaseState_;
-    SdlTexture attImg_;
-    SdlTexture attAnim_;
-    bool attackerReset_;
-    int defender_;
-    MapEntity defBaseState_;
-    SdlTexture defImg_;
-    bool defAnimStarted_;
-    SdlTexture defAnim_;
+    int entity_;
+    MapEntity baseState_;
+    SdlTexture idleImg_;
+    SdlTexture anim_;
+    Hex hFacing_;
+    Uint32 startTime_ms_;
+    bool animStarted_;
 };
 
 

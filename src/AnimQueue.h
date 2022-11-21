@@ -25,6 +25,7 @@ using AnimType = std::variant<std::monostate,
                               AnimMove,
                               AnimMelee,
                               AnimRanged,
+                              AnimDefend,
                               AnimProjectile>;
 
 

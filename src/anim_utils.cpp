@@ -334,7 +334,7 @@ void AnimMelee::stop()
     auto defObj = get_entity(defender_);
 
     set_idle(attObj, attBaseState_);
-    attObj.visible = false;
+    attObj.visible = false;  // TODO: do this with explicit AnimHide
     set_idle(defObj, defBaseState_);
     defObj.visible = false;
     update_entity(attObj, attImg_);
@@ -343,93 +343,113 @@ void AnimMelee::stop()
 
 
 AnimRanged::AnimRanged(MapDisplay &display,
-                       int attackerId,
-                       const SdlTexture &attackerImg,
-                       const SdlTexture &attackerAnim,
-                       int defenderId,
-                       const SdlTexture &defenderImg,
-                       const SdlTexture &defenderAnim)
-    : AnimBase(display, total_runtime_ms(attackerAnim, defenderAnim)),
-    attacker_(attackerId),
-    attBaseState_(),
-    attImg_(attackerImg),
-    attAnim_(attackerAnim),
-    attackerReset_(false),
-    defender_(defenderId),
-    defBaseState_(),
-    defImg_(defenderImg),
-    defAnimStarted_(false),
-    defAnim_(defenderAnim)
+                       int entityId,
+                       const SdlTexture &idleImg,
+                       const SdlTexture &anim,
+                       const Hex &hDefender)
+    : AnimBase(display, anim.duration_ms()),
+    entity_(entityId),
+    baseState_(),
+    idleImg_(idleImg),
+    anim_(anim),
+    hFacing_(hDefender)
 {
-}
-
-Uint32 AnimRanged::total_runtime_ms(const SdlTexture &attackerAnim,
-                                    const SdlTexture &defenderAnim)
-{
-    return std::max({attackerAnim.duration_ms(),
-                     RANGED_HIT_MS + DEFEND_MS,
-                     RANGED_HIT_MS + defenderAnim.duration_ms()});
 }
 
 void AnimRanged::start()
 {
-    auto attObj = get_entity(attacker_);
-    auto defObj = get_entity(defender_);
+    auto obj = get_entity(entity_);
 
-    attBaseState_ = attObj;
-    defBaseState_ = defObj;
+    baseState_ = obj;
+    obj.z = ZOrder::animating;
+    obj.visible = true;
+    obj.faceHex(hFacing_);
+    obj.frame = {0, 0};
 
-    attObj.z = ZOrder::animating;
-    attObj.visible = true;
-    attObj.faceHex(defBaseState_.hex);
-    attObj.frame = {0, 0};
-    defObj.z = ZOrder::animating;
-    defObj.visible = true;
-    defObj.faceHex(attBaseState_.hex);
-
-    update_entity(attObj, attAnim_);
-    update_entity(defObj, defImg_);
+    update_entity(obj, anim_);
 }
 
 void AnimRanged::update(Uint32 elapsed_ms)
 {
-    // TODO: could this be composed of individual separate animations?
-    // Attacker
-    if (elapsed_ms < attAnim_.duration_ms()) {
-        auto attObj = get_entity(attacker_);
-        attObj.frame = get_anim_frame(attAnim_.timing_ms(), elapsed_ms);
-        update_entity(attObj);
-    }
-    else if (!attackerReset_) {
-        auto attObj = get_entity(attacker_);
-        set_idle(attObj, attBaseState_);
-        update_entity(attObj, attImg_);
-        attackerReset_ = true;
-    }
-
-    // Defender
-    if (elapsed_ms >= RANGED_HIT_MS) {
-        if (!defAnimStarted_) {
-            get_display().setEntityImage(defender_, defAnim_);
-            defAnimStarted_ = true;
-        }
-        auto defObj = get_entity(defender_);
-        defObj.frame = get_anim_frame(defAnim_.timing_ms(), elapsed_ms - RANGED_HIT_MS);
-        update_entity(defObj);
-    }
+    auto obj = get_entity(entity_);
+    obj.frame = get_anim_frame(anim_.timing_ms(), elapsed_ms);
+    update_entity(obj);
 }
 
 void AnimRanged::stop()
 {
-    auto attObj = get_entity(attacker_);
-    auto defObj = get_entity(defender_);
+    auto obj = get_entity(entity_);
+    set_idle(obj, baseState_);
+    update_entity(obj, idleImg_);
+}
 
-    set_idle(attObj, attBaseState_);
-    attObj.visible = false;
-    set_idle(defObj, defBaseState_);
-    defObj.visible = false;
-    update_entity(attObj, attImg_);
-    update_entity(defObj, defImg_);
+
+AnimDefend::AnimDefend(MapDisplay &display,
+                       int entityId,
+                       const SdlTexture &idleImg,
+                       const SdlTexture &anim,
+                       const Hex &hAttacker,
+                       Uint32 hitTime_ms)
+    : AnimBase(display, hitTime_ms + std::max(DEFEND_MS, anim.duration_ms())),
+    entity_(entityId),
+    idleImg_(idleImg),
+    anim_(anim),
+    hFacing_(hAttacker),
+    startTime_ms_(hitTime_ms),
+    animStarted_(false)
+{
+}
+
+AnimDefend AnimDefend::from_melee(MapDisplay &display,
+                                  int entityId,
+                                  const SdlTexture &idleImg,
+                                  const SdlTexture &anim,
+                                  const Hex &hAttacker)
+{
+    return AnimDefend(display, entityId, idleImg, anim, hAttacker, MELEE_HIT_MS);
+}
+
+AnimDefend AnimDefend::from_ranged(MapDisplay &display,
+                                   int entityId,
+                                   const SdlTexture &idleImg,
+                                   const SdlTexture &anim,
+                                   const Hex &hAttacker)
+{
+    return AnimDefend(display, entityId, idleImg, anim, hAttacker, RANGED_HIT_MS);
+}
+
+void AnimDefend::start()
+{
+    auto obj = get_entity(entity_);
+
+    baseState_ = obj;
+    obj.z = ZOrder::animating;
+    obj.visible = true;
+    obj.faceHex(hFacing_);
+
+    update_entity(obj, idleImg_);
+}
+
+void AnimDefend::update(Uint32 elapsed_ms)
+{
+    if (elapsed_ms < startTime_ms_) {
+        return;
+    }
+
+    if (!animStarted_) {
+        get_display().setEntityImage(entity_, anim_);
+        animStarted_ = true;
+    }
+    auto obj = get_entity(entity_);
+    obj.frame = get_anim_frame(anim_.timing_ms(), elapsed_ms - startTime_ms_);
+    update_entity(obj);
+}
+
+void AnimDefend::stop()
+{
+    auto obj = get_entity(entity_);
+    set_idle(obj, baseState_);
+    update_entity(obj, idleImg_);
 }
 
 
