@@ -232,12 +232,12 @@ is next to or in front of a castle
 
 # Containers
 ------------
-- compact queue
-    - minimize memory (de-)allocations
-    - use a vector, keep index to the current front, add to the back
-    - pop() should return by value to avoid invalidating references on push()
-    - if pop() makes the queue empty, start overwriting old elements
-    - this one is probably just a fun experiment, std::queue is going to be fine
+* compact queue
+    * minimize memory (de-)allocations
+    * use a vector, keep index to the current front, add to the back
+    * pop() should return by value to avoid invalidating references on push()
+    * if pop() makes the queue empty, start overwriting old elements
+    * this one is probably just a fun experiment, std::queue is going to be fine
 * flat multimap
     * sorted vector of nodes
     * insert, sort, then read-only
@@ -262,3 +262,4 @@ is next to or in front of a castle
 # C++ features
 --------------
 * use concepts to eliminate static_asserts
+- ranges instead of begin/end or cbegin/cend on containers

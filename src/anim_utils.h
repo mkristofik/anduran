@@ -19,10 +19,8 @@
 #include "pixel_utils.h"
 
 #include "SDL.h"
-#include <concepts>
 #include <memory>
 #include <utility>
-#include <variant>
 #include <vector>
 
 class AnimBase
@@ -175,57 +173,5 @@ private:
     bool projectileReset_;
     PartialPixel distToMove_;
 };
-
-
-// List of all animation types, to try to build a polymorphic array without
-// dynamic memory allocation.  The monostate serves as the null animation, so
-// the array's elements can be default constructible.
-using AnimType = std::variant<std::monostate, AnimDisplay>;
-using AnimArray = std::array<AnimType, 4>;  // keep this small for now
-
-
-// Set of animations to be run in parallel, such as the parts of a battle.
-class AnimGroup : public AnimBase
-{
-public:
-    AnimGroup(MapDisplay &display, const AnimArray &anims);
-
-    void run(Uint32 frame_ms) override;
-
-private:
-    static Uint32 total_runtime_ms(const AnimArray &anims);
-    void update(Uint32) override {}
-
-    AnimArray anims_;
-};
-
-
-// Run a set of animations in sequence.
-class AnimManager
-{
-public:
-    AnimManager(MapDisplay &display);
-
-    bool running() const;
-    void update(Uint32 frame_ms);
-
-    // This is probably too clever by half, but whatever.
-    // Skip having to specify the display on every call (because laziness), I
-    // don't have to modify this function if the argument list ever changes, and I
-    // don't have to write a new one for a new animation type.
-    template <std::derived_from<AnimBase> T, typename... U>
-    void insert(U&&... args);
-
-private:
-    MapDisplay *display_;
-    std::vector<std::shared_ptr<AnimBase>> anims_;
-    int currentAnim_;
-};
-
-template <std::derived_from<AnimBase> T, typename... U>
-void AnimManager::insert(U&&... args)
-{
-    anims_.push_back(std::make_shared<T>(*display_, std::forward<U>(args)...));
-}
 
 #endif

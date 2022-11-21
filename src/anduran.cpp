@@ -10,6 +10,7 @@
  
     See the COPYING.txt file for more details.
 */
+#include "AnimQueue.h"
 #include "GameState.h"
 #include "MapDisplay.h"
 #include "Pathfinder.h"
@@ -81,7 +82,7 @@ private:
     int curPlayerNum_;
     bool championSelected_;
     int projectileId_;
-    AnimManager anims_;
+    AnimQueue anims_;
     Pathfinder pathfind_;
     UnitManager units_;
     TeamColoredTextures championImages_;
@@ -101,7 +102,7 @@ Anduran::Anduran()
     curPlayerNum_(0),
     championSelected_(false),
     projectileId_(-1),
-    anims_(rmapView_),
+    anims_(),
     pathfind_(rmap_, game_),
     units_("data/units.json"s, win_, images_),
     championImages_(),
@@ -123,14 +124,14 @@ void Anduran::update_frame(Uint32 elapsed_ms)
         rmapView_.handleMousePos(elapsed_ms);
     }
     win_.clear();
-    anims_.update(elapsed_ms);
+    anims_.run(elapsed_ms);
     rmapView_.draw();
     win_.update();
 }
 
 void Anduran::handle_lmouse_up()
 {
-    if (anims_.running()) {
+    if (!anims_.empty()) {
         return;
     }
 
@@ -344,12 +345,16 @@ void Anduran::move_action(GameObject &player, const Path &path)
 
     auto champion = player.entity;
     auto ellipse = player.secondary;
-    anims_.insert<AnimHide>(ellipse);
-    anims_.insert<AnimMove>(champion, path);
+
+    AnimSet moveAnim;
+    moveAnim.insert(AnimHide(rmapView_, ellipse));
+    moveAnim.insert(AnimMove(rmapView_, champion, path));
+    anims_.push(moveAnim);
 
     const int zoc = game_.hex_controller(destHex);
     if (zoc < 0) {
-        anims_.insert<AnimDisplay>(ellipse, destHex);
+        AnimSet showAnim;
+        showAnim.insert(AnimDisplay(rmapView_, ellipse, destHex));
 
         // If we land on an object with a flag, change the flag color to
         // match the player's.
@@ -361,10 +366,12 @@ void Anduran::move_action(GameObject &player, const Path &path)
             {
                 obj.team = player.team;
                 game_.update_object(obj);
-                anims_.insert<AnimDisplay>(obj.secondary,
-                                           flagImages_[curPlayerNum_]);
+                showAnim.insert(AnimDisplay(rmapView_,
+                                            obj.secondary,
+                                            flagImages_[curPlayerNum_]));
             }
         }
+        anims_.push(showAnim);
     }
     else {
         auto enemy = game_.get_object(zoc);
@@ -402,15 +409,14 @@ void Anduran::battle_action(GameObject &player, GameObject &enemy)
     if (!result.attackerWins) {
         winner = &enemy;
     }
-
-    AnimArray ary;
-    ary[0] = AnimDisplay(rmapView_,
-                         winner->entity,
-                         rmapView_.getEntityImage(winner->entity));
+    AnimSet showAnim;
+    showAnim.insert(AnimDisplay(rmapView_,
+                                winner->entity,
+                                rmapView_.getEntityImage(winner->entity)));
     if (winner->secondary >= 0) {
-        ary[1] = AnimDisplay(rmapView_, winner->secondary, winner->hex);
+        showAnim.insert(AnimDisplay(rmapView_, winner->secondary, winner->hex));
     }
-    anims_.insert<AnimGroup>(ary);
+    anims_.push(showAnim);
 
     if (result.attackerWins) {
         SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Attacker wins");
@@ -497,15 +503,17 @@ void Anduran::animate(const GameObject &attacker,
     SdlTexture attAnim;
     if (units_.get_data(attUnitType).attack == AttackType::melee) {
         attAnim = units_.get_image(attUnitType, ImageType::anim_attack, attTeam);
-        anims_.insert<AnimMelee>(attacker.entity, attIdle, attAnim,
-                                 defender.entity, defIdle, defAnim);
+        anims_.push(AnimMelee(rmapView_,
+                              attacker.entity, attIdle, attAnim,
+                              defender.entity, defIdle, defAnim));
     }
     else {
         attAnim = units_.get_image(attUnitType, ImageType::anim_ranged, attTeam);
         rmapView_.setEntityImage(projectileId_, units_.get_projectile(attUnitType));
-        anims_.insert<AnimRanged>(attacker.entity, attIdle, attAnim,
-                                  defender.entity, defIdle, defAnim,
-                                  projectileId_);
+        anims_.push(AnimRanged(rmapView_,
+                               attacker.entity, attIdle, attAnim,
+                               defender.entity, defIdle, defAnim,
+                               projectileId_));
     }
 }
 
