@@ -106,31 +106,22 @@ class AnimMelee : public AnimBase
 {
 public:
     AnimMelee(MapDisplay &display,
-              int attackerId,
-              const SdlTexture &attackerImg,
-              const SdlTexture &attackerAnim,
-              int defenderId,
-              const SdlTexture &defenderImg,
-              const SdlTexture &defenderAnim);
+              int entityId,
+              const SdlTexture &idleImg,
+              const SdlTexture &anim,
+              const Hex &hDefender);
 
 private:
-    static Uint32 total_runtime_ms(const SdlTexture &defenderAnim);
-
     void start() override;
     void update(Uint32 elapsed_ms) override;
     void stop() override;
 
-    int attacker_;
-    MapEntity attBaseState_;
-    SdlTexture attImg_;
-    SdlTexture attAnim_;
-    bool attackerReset_;
-    int defender_;
-    MapEntity defBaseState_;
-    SdlTexture defImg_;
-    SdlTexture defAnim_;
-    bool defAnimStarted_;;
-    PartialPixel distToMove_;
+    int entity_;
+    MapEntity baseState_;
+    SdlTexture idleImg_;
+    SdlTexture anim_;
+    Hex hDefender_;
+    PartialPixel pDistToMove_;
 };
 
 

@@ -507,9 +507,18 @@ void Anduran::animate(const GameObject &attacker,
     SdlTexture attImg;
     if (units_.get_data(attUnitType).attack == AttackType::melee) {
         attImg = units_.get_image(attUnitType, ImageType::anim_attack, attTeam);
-        anims_.push(AnimMelee(rmapView_,
-                              attacker.entity, attIdle, attImg,
-                              defender.entity, defIdle, defImg));
+        AnimSet meleeAnim;
+        meleeAnim.insert(AnimMelee(rmapView_,
+                                   attacker.entity,
+                                   attIdle,
+                                   attImg,
+                                   defender.hex));
+        meleeAnim.insert(AnimDefend::from_melee(rmapView_,
+                                                defender.entity,
+                                                defIdle,
+                                                defImg,
+                                                attacker.hex));
+        anims_.push(meleeAnim);
     }
     else {
         attImg = units_.get_image(attUnitType, ImageType::anim_ranged, attTeam);

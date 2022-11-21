@@ -241,104 +241,60 @@ void AnimMove::stop()
 
 
 AnimMelee::AnimMelee(MapDisplay &display,
-                     int attackerId,
-                     const SdlTexture &attackerImg,
-                     const SdlTexture &attackerAnim,
-                     int defenderId,
-                     const SdlTexture &defenderImg,
-                     const SdlTexture &defenderAnim)
-    : AnimBase(display, total_runtime_ms(defenderAnim)),
-    attacker_(attackerId),
-    attBaseState_(),
-    attImg_(attackerImg),
-    attAnim_(attackerAnim),
-    attackerReset_(false),
-    defender_(defenderId),
-    defBaseState_(),
-    defImg_(defenderImg),
-    defAnim_(defenderAnim),
-    defAnimStarted_(false),
-    distToMove_()
+                     int entityId,
+                     const SdlTexture &idleImg,
+                     const SdlTexture &anim,
+                     const Hex &hDefender)
+    : AnimBase(display, std::max(MELEE_HIT_MS * 2, anim.duration_ms())),
+    entity_(entityId),
+    baseState_(),
+    idleImg_(idleImg),
+    anim_(anim),
+    hDefender_(hDefender),
+    pDistToMove_()
 {
-}
-
-Uint32 AnimMelee::total_runtime_ms(const SdlTexture &defenderAnim)
-{
-    return MELEE_HIT_MS + std::max(DEFEND_MS, defenderAnim.duration_ms());
 }
 
 void AnimMelee::start()
 {
-    auto attObj = get_entity(attacker_);
-    auto defObj = get_entity(defender_);
+    auto obj = get_entity(entity_);
 
     // Can't do base state until we get here because other animations might be
     // running.
-    attBaseState_ = attObj;
-    defBaseState_ = defObj;
-    distToMove_ = get_display().pixelDelta(attBaseState_.hex, defBaseState_.hex) / 2;
+    baseState_ = obj;
+    pDistToMove_ = get_display().pixelDelta(obj.hex, hDefender_) / 2;
 
-    attObj.z = ZOrder::animating;
-    attObj.visible = true;
-    attObj.faceHex(defBaseState_.hex);
-    attObj.frame = Frame{0, 0};
-    defObj.z = ZOrder::animating;
-    defObj.visible = true;
-    defObj.faceHex(attBaseState_.hex);
+    obj.z = ZOrder::animating;
+    obj.visible = true;
+    obj.faceHex(hDefender_);
+    obj.frame = {0, 0};
 
-    update_entity(attObj, attAnim_);
-    update_entity(defObj, defImg_);
+    update_entity(obj, anim_);
 }
 
 void AnimMelee::update(Uint32 elapsed_ms)
 {
     const auto hitFrac = static_cast<double>(elapsed_ms) / MELEE_HIT_MS;
+    auto obj = get_entity(entity_);
 
-    // Attacker
-    auto attObj = get_entity(attacker_);
     if (hitFrac < 1.0) {
-        attObj.offset = attBaseState_.offset + hitFrac * distToMove_;
-        attObj.frame = get_anim_frame(attAnim_.timing_ms(), elapsed_ms);
-        update_entity(attObj);
+        obj.offset = baseState_.offset + hitFrac * pDistToMove_;
+        obj.frame = get_anim_frame(anim_.timing_ms(), elapsed_ms);
     }
-    else if (hitFrac <= 2.0) {
-        attObj.offset = attBaseState_.offset + (2 - hitFrac) * distToMove_;
-        attObj.frame = get_anim_frame(attAnim_.timing_ms(), elapsed_ms);
-        update_entity(attObj);
-    }
-    // This part only runs if the defender animation runs longer.
-    else if (!attackerReset_) {
-        auto attObj = get_entity(attacker_);
-        set_idle(attObj, attBaseState_);
-        update_entity(attObj, attImg_);
-        attackerReset_ = true;
+    else {
+        obj.offset = baseState_.offset + std::max(0.0, (2 - hitFrac)) * pDistToMove_;
+        obj.frame = get_anim_frame(anim_.timing_ms(), elapsed_ms);
     }
 
-    // Defender
-    if (hitFrac >= 1.0) {
-        if (!defAnimStarted_) {
-            get_display().setEntityImage(defender_, defAnim_);
-            defAnimStarted_ = true;
-        }
-        auto defObj = get_entity(defender_);
-        defObj.frame = get_anim_frame(defAnim_.timing_ms(), elapsed_ms - MELEE_HIT_MS);
-        update_entity(defObj);
-    }
-
+    update_entity(obj);
     // TODO: play attack sound at 100 ms, hit sound at 300 ms
 }
 
 void AnimMelee::stop()
 {
-    auto attObj = get_entity(attacker_);
-    auto defObj = get_entity(defender_);
-
-    set_idle(attObj, attBaseState_);
-    attObj.visible = false;  // TODO: do this with explicit AnimHide
-    set_idle(defObj, defBaseState_);
-    defObj.visible = false;
-    update_entity(attObj, attImg_);
-    update_entity(defObj, defImg_);
+    auto obj = get_entity(entity_);
+    set_idle(obj, baseState_);
+    update_entity(obj, idleImg_);
 }
 
 
