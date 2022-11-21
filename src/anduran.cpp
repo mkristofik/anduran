@@ -495,25 +495,30 @@ void Anduran::animate(const GameObject &attacker,
     const auto defUnitType = event.defenderType;
     const auto defTeam = defender.team;
     const auto defIdle = units_.get_image(defUnitType, ImageType::img_idle, defTeam);
-    auto defAnim = units_.get_image(defUnitType, ImageType::img_defend, defTeam);
+    auto defImg = units_.get_image(defUnitType, ImageType::img_defend, defTeam);
     if (event.numDefenders == event.losses) {
-        defAnim = units_.get_image(defUnitType, ImageType::anim_die, defTeam);
+        defImg = units_.get_image(defUnitType, ImageType::anim_die, defTeam);
     }
 
-    SdlTexture attAnim;
+    SdlTexture attImg;
     if (units_.get_data(attUnitType).attack == AttackType::melee) {
-        attAnim = units_.get_image(attUnitType, ImageType::anim_attack, attTeam);
+        attImg = units_.get_image(attUnitType, ImageType::anim_attack, attTeam);
         anims_.push(AnimMelee(rmapView_,
-                              attacker.entity, attIdle, attAnim,
-                              defender.entity, defIdle, defAnim));
+                              attacker.entity, attIdle, attImg,
+                              defender.entity, defIdle, defImg));
     }
     else {
-        attAnim = units_.get_image(attUnitType, ImageType::anim_ranged, attTeam);
-        rmapView_.setEntityImage(projectileId_, units_.get_projectile(attUnitType));
-        anims_.push(AnimRanged(rmapView_,
-                               attacker.entity, attIdle, attAnim,
-                               defender.entity, defIdle, defAnim,
-                               projectileId_));
+        attImg = units_.get_image(attUnitType, ImageType::anim_ranged, attTeam);
+        AnimSet rangedAnim;
+        rangedAnim.insert(AnimRanged(rmapView_,
+                                     attacker.entity, attIdle, attImg,
+                                     defender.entity, defIdle, defImg));
+        rangedAnim.insert(AnimProjectile(rmapView_,
+                                         projectileId_,
+                                         units_.get_projectile(attUnitType),
+                                         attacker.hex,
+                                         defender.hex));
+        anims_.push(rangedAnim);
     }
 }
 

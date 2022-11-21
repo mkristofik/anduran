@@ -143,8 +143,7 @@ public:
                const SdlTexture &attackerAnim,
                int defenderId,
                const SdlTexture &defenderImg,
-               const SdlTexture &defenderAnim,
-               int projectileId);
+               const SdlTexture &defenderAnim);
 
 private:
     static Uint32 total_runtime_ms(const SdlTexture &attackerAnim,
@@ -153,10 +152,6 @@ private:
     void start() override;
     void update(Uint32 elapsed_ms) override;
     void stop() override;
-
-    // Compute the direction between attacker and defender's hexes to pick the
-    // projectile frame to draw.  Return N if the hexes aren't neighbors.
-    HexDir projectile_angle() const;
 
     int attacker_;
     MapEntity attBaseState_;
@@ -168,10 +163,34 @@ private:
     SdlTexture defImg_;
     bool defAnimStarted_;
     SdlTexture defAnim_;
-    int projectile_;
-    MapEntity projectileBaseState_;
-    bool projectileReset_;
-    PartialPixel distToMove_;
 };
+
+
+class AnimProjectile : public AnimBase
+{
+public:
+    AnimProjectile(MapDisplay &display,
+                   int entityId,
+                   const SdlTexture &img,
+                   const Hex &hAttacker,
+                   const Hex &hDefender);
+
+private:
+    // Compute the direction between attacker and defender's hexes to pick the
+    // projectile frame to draw.  Return N if the hexes aren't neighbors.
+    static HexDir get_angle(const Hex &h1, const Hex &h2);
+
+    void start() override;
+    void update(Uint32 elapsed_ms) override;
+    void stop() override;
+
+    int entity_;
+    MapEntity baseState_;
+    SdlTexture img_;
+    Hex hStart_;
+    HexDir angle_;
+    PartialPixel pDistToMove_;
+};
+
 
 #endif

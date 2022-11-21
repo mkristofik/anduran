@@ -24,7 +24,8 @@ using AnimType = std::variant<std::monostate,
                               AnimDisplay,
                               AnimMove,
                               AnimMelee,
-                              AnimRanged>;
+                              AnimRanged,
+                              AnimProjectile>;
 
 
 // Set of animations to be run in parallel, such as the parts of a battle.

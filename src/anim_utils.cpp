@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2021 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2022 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -19,6 +19,7 @@ namespace
 {
     const Uint32 MOVE_STEP_MS = 200;
     const Uint32 MELEE_HIT_MS = 300;
+    const Uint32 DEFEND_MS = 300;
     const Uint32 RANGED_SHOT_MS = 300;
     const Uint32 RANGED_FLIGHT_MS = 150;
     const Uint32 RANGED_HIT_MS = RANGED_SHOT_MS + RANGED_FLIGHT_MS;
@@ -263,7 +264,7 @@ AnimMelee::AnimMelee(MapDisplay &display,
 
 Uint32 AnimMelee::total_runtime_ms(const SdlTexture &defenderAnim)
 {
-    return std::max(MELEE_HIT_MS * 2, MELEE_HIT_MS + defenderAnim.duration_ms());
+    return MELEE_HIT_MS + std::max(DEFEND_MS, defenderAnim.duration_ms());
 }
 
 void AnimMelee::start()
@@ -347,8 +348,7 @@ AnimRanged::AnimRanged(MapDisplay &display,
                        const SdlTexture &attackerAnim,
                        int defenderId,
                        const SdlTexture &defenderImg,
-                       const SdlTexture &defenderAnim,
-                       int projectileId)
+                       const SdlTexture &defenderAnim)
     : AnimBase(display, total_runtime_ms(attackerAnim, defenderAnim)),
     attacker_(attackerId),
     attBaseState_(),
@@ -359,35 +359,25 @@ AnimRanged::AnimRanged(MapDisplay &display,
     defBaseState_(),
     defImg_(defenderImg),
     defAnimStarted_(false),
-    defAnim_(defenderAnim),
-    projectile_(projectileId),
-    projectileBaseState_(),
-    projectileReset_(false),
-    distToMove_()
+    defAnim_(defenderAnim)
 {
 }
 
 Uint32 AnimRanged::total_runtime_ms(const SdlTexture &attackerAnim,
                                     const SdlTexture &defenderAnim)
 {
-    // TODO: this ends too quickly when defender just shows img-defend
-    return std::max(attackerAnim.duration_ms(),
-                    RANGED_HIT_MS + defenderAnim.duration_ms());
+    return std::max({attackerAnim.duration_ms(),
+                     RANGED_HIT_MS + DEFEND_MS,
+                     RANGED_HIT_MS + defenderAnim.duration_ms()});
 }
 
 void AnimRanged::start()
 {
     auto attObj = get_entity(attacker_);
     auto defObj = get_entity(defender_);
-    auto projObj = get_entity(projectile_);
 
     attBaseState_ = attObj;
     defBaseState_ = defObj;
-    projectileBaseState_ = projObj;
-    // Rather than figure out how far the projectile has to fly so its leading
-    // edge stops at the target, just shorten the flight distance by a fudge
-    // factor.
-    distToMove_ = get_display().pixelDelta(attBaseState_.hex, defBaseState_.hex) * 0.9;
 
     attObj.z = ZOrder::animating;
     attObj.visible = true;
@@ -396,13 +386,9 @@ void AnimRanged::start()
     defObj.z = ZOrder::animating;
     defObj.visible = true;
     defObj.faceHex(attBaseState_.hex);
-    projObj.hex = attBaseState_.hex;
-    projObj.frame = {0, static_cast<int>(projectile_angle())};
-    projObj.visible = false;
 
     update_entity(attObj, attAnim_);
     update_entity(defObj, defImg_);
-    update_entity(projObj);
 }
 
 void AnimRanged::update(Uint32 elapsed_ms)
@@ -421,26 +407,6 @@ void AnimRanged::update(Uint32 elapsed_ms)
         attackerReset_ = true;
     }
 
-    // Projectile
-    if (elapsed_ms >= RANGED_SHOT_MS) {
-        if (elapsed_ms < RANGED_HIT_MS) {
-            auto projObj = get_entity(projectile_);
-            // Note: assumes target is one hex away.
-            const auto flightFrac =
-                static_cast<double>(elapsed_ms - RANGED_SHOT_MS) / RANGED_FLIGHT_MS;
-            projObj.visible = true;
-            projObj.offset = projectileBaseState_.offset + distToMove_ * flightFrac;
-            update_entity(projObj);
-        }
-        else if (!projectileReset_) {
-            auto projObj = get_entity(projectile_);
-            projObj = projectileBaseState_;
-            projObj.visible = false;
-            update_entity(projObj);
-            projectileReset_ = true;
-        }
-    }
-
     // Defender
     if (elapsed_ms >= RANGED_HIT_MS) {
         if (!defAnimStarted_) {
@@ -457,26 +423,75 @@ void AnimRanged::stop()
 {
     auto attObj = get_entity(attacker_);
     auto defObj = get_entity(defender_);
-    auto projObj = get_entity(projectile_);
 
     set_idle(attObj, attBaseState_);
     attObj.visible = false;
     set_idle(defObj, defBaseState_);
     defObj.visible = false;
-    projObj = projectileBaseState_;
-    projObj.visible = false;
     update_entity(attObj, attImg_);
     update_entity(defObj, defImg_);
-    update_entity(projObj);
 }
 
-HexDir AnimRanged::projectile_angle() const
+
+AnimProjectile::AnimProjectile(MapDisplay &display,
+                               int entityId,
+                               const SdlTexture &img,
+                               const Hex &hAttacker,
+                               const Hex &hDefender)
+    : AnimBase(display, RANGED_HIT_MS),
+    entity_(entityId),
+    baseState_(),
+    img_(img),
+    hStart_(hAttacker),
+    angle_(get_angle(hAttacker, hDefender)),
+    // Rather than figure out how far the projectile has to fly so its leading
+    // edge stops at the target, just shorten the flight distance by a fudge
+    // factor.
+    pDistToMove_(get_display().pixelDelta(hAttacker, hDefender) * 0.9)
+{
+}
+
+HexDir AnimProjectile::get_angle(const Hex &h1, const Hex &h2)
 {
     for (HexDir d : HexDir()) {
-        if (attBaseState_.hex.getNeighbor(d) == defBaseState_.hex) {
+        if (h1.getNeighbor(d) == h2) {
             return d;
         }
     }
 
     return HexDir::n;
+}
+
+void AnimProjectile::start()
+{
+    auto obj = get_entity(entity_);
+
+    baseState_ = obj;
+    obj.hex = hStart_;
+    obj.frame = {0, static_cast<int>(angle_)};
+    obj.visible = false;
+
+    update_entity(obj, img_);
+}
+
+void AnimProjectile::update(Uint32 elapsed_ms)
+{
+    if (elapsed_ms < RANGED_SHOT_MS) {
+        return;
+    }
+
+    auto obj = get_entity(entity_);
+    // Note: assumes target is one hex away.
+    const auto frac = static_cast<double>(elapsed_ms - RANGED_SHOT_MS) / RANGED_FLIGHT_MS;
+    obj.visible = true;
+    obj.offset = baseState_.offset + pDistToMove_ * frac;
+    update_entity(obj);
+}
+
+void AnimProjectile::stop()
+{
+    auto obj = get_entity(entity_);
+    obj = baseState_;
+    obj.visible = false;
+    update_entity(obj);
 }
