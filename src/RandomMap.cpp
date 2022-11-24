@@ -291,7 +291,7 @@ void RandomMap::generateRegions()
     // Start with a set of random hexes.  Don't worry if there are duplicates.
     numRegions_ = size_ / REGION_SIZE;
     std::vector<Hex> centers(numRegions_);
-    generate(begin(centers), end(centers), RandomHex(width_));
+    std::ranges::generate(centers, RandomHex(width_));
      
     // Find the closest center to each hex on the map.  The set of hexes
     // closest to center #0 will be region 0, etc.  Repeat this several times
@@ -456,9 +456,7 @@ std::vector<int> RandomMap::randomAltitudes()
     }
 
     assert(ssize(altitude) == numRegions_);
-    assert(none_of(std::cbegin(altitude), std::cend(altitude), [] (auto elem) {
-                       return elem == -1;
-                   }));
+    assert(std::ranges::none_of(altitude, [] (auto elem) { return elem == -1; }));
     return altitude;
 }
 
@@ -694,9 +692,8 @@ Hex RandomMap::findCastleSpot(int startTile)
 int RandomMap::getRandomTile(int region)
 {
     const auto regTiles = regionTiles_.find(region);
-    const auto regSize = std::distance(regTiles.first, regTiles.second);
-    RandomRange dist(0, regSize - 1);
-    return *std::next(regTiles.first, dist.get());
+    RandomRange dist(0, regTiles.size() - 1);
+    return *std::next(regTiles.begin(), dist.get());
 }
 
 int RandomMap::findObjectSpot(int startTile, int region)

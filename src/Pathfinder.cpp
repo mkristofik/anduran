@@ -99,7 +99,7 @@ Path Pathfinder::find_path(const Hex &hSrc, const Hex &hDest, Team team)
         path.push_back(rmap_->hexFromInt(fromIter->first));
         fromIter = cameFrom_.find(fromIter->second);
     }
-    std::reverse(path.begin(), path.end());
+    std::ranges::reverse(path);
 
     return path;
 }
@@ -141,8 +141,8 @@ Neighbors<int> Pathfinder::get_neighbors(int index) const
         // they match the player's team color.
         if (hNbrs[i] != hDest_ && game_->hex_occupied(hNbrs[i])) {
             const auto objs = game_->objects_in_hex(hNbrs[i]);
-            if (std::any_of(std::begin(objs), std::end(objs),
-                            [this] (auto &obj) { return obj.team != team_; }))
+            if (std::ranges::any_of(objs,
+                                    [this] (auto &obj) { return obj.team != team_; }))
             {
                 iNbrs[i] = RandomMap::invalidIndex;
                 continue;

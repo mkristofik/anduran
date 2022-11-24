@@ -43,8 +43,7 @@ MapViewApp::MapViewApp()
     images_("img/"),
     rmapView_(win_, rmap_, images_)
 {
-    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_VERBOSE);
-    SDL_LogSetPriority(SDL_LOG_CATEGORY_VIDEO, SDL_LOG_PRIORITY_VERBOSE);
+    SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
     auto village = images_.make_texture("villages"s, win_);
     for (auto &hex : rmap_.getObjectTiles(ObjectType::village)) {

@@ -53,7 +53,7 @@ destination hex
 * hide the ellipse while the champion is moving
 * screen flashes white briefly when first loading
 * try to cap the framerate to save CPU
-- SDL_LogSetAllPriority
+* SDL_LogSetAllPriority
 
 
 # Improving edge transitions
@@ -280,4 +280,4 @@ is next to or in front of a castle
 # C++ features
 --------------
 * use concepts to eliminate static_asserts
-- ranges instead of begin/end or cbegin/cend on containers
+* ranges instead of begin/end or cbegin/cend on containers

@@ -26,22 +26,16 @@ constexpr bool in_bounds(const C &cont, int index)
 
 
 template <typename C, typename T>
-bool contains(const C &cont, const T &val)
+constexpr bool contains(const C &cont, const T &val)
 {
-    using std::cbegin;
-    using std::cend;
-
-    return std::find(cbegin(cont), cend(cont), val) != cend(cont);
+    return std::ranges::find(cont, val) != std::ranges::cend(cont);
 }
 
 
 template <typename C>
 void randomize(C &cont)
 {
-    using std::begin;
-    using std::end;
-
-    shuffle(begin(cont), end(cont), RandomRange::engine);
+    std::ranges::shuffle(cont, RandomRange::engine);
 }
 
 #endif

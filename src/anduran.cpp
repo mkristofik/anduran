@@ -109,8 +109,7 @@ Anduran::Anduran()
     ellipseImages_(),
     flagImages_()
 {
-    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_VERBOSE);
-    SDL_LogSetPriority(SDL_LOG_CATEGORY_VIDEO, SDL_LOG_PRIORITY_VERBOSE);
+    SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
     load_images();
     load_players();

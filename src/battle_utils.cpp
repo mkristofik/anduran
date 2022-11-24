@@ -168,7 +168,7 @@ Battle::Battle(const BattleState &armies)
     attackerTotalHp_(0),
     defenderTotalHp_(0)
 {
-    std::stable_sort(begin(units_), end(units_),
+    std::ranges::stable_sort(units_,
         [] (const auto &lhs, const auto &rhs) {
             return lhs.speed() > rhs.speed();
         });

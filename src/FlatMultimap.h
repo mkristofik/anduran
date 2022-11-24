@@ -193,11 +193,9 @@ void FlatMultimap<K, V>::sortAndPrune()
         return;
     }
 
-    using std::begin;
-    using std::end;
-    sort(begin(data_), end(data_));
-    data_.erase(unique(begin(data_), end(data_)),
-                end(data_));
+    std::ranges::sort(data_);
+    auto pruned = std::ranges::unique(data_);
+    data_.erase(pruned.begin(), pruned.end());
 
     isDirty_ = false;
 }
