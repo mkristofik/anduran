@@ -499,39 +499,39 @@ void Anduran::animate(const GameObject &attacker,
     const auto defUnitType = event.defenderType;
     const auto defTeam = defender.team;
     const auto defIdle = units_.get_image(defUnitType, ImageType::img_idle, defTeam);
-    auto defImg = units_.get_image(defUnitType, ImageType::img_defend, defTeam);
+    auto defAnim = units_.get_image(defUnitType, ImageType::img_defend, defTeam);
     if (event.numDefenders == event.losses) {
-        defImg = units_.get_image(defUnitType, ImageType::anim_die, defTeam);
+        defAnim = units_.get_image(defUnitType, ImageType::anim_die, defTeam);
     }
 
-    SdlTexture attImg;
+    SdlTexture attAnim;
     if (units_.get_data(attUnitType).attack == AttackType::melee) {
-        attImg = units_.get_image(attUnitType, ImageType::anim_attack, attTeam);
+        attAnim = units_.get_image(attUnitType, ImageType::anim_attack, attTeam);
         AnimSet meleeAnim;
         meleeAnim.insert(AnimMelee(rmapView_,
                                    attacker.entity,
                                    attIdle,
-                                   attImg,
+                                   attAnim,
                                    defender.hex));
         meleeAnim.insert(AnimDefend::from_melee(rmapView_,
                                                 defender.entity,
                                                 defIdle,
-                                                defImg,
+                                                defAnim,
                                                 attacker.hex));
         anims_.push(meleeAnim);
     }
     else {
-        attImg = units_.get_image(attUnitType, ImageType::anim_ranged, attTeam);
+        attAnim = units_.get_image(attUnitType, ImageType::anim_ranged, attTeam);
         AnimSet rangedAnim;
         rangedAnim.insert(AnimRanged(rmapView_,
                                      attacker.entity,
                                      attIdle,
-                                     attImg,
+                                     attAnim,
                                      defender.hex));
         rangedAnim.insert(AnimDefend::from_ranged(rmapView_,
                                                   defender.entity,
                                                   defIdle,
-                                                  defImg,
+                                                  defAnim,
                                                   attacker.hex));
         rangedAnim.insert(AnimProjectile(rmapView_,
                                          projectileId_,

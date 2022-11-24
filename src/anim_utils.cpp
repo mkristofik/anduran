@@ -76,11 +76,6 @@ void AnimBase::run(Uint32 frame_ms)
     }
 }
 
-Uint32 AnimBase::get_runtime_ms() const
-{
-    return runtime_ms_;
-}
-
 bool AnimBase::finished() const
 {
     return isDone_;

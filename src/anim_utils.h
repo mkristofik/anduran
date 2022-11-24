@@ -30,7 +30,6 @@ public:
     virtual ~AnimBase() = default;
 
     virtual void run(Uint32 frame_ms);
-    Uint32 get_runtime_ms() const;
     bool finished() const;
 
 protected:
