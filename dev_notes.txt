@@ -5,14 +5,30 @@
     * map display can convert pixel to hex
     * game display controls the highlights
 * flag all villages and windmills
-- all animations inserted to AnimManager are AnimArrays
-    - add convenience function for one-element arrays
-    - AnimGroup can go away
-    - AnimBase::get_runtime_ms() probably no longer needed
-- AnimManager::update() needs rewriting
-    - add visitor for finished()
-- fancy insert becomes a fancy create
-    - insert then takes the AnimType variant instead
+* all animations inserted to AnimManager are AnimArrays
+    * add convenience function for one-element arrays
+    * AnimGroup can go away
+    * AnimBase::get_runtime_ms() probably no longer needed
+* AnimManager::update() needs rewriting
+    * add visitor for finished()
+- log battle messages in time with their animations
+* Archer needs a defend image
+- draw/animate HP bars
+    - background color is 0,0,0,80
+    - 4 pixels wide
+    - fill colors are (all at 255 alpha):
+        - 100,255,100 (light green, above max health)
+        - 33,225,0 (green, full health)
+        - 170,255,0 (yellow-green, 75%)
+        - 255,175,0 (light orange, 50%)
+        - 255,155,0 (orange, 25%)
+        - 255,0,0 (red, below 25%)
+    - border color is 213,213,213,200
+    - uses blend mode blend (1)
+    - source: units/drawer.cpp and units/unit.cpp
+    - SDL_CreateTexture, SDL_GetWindowPixelFormat, SDL_TEXTUREACCESS_STREAMING
+    - SDL_AllocFormat, SDL_FreeFormat
+    - SDL_LockTexture, SDL_UnlockTexture
 
 
 # Pathfinding
@@ -28,6 +44,7 @@ destination hex
 # Polish
 --------
 - delay for a beat before scrolling the map when mouse is near the edge
+    - show a different mouse cursor for scrolling
 * don't scroll when the mouse is outside the window
 - how should obstacles overlap with different terrain?
 * use the multi-edge transitions where available
@@ -36,6 +53,7 @@ destination hex
 * hide the ellipse while the champion is moving
 * screen flashes white briefly when first loading
 * try to cap the framerate to save CPU
+- SDL_LogSetAllPriority
 
 
 # Improving edge transitions

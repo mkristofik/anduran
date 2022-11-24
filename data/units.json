@@ -6,6 +6,7 @@
         "damage": [2, 3],
         "attack-type": "ranged",
         "img-idle": "archer",
+        "img-defend": "archer-defend",
         "anim-ranged": "archer-attack-ranged",
         "projectile": "missile"
     },
