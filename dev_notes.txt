@@ -11,7 +11,7 @@
     * AnimBase::get_runtime_ms() probably no longer needed
 * AnimManager::update() needs rewriting
     * add visitor for finished()
-- log battle messages in time with their animations
+* log battle messages in time with their animations
 * Archer needs a defend image
 - draw/animate HP bars
     - background color is 0,0,0,80

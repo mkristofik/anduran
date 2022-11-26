@@ -210,4 +210,17 @@ private:
 };
 
 
+class AnimLog : public AnimBase
+{
+public:
+    AnimLog(MapDisplay &display, const std::string &message);
+
+private:
+    void start() override;
+    void update(Uint32) override {}
+
+    std::string msg_;
+};
+
+
 #endif

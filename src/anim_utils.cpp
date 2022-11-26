@@ -466,3 +466,15 @@ void AnimProjectile::stop()
     obj.visible = false;
     update_entity(obj);
 }
+
+
+AnimLog::AnimLog(MapDisplay &display, const std::string &message)
+    : AnimBase(display, 0),
+    msg_(message)
+{
+}
+
+void AnimLog::start()
+{
+    SDL_Log(msg_.c_str());
+}

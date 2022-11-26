@@ -35,6 +35,7 @@
 #include <cstdlib>
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -50,8 +51,6 @@ public:
     void handle_lmouse_up() override;
 
 private:
-    void experiment2();
-
     // Load images that aren't tied to units.
     void load_images();
 
@@ -65,8 +64,9 @@ private:
     void move_action(GameObject &player, const Path &path);
     void battle_action(GameObject &player, GameObject &enemy);
 
-    void debug_print_army(const Army &army) const;
-    void debug_print_losses(const Army &before, const ArmyState &after) const;
+    std::string army_log(const Army &army) const;
+    std::string battle_result_log(const Army &before, const BattleResult &result) const;
+    std::string battle_event_log(const BattleEvent &event) const;
     ArmyState make_army_state(const Army &army, BattleSide side) const;
     void animate(const GameObject &attacker,
                  const GameObject &defender,
@@ -382,10 +382,9 @@ void Anduran::battle_action(GameObject &player, GameObject &enemy)
 {
     auto attacker = game_.get_army(player.entity);
     auto defender = game_.get_army(enemy.entity);
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Battle:");
-    debug_print_army(attacker);
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "vs.");
-    debug_print_army(defender);
+
+    std::string introLog = army_log(attacker) + "\n    vs.\n" + army_log(defender);
+    SDL_Log(introLog.c_str());
 
     const auto result = do_battle(make_army_state(attacker, BattleSide::attacker),
                                   make_army_state(defender, BattleSide::defender));
@@ -402,7 +401,7 @@ void Anduran::battle_action(GameObject &player, GameObject &enemy)
         }
     }
 
-    // Losing team's last unit was hidden at the end of the battle.  Have to
+    // Losing team's last unit must be hidden at the end of the battle.  Have to
     // restore the winning team's starting image (and ellipse if needed).
     const GameObject *winner = &player;
     if (!result.attackerWins) {
@@ -417,20 +416,20 @@ void Anduran::battle_action(GameObject &player, GameObject &enemy)
         endingAnim.insert(AnimDisplay(rmapView_, winner->secondary, winner->hex));
     }
 
+    std::string endLog;
     if (result.attackerWins) {
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Attacker wins");
-        debug_print_losses(attacker, result.attacker);
+        endLog = battle_result_log(attacker, result);
         endingAnim.insert(AnimHide(rmapView_, enemy.entity));
         game_.remove_object(enemy.entity);
     }
     else {
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Defender wins");
-        debug_print_losses(defender, result.defender);
+        endLog = battle_result_log(defender, result);
         // TODO: game can't yet handle a player being defeated
         endingAnim.insert(AnimHide(rmapView_, player.entity));
         game_.remove_object(player.entity);
     }
 
+    endingAnim.insert(AnimLog(rmapView_, endLog));
     anims_.push(endingAnim);
     attacker.update(result.attacker);
     defender.update(result.defender);
@@ -438,37 +437,72 @@ void Anduran::battle_action(GameObject &player, GameObject &enemy)
     game_.update_army(defender);
 }
 
-void Anduran::debug_print_army(const Army &army) const
+std::string Anduran::army_log(const Army &army) const
 {
+    std::ostringstream ostr;
     for (auto &unit : army.units) {
         if (unit.type < 0) {
             continue;
         }
 
-        SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "%d %s",
-                     unit.num,
-                     units_.get_data(unit.type).name.c_str());
+        ostr << units_.get_data(unit.type).name << '(' << unit.num << ") ";
     }
+
+    return ostr.str();
 }
 
-void Anduran::debug_print_losses(const Army &before, const ArmyState &after) const
+std::string Anduran::battle_result_log(const Army &before,
+                                       const BattleResult &result) const
 {
-    SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "Losses:");
+    std::ostringstream ostr;
 
+    const ArmyState *after = nullptr;
+    if (result.attackerWins) {
+        ostr << "Attacker wins";
+        after = &result.attacker;
+    }
+    else {
+        ostr << "Defender wins";
+        after = &result.defender;
+    }
+
+    ostr << ", losses: ";
     for (int i = 0; i < ssize(before.units); ++i) {
         const int unitType = before.units[i].type;
-        SDL_assert(unitType == after[i].type());
+        SDL_assert(unitType == (*after)[i].type());
         if (unitType < 0) {
             continue;
         }
 
-        const int losses = before.units[i].num - after[i].num;
+        const int losses = before.units[i].num - (*after)[i].num;
         if (losses > 0) {
-            SDL_LogDebug(SDL_LOG_CATEGORY_APPLICATION, "%d %s",
-                         losses,
-                         units_.get_data(unitType).name.c_str());
+            ostr << units_.get_data(unitType).name << '(' << losses << ") ";
         }
     }
+
+    return ostr.str();
+}
+
+std::string Anduran::battle_event_log(const BattleEvent &event) const
+{
+    auto &attacker = units_.get_data(event.attackerType).name;
+    auto &defender = units_.get_data(event.defenderType).name;
+
+    std::ostringstream ostr;
+    ostr << attacker << '(' << event.numAttackers << ") attacks "
+         << defender << '(' << event.numDefenders << ") for "
+         << event.damage << " damage";
+    if (event.losses > 0) {
+        ostr << ", " << event.losses;
+        if (event.losses == 1) {
+            ostr << " perishes";
+        }
+        else {
+            ostr << " perish";
+        }
+    }
+
+    return ostr.str();
 }
 
 ArmyState Anduran::make_army_state(const Army &army, BattleSide side) const
@@ -503,7 +537,9 @@ void Anduran::animate(const GameObject &attacker,
         defAnim = units_.get_image(defUnitType, ImageType::anim_die, defTeam);
     }
 
+    AnimLog logMessage(rmapView_, battle_event_log(event));
     SdlTexture attAnim;
+
     if (units_.get_data(attUnitType).attack == AttackType::melee) {
         attAnim = units_.get_image(attUnitType, ImageType::anim_attack, attTeam);
         AnimSet meleeAnim;
@@ -517,6 +553,7 @@ void Anduran::animate(const GameObject &attacker,
                                                 defIdle,
                                                 defAnim,
                                                 attacker.hex));
+        meleeAnim.insert(logMessage);
         anims_.push(meleeAnim);
     }
     else {
@@ -537,6 +574,7 @@ void Anduran::animate(const GameObject &attacker,
                                          units_.get_projectile(attUnitType),
                                          attacker.hex,
                                          defender.hex));
+        rangedAnim.insert(logMessage);
         anims_.push(rangedAnim);
     }
 }
