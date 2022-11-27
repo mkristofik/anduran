@@ -51,6 +51,9 @@
     "edges-water": {
         "frames": [1, 6]
     },
+    "footsteps": {
+        "frames": [1, 6]
+    },
     "missile": {
         "frames": [1, 6]
     },

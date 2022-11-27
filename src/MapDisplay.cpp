@@ -199,7 +199,9 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
     entities_(),
     entityImg_(),
     hexShadowId_(-1),
-    hexHighlightId_(-1)
+    hexHighlightId_(-1),
+    pathImg_(),
+    pathIds_()
 {
     loadTerrainImages();
 
@@ -228,6 +230,7 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
     hexShadowId_ = addHiddenEntity(shadowImg, ZOrder::shadow);
     const auto highlightImg = images_->make_texture("hex-yellow"s, *window_);
     hexHighlightId_ = addHiddenEntity(highlightImg, ZOrder::highlight);
+    pathImg_ = images_->make_texture("footsteps"s, *window_);
 }
 
 void MapDisplay::draw()
@@ -401,6 +404,31 @@ void MapDisplay::clearHighlight()
     auto e = getEntity(hexHighlightId_);
     e.visible = false;
     updateEntity(e);
+}
+
+void MapDisplay::showPath(const Path &path)
+{
+    // Expand the number of available footsteps, if necessary.
+    for (int i = ssize(pathIds_); i < ssize(path); ++i) {
+        pathIds_.push_back(addHiddenEntity(pathImg_, ZOrder::highlight));
+    }
+
+    for (int i = 0; i < ssize(path) - 1; ++i) {
+        auto step = getEntity(pathIds_[i]);
+        step.hex = path[i];
+        step.frame = {0, static_cast<int>(path[i].getNeighborDir(path[i + 1]))};
+        step.visible = true;
+        updateEntity(step);
+    }
+}
+
+void MapDisplay::clearPath()
+{
+    for (auto id : pathIds_) {
+        auto step = getEntity(id);
+        step.visible = false;
+        updateEntity(step);
+    }
 }
 
 SDL_Point MapDisplay::pixelDelta(const Hex &hSrc, const Hex &hDest) const

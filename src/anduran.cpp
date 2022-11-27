@@ -167,6 +167,8 @@ void Anduran::handle_lmouse_up()
         if (!path.empty()) {
             championSelected_ = false;
             rmapView_.clearHighlight();
+            rmapView_.clearPath();
+            rmapView_.showPath(path);
             move_action(player, path);
         }
     }

@@ -50,9 +50,15 @@ struct Hex
     // Return all the hexes adjacent to the source hex. No bounds checking.
     Neighbors<Hex> getAllNeighbors() const;
 
+    // Return the direction to the given hex.  Return N if hex is not adjacent.
+    HexDir getNeighborDir(const Hex &hNbr) const;
+
     // source: http://stackoverflow.com/a/2223288/46821
     friend void swap(Hex &lhs, Hex &rhs) noexcept;
 };
+
+// Standard type for pathfinding.
+using Path = std::vector<Hex>;
 
 Hex operator+(Hex lhs, const Hex &rhs);
 Hex operator-(Hex lhs, const Hex &rhs);

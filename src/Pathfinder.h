@@ -32,8 +32,6 @@ struct EstimatedPathCost
 bool operator>(const EstimatedPathCost &lhs, const EstimatedPathCost &rhs);
 
 
-using Path = std::vector<Hex>;
-
 // Each thread should have its own one of these due to internal state.
 class Pathfinder
 {

@@ -103,6 +103,17 @@ Neighbors<Hex> Hex::getAllNeighbors() const
     return nbrs;
 }
 
+HexDir Hex::getNeighborDir(const Hex &hNbr) const
+{
+    for (auto d : HexDir()) {
+        if (hNbr == getNeighbor(d)) {
+            return d;
+        }
+    }
+
+    return HexDir::n;
+}
+
 void swap(Hex &lhs, Hex &rhs) noexcept
 {
     using std::swap;
