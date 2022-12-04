@@ -42,6 +42,7 @@ struct GameObject
 };
 
 // expect to never have more than this many objects per hex
+// TODO: change this to a span?
 using ObjVector = boost::container::static_vector<GameObject, 4>;
 
 

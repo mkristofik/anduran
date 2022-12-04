@@ -186,25 +186,21 @@ void Anduran::handle_mouse_pos()
     }
 
     auto hMouse = rmapView_.hexFromMousePos();
-    auto player = game_.get_object(curPlayerId_);
-    if (hMouse == player.hex) {
-        hCurPathEnd_ = Hex::invalid();
-        rmapView_.clearPath();
-        return;
-    }
-
     if (hMouse == hCurPathEnd_) {
         return;
     }
-
-    auto path = find_path(player, hMouse);
-    if (path.empty()) {
-        hCurPathEnd_ = Hex::invalid();
-        rmapView_.clearPath();
-    }
     else {
-        hCurPathEnd_ = path.back();
-        rmapView_.clearPath();
+        hCurPathEnd_ = hMouse;
+    }
+
+    rmapView_.clearPath();
+    auto player = game_.get_object(curPlayerId_);
+    if (hCurPathEnd_ == player.hex) {
+        return;
+    }
+
+    auto path = find_path(player, hCurPathEnd_);
+    if (!path.empty()) {
         // If path ends within ZoC, a battle will occur there.
         rmapView_.showPath(path, game_.hex_controller(hCurPathEnd_) >= 0);
     }

@@ -52,6 +52,7 @@ private:
     int iDest_;
     Hex hDest_;
     int destZoc_;
+    bool destIsArmy_;
     Team team_;
 };
 

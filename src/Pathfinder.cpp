@@ -14,6 +14,7 @@
 
 #include "GameState.h"
 #include "RandomMap.h"
+#include "container_utils.h"
 
 #include <algorithm>
 #include <functional>
@@ -34,6 +35,7 @@ Pathfinder::Pathfinder(const RandomMap &rmap, const GameState &state)
     iDest_(RandomMap::invalidIndex),
     hDest_(),
     destZoc_(-1),
+    destIsArmy_(false),
     team_(Team::neutral)
 {
 }
@@ -50,6 +52,8 @@ Path Pathfinder::find_path(const Hex &hSrc, const Hex &hDest, Team team)
     hDest_ = hDest;
     iDest_ = rmap_->intFromHex(hDest_);
     destZoc_ = game_->hex_controller(hDest_);
+    destIsArmy_ = std::ranges::any_of(game_->objects_in_hex(hDest_),
+        [this] (auto &obj) { return obj.entity == destZoc_; });
     team_ = team;
 
     // Optimization: skip everything if the destination hex isn't reachable.
@@ -110,17 +114,28 @@ Neighbors<int> Pathfinder::get_neighbors(int index) const
     Neighbors<int> iNbrs;
     assert(!rmap_->offGrid(index));
 
-    // TODO: possible optimization to skip neighbors of the previous tile.
     const auto hNbrs = rmap_->hexFromInt(index).getAllNeighbors();
     for (auto i = 0u; i < hNbrs.size(); ++i) {
         iNbrs[i] = rmap_->intFromHex(hNbrs[i]);
 
-        // Every step has a nonzero cost so we'll never step back to the tile we
-        // just came from.
         auto prevIter = cameFrom_.find(index);
-        if (prevIter != std::end(cameFrom_) && iNbrs[i] == prevIter->second) {
-            iNbrs[i] = RandomMap::invalidIndex;
-            continue;
+        if (prevIter != std::end(cameFrom_)) {
+            int iPrev = prevIter->second;
+
+            // Every step has a nonzero cost so we'll never step back to the tile
+            // we just came from.
+            if (iNbrs[i] == iPrev) {
+                iNbrs[i] = RandomMap::invalidIndex;
+                continue;
+            }
+
+            // Skip neighbors of the hex we came from.  It would have been faster
+            // to go directly there than via the current hex.
+            auto prevNbrs = rmap_->hexFromInt(iPrev).getAllNeighbors();
+            if (contains(prevNbrs, hNbrs[i])) {
+                iNbrs[i] = RandomMap::invalidIndex;
+                continue;
+            }
         }
 
         if (!rmap_->getWalkable(iNbrs[i]) ||
@@ -131,18 +146,20 @@ Neighbors<int> Pathfinder::get_neighbors(int index) const
         }
 
         // ZoC hexes aren't walkable unless they match the ZoC of the destination
-        // hex (either within that army's ZoC or empty)
+        // hex (either within that army's ZoC or empty).  And then, only if we're
+        // stopping there, or continuing on to that army's hex.
         const int zoc = game_->hex_controller(hNbrs[i]);
-        if (zoc >= 0 && zoc != destZoc_) {
-            iNbrs[i] = RandomMap::invalidIndex;
-            continue;
+        if (zoc >= 0) {
+            if (zoc != destZoc_ || !(hNbrs[i] == hDest_ || destIsArmy_)) {
+                iNbrs[i] = RandomMap::invalidIndex;
+                continue;
+            }
         }
 
         // Game objects are only walkable if they're on the destination hex or if
         // they match the player's team color.
         if (hNbrs[i] != hDest_ && game_->hex_occupied(hNbrs[i])) {
-            const auto objs = game_->objects_in_hex(hNbrs[i]);
-            if (std::ranges::any_of(objs,
+            if (std::ranges::any_of(game_->objects_in_hex(hNbrs[i]),
                                     [this] (auto &obj) { return obj.team != team_; }))
             {
                 iNbrs[i] = RandomMap::invalidIndex;
