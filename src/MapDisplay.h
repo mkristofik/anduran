@@ -106,7 +106,7 @@ public:
 
     void highlight(const Hex &hex);
     void clearHighlight();
-    void showPath(const Path &path);
+    void showPath(const Path &path, bool isBattle = false);
     void clearPath();
 
     SDL_Point pixelDelta(const Hex &hSrc, const Hex &hDest) const;
@@ -161,6 +161,7 @@ private:
     int hexShadowId_;
     int hexHighlightId_;
     SdlTexture pathImg_;
+    SdlTexture pathBattleImg_;
     std::vector<int> pathIds_;
 };
 

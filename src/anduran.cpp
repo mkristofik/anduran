@@ -168,6 +168,7 @@ void Anduran::handle_lmouse_up()
         }
     }
     else if (championSelected_) {
+        // TODO: this duplicates the path we found on mouse move
         auto path = find_path(player, mouseHex);
         if (!path.empty()) {
             championSelected_ = false;
@@ -204,7 +205,8 @@ void Anduran::handle_mouse_pos()
     else {
         hCurPathEnd_ = path.back();
         rmapView_.clearPath();
-        rmapView_.showPath(path);
+        // If path ends within ZoC, a battle will occur there.
+        rmapView_.showPath(path, game_.hex_controller(hCurPathEnd_) >= 0);
     }
 }
 

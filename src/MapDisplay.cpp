@@ -201,6 +201,7 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
     hexShadowId_(-1),
     hexHighlightId_(-1),
     pathImg_(),
+    pathBattleImg_(),
     pathIds_()
 {
     loadTerrainImages();
@@ -231,6 +232,7 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
     const auto highlightImg = images_->make_texture("hex-yellow"s, *window_);
     hexHighlightId_ = addHiddenEntity(highlightImg, ZOrder::highlight);
     pathImg_ = images_->make_texture("footsteps"s, *window_);
+    pathBattleImg_ = images_->make_texture("new-battle"s, *window_);
 }
 
 void MapDisplay::draw()
@@ -407,7 +409,7 @@ void MapDisplay::clearHighlight()
     hideEntity(hexHighlightId_);
 }
 
-void MapDisplay::showPath(const Path &path)
+void MapDisplay::showPath(const Path &path, bool isBattle)
 {
     if (ssize(path) < 2) {
         return;
@@ -424,15 +426,24 @@ void MapDisplay::showPath(const Path &path)
         step.hex = path[i];
         step.frame = {0, static_cast<int>(path[i].getNeighborDir(path[i + 1]))};
         step.visible = true;
+        entityImg_[pathIds_[i]] = pathImg_;
     }
 
     // Final step is drawn relative to where it came from instead of the other way
     // around like the others.
     int last = ssize(path) - 1;
-    auto &step = entities_[pathIds_[last]];
+    int lastId = pathIds_[last];
+    auto &step = entities_[lastId];
     step.hex = path.back();
-    step.frame = {0, static_cast<int>(path[last - 1].getNeighborDir(path[last]))};
     step.visible = true;
+    if (isBattle) {
+        step.frame = {0, 0};
+        entityImg_[lastId] = pathBattleImg_;
+    }
+    else {
+        step.frame = {0, static_cast<int>(path[last - 1].getNeighborDir(path[last]))};
+        entityImg_[lastId] = pathImg_;
+    }
 }
 
 void MapDisplay::clearPath()
