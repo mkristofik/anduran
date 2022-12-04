@@ -51,6 +51,8 @@ public:
     void handle_lmouse_up() override;
 
 private:
+    void handle_mouse_pos();
+
     // Load images that aren't tied to units.
     void load_images();
 
@@ -81,6 +83,7 @@ private:
     int curPlayerId_;
     int curPlayerNum_;
     bool championSelected_;
+    Hex hCurPathEnd_;
     int projectileId_;
     AnimQueue anims_;
     Pathfinder pathfind_;
@@ -101,6 +104,7 @@ Anduran::Anduran()
     curPlayerId_(0),
     curPlayerNum_(0),
     championSelected_(false),
+    hCurPathEnd_(),
     projectileId_(-1),
     anims_(),
     pathfind_(rmap_, game_),
@@ -121,6 +125,7 @@ void Anduran::update_frame(Uint32 elapsed_ms)
 {
     if (mouse_in_window()) {
         rmapView_.handleMousePos(elapsed_ms);
+        handle_mouse_pos();
     }
     win_.clear();
     anims_.run(elapsed_ms);
@@ -168,9 +173,38 @@ void Anduran::handle_lmouse_up()
             championSelected_ = false;
             rmapView_.clearHighlight();
             rmapView_.clearPath();
-            rmapView_.showPath(path);
             move_action(player, path);
         }
+    }
+}
+
+void Anduran::handle_mouse_pos()
+{
+    if (!championSelected_) {
+        return;
+    }
+
+    auto hMouse = rmapView_.hexFromMousePos();
+    auto player = game_.get_object(curPlayerId_);
+    if (hMouse == player.hex) {
+        hCurPathEnd_ = Hex::invalid();
+        rmapView_.clearPath();
+        return;
+    }
+
+    if (hMouse == hCurPathEnd_) {
+        return;
+    }
+
+    auto path = find_path(player, hMouse);
+    if (path.empty()) {
+        hCurPathEnd_ = Hex::invalid();
+        rmapView_.clearPath();
+    }
+    else {
+        hCurPathEnd_ = path.back();
+        rmapView_.clearPath();
+        rmapView_.showPath(path);
     }
 }
 

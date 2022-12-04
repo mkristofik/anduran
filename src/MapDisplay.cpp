@@ -409,7 +409,7 @@ void MapDisplay::clearHighlight()
 
 void MapDisplay::showPath(const Path &path)
 {
-    if (path.empty()) {
+    if (ssize(path) < 2) {
         return;
     }
 
@@ -418,18 +418,21 @@ void MapDisplay::showPath(const Path &path)
         pathIds_.push_back(addHiddenEntity(pathImg_, ZOrder::highlight));
     }
 
-    for (int i = 0; i < ssize(path) - 1; ++i) {
+    // First element of the path is the starting hex, don't draw a footstep there.
+    for (int i = 1; i < ssize(path) - 1; ++i) {
         auto &step = entities_[pathIds_[i]];
         step.hex = path[i];
         step.frame = {0, static_cast<int>(path[i].getNeighborDir(path[i + 1]))};
         step.visible = true;
     }
 
-    // Duplicate the second-to-last step for the final hex.
-    int lastIndex = ssize(path) - 1;
-    auto &lastStep = entities_[pathIds_[lastIndex]];
-    lastStep = entities_[pathIds_[lastIndex - 1]];
-    lastStep.hex = path.back();
+    // Final step is drawn relative to where it came from instead of the other way
+    // around like the others.
+    int last = ssize(path) - 1;
+    auto &step = entities_[pathIds_[last]];
+    step.hex = path.back();
+    step.frame = {0, static_cast<int>(path[last - 1].getNeighborDir(path[last]))};
+    step.visible = true;
 }
 
 void MapDisplay::clearPath()

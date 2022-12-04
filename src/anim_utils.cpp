@@ -171,14 +171,14 @@ void AnimDisplay::start()
 AnimMove::AnimMove(MapDisplay &display,
                    int mover,
                    const std::vector<Hex> &path)
-    : AnimBase(display, MOVE_STEP_MS * size(path)),
+    : AnimBase(display, MOVE_STEP_MS * (size(path) - 1)),
     entity_(mover),
-    pathStep_(0),
+    pathStep_(1),  // first element of the path is the starting hex
     path_(path),
     baseState_(),
     distToMove_()
 {
-    SDL_assert(!path.empty());
+    SDL_assert(ssize(path) >= 2);
 }
 
 void AnimMove::start()
@@ -186,11 +186,11 @@ void AnimMove::start()
     auto moverObj = get_entity(entity_);
 
     baseState_ = moverObj;
-    distToMove_ = get_display().pixelDelta(baseState_.hex, path_[0]);
+    distToMove_ = get_display().pixelDelta(path_[0], path_[1]);
 
     moverObj.z = ZOrder::animating;
     moverObj.visible = true;
-    moverObj.faceHex(path_[0]);
+    moverObj.faceHex(path_[1]);
     // TODO: set image to the moving image if we have one
     // TODO: play the moving sound if we have one
 
@@ -199,7 +199,7 @@ void AnimMove::start()
 
 void AnimMove::update(Uint32 elapsed_ms)
 {
-    const auto stepElapsed_ms = elapsed_ms - MOVE_STEP_MS * pathStep_;
+    const auto stepElapsed_ms = elapsed_ms - MOVE_STEP_MS * (pathStep_ - 1);
     const auto stepFrac = static_cast<double>(stepElapsed_ms) / MOVE_STEP_MS;
     auto moverObj = get_entity(entity_);
 

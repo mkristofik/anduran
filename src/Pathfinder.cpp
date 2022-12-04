@@ -40,8 +40,9 @@ Pathfinder::Pathfinder(const RandomMap &rmap, const GameState &state)
 
 Path Pathfinder::find_path(const Hex &hSrc, const Hex &hDest, Team team)
 {
-    Path path;
+    assert(hSrc != hDest);
 
+    Path path;
     cameFrom_.clear();
     costSoFar_.clear();
     frontier_.clear();
@@ -92,10 +93,10 @@ Path Pathfinder::find_path(const Hex &hSrc, const Hex &hDest, Team team)
         }
     }
 
-    // Walk backwards to produce the path (don't need the starting hex). If the
-    // destination hex wasn't found, the path will be empty.
+    // Walk backwards to produce the path.  If the destination hex wasn't found,
+    // the path will be empty.
     auto fromIter = cameFrom_.find(iDest_);
-    while (fromIter != cameFrom_.end() && fromIter->first != iSrc_) {
+    while (fromIter != cameFrom_.end()) {
         path.push_back(rmap_->hexFromInt(fromIter->first));
         fromIter = cameFrom_.find(fromIter->second);
     }
