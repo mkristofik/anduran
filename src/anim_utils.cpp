@@ -125,9 +125,7 @@ AnimHide::AnimHide(MapDisplay &display, int entity)
 
 void AnimHide::start()
 {
-    auto obj = get_entity(entity_);
-    obj.visible = false;
-    update_entity(obj);
+    get_display().hideEntity(entity_);
 }
 
 

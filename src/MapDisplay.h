@@ -99,6 +99,7 @@ public:
     void updateEntity(const MapEntity &newState);
     SdlTexture getEntityImage(int id) const;
     void setEntityImage(int id, const SdlTexture &img);
+    void hideEntity(int id);
 
     void handleMousePos(Uint32 elapsed_ms);
     Hex hexFromMousePos() const;

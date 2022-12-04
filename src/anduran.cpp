@@ -231,6 +231,7 @@ void Anduran::load_players()
         army.entity = champion.entity;
         game_.add_army(army);
     }
+    curPlayerId_ = playerEntityIds_[0];
 
     // Add a wandering army to attack.
     const auto orc = units_.get_type("orc"s);

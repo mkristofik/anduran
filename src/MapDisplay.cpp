@@ -323,12 +323,18 @@ void MapDisplay::setEntityImage(int id, const SdlTexture &img)
     entityImg_[id] = img;
 }
 
+void MapDisplay::hideEntity(int id)
+{
+    SDL_assert(in_bounds(entities_, id));
+    entities_[id].visible = false;
+}
+
 void MapDisplay::handleMousePos(Uint32 elapsed_ms)
 {
     const auto scrolling = scrollDisplay(elapsed_ms);
 
     // Move the hex shadow to the hex under the mouse.
-    auto shadow = getEntity(hexShadowId_);
+    auto &shadow = entities_[hexShadowId_];
     const auto mouseHex = hexFromMousePos();
     if (scrolling || map_->offGrid(mouseHex)) {
         shadow.visible = false;
@@ -337,8 +343,6 @@ void MapDisplay::handleMousePos(Uint32 elapsed_ms)
         shadow.hex = mouseHex;
         shadow.visible = true;
     }
-
-    updateEntity(shadow);
 }
 
 // source: Battle for Wesnoth, display::pixel_position_to_hex()
@@ -393,41 +397,45 @@ void MapDisplay::highlight(const Hex &hex)
 {
     SDL_assert(!map_->offGrid(hex));
 
-    auto e = getEntity(hexHighlightId_);
-    e.hex = hex;
-    e.visible = true;
-    updateEntity(e);
+    auto &highlight = entities_[hexHighlightId_];
+    highlight.hex = hex;
+    highlight.visible = true;
 }
 
 void MapDisplay::clearHighlight()
 {
-    auto e = getEntity(hexHighlightId_);
-    e.visible = false;
-    updateEntity(e);
+    hideEntity(hexHighlightId_);
 }
 
 void MapDisplay::showPath(const Path &path)
 {
+    if (path.empty()) {
+        return;
+    }
+
     // Expand the number of available footsteps, if necessary.
     for (int i = ssize(pathIds_); i < ssize(path); ++i) {
         pathIds_.push_back(addHiddenEntity(pathImg_, ZOrder::highlight));
     }
 
     for (int i = 0; i < ssize(path) - 1; ++i) {
-        auto step = getEntity(pathIds_[i]);
+        auto &step = entities_[pathIds_[i]];
         step.hex = path[i];
         step.frame = {0, static_cast<int>(path[i].getNeighborDir(path[i + 1]))};
         step.visible = true;
-        updateEntity(step);
     }
+
+    // Duplicate the second-to-last step for the final hex.
+    int lastIndex = ssize(path) - 1;
+    auto &lastStep = entities_[pathIds_[lastIndex]];
+    lastStep = entities_[pathIds_[lastIndex - 1]];
+    lastStep.hex = path.back();
 }
 
 void MapDisplay::clearPath()
 {
     for (auto id : pathIds_) {
-        auto step = getEntity(id);
-        step.visible = false;
-        updateEntity(step);
+        hideEntity(id);
     }
 }
 
