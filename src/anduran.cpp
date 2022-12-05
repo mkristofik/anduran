@@ -36,6 +36,7 @@ Anduran::Anduran()
     curPlayerId_(0),
     curPlayerNum_(0),
     championSelected_(false),
+    curPath_(),
     hCurPathEnd_(),
     projectileId_(-1),
     anims_(),
@@ -99,15 +100,12 @@ void Anduran::handle_lmouse_up()
             championSelected_ = false;
         }
     }
-    else if (championSelected_) {
-        // TODO: this duplicates the path we found on mouse move
-        auto path = find_path(player, mouseHex);
-        if (!path.empty()) {
-            championSelected_ = false;
-            rmapView_.clearHighlight();
-            rmapView_.clearPath();
-            move_action(player, path);
-        }
+    // path computed by handle_mouse_pos()
+    else if (championSelected_ && !curPath_.empty()) {  
+        championSelected_ = false;
+        rmapView_.clearHighlight();
+        rmapView_.clearPath();
+        move_action(player, curPath_);
     }
 }
 
@@ -117,6 +115,8 @@ void Anduran::handle_mouse_pos()
         return;
     }
 
+    // Cache the current path target, so we can avoid recomputing when there's no
+    // valid path.
     auto hMouse = rmapView_.hexFromMousePos();
     if (hMouse == hCurPathEnd_) {
         return;
@@ -127,14 +127,10 @@ void Anduran::handle_mouse_pos()
 
     rmapView_.clearPath();
     auto player = game_.get_object(curPlayerId_);
-    if (hCurPathEnd_ == player.hex) {
-        return;
-    }
-
-    auto path = find_path(player, hCurPathEnd_);
-    if (!path.empty()) {
+    curPath_ = find_path(player, hCurPathEnd_);
+    if (!curPath_.empty()) {
         // If path ends within ZoC, a battle will occur there.
-        rmapView_.showPath(path, game_.hex_controller(hCurPathEnd_) >= 0);
+        rmapView_.showPath(curPath_, game_.hex_controller(hCurPathEnd_) >= 0);
     }
 }
 

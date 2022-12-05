@@ -42,24 +42,28 @@ Pathfinder::Pathfinder(const RandomMap &rmap, const GameState &state)
 
 Path Pathfinder::find_path(const Hex &hSrc, const Hex &hDest, Team team)
 {
-    assert(hSrc != hDest);
+    if (hSrc == hDest) {
+        return {};
+    }
+
+    hDest_ = hDest;
+    iDest_ = rmap_->intFromHex(hDest_);
+    // Optimization: skip everything if the destination hex isn't reachable.
+    if (!rmap_->getWalkable(iDest_)) {
+        return {};
+    }
 
     Path path;
     cameFrom_.clear();
     costSoFar_.clear();
     frontier_.clear();
     iSrc_ = rmap_->intFromHex(hSrc);
-    hDest_ = hDest;
-    iDest_ = rmap_->intFromHex(hDest_);
     destZoc_ = game_->hex_controller(hDest_);
     destIsArmy_ = std::ranges::any_of(game_->objects_in_hex(hDest_),
         [this] (auto &obj) { return obj.entity == destZoc_; });
     team_ = team;
 
-    // Optimization: skip everything if the destination hex isn't reachable.
-    if (rmap_->getWalkable(iDest_)) {
-        frontier_.push({iSrc_, 0});
-    }
+    frontier_.push({iSrc_, 0});
     cameFrom_.emplace(iSrc_, RandomMap::invalidIndex);
     costSoFar_.emplace(iSrc_, 0);
 

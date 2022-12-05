@@ -72,6 +72,7 @@ private:
     int curPlayerId_;
     int curPlayerNum_;
     bool championSelected_;
+    Path curPath_;
     Hex hCurPathEnd_;
     int projectileId_;
     AnimQueue anims_;
