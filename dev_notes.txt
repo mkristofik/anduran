@@ -38,7 +38,7 @@ destination hex
 - configurable walking speed
 * move one hex less to land in ZoC to attack
     * display an attack arrow
-- region boundary stops movement
+* region boundary stops movement
 * highlight current path
 
 

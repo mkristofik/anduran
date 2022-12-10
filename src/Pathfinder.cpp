@@ -32,6 +32,7 @@ Pathfinder::Pathfinder(const RandomMap &rmap, const GameState &state)
     rmap_(&rmap),
     game_(&state),
     iSrc_(RandomMap::invalidIndex),
+    region_(-1),
     iDest_(RandomMap::invalidIndex),
     hDest_(),
     destZoc_(-1),
@@ -46,22 +47,23 @@ Path Pathfinder::find_path(const Hex &hSrc, const Hex &hDest, Team team)
         return {};
     }
 
-    hDest_ = hDest;
-    iDest_ = rmap_->intFromHex(hDest_);
-    // Optimization: skip everything if the destination hex isn't reachable.
-    if (!rmap_->getWalkable(iDest_)) {
-        return {};
-    }
-
     Path path;
     cameFrom_.clear();
     costSoFar_.clear();
     frontier_.clear();
+    hDest_ = hDest;
+    iDest_ = rmap_->intFromHex(hDest_);
     iSrc_ = rmap_->intFromHex(hSrc);
+    region_ = rmap_->getRegion(iSrc_);
     destZoc_ = game_->hex_controller(hDest_);
     destIsArmy_ = std::ranges::any_of(game_->objects_in_hex(hDest_),
         [this] (auto &obj) { return obj.entity == destZoc_; });
     team_ = team;
+
+    // Optimization: skip everything if the destination hex isn't reachable.
+    if (!is_reachable(iDest_)) {
+        return {};
+    }
 
     frontier_.push({iSrc_, 0});
     cameFrom_.emplace(iSrc_, RandomMap::invalidIndex);
@@ -142,34 +144,46 @@ Neighbors<int> Pathfinder::get_neighbors(int index) const
             }
         }
 
-        if (!rmap_->getWalkable(iNbrs[i]) ||
-            rmap_->getTerrain(iNbrs[i]) == Terrain::water)
-        {
+        if (!is_reachable(iNbrs[i])) {
             iNbrs[i] = RandomMap::invalidIndex;
-            continue;
-        }
-
-        // ZoC hexes aren't walkable unless they match the ZoC of the destination
-        // hex (either within that army's ZoC or empty).  And then, only if we're
-        // stopping there, or continuing on to that army's hex.
-        const int zoc = game_->hex_controller(hNbrs[i]);
-        if (zoc >= 0) {
-            if (zoc != destZoc_ || !(hNbrs[i] == hDest_ || destIsArmy_)) {
-                iNbrs[i] = RandomMap::invalidIndex;
-                continue;
-            }
-        }
-
-        // Game objects are only walkable if they're on the destination hex or if
-        // they match the player's team color.
-        if (hNbrs[i] != hDest_ && game_->hex_occupied(hNbrs[i])) {
-            if (std::ranges::any_of(game_->objects_in_hex(hNbrs[i]),
-                                    [this] (auto &obj) { return obj.team != team_; }))
-            {
-                iNbrs[i] = RandomMap::invalidIndex;
-                continue;
-            }
         }
     }
+
     return iNbrs;
+}
+
+bool Pathfinder::is_reachable(int index) const
+{
+    auto hex = rmap_->hexFromInt(index);
+
+    if (!rmap_->getWalkable(index) || rmap_->getTerrain(index) == Terrain::water) {
+        return false;
+    }
+
+    // Leaving the current region uses up all your movement.
+    if (index != iDest_ && rmap_->getRegion(index) != region_) {
+        return false;
+    }
+
+    // ZoC hexes aren't walkable unless they match the ZoC of the destination
+    // hex (either within that army's ZoC or empty).  And then, only if we're
+    // stopping there, or continuing on to that army's hex.
+    int zoc = game_->hex_controller(hex);
+    if (zoc >= 0) {
+        if (zoc != destZoc_ || !(hex == hDest_ || destIsArmy_)) {
+            return false;
+        }
+    }
+
+    // Game objects are only walkable if they're on the destination hex or if
+    // they match the player's team color.
+    if (hex != hDest_ && game_->hex_occupied(hex)) {
+        if (std::ranges::any_of(game_->objects_in_hex(hex),
+                                [this] (auto &obj) { return obj.team != team_; }))
+        {
+            return false;
+        }
+    }
+
+    return true;
 }

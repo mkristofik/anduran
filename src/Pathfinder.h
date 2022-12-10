@@ -42,6 +42,7 @@ public:
 
 private:
     Neighbors<int> get_neighbors(int index) const;
+    bool is_reachable(int index) const;
 
     boost::container::flat_map<int, int> cameFrom_;
     boost::container::flat_map<int, int> costSoFar_;
@@ -49,6 +50,7 @@ private:
     const RandomMap *rmap_;
     const GameState *game_;
     int iSrc_;
+    int region_;
     int iDest_;
     Hex hDest_;
     int destZoc_;
