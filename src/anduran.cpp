@@ -101,7 +101,7 @@ void Anduran::handle_lmouse_up()
         }
     }
     // path computed by handle_mouse_pos()
-    else if (championSelected_ && !curPath_.empty()) {  
+    else if (championSelected_ && !curPath_.empty()) {
         championSelected_ = false;
         rmapView_.clearHighlight();
         rmapView_.clearPath();
