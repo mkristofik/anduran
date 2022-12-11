@@ -107,4 +107,10 @@ void GameState::update_zoc()
     for (auto i = range.first; i != range.second; ++i) {
         zoc_.insert_or_assign(i->hex, i->entity);
     }
+
+    // Champions control their hex only.
+    range = objects_.get<ByType>().equal_range(ObjectType::champion);
+    for (auto i = range.first; i != range.second; ++i) {
+        zoc_.insert_or_assign(i->hex, i->entity);
+    }
 }

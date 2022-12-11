@@ -285,10 +285,12 @@ Path Anduran::find_path(const GameObject &obj, const Hex &hDest)
 {
     auto path = pathfind_.find_path(obj.hex, hDest, obj.team);
 
-    // Path must stop early at first hex inside a zone of control.
+    // Path must stop early at first hex inside a zone of control other than your
+    // own.
     auto stopAt = find_if(begin(path), end(path),
-        [this] (const auto &hex) {
-            return game_.hex_controller(hex) >= 0;
+        [this, &obj] (const auto &hex) {
+            int zoc = game_.hex_controller(hex);
+            return zoc >= 0 && zoc != obj.entity;
         });
     if (stopAt != end(path)) {
         path.erase(next(stopAt), end(path));
@@ -301,10 +303,6 @@ void Anduran::move_action(GameObject &player, const Path &path)
 {
     SDL_assert(!path.empty());
 
-    auto destHex = path.back();
-    player.hex = destHex;
-    game_.update_object(player);
-
     auto champion = player.entity;
     auto ellipse = player.secondary;
 
@@ -313,7 +311,14 @@ void Anduran::move_action(GameObject &player, const Path &path)
     moveAnim.insert(AnimMove(rmapView_, champion, path));
     anims_.push(moveAnim);
 
+    auto destHex = path.back();
     const int zoc = game_.hex_controller(destHex);
+
+    // Do this here so the player's ZoC at the destination hex doesn't affect the
+    // move/battle decision.
+    player.hex = destHex;
+    game_.update_object(player);
+
     if (zoc < 0) {
         AnimSet showAnim;
         showAnim.insert(AnimDisplay(rmapView_, ellipse, destHex));
