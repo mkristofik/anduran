@@ -129,8 +129,15 @@ void Anduran::handle_mouse_pos()
     auto player = game_.get_object(curPlayerId_);
     curPath_ = find_path(player, hCurPathEnd_);
     if (!curPath_.empty()) {
-        // If path ends within ZoC, a battle will occur there.
-        rmapView_.showPath(curPath_, game_.hex_controller(hCurPathEnd_) >= 0);
+        auto lastStep = PathHighlight::normal;
+        // TODO: this duplicates the decision made at the end of move_action()
+        if (game_.hex_controller(hCurPathEnd_) >= 0) {
+            lastStep = PathHighlight::battle;
+        }
+        else if (game_.hex_occupied(hCurPathEnd_)) {
+            lastStep = PathHighlight::visit;
+        }
+        rmapView_.showPath(curPath_, lastStep);
     }
 }
 

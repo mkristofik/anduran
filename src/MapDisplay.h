@@ -16,6 +16,7 @@
 #include "RandomMap.h"
 #include "SdlTexture.h"
 #include "hex_utils.h"
+#include "iterable_enum_class.h"
 #include "object_types.h"
 #include "pixel_utils.h"
 
@@ -58,6 +59,11 @@ enum class ZOrder {floor,
                    highlight,
                    projectile,
                    animating};
+
+
+// When drawing path footsteps, use a different image if a game action will occur
+// on the last tile.
+ITERABLE_ENUM_CLASS(PathHighlight, normal, battle, visit);
 
 
 struct MapEntity
@@ -106,7 +112,7 @@ public:
 
     void highlight(const Hex &hex);
     void clearHighlight();
-    void showPath(const Path &path, bool isBattle = false);
+    void showPath(const Path &path, PathHighlight lastStep = PathHighlight::normal);
     void clearPath();
 
     SDL_Point pixelDelta(const Hex &hSrc, const Hex &hDest) const;
@@ -160,8 +166,7 @@ private:
     std::vector<SdlTexture> entityImg_;
     int hexShadowId_;
     int hexHighlightId_;
-    SdlTexture pathImg_;
-    SdlTexture pathBattleImg_;
+    EnumSizedArray<SdlTexture, PathHighlight> pathImg_;
     std::vector<int> pathIds_;
 };
 

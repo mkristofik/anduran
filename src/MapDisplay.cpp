@@ -201,7 +201,6 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
     hexShadowId_(-1),
     hexHighlightId_(-1),
     pathImg_(),
-    pathBattleImg_(),
     pathIds_()
 {
     loadTerrainImages();
@@ -231,8 +230,9 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
     hexShadowId_ = addHiddenEntity(shadowImg, ZOrder::shadow);
     const auto highlightImg = images_->make_texture("hex-yellow"s, *window_);
     hexHighlightId_ = addHiddenEntity(highlightImg, ZOrder::highlight);
-    pathImg_ = images_->make_texture("footsteps"s, *window_);
-    pathBattleImg_ = images_->make_texture("new-battle"s, *window_);
+    pathImg_[PathHighlight::normal] = images_->make_texture("footsteps"s, *window_);
+    pathImg_[PathHighlight::battle] = images_->make_texture("new-battle"s, *window_);
+    pathImg_[PathHighlight::visit] = images_->make_texture("visit-object"s, *window_);
 }
 
 void MapDisplay::draw()
@@ -409,15 +409,16 @@ void MapDisplay::clearHighlight()
     hideEntity(hexHighlightId_);
 }
 
-void MapDisplay::showPath(const Path &path, bool isBattle)
+void MapDisplay::showPath(const Path &path, PathHighlight lastStep)
 {
     if (ssize(path) < 2) {
         return;
     }
 
     // Expand the number of available footsteps, if necessary.
+    const SdlTexture &normalStep = pathImg_[PathHighlight::normal];
     for (int i = ssize(pathIds_); i < ssize(path); ++i) {
-        pathIds_.push_back(addHiddenEntity(pathImg_, ZOrder::highlight));
+        pathIds_.push_back(addHiddenEntity(normalStep, ZOrder::highlight));
     }
 
     // First element of the path is the starting hex, don't draw a footstep there.
@@ -426,7 +427,7 @@ void MapDisplay::showPath(const Path &path, bool isBattle)
         step.hex = path[i];
         step.frame = {0, static_cast<int>(path[i].getNeighborDir(path[i + 1]))};
         step.visible = true;
-        entityImg_[pathIds_[i]] = pathImg_;
+        entityImg_[pathIds_[i]] = normalStep;
     }
 
     // Final step is drawn relative to where it came from instead of the other way
@@ -436,13 +437,13 @@ void MapDisplay::showPath(const Path &path, bool isBattle)
     auto &step = entities_[lastId];
     step.hex = path.back();
     step.visible = true;
-    if (isBattle) {
+    if (lastStep != PathHighlight::normal) {
         step.frame = {0, 0};
-        entityImg_[lastId] = pathBattleImg_;
+        entityImg_[lastId] = pathImg_[lastStep];
     }
     else {
         step.frame = {0, static_cast<int>(path[last - 1].getNeighborDir(path[last]))};
-        entityImg_[lastId] = pathImg_;
+        entityImg_[lastId] = normalStep;
     }
 }
 
