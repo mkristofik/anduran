@@ -283,17 +283,13 @@ void Anduran::load_simple_object(ObjectType type, const std::string &imgName)
 
 Path Anduran::find_path(const GameObject &obj, const Hex &hDest)
 {
-    auto path = pathfind_.find_path(obj.hex, hDest, obj.team);
+    auto path = pathfind_.find_path(obj, hDest);
 
-    // Path must stop early at first hex inside a zone of control other than your
-    // own.
-    // TODO: generalize to any action?  tiles owned by player are walkable
-    auto stopAt = find_if(begin(path), end(path),
-        [this, &obj] (const auto &hex) {
-            int zoc = game_.hex_controller(hex);
-            return zoc >= 0 && zoc != obj.entity;
-        });
-    if (stopAt != end(path)) {
+    // Path must stop early at first hex where an action occurs.
+    auto stopAt = std::ranges::find_if(path, [this, &obj] (const auto &hex) {
+        return game_.hex_action(obj, hex).action != ObjectAction::none;
+    });
+    if (stopAt != std::ranges::end(path)) {
         path.erase(next(stopAt), end(path));
     }
 
@@ -313,7 +309,7 @@ void Anduran::move_action(GameObject &player, const Path &path)
     anims_.push(moveAnim);
 
     auto destHex = path.back();
-    auto [action, entity] = game_.hex_action(player, destHex);
+    auto [action, obj] = game_.hex_action(player, destHex);
 
     // Do this here so the player's ZoC at the destination hex doesn't affect the
     // move/battle decision.
@@ -327,7 +323,6 @@ void Anduran::move_action(GameObject &player, const Path &path)
         // If we land on an object with a flag, change the flag color to
         // match the player's.
         if (action == ObjectAction::visit) {
-            auto obj = game_.get_object(entity);
             obj.team = player.team;
             game_.update_object(obj);
             moveEndAnim.insert(AnimDisplay(rmapView_,
@@ -335,7 +330,6 @@ void Anduran::move_action(GameObject &player, const Path &path)
                                            flagImages_[curPlayerNum_]));
         }
         else if (action == ObjectAction::pickup) {
-            auto obj = game_.get_object(entity);
             moveEndAnim.insert(AnimHide(rmapView_, obj.entity));
             game_.remove_object(obj.entity);
         }
@@ -343,8 +337,7 @@ void Anduran::move_action(GameObject &player, const Path &path)
         anims_.push(moveEndAnim);
     }
     else {
-        auto enemy = game_.get_object(entity);
-        battle_action(player, enemy);
+        battle_action(player, obj);
     }
 }
 

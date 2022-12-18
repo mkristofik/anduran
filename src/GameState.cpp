@@ -76,12 +76,11 @@ int GameState::hex_controller(const Hex &hex) const
     return iter->second;
 }
 
-std::pair<ObjectAction, int> GameState::hex_action(const GameObject &player,
-                                                   const Hex &hex) const
+GameAction GameState::hex_action(const GameObject &player, const Hex &hex) const
 {
     int zoc = hex_controller(hex);
     if (zoc >= 0 && zoc != player.entity) {
-        return {ObjectAction::battle, zoc};
+        return {ObjectAction::battle, get_object(zoc)};
     }
     else {
         auto objectsHere = objects_in_hex(hex);
@@ -90,18 +89,18 @@ std::pair<ObjectAction, int> GameState::hex_action(const GameObject &player,
                  obj.type == ObjectType::windmill) &&
                 obj.team != player.team)
             {
-                return {ObjectAction::visit, obj.entity};
+                return {ObjectAction::visit, obj};
             }
             else if (obj.type == ObjectType::camp ||
                      obj.type == ObjectType::chest ||
                      obj.type == ObjectType::resource)
             {
-                return {ObjectAction::pickup, obj.entity};
+                return {ObjectAction::pickup, obj};
             }
         }
     }
 
-    return {ObjectAction::none, -1};
+    return {};
 }
 
 void GameState::add_army(const Army &army)

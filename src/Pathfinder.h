@@ -13,14 +13,13 @@
 #ifndef PATHFINDER_H
 #define PATHFINDER_H
 
+#include "GameState.h"
 #include "PriorityQueue.h"
 #include "hex_utils.h"
 #include "team_color.h"
 
 #include "boost/container/flat_map.hpp"
-#include <vector>
 
-class GameState;
 class RandomMap;
 
 struct EstimatedPathCost
@@ -38,7 +37,7 @@ class Pathfinder
 public:
     Pathfinder(const RandomMap &rmap, const GameState &state);
 
-    Path find_path(const Hex &hSrc, const Hex &hDest, Team team);
+    Path find_path(const GameObject &player, const Hex &hDest);
 
 private:
     Neighbors<int> get_neighbors(int index) const;
@@ -49,13 +48,12 @@ private:
     PriorityQueue<EstimatedPathCost> frontier_;
     const RandomMap *rmap_;
     const GameState *game_;
+    const GameObject *player_;
     int iSrc_;
     int region_;
     int iDest_;
     Hex hDest_;
-    int destZoc_;
-    bool destIsArmy_;
-    Team team_;
+    GameObject destObject_;
 };
 
 #endif

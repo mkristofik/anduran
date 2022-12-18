@@ -15,9 +15,7 @@
 #include "GameState.h"
 #include "RandomMap.h"
 #include "container_utils.h"
-
 #include <algorithm>
-#include <functional>
 
 bool operator>(const EstimatedPathCost &lhs, const EstimatedPathCost &rhs)
 {
@@ -31,19 +29,18 @@ Pathfinder::Pathfinder(const RandomMap &rmap, const GameState &state)
     frontier_(),
     rmap_(&rmap),
     game_(&state),
+    player_(nullptr),
     iSrc_(RandomMap::invalidIndex),
     region_(-1),
     iDest_(RandomMap::invalidIndex),
     hDest_(),
-    destZoc_(-1),
-    destIsArmy_(false),
-    team_(Team::neutral)
+    destObject_()
 {
 }
 
-Path Pathfinder::find_path(const Hex &hSrc, const Hex &hDest, Team team)
+Path Pathfinder::find_path(const GameObject &player, const Hex &hDest)
 {
-    if (hSrc == hDest) {
+    if (player.hex == hDest) {
         return {};
     }
 
@@ -51,14 +48,12 @@ Path Pathfinder::find_path(const Hex &hSrc, const Hex &hDest, Team team)
     cameFrom_.clear();
     costSoFar_.clear();
     frontier_.clear();
+    player_ = &player;
     hDest_ = hDest;
     iDest_ = rmap_->intFromHex(hDest_);
-    iSrc_ = rmap_->intFromHex(hSrc);
+    iSrc_ = rmap_->intFromHex(player_->hex);
     region_ = rmap_->getRegion(iSrc_);
-    destZoc_ = game_->hex_controller(hDest_);
-    destIsArmy_ = std::ranges::any_of(game_->objects_in_hex(hDest_),
-        [this] (auto &obj) { return obj.entity == destZoc_; });
-    team_ = team;
+    destObject_ = game_->hex_action(*player_, hDest_).obj;
 
     // Optimization: skip everything if the destination hex isn't reachable.
     if (!is_reachable(iDest_)) {
@@ -154,8 +149,6 @@ Neighbors<int> Pathfinder::get_neighbors(int index) const
 
 bool Pathfinder::is_reachable(int index) const
 {
-    auto hex = rmap_->hexFromInt(index);
-
     if (!rmap_->getWalkable(index) || rmap_->getTerrain(index) == Terrain::water) {
         return false;
     }
@@ -165,26 +158,27 @@ bool Pathfinder::is_reachable(int index) const
         return false;
     }
 
+    auto hex = rmap_->hexFromInt(index);
+    auto [action, obj] = game_->hex_action(*player_, hex);
+
     // ZoC hexes aren't walkable unless they match the ZoC of the destination
     // hex (either within that army's ZoC or empty).  And then, only if we're
     // stopping there, or continuing on to that army's hex.
-    // TODO: use the game hex action to make this decision
-    int zoc = game_->hex_controller(hex);
-    if (zoc >= 0) {
-        if (zoc != destZoc_ || !(hex == hDest_ || destIsArmy_)) {
+    if (action == ObjectAction::battle) {
+        if (obj.entity == destObject_.entity &&
+            (hex == hDest_ || hDest_ == destObject_.hex))
+        {
+            return true;
+        }
+        else {
             return false;
         }
     }
 
     // Game objects are only walkable if they're on the destination hex or if
     // they match the player's team color.
-    // TODO: use the game hex action to make this decision too
-    if (hex != hDest_ && game_->hex_occupied(hex)) {
-        if (std::ranges::any_of(game_->objects_in_hex(hex),
-                                [this] (auto &obj) { return obj.team != team_; }))
-        {
-            return false;
-        }
+    if (hex != hDest_ && action != ObjectAction::none) {
+        return false;
     }
 
     return true;
