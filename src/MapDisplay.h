@@ -61,11 +61,6 @@ enum class ZOrder {floor,
                    animating};
 
 
-// When drawing path footsteps, use a different image if a game action will occur
-// on the last tile.
-ITERABLE_ENUM_CLASS(PathHighlight, normal, battle, visit);
-
-
 struct MapEntity
 {
     PartialPixel offset;
@@ -112,7 +107,7 @@ public:
 
     void highlight(const Hex &hex);
     void clearHighlight();
-    void showPath(const Path &path, PathHighlight lastStep = PathHighlight::normal);
+    void showPath(const Path &path, ObjectAction lastStep);
     void clearPath();
 
     SDL_Point pixelDelta(const Hex &hSrc, const Hex &hDest) const;
@@ -166,7 +161,7 @@ private:
     std::vector<SdlTexture> entityImg_;
     int hexShadowId_;
     int hexHighlightId_;
-    EnumSizedArray<SdlTexture, PathHighlight> pathImg_;
+    EnumSizedArray<SdlTexture, ObjectAction> pathImg_;
     std::vector<int> pathIds_;
 };
 

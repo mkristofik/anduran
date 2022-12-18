@@ -230,9 +230,10 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
     hexShadowId_ = addHiddenEntity(shadowImg, ZOrder::shadow);
     const auto highlightImg = images_->make_texture("hex-yellow"s, *window_);
     hexHighlightId_ = addHiddenEntity(highlightImg, ZOrder::highlight);
-    pathImg_[PathHighlight::normal] = images_->make_texture("footsteps"s, *window_);
-    pathImg_[PathHighlight::battle] = images_->make_texture("new-battle"s, *window_);
-    pathImg_[PathHighlight::visit] = images_->make_texture("visit-object"s, *window_);
+    pathImg_[ObjectAction::none] = images_->make_texture("footsteps"s, *window_);
+    pathImg_[ObjectAction::battle] = images_->make_texture("new-battle"s, *window_);
+    pathImg_[ObjectAction::visit] = images_->make_texture("visit-object"s, *window_);
+    pathImg_[ObjectAction::pickup] = images_->make_texture("visit-object"s, *window_);
 }
 
 void MapDisplay::draw()
@@ -409,14 +410,14 @@ void MapDisplay::clearHighlight()
     hideEntity(hexHighlightId_);
 }
 
-void MapDisplay::showPath(const Path &path, PathHighlight lastStep)
+void MapDisplay::showPath(const Path &path, ObjectAction lastStep)
 {
     if (ssize(path) < 2) {
         return;
     }
 
     // Expand the number of available footsteps, if necessary.
-    const SdlTexture &normalStep = pathImg_[PathHighlight::normal];
+    const SdlTexture &normalStep = pathImg_[ObjectAction::none];
     for (int i = ssize(pathIds_); i < ssize(path); ++i) {
         pathIds_.push_back(addHiddenEntity(normalStep, ZOrder::highlight));
     }
@@ -437,7 +438,7 @@ void MapDisplay::showPath(const Path &path, PathHighlight lastStep)
     auto &step = entities_[lastId];
     step.hex = path.back();
     step.visible = true;
-    if (lastStep != PathHighlight::normal) {
+    if (lastStep != ObjectAction::none) {
         step.frame = {0, 0};
         entityImg_[lastId] = pathImg_[lastStep];
     }

@@ -168,6 +168,7 @@ bool Pathfinder::is_reachable(int index) const
     // ZoC hexes aren't walkable unless they match the ZoC of the destination
     // hex (either within that army's ZoC or empty).  And then, only if we're
     // stopping there, or continuing on to that army's hex.
+    // TODO: use the game hex action to make this decision
     int zoc = game_->hex_controller(hex);
     if (zoc >= 0) {
         if (zoc != destZoc_ || !(hex == hDest_ || destIsArmy_)) {
@@ -177,6 +178,7 @@ bool Pathfinder::is_reachable(int index) const
 
     // Game objects are only walkable if they're on the destination hex or if
     // they match the player's team color.
+    // TODO: use the game hex action to make this decision too
     if (hex != hDest_ && game_->hex_occupied(hex)) {
         if (std::ranges::any_of(game_->objects_in_hex(hex),
                                 [this] (auto &obj) { return obj.team != team_; }))

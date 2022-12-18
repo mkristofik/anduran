@@ -13,6 +13,7 @@
 #ifndef OBJECT_TYPES_H
 #define OBJECT_TYPES_H
 
+#include "iterable_enum_class.h"
 #include <string>
 
 #define OBJ_TYPES \
@@ -33,5 +34,8 @@
 
 const std::string & obj_name_from_type(ObjectType type);
 ObjectType obj_type_from_name(const std::string &name);
+
+
+ITERABLE_ENUM_CLASS(ObjectAction, none, battle, visit, pickup);
 
 #endif

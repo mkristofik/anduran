@@ -35,15 +35,20 @@ void GameState::update_object(const GameObject &obj)
     auto iter = entityIndex.find(obj.entity);
     if (iter != std::end(objects_)) {
         entityIndex.replace(iter, obj);
+        update_zoc();
     }
-    update_zoc();
 }
 
 void GameState::remove_object(int id)
 {
-    const int numRemoved = objects_.erase(id);
-    assert(numRemoved == 1);
-    update_zoc();
+    auto &entityIndex = objects_.get<ByEntity>();
+    auto iter = entityIndex.find(id);
+    if (iter != std::end(objects_)) {
+        auto obj = *iter;
+        obj.hex = Hex::invalid();
+        entityIndex.replace(iter, obj);
+        update_zoc();
+    }
 }
 
 ObjVector GameState::objects_in_hex(const Hex &hex) const
@@ -69,6 +74,34 @@ int GameState::hex_controller(const Hex &hex) const
     }
 
     return iter->second;
+}
+
+std::pair<ObjectAction, int> GameState::hex_action(const GameObject &player,
+                                                   const Hex &hex) const
+{
+    int zoc = hex_controller(hex);
+    if (zoc >= 0 && zoc != player.entity) {
+        return {ObjectAction::battle, zoc};
+    }
+    else {
+        auto objectsHere = objects_in_hex(hex);
+        for (auto &obj : objectsHere) {
+            if ((obj.type == ObjectType::village ||
+                 obj.type == ObjectType::windmill) &&
+                obj.team != player.team)
+            {
+                return {ObjectAction::visit, obj.entity};
+            }
+            else if (obj.type == ObjectType::camp ||
+                     obj.type == ObjectType::chest ||
+                     obj.type == ObjectType::resource)
+            {
+                return {ObjectAction::pickup, obj.entity};
+            }
+        }
+    }
+
+    return {ObjectAction::none, -1};
 }
 
 void GameState::add_army(const Army &army)

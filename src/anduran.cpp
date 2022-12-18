@@ -129,15 +129,8 @@ void Anduran::handle_mouse_pos()
     auto player = game_.get_object(curPlayerId_);
     curPath_ = find_path(player, hCurPathEnd_);
     if (!curPath_.empty()) {
-        auto lastStep = PathHighlight::normal;
-        // TODO: this duplicates the decision made at the end of move_action()
-        if (game_.hex_controller(hCurPathEnd_) >= 0) {
-            lastStep = PathHighlight::battle;
-        }
-        else if (game_.hex_occupied(hCurPathEnd_)) {
-            lastStep = PathHighlight::visit;
-        }
-        rmapView_.showPath(curPath_, lastStep);
+        auto [action, _] = game_.hex_action(player, hCurPathEnd_);
+        rmapView_.showPath(curPath_, action);
     }
 }
 
@@ -294,6 +287,7 @@ Path Anduran::find_path(const GameObject &obj, const Hex &hDest)
 
     // Path must stop early at first hex inside a zone of control other than your
     // own.
+    // TODO: generalize to any action?  tiles owned by player are walkable
     auto stopAt = find_if(begin(path), end(path),
         [this, &obj] (const auto &hex) {
             int zoc = game_.hex_controller(hex);
@@ -319,36 +313,37 @@ void Anduran::move_action(GameObject &player, const Path &path)
     anims_.push(moveAnim);
 
     auto destHex = path.back();
-    const int zoc = game_.hex_controller(destHex);
+    auto [action, entity] = game_.hex_action(player, destHex);
 
     // Do this here so the player's ZoC at the destination hex doesn't affect the
     // move/battle decision.
     player.hex = destHex;
     game_.update_object(player);
 
-    if (zoc < 0) {
-        AnimSet showAnim;
-        showAnim.insert(AnimDisplay(rmapView_, ellipse, destHex));
+    if (action != ObjectAction::battle) {
+        AnimSet moveEndAnim;
+        moveEndAnim.insert(AnimDisplay(rmapView_, ellipse, destHex));
 
         // If we land on an object with a flag, change the flag color to
         // match the player's.
-        auto objectsHere = game_.objects_in_hex(destHex);
-        for (auto &obj : objectsHere) {
-            if ((obj.type == ObjectType::village ||
-                 obj.type == ObjectType::windmill) &&
-                obj.team != player.team)
-            {
-                obj.team = player.team;
-                game_.update_object(obj);
-                showAnim.insert(AnimDisplay(rmapView_,
-                                            obj.secondary,
-                                            flagImages_[curPlayerNum_]));
-            }
+        if (action == ObjectAction::visit) {
+            auto obj = game_.get_object(entity);
+            obj.team = player.team;
+            game_.update_object(obj);
+            moveEndAnim.insert(AnimDisplay(rmapView_,
+                                           obj.secondary,
+                                           flagImages_[curPlayerNum_]));
         }
-        anims_.push(showAnim);
+        else if (action == ObjectAction::pickup) {
+            auto obj = game_.get_object(entity);
+            moveEndAnim.insert(AnimHide(rmapView_, obj.entity));
+            game_.remove_object(obj.entity);
+        }
+
+        anims_.push(moveEndAnim);
     }
     else {
-        auto enemy = game_.get_object(zoc);
+        auto enemy = game_.get_object(entity);
         battle_action(player, enemy);
     }
 }

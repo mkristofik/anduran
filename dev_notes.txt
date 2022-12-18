@@ -119,8 +119,8 @@ is next to or in front of a castle
     * ZoC is not walkable unless it's a destination hex
     * update all of them any time somebody moves
     * champions should control their hexes, but no radius
-- remove objects after they've been picked up
-    - move to the invalid hex instead of deleting it?
+* remove objects after they've been picked up
+    * move to the invalid hex instead of deleting it?
 - currently requires a drawable entity so an object can be flaggable
 
 

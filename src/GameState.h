@@ -26,6 +26,7 @@
 #include "boost/multi_index/tag.hpp"
 
 #include <optional>
+#include <utility>
 #include <vector>
 
 
@@ -62,6 +63,11 @@ public:
     // the given hex's controller, or -1 if uncontrolled.  No bounds checking is
     // necessary as invalid hexes are by definition uncontrollable.
     int hex_controller(const Hex &hex) const;
+
+    // Return the action that should happen at a given hex for the player, and
+    // the entity id of the object to interact with.
+    std::pair<ObjectAction, int> hex_action(const GameObject &player,
+                                            const Hex &hex) const;
 
     // Accessors for the army state of each army object.
     void add_army(const Army &army);
