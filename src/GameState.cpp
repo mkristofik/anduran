@@ -33,22 +33,23 @@ void GameState::update_object(const GameObject &obj)
 {
     auto &entityIndex = objects_.get<ByEntity>();
     auto iter = entityIndex.find(obj.entity);
-    if (iter != std::end(objects_)) {
-        entityIndex.replace(iter, obj);
-        update_zoc();
-    }
+    assert(iter != std::end(objects_));
+
+    entityIndex.replace(iter, obj);
+    update_zoc();
 }
 
 void GameState::remove_object(int id)
 {
     auto &entityIndex = objects_.get<ByEntity>();
     auto iter = entityIndex.find(id);
-    if (iter != std::end(objects_)) {
-        auto obj = *iter;
-        obj.hex = Hex::invalid();
-        entityIndex.replace(iter, obj);
-        update_zoc();
-    }
+    assert(iter != std::end(objects_));
+
+    // Must replace the object by copy to ensure indexes get updated.
+    auto obj = *iter;
+    obj.hex = Hex::invalid();
+    entityIndex.replace(iter, obj);
+    update_zoc();
 }
 
 ObjVector GameState::objects_in_hex(const Hex &hex) const
@@ -122,7 +123,6 @@ void GameState::update_zoc()
 {
     zoc_.clear();
 
-    // TODO: this could be done just by iterating over a vector
     auto range = objects_.get<ByType>().equal_range(ObjectType::army);
     for (auto i = range.first; i != range.second; ++i) {
         if (i->hex == Hex::invalid()) {
