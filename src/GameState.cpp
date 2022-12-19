@@ -60,12 +60,7 @@ ObjVector GameState::objects_in_hex(const Hex &hex) const
     return ObjVector(range.first, range.second);
 }
 
-bool GameState::hex_occupied(const Hex &hex) const
-{
-    auto range = objects_.get<ByHex>().equal_range(hex);
-    return range.first != range.second;
-}
-
+// This could be private or inlined, but it makes a good unit test.
 int GameState::hex_controller(const Hex &hex) const
 {
     auto iter = zoc_.find(hex);
@@ -83,19 +78,19 @@ GameAction GameState::hex_action(const GameObject &player, const Hex &hex) const
         return {ObjectAction::battle, get_object(zoc)};
     }
     else {
-        auto objectsHere = objects_in_hex(hex);
-        for (auto &obj : objectsHere) {
-            if ((obj.type == ObjectType::village ||
-                 obj.type == ObjectType::windmill) &&
-                obj.team != player.team)
+        auto range = objects_.get<ByHex>().equal_range(hex);
+        for (auto objIter = range.first; objIter != range.second; ++objIter) {
+            if ((objIter->type == ObjectType::village ||
+                 objIter->type == ObjectType::windmill) &&
+                objIter->team != player.team)
             {
-                return {ObjectAction::visit, obj};
+                return {ObjectAction::visit, *objIter};
             }
-            else if (obj.type == ObjectType::camp ||
-                     obj.type == ObjectType::chest ||
-                     obj.type == ObjectType::resource)
+            else if (objIter->type == ObjectType::camp ||
+                     objIter->type == ObjectType::chest ||
+                     objIter->type == ObjectType::resource)
             {
-                return {ObjectAction::pickup, obj};
+                return {ObjectAction::pickup, *objIter};
             }
         }
     }
@@ -127,22 +122,26 @@ void GameState::update_zoc()
 {
     zoc_.clear();
 
+    // TODO: this could be done just by iterating over a vector
     auto range = objects_.get<ByType>().equal_range(ObjectType::army);
     for (auto i = range.first; i != range.second; ++i) {
-        for (auto &hex : i->hex.getAllNeighbors()) {
-            zoc_.insert_or_assign(hex, i->entity);
+        if (i->hex == Hex::invalid()) {
+            continue;
         }
-    }
 
-    // Second pass just in case two armies are next to each other.  Make sure
-    // each army has control over its own hex.
-    for (auto i = range.first; i != range.second; ++i) {
         zoc_.insert_or_assign(i->hex, i->entity);
+        for (auto &hex : i->hex.getAllNeighbors()) {
+            // Just in case two armies are next to each other, ensure we don't
+            // overwrite a ZoC that already exists.
+            zoc_.insert({hex, i->entity});
+        }
     }
 
     // Champions control their hex only.
     range = objects_.get<ByType>().equal_range(ObjectType::champion);
     for (auto i = range.first; i != range.second; ++i) {
-        zoc_.insert_or_assign(i->hex, i->entity);
+        if (i->hex != Hex::invalid()) {
+            zoc_.insert_or_assign(i->hex, i->entity);
+        }
     }
 }

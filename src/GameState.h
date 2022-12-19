@@ -61,8 +61,8 @@ public:
     void update_object(const GameObject &obj);
     void remove_object(int id);
 
+    // Expect to use this to support right-click popups.
     ObjVector objects_in_hex(const Hex &hex) const;
-    bool hex_occupied(const Hex &hex) const;
 
     // Armies have a 1-hex zone of control around them.  Return the entity id of
     // the given hex's controller, or -1 if uncontrolled.  No bounds checking is
