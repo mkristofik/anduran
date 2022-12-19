@@ -396,9 +396,12 @@ void AnimDefend::update(Uint32 elapsed_ms)
 
 void AnimDefend::stop()
 {
-    auto obj = get_entity(entity_);
-    set_idle(obj, baseState_);
-    update_entity(obj, idleImg_);
+    // If we're showing a defend image, revert back to the base image when done.
+    if (anim_.duration_ms() == 0) {
+        auto obj = get_entity(entity_);
+        set_idle(obj, baseState_);
+        update_entity(obj, idleImg_);
+    }
 }
 
 
