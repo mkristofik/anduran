@@ -79,6 +79,7 @@ struct MapEntity
 
     // Set the image offset to draw it centered on a hex.
     void alignCentered(const SdlTexture &img);
+    void alignTopCenter(const SdlTexture &img);
 };
 
 

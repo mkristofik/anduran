@@ -42,8 +42,8 @@ public:
                const Frame &numFrames,
                const std::vector<Uint32> &timing_ms);
 
-    static SdlTexture make_image(const SdlSurface &src,
-                                 SdlWindow &win);
+    static SdlTexture make_image(const SdlSurface &src, SdlWindow &win);
+    static SdlTexture make_editable_image(SdlWindow &win, int width, int height);
 
     static SdlTexture make_sprite_sheet(const SdlSurface &src,
                                         SdlWindow &win,

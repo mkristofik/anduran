@@ -185,6 +185,12 @@ void MapEntity::alignCentered(const SdlTexture &img)
     offset.y = HEX_SIZE / 2 - img.frame_height() / 2.0;
 }
 
+void MapEntity::alignTopCenter(const SdlTexture &img)
+{
+    offset.x = HEX_SIZE / 2 - img.frame_width() / 2.0;
+    offset.y = 0;
+}
+
 
 MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
     : window_(&win),

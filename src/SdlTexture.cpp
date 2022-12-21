@@ -30,6 +30,27 @@ namespace
             return {};
         }
 
+        SDL_SetTextureBlendMode(img, SDL_BLENDMODE_BLEND);
+        return {img, SDL_DestroyTexture};
+    }
+
+    std::shared_ptr<SDL_Texture> make_editable_texture(SDL_Renderer *renderer,
+                                                       int w,
+                                                       int h)
+    {
+        auto img = SDL_CreateTexture(renderer,
+                                     SDL_PIXELFORMAT_RGBA8888,
+                                     SDL_TEXTUREACCESS_STREAMING,
+                                     w,
+                                     h);
+        if (!img) {
+            SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
+                        "Error creating editable texture: %s",
+                        SDL_GetError());
+            return {};
+        }
+
+        SDL_SetTextureBlendMode(img, SDL_BLENDMODE_BLEND);
         return {img, SDL_DestroyTexture};
     }
 }
@@ -82,6 +103,23 @@ SdlTexture SdlTexture::make_image(const SdlSurface &src, SdlWindow &win)
     impl.frameWidth = src->w;
     impl.frameHeight = src->h;
     impl.texture = make_texture(impl.renderer, src.get());
+
+    return self;
+}
+
+SdlTexture SdlTexture::make_editable_image(SdlWindow &win, int width, int height)
+{
+    SdlTexture self;
+    auto &impl = *self.pimpl_;
+
+    impl.renderer = win.renderer();
+    SDL_assert(width > 0 && height > 0 && impl.renderer);
+
+    impl.rows = 1;
+    impl.cols = 1;
+    impl.frameWidth = width;
+    impl.frameHeight = height;
+    impl.texture = make_editable_texture(impl.renderer, width, height);
 
     return self;
 }

@@ -203,6 +203,14 @@ void Anduran::load_players()
     enemy.type = ObjectType::army;
     game_.add_object(enemy);
 
+    // Give the Orc a health bar.
+    auto barImg = make_hp_bar();
+    MapEntity hpBar;
+    hpBar.hex = enemy.hex;
+    hpBar.z = ZOrder::flag;
+    hpBar.alignTopCenter(barImg);
+    rmapView_.addEntity(barImg, hpBar);
+
     Army orcArmy;
     orcArmy.units[0] = {orc, 6};
     orcArmy.entity = enemy.entity;
@@ -542,6 +550,92 @@ void Anduran::animate(const GameObject &attacker,
     }
 }
 
+SdlTexture Anduran::make_hp_bar()
+{
+    // 50 pixels wide, plus one pixel on each side for the border.
+    auto bar = SdlTexture::make_editable_image(win_, 52, 4);
+    SDL_Surface *surf = nullptr;
+    if (SDL_LockTextureToSurface(bar.get(), nullptr, &surf) < 0) {
+        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO, "Error locking texture: %s", SDL_GetError());
+        return {};
+    }
+
+    SDL_assert(surf->pitch == 52 * 4);  // 52 pixels wide * 4 bytes per pixel
+    auto *p = static_cast<Uint32 *>(surf->pixels);
+
+    // Top row, invisible pixels on the left
+    for (int i = 0; i < 5; ++i) {
+        *p = SDL_MapRGBA(surf->format, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
+        ++p;
+    }
+
+    // Top border
+    for (int i = 0; i < 42; ++i) {
+        *p = SDL_MapRGBA(surf->format, 213, 213, 213, 200);
+        ++p;
+    }
+
+    // Top row, invisible pixels on the right
+    for (int i = 0; i < 5; ++i) {
+        *p = SDL_MapRGBA(surf->format, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
+        ++p;
+    }
+
+    for (int row = 2; row <= 3; ++row) {
+        // invisible pixels on the left
+        for (int i = 0; i < 5; ++i) {
+            *p = SDL_MapRGBA(surf->format, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
+            ++p;
+        }
+
+        // Left border
+        *p = SDL_MapRGBA(surf->format, 213, 213, 213, 200);
+        ++p;
+
+        // 80% health
+        for (int i = 0; i < 32; ++i) {
+            *p = SDL_MapRGBA(surf->format, 170, 255, 0, SDL_ALPHA_OPAQUE);
+            ++p;
+        }
+
+        // background
+        for (int i = 0; i < 8; ++i) {
+            *p = SDL_MapRGBA(surf->format, 0, 0, 0, 80);
+            ++p;
+        }
+
+        // Right border
+        *p = SDL_MapRGBA(surf->format, 213, 213, 213, 200);
+        ++p;
+
+        // invisible pixels on the right
+        for (int i = 0; i < 5; ++i) {
+            *p = SDL_MapRGBA(surf->format, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
+            ++p;
+        }
+    }
+
+    // Bottom row, invisible pixels on the left
+    for (int i = 0; i < 5; ++i) {
+        *p = SDL_MapRGBA(surf->format, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
+        ++p;
+    }
+
+    // Bottom border
+    for (int i = 0; i < 42; ++i) {
+        *p = SDL_MapRGBA(surf->format, 213, 213, 213, 200);
+        ++p;
+    }
+
+    // Bottom row, invisible pixels on the right
+    for (int i = 0; i < 5; ++i) {
+        *p = SDL_MapRGBA(surf->format, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
+        ++p;
+    }
+
+    SDL_UnlockTexture(bar.get());
+    return bar;
+}
 
 int main(int, char *[])  // two-argument form required by SDL
 {
