@@ -361,6 +361,9 @@ void Anduran::battle_action(GameObject &player, GameObject &enemy)
                                   make_army_state(defender, BattleSide::defender));
     for (const auto &event : result.log) {
         if (event.action == ActionType::next_round) {
+            AnimSet nextRoundMsg;
+            nextRoundMsg.insert(AnimLog(rmapView_, "Next round begins"));
+            anims_.push(nextRoundMsg);
             continue;
         }
 
@@ -559,24 +562,20 @@ SdlTexture Anduran::make_hp_bar()
     // - want most of the time to fall around 32 px
     // - use log math to ensure we only get the extremes rarely
 
-    // 50 pixels wide, plus one pixel on each side for the border.
-    //auto bar = SdlTexture::make_editable_image(win_, 52, 4);
-    auto bar = SdlTexture::make_editable_image(win_, 34, 4);
+    // 48 pixels wide, plus one pixel on each side for the border.
+    auto bar = SdlTexture::make_editable_image(win_, 50, 4);
     SdlEditTexture edit(bar);
 
     SDL_Color borderColor = {213, 213, 213, 200};
-    //SDL_Rect border = {5, 0, 42, 4};
-    SDL_Rect border = {0, 0, 34, 4};
+    SDL_Rect border = {0, 0, 50, 4};
     edit.fill_rect(border, borderColor);
 
     SDL_Color bgColor = {0, 0, 0, 80};
-    //SDL_Rect background = {38, 1, 8, 2};
-    SDL_Rect background = {1, 1, 32, 2};
+    SDL_Rect background = {1, 1, 48, 2};
     edit.fill_rect(background, bgColor);
 
     SDL_Color healthColor = {170, 255, 0, SDL_ALPHA_OPAQUE};
-    //SDL_Rect health = {6, 1, 32, 2};
-    SDL_Rect health = {1, 1, 25, 2};
+    SDL_Rect health = {1, 1, 38, 2};
     edit.fill_rect(health, healthColor);
 
     return bar;

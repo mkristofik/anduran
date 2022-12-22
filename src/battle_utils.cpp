@@ -161,22 +161,37 @@ bool operator<(const Army &lhs, int rhs)
 }
 
 
-Battle::Battle(const BattleState &armies)
-    : units_(armies),
+Battle::Battle(const ArmyState &attacker, const ArmyState &defender)
+    : attArmyStart_(attacker),
+    defArmyStart_(defender),
+    attRelSizes_(),
+    defRelSizes_(),
+    units_(),
     log_(nullptr),
     activeUnit_(-1),
     attackerTotalHp_(0),
     defenderTotalHp_(0)
 {
+    // Interleave attacking and defending units so both sides get equal
+    // opportunity in case of ties.
+    for (int i = 0; i < ssize(attArmyStart_); ++i) {
+        units_[2 * i] = attArmyStart_[i];
+        units_[2 * i].armyIndex = i;
+        units_[2 * i + 1] = defArmyStart_[i];
+        units_[2 * i + 1].armyIndex = i;
+    }
+
     std::ranges::stable_sort(units_,
         [] (const auto &lhs, const auto &rhs) {
             return lhs.speed() > rhs.speed();
         });
+    assert(check_army_slots(units_));
 
     if (units_[0].alive()) {
         activeUnit_ = 0;
     }
     update_hp_totals();
+    compute_relative_unit_sizes();
 }
 
 void Battle::enable_log(BattleLog &log)
@@ -280,6 +295,18 @@ void Battle::attack(int targetIndex, DamageType dType)
         event.numDefenders = def.num;
         event.damage = dmg;
         event.attackingTeam = att.attacker;
+        if (event.attackingTeam) {
+            event.attackerStartHp = attArmyStart_[att.armyIndex].total_hp();
+            event.attackerRelSize = attRelSizes_[att.armyIndex];
+            event.defenderStartHp = defArmyStart_[def.armyIndex].total_hp();
+            event.defenderRelSize = defRelSizes_[def.armyIndex];
+        }
+        else {
+            event.attackerStartHp = defArmyStart_[att.armyIndex].total_hp();
+            event.attackerRelSize = defRelSizes_[att.armyIndex];
+            event.defenderStartHp = attArmyStart_[def.armyIndex].total_hp();
+            event.defenderRelSize = attRelSizes_[def.armyIndex];
+        }
 
         def.take_damage(dmg);
         event.losses = event.numDefenders - def.num;
@@ -318,6 +345,22 @@ void Battle::attack(int targetIndex, DamageType dType)
     */
 
     next_turn();
+}
+
+void Battle::compute_relative_unit_sizes()
+{
+    int numUnits = 0;
+    for (auto &unit : units_) {
+        if (unit.num > 0) {
+            ++numUnits;
+        }
+    }
+
+    int avgHp = (attackerTotalHp_ + defenderTotalHp_) / numUnits;
+    for (int i = 0; i < ssize(attArmyStart_); ++i) {
+        attRelSizes_[i] = 100 * attArmyStart_[i].total_hp() / avgHp;
+        defRelSizes_[i] = 100 * defArmyStart_[i].total_hp() / avgHp;
+    }
 }
 
 void Battle::next_turn()
@@ -411,19 +454,8 @@ BattleResult do_battle(const ArmyState &attacker,
                        const ArmyState &defender,
                        DamageType dType)
 {
-    // Interleave attacking and defending units so both sides get equal
-    // opportunity in case of ties.
-    BattleState armies;
-    for (int i = 0; i < ssize(attacker); ++i) {
-        armies[2 * i] = attacker[i];
-        armies[2 * i].armyIndex = i;
-        armies[2 * i + 1] = defender[i];
-        armies[2 * i + 1].armyIndex = i;
-    }
-    assert(check_army_slots(armies));
-
     BattleResult result;
-    Battle battle(armies);
+    Battle battle(attacker, defender);
     battle.enable_log(result.log);
     while (!battle.done()) {
         battle.attack(battle.optimal_target(), dType);

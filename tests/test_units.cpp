@@ -88,7 +88,8 @@ void print_battle_state(const Battle &battle)
         if (unit.alive()) {
             std::cout << unit.num << ' ' <<
                 unit.unit->name << ' ' <<
-                unit.total_hp() << ' ' <<
+                "army index " << unit.armyIndex << ' ' <<
+                "HP " << unit.total_hp() << ' ' <<
                 "attacked " << unit.timesAttacked << ' ' <<
                 "relatiated " << unit.retaliated <<
                 '\n';
@@ -108,14 +109,15 @@ BOOST_FIXTURE_TEST_SUITE(battle_testing, TestUnitConfig)
 
 BOOST_AUTO_TEST_CASE(manual_battle_state)
 {
-    BattleState armies;
-    armies[0] = attacker1_;
-    armies[1] = attacker2_;
-    armies[2] = defender1_;
-    armies[3] = defender2_;
+    ArmyState army1;
+    army1[0] = attacker1_;
+    army1[1] = attacker2_;
+    ArmyState army2;
+    army2[0] = defender1_;
+    army2[1] = defender2_;
 
     BattleLog log;
-    Battle battle(armies);
+    Battle battle(army1, army2);
     battle.enable_log(log);
     BOOST_TEST(!battle.done());
     BOOST_TEST(!battle.attackers_turn());
@@ -174,10 +176,12 @@ BOOST_AUTO_TEST_CASE(manual_battle_state)
             std::cout << "Event type " << static_cast<int>(event.action) <<
                 " Attacker type " << event.attackerType <<
                 " #units " << event.numAttackers <<
-                " HP " << event.attackerHp <<
+                " HP " << event.attackerHp << '/' << event.attackerStartHp <<
+                " (" << event.attackerRelSize << "%)" <<
                 " Defender type " << event.defenderType <<
                 " #units " << event.numDefenders <<
-                " HP " << event.defenderHp <<
+                " HP " << event.defenderHp << '/' << event.defenderStartHp <<
+                " (" << event.defenderRelSize << "%)" <<
                 " damage " << event.damage <<
                 " losses " << event.losses <<
                 '\n';

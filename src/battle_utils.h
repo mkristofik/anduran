@@ -74,9 +74,13 @@ struct BattleEvent
 {
     ActionType action = ActionType::attack;
     int attackerType = -1;
+    int attackerStartHp = 0;
+    int attackerRelSize = 0;  // relative original size of this unit, 100 is avg
     int attackerHp = 0;
     int numAttackers = 0;
     int defenderType = -1;
+    int defenderStartHp = 0;
+    int defenderRelSize = 0;
     int defenderHp = 0;
     int numDefenders = 0;
     int damage = 0;
@@ -92,7 +96,7 @@ using TargetList = boost::container::static_vector<int, ARMY_SIZE>;
 class Battle
 {
 public:
-    Battle(const BattleState &armies);
+    Battle(const ArmyState &attacker, const ArmyState &defender);
 
     // Keep a running log of the battle's actions so they can be animated later.
     // Turn it off for the AI when simulating a battle.
@@ -116,6 +120,11 @@ public:
     void attack(int targetIndex, DamageType dType = DamageType::normal);
 
 private:
+    // To draw health bars of different sizes, we need to know how strong each
+    // unit is relative to all the units participating in the battle.  100 is
+    // average.
+    void compute_relative_unit_sizes();
+
     void next_turn();
     void next_round();
     void update_hp_totals();
@@ -127,6 +136,13 @@ private:
                                    int alpha = std::numeric_limits<int>::min(),
                                    int beta = std::numeric_limits<int>::max()) const;
 
+    // Starting armies
+    ArmyState attArmyStart_;
+    ArmyState defArmyStart_;
+    std::array<int, ARMY_SIZE> attRelSizes_;
+    std::array<int, ARMY_SIZE> defRelSizes_;
+
+    // Current state
     BattleState units_;
     BattleLog *log_;
     int activeUnit_;
