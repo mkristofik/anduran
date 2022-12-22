@@ -60,6 +60,7 @@ public:
     int height() const;
     int frame_width() const;
     int frame_height() const;
+    bool editable() const;
 
     // Each element holds the time we should switch to the next frame, assuming
     // the animation starts at 0 ms.  Last element therefore also represents the
@@ -88,6 +89,30 @@ private:
     SDL_Rect get_frame_rect(const Frame &frame) const;
 
     std::shared_ptr<TextureData> pimpl_;
+};
+
+
+// Streaming textures (created with make_editable_image) have to be locked before
+// you can set the raw pixels.  This is an RAII wrapper to help with that.
+class SdlEditTexture
+{
+public:
+    SdlEditTexture(SdlTexture &img);
+    ~SdlEditTexture();
+
+    SdlEditTexture(const SdlEditTexture &) = delete;
+    SdlEditTexture & operator=(const SdlEditTexture &) = delete;
+    SdlEditTexture(SdlEditTexture &&) = delete;
+    SdlEditTexture & operator=(SdlEditTexture &&) = delete;
+
+    // Draw a rectangle of the given color.  Coordinates are relative to the size
+    // of the texture.
+    void fill_rect(const SDL_Rect &rect, const SDL_Color &color);
+
+private:
+    SDL_Texture *texture_;
+    SDL_Surface *surf_;
+    bool isLocked_;
 };
 
 #endif

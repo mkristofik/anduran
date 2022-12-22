@@ -552,88 +552,33 @@ void Anduran::animate(const GameObject &attacker,
 
 SdlTexture Anduran::make_hp_bar()
 {
+    // TODO:
+    // - 16 px is about the smallest we should go (+2 for border)
+    // - 64 px is ridiculously wide (again +2 for border)
+    // - scale the size of the bar to the relative starting HP of all units
+    // - want most of the time to fall around 32 px
+    // - use log math to ensure we only get the extremes rarely
+
     // 50 pixels wide, plus one pixel on each side for the border.
-    auto bar = SdlTexture::make_editable_image(win_, 52, 4);
-    SDL_Surface *surf = nullptr;
-    if (SDL_LockTextureToSurface(bar.get(), nullptr, &surf) < 0) {
-        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO, "Error locking texture: %s", SDL_GetError());
-        return {};
-    }
+    //auto bar = SdlTexture::make_editable_image(win_, 52, 4);
+    auto bar = SdlTexture::make_editable_image(win_, 34, 4);
+    SdlEditTexture edit(bar);
 
-    SDL_assert(surf->pitch == 52 * 4);  // 52 pixels wide * 4 bytes per pixel
-    auto *p = static_cast<Uint32 *>(surf->pixels);
+    SDL_Color borderColor = {213, 213, 213, 200};
+    //SDL_Rect border = {5, 0, 42, 4};
+    SDL_Rect border = {0, 0, 34, 4};
+    edit.fill_rect(border, borderColor);
 
-    // Top row, invisible pixels on the left
-    for (int i = 0; i < 5; ++i) {
-        *p = SDL_MapRGBA(surf->format, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
-        ++p;
-    }
+    SDL_Color bgColor = {0, 0, 0, 80};
+    //SDL_Rect background = {38, 1, 8, 2};
+    SDL_Rect background = {1, 1, 32, 2};
+    edit.fill_rect(background, bgColor);
 
-    // Top border
-    for (int i = 0; i < 42; ++i) {
-        *p = SDL_MapRGBA(surf->format, 213, 213, 213, 200);
-        ++p;
-    }
+    SDL_Color healthColor = {170, 255, 0, SDL_ALPHA_OPAQUE};
+    //SDL_Rect health = {6, 1, 32, 2};
+    SDL_Rect health = {1, 1, 25, 2};
+    edit.fill_rect(health, healthColor);
 
-    // Top row, invisible pixels on the right
-    for (int i = 0; i < 5; ++i) {
-        *p = SDL_MapRGBA(surf->format, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
-        ++p;
-    }
-
-    for (int row = 2; row <= 3; ++row) {
-        // invisible pixels on the left
-        for (int i = 0; i < 5; ++i) {
-            *p = SDL_MapRGBA(surf->format, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
-            ++p;
-        }
-
-        // Left border
-        *p = SDL_MapRGBA(surf->format, 213, 213, 213, 200);
-        ++p;
-
-        // 80% health
-        for (int i = 0; i < 32; ++i) {
-            *p = SDL_MapRGBA(surf->format, 170, 255, 0, SDL_ALPHA_OPAQUE);
-            ++p;
-        }
-
-        // background
-        for (int i = 0; i < 8; ++i) {
-            *p = SDL_MapRGBA(surf->format, 0, 0, 0, 80);
-            ++p;
-        }
-
-        // Right border
-        *p = SDL_MapRGBA(surf->format, 213, 213, 213, 200);
-        ++p;
-
-        // invisible pixels on the right
-        for (int i = 0; i < 5; ++i) {
-            *p = SDL_MapRGBA(surf->format, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
-            ++p;
-        }
-    }
-
-    // Bottom row, invisible pixels on the left
-    for (int i = 0; i < 5; ++i) {
-        *p = SDL_MapRGBA(surf->format, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
-        ++p;
-    }
-
-    // Bottom border
-    for (int i = 0; i < 42; ++i) {
-        *p = SDL_MapRGBA(surf->format, 213, 213, 213, 200);
-        ++p;
-    }
-
-    // Bottom row, invisible pixels on the right
-    for (int i = 0; i < 5; ++i) {
-        *p = SDL_MapRGBA(surf->format, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
-        ++p;
-    }
-
-    SDL_UnlockTexture(bar.get());
     return bar;
 }
 

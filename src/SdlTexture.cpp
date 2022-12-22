@@ -65,6 +65,7 @@ struct TextureData
     SDL_Renderer *renderer = nullptr;
     std::shared_ptr<SDL_Texture> texture;
     std::vector<Uint32> timing_ms;
+    bool editable = false;
 };
 
 
@@ -120,6 +121,7 @@ SdlTexture SdlTexture::make_editable_image(SdlWindow &win, int width, int height
     impl.frameWidth = width;
     impl.frameHeight = height;
     impl.texture = make_editable_texture(impl.renderer, width, height);
+    impl.editable = true;
 
     return self;
 }
@@ -180,6 +182,11 @@ int SdlTexture::frame_width() const
 int SdlTexture::frame_height() const
 {
     return pimpl_->frameHeight;
+}
+
+bool SdlTexture::editable() const
+{
+    return pimpl_->editable;
 }
 
 const std::vector<Uint32> & SdlTexture::timing_ms() const
@@ -256,4 +263,43 @@ SDL_Rect SdlTexture::get_frame_rect(const Frame &frame) const
     const auto fwidth = frame_width();
     const auto fheight = frame_height();
     return {frame.col * fwidth, frame.row * fheight, fwidth, fheight};
+}
+
+
+SdlEditTexture::SdlEditTexture(SdlTexture &img)
+    : texture_(img.get()),
+    surf_(nullptr),
+    isLocked_(false)
+{
+    SDL_assert(texture_ && img.editable());
+    if (SDL_LockTextureToSurface(texture_, nullptr, &surf_) < 0) {
+        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO, "Error locking texture: %s", SDL_GetError());
+        return;
+    }
+
+    // Clear the whole surface (we have to write every pixel at least once).
+    SDL_Rect whole = {0, 0, surf_->w, surf_->h};
+    SDL_Color clear = {0, 0, 0, SDL_ALPHA_TRANSPARENT};
+    fill_rect(whole, clear);
+    isLocked_ = true;
+}
+
+SdlEditTexture::~SdlEditTexture()
+{
+    if (isLocked_) {
+        SDL_UnlockTexture(texture_);
+    }
+}
+
+void SdlEditTexture::fill_rect(const SDL_Rect &rect, const SDL_Color &color)
+{
+    if (!isLocked_) {
+        return;
+    }
+
+    auto colorVal = SDL_MapRGBA(surf_->format, color.r, color.g, color.b, color.a);
+    if (SDL_FillRect(surf_, &rect, colorVal) < 0) {
+        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO, "Error drawing to texture: %s",
+                    SDL_GetError());
+    }
 }
