@@ -522,11 +522,12 @@ void Anduran::animate(const GameObject &attacker,
                                    attIdle,
                                    attAnim,
                                    defender.hex));
-        meleeAnim.insert(AnimDefend::from_melee(rmapView_,
-                                                defender.entity,
-                                                defIdle,
-                                                defAnim,
-                                                attacker.hex));
+        meleeAnim.insert(AnimDefend(rmapView_,
+                                    defender.entity,
+                                    defIdle,
+                                    defAnim,
+                                    attacker.hex,
+                                    AttackType::melee));
         meleeAnim.insert(logMessage);
         anims_.push(meleeAnim);
     }
@@ -538,11 +539,12 @@ void Anduran::animate(const GameObject &attacker,
                                      attIdle,
                                      attAnim,
                                      defender.hex));
-        rangedAnim.insert(AnimDefend::from_ranged(rmapView_,
-                                                  defender.entity,
-                                                  defIdle,
-                                                  defAnim,
-                                                  attacker.hex));
+        rangedAnim.insert(AnimDefend(rmapView_,
+                                     defender.entity,
+                                     defIdle,
+                                     defAnim,
+                                     attacker.hex,
+                                     AttackType::ranged));
         rangedAnim.insert(AnimProjectile(rmapView_,
                                          projectileId_,
                                          units_.get_projectile(attUnitType),

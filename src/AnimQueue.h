@@ -14,6 +14,7 @@
 #define ANIM_QUEUE_H
 
 #include "anim_utils.h"
+#include <array>
 #include <variant>
 
 // List of all animation types, to try to build a polymorphic array without

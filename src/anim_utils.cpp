@@ -338,33 +338,23 @@ AnimDefend::AnimDefend(MapDisplay &display,
                        const SdlTexture &idleImg,
                        const SdlTexture &anim,
                        const Hex &hAttacker,
-                       Uint32 hitTime_ms)
-    : AnimBase(display, hitTime_ms + std::max(DEFEND_MS, anim.duration_ms())),
+                       AttackType attType)
+    : AnimBase(display, get_hit_ms(attType) + std::max(DEFEND_MS, anim.duration_ms())),
     entity_(entityId),
     idleImg_(idleImg),
     anim_(anim),
     hFacing_(hAttacker),
-    startTime_ms_(hitTime_ms),
+    startTime_ms_(get_hit_ms(attType)),
     animStarted_(false)
 {
 }
 
-AnimDefend AnimDefend::from_melee(MapDisplay &display,
-                                  int entityId,
-                                  const SdlTexture &idleImg,
-                                  const SdlTexture &anim,
-                                  const Hex &hAttacker)
+Uint32 AnimDefend::get_hit_ms(AttackType attType)
 {
-    return AnimDefend(display, entityId, idleImg, anim, hAttacker, MELEE_HIT_MS);
-}
-
-AnimDefend AnimDefend::from_ranged(MapDisplay &display,
-                                   int entityId,
-                                   const SdlTexture &idleImg,
-                                   const SdlTexture &anim,
-                                   const Hex &hAttacker)
-{
-    return AnimDefend(display, entityId, idleImg, anim, hAttacker, RANGED_HIT_MS);
+    if (attType == AttackType::ranged) {
+        return RANGED_HIT_MS;
+    }
+    return MELEE_HIT_MS;
 }
 
 void AnimDefend::start()
