@@ -503,103 +503,60 @@ void Anduran::animate(const GameObject &attacker,
 {
     SDL_assert(event.attackerType >= 0 && event.defenderType >= 0);
 
-    const auto attUnitType = event.attackerType;
-    const auto attTeam = attacker.team;
-    const auto attIdle = units_.get_image(attUnitType, ImageType::img_idle, attTeam);
+    auto attUnitType = event.attackerType;
+    auto attTeam = attacker.team;
+    auto attIdle = units_.get_image(attUnitType, ImageType::img_idle, attTeam);
+    auto attType = units_.get_data(attUnitType).attack;
 
-    const auto defUnitType = event.defenderType;
-    const auto defTeam = defender.team;
-    const auto defIdle = units_.get_image(defUnitType, ImageType::img_idle, defTeam);
+    auto defUnitType = event.defenderType;
+    auto defTeam = defender.team;
+    auto defIdle = units_.get_image(defUnitType, ImageType::img_idle, defTeam);
     auto defAnim = units_.get_image(defUnitType, ImageType::img_defend, defTeam);
     if (event.numDefenders == event.losses) {
         defAnim = units_.get_image(defUnitType, ImageType::anim_die, defTeam);
     }
 
-    AnimLog logMessage(rmapView_, battle_event_log(event));
-    SdlTexture attAnim;
+    AnimSet animSet;
+    animSet.insert(AnimLog(rmapView_, battle_event_log(event)));
+    animSet.insert(AnimDefend(rmapView_,
+                                defender.entity,
+                                defIdle,
+                                defAnim,
+                                attacker.hex,
+                                attType));
+    animSet.insert(AnimHealth(rmapView_,
+                              hpBarIds_[0],
+                              hpBarIds_[1],
+                              event,
+                              attacker.hex,
+                              defender.hex,
+                              attType));
 
-    if (units_.get_data(attUnitType).attack == AttackType::melee) {
-        attAnim = units_.get_image(attUnitType, ImageType::anim_attack, attTeam);
-        AnimSet meleeAnim;
-        meleeAnim.insert(AnimMelee(rmapView_,
-                                   attacker.entity,
-                                   attIdle,
-                                   attAnim,
-                                   defender.hex));
-        meleeAnim.insert(AnimDefend(rmapView_,
-                                    defender.entity,
-                                    defIdle,
-                                    defAnim,
-                                    attacker.hex,
-                                    AttackType::melee));
-        meleeAnim.insert(logMessage);
-        meleeAnim.insert(AnimHealth(rmapView_,
-                                    hpBarIds_[0],
-                                    hpBarIds_[1],
-                                    event,
-                                    attacker.hex,
-                                    defender.hex,
-                                    AttackType::melee));
-        anims_.push(meleeAnim);
+    if (attType == AttackType::melee) {
+        auto attAnim = units_.get_image(attUnitType, ImageType::anim_attack, attTeam);
+        animSet.insert(AnimMelee(rmapView_,
+                                 attacker.entity,
+                                 attIdle,
+                                 attAnim,
+                                 defender.hex));
     }
     else {
-        attAnim = units_.get_image(attUnitType, ImageType::anim_ranged, attTeam);
-        AnimSet rangedAnim;
-        rangedAnim.insert(AnimRanged(rmapView_,
-                                     attacker.entity,
-                                     attIdle,
-                                     attAnim,
-                                     defender.hex));
-        rangedAnim.insert(AnimDefend(rmapView_,
-                                     defender.entity,
-                                     defIdle,
-                                     defAnim,
-                                     attacker.hex,
-                                     AttackType::ranged));
-        rangedAnim.insert(AnimProjectile(rmapView_,
-                                         projectileId_,
-                                         units_.get_projectile(attUnitType),
-                                         attacker.hex,
-                                         defender.hex));
-        rangedAnim.insert(AnimHealth(rmapView_,
-                                     hpBarIds_[0],
-                                     hpBarIds_[1],
-                                     event,
-                                     attacker.hex,
-                                     defender.hex,
-                                     AttackType::ranged));
-        rangedAnim.insert(logMessage);
-        anims_.push(rangedAnim);
+        auto attAnim = units_.get_image(attUnitType, ImageType::anim_ranged, attTeam);
+        animSet.insert(AnimRanged(rmapView_,
+                                  attacker.entity,
+                                  attIdle,
+                                  attAnim,
+                                  defender.hex));
+        animSet.insert(AnimProjectile(rmapView_,
+                                      projectileId_,
+                                      units_.get_projectile(attUnitType),
+                                      attacker.hex,
+                                      defender.hex));
     }
+
+    anims_.push(animSet);
 }
 
-SdlTexture Anduran::make_hp_bar()
-{
-    // TODO:
-    // - 16 px is about the smallest we should go (+2 for border)
-    // - 64 px is ridiculously wide (again +2 for border)
-    // - scale the size of the bar to the relative starting HP of all units
-    // - want most of the time to fall around 32 px
-    // - use log math to ensure we only get the extremes rarely
-
-    // 48 pixels wide, plus one pixel on each side for the border.
-    auto bar = SdlTexture::make_editable_image(win_, 50, 4);
-    SdlEditTexture edit(bar);
-
-    SDL_Color borderColor = {213, 213, 213, 200};
-    SDL_Rect border = {0, 0, 50, 4};
-    edit.fill_rect(border, borderColor);
-
-    SDL_Color bgColor = {0, 0, 0, 80};
-    SDL_Rect background = {1, 1, 48, 2};
-    edit.fill_rect(background, bgColor);
-
-    SDL_Color healthColor = {170, 255, 0, SDL_ALPHA_OPAQUE};
-    SDL_Rect health = {1, 1, 38, 2};
-    edit.fill_rect(health, healthColor);
-
-    return bar;
-}
 
 int main(int, char *[])  // two-argument form required by SDL
 {

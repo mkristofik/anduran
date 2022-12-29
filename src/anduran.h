@@ -63,8 +63,6 @@ private:
                  const GameObject &defender,
                  const BattleEvent &event);
 
-    SdlTexture make_hp_bar();
-
     SdlWindow win_;
     RandomMap rmap_;
     SdlImageManager images_;

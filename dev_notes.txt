@@ -13,22 +13,22 @@
     * add visitor for finished()
 * log battle messages in time with their animations
 * Archer needs a defend image
-- draw/animate HP bars
-    - background color is 0,0,0,80
-    - 4 pixels wide
-    - fill colors are (all at 255 alpha):
-        - 100,255,100 (light green, above max health)
-        - 33,225,0 (green, full health)
-        - 170,255,0 (yellow-green, 75%)
-        - 255,175,0 (light orange, 50%)
-        - 255,155,0 (orange, 25%)
-        - 255,0,0 (red, below 25%)
-    - border color is 213,213,213,200
-    - uses blend mode blend (1)
-    - source: units/drawer.cpp and units/unit.cpp
-    - SDL_CreateTexture, SDL_GetWindowPixelFormat, SDL_TEXTUREACCESS_STREAMING
-    - SDL_AllocFormat, SDL_FreeFormat
-    - SDL_LockTexture, SDL_UnlockTexture
+* draw/animate HP bars
+    * background color is 0,0,0,80
+    * 4 pixels wide
+    * fill colors are (all at 255 alpha):
+        * 100,255,100 (light green, above max health)
+        * 33,225,0 (green, full health)
+        * 170,255,0 (yellow-green, 75%)
+        * 255,175,0 (light orange, 50%)
+        * 255,155,0 (orange, 25%)
+        * 255,0,0 (red, below 25%)
+    * border color is 213,213,213,200
+    * uses blend mode blend (1)
+    * source: units/drawer.cpp and units/unit.cpp
+    * SDL_CreateTexture, SDL_GetWindowPixelFormat, SDL_TEXTUREACCESS_STREAMING
+    * SDL_AllocFormat, SDL_FreeFormat
+    * SDL_LockTexture, SDL_UnlockTexture
 
 
 # Pathfinding
