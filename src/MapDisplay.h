@@ -61,6 +61,9 @@ enum class ZOrder {floor,
                    animating};
 
 
+enum class HexAlign {top, middle, bottom};
+
+
 struct MapEntity
 {
     PartialPixel offset;
@@ -76,10 +79,6 @@ struct MapEntity
     // All unit sprites are drawn looking to the right. A unit walking to the left
     // should face left so it always walks forward.
     void faceHex(const Hex &hDest);
-
-    // Set the image offset to draw it centered on a hex.
-    void alignCentered(const SdlTexture &img);
-    void alignTopCenter(const SdlTexture &img);
 };
 
 
@@ -90,8 +89,13 @@ public:
 
     void draw();
 
+    // Compute the offset to draw the entity image centered horizontally on its
+    // hex, with the given vertical alignment.
+    PartialPixel alignImage(int id, HexAlign vAlign);
+    PartialPixel alignImage(const SdlTexture &img, HexAlign vAlign);
+
     // Adding new entity returns the new entity id.
-    int addEntity(const SdlTexture &img, MapEntity entity);
+    int addEntity(const SdlTexture &img, MapEntity entity, HexAlign vAlign);
     int addEntity(const SdlTexture &img, const Hex &hex, ZOrder z);
     int addHiddenEntity(const SdlTexture &img, ZOrder z);
 
@@ -101,6 +105,7 @@ public:
     void updateEntity(const MapEntity &newState);
     SdlTexture getEntityImage(int id) const;
     void setEntityImage(int id, const SdlTexture &img);
+    void showEntity(int id);
     void hideEntity(int id);
 
     void handleMousePos(Uint32 elapsed_ms);

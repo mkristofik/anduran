@@ -12,6 +12,7 @@
 */
 #include "hex_utils.h"
 #include <algorithm>
+#include <cassert>
 #include <limits>
 #include <tuple>
 
@@ -111,6 +112,8 @@ HexDir Hex::getNeighborDir(const Hex &hNbr) const
         }
     }
 
+    // Should never get here.
+    assert(false);
     return HexDir::n;
 }
 

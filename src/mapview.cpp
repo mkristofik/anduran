@@ -51,9 +51,8 @@ MapViewApp::MapViewApp()
         entity.hex = hex;
         entity.frame = {0, static_cast<int>(rmap_.getTerrain(hex))};
         entity.z = ZOrder::object;
-        entity.alignCentered(village);
 
-        rmapView_.addEntity(village, entity);
+        rmapView_.addEntity(village, entity, HexAlign::middle);
     }
 }
 

@@ -179,18 +179,6 @@ void MapEntity::faceHex(const Hex &hDest)
     }
 }
 
-void MapEntity::alignCentered(const SdlTexture &img)
-{
-    offset.x = HEX_SIZE / 2 - img.frame_width() / 2.0;
-    offset.y = HEX_SIZE / 2 - img.frame_height() / 2.0;
-}
-
-void MapEntity::alignTopCenter(const SdlTexture &img)
-{
-    offset.x = HEX_SIZE / 2 - img.frame_width() / 2.0;
-    offset.y = 0;
-}
-
 
 MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
     : window_(&win),
@@ -278,9 +266,38 @@ void MapDisplay::draw()
     drawEntities();
 }
 
-int MapDisplay::addEntity(const SdlTexture &img, MapEntity entity)
+PartialPixel MapDisplay::alignImage(int id, HexAlign vAlign)
+{
+    SDL_assert(in_bounds(entityImg_, id));
+    return alignImage(entityImg_[id], vAlign);
+}
+
+PartialPixel MapDisplay::alignImage(const SdlTexture &img, HexAlign vAlign)
+{
+    PartialPixel offset;
+
+    switch (vAlign) {
+        case HexAlign::top:
+            offset.x = HEX_SIZE / 2 - img.frame_width() / 2.0;
+            offset.y = 0;
+            break;
+        case HexAlign::middle:
+            offset.x = HEX_SIZE / 2 - img.frame_width() / 2.0;
+            offset.y = HEX_SIZE / 2 - img.frame_height() / 2.0;
+            break;
+        case HexAlign::bottom:
+            offset.x = HEX_SIZE / 2 - img.frame_width() / 2.0;
+            offset.y = HEX_SIZE - img.frame_height();
+            break;
+    }
+
+    return offset;
+}
+
+int MapDisplay::addEntity(const SdlTexture &img, MapEntity entity, HexAlign vAlign)
 {
     int id = entities_.size();
+    entity.offset = alignImage(img, vAlign);
     entity.id = id;
     entities_.push_back(entity);
     entityImg_.push_back(img);
@@ -291,11 +308,10 @@ int MapDisplay::addEntity(const SdlTexture &img, MapEntity entity)
 int MapDisplay::addEntity(const SdlTexture &img, const Hex &hex, ZOrder z)
 {
     MapEntity e;
-    e.alignCentered(img);
     e.hex = hex;
     e.z = z;
 
-    return addEntity(img, e);
+    return addEntity(img, e, HexAlign::middle);
 }
 
 int MapDisplay::addHiddenEntity(const SdlTexture &img, ZOrder z)
@@ -304,7 +320,7 @@ int MapDisplay::addHiddenEntity(const SdlTexture &img, ZOrder z)
     e.z = z;
     e.visible = false;
 
-    return addEntity(img, e);
+    return addEntity(img, e, HexAlign::middle);
 }
 
 MapEntity MapDisplay::getEntity(int id) const
@@ -330,6 +346,12 @@ void MapDisplay::setEntityImage(int id, const SdlTexture &img)
 {
     SDL_assert(in_bounds(entityImg_, id));
     entityImg_[id] = img;
+}
+
+void MapDisplay::showEntity(int id)
+{
+    SDL_assert(in_bounds(entities_, id));
+    entities_[id].visible = true;
 }
 
 void MapDisplay::hideEntity(int id)
