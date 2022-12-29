@@ -16,6 +16,7 @@
 #include "MapDisplay.h"
 #include "SdlTexture.h"
 #include "UnitData.h"
+#include "battle_utils.h"
 #include "hex_utils.h"
 #include "pixel_utils.h"
 
@@ -158,8 +159,6 @@ public:
                AttackType attType);
 
 private:
-    static Uint32 get_hit_ms(AttackType attType);
-
     void start() override;
     void update(Uint32 elapsed_ms) override;
     void stop() override;
@@ -184,10 +183,6 @@ public:
                    const Hex &hDefender);
 
 private:
-    // Compute the direction between attacker and defender's hexes to pick the
-    // projectile frame to draw.  Return N if the hexes aren't neighbors.
-    static HexDir get_angle(const Hex &h1, const Hex &h2);
-
     void start() override;
     void update(Uint32 elapsed_ms) override;
     void stop() override;
@@ -196,7 +191,7 @@ private:
     MapEntity baseState_;
     SdlTexture img_;
     Hex hStart_;
-    HexDir angle_;
+    HexDir angle_;  // determines projectile frame to draw
     PartialPixel pDistToMove_;
 };
 
@@ -213,5 +208,37 @@ private:
     std::string msg_;
 };
 
+
+// Drawing HP bars for units involved in a battle.
+class AnimHealth : public AnimBase
+{
+public:
+    AnimHealth(MapDisplay &display,
+               int attackerBar,
+               int defenderBar,
+               const BattleEvent &event,
+               const Hex &hAttacker,
+               const Hex &hDefender,
+               AttackType attType);
+
+    static int width();
+    static int height();
+
+private:
+    void start() override;
+    void update(Uint32 elapsed_ms) override;
+    void stop() override;
+
+    void draw_hp_bar(int entity, int hp);
+    SDL_Rect border_rect(int relSize);
+    SDL_Color bar_color(double hpFrac);
+
+    int attackerId_;
+    int defenderId_;
+    Uint32 startTime_ms_;
+    BattleEvent event_;
+    Hex hAttacker_;
+    Hex hDefender_;
+};
 
 #endif

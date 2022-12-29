@@ -77,6 +77,7 @@ private:
     Path curPath_;
     Hex hCurPathEnd_;
     int projectileId_;
+    std::array<int, 2> hpBarIds_;
     AnimQueue anims_;
     Pathfinder pathfind_;
     UnitManager units_;

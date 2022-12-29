@@ -24,6 +24,14 @@ namespace
     const Uint32 RANGED_FLIGHT_MS = 150;
     const Uint32 RANGED_HIT_MS = RANGED_SHOT_MS + RANGED_FLIGHT_MS;
 
+    Uint32 get_hit_ms(AttackType attType)
+    {
+        if (attType == AttackType::ranged) {
+            return RANGED_HIT_MS;
+        }
+        return MELEE_HIT_MS;
+    }
+
     // Return to idle state but retain facing.
     void set_idle(MapEntity &entity, const MapEntity &baseState)
     {
@@ -41,8 +49,8 @@ namespace
             return {};
         }
 
-        auto iter = lower_bound(begin(frameList), end(frameList), elapsed_ms);
-        const auto col = std::min<int>(distance(begin(frameList), iter),
+        auto iter = std::ranges::lower_bound(frameList, elapsed_ms);
+        const auto col = std::min<int>(distance(std::ranges::begin(frameList), iter),
                                        ssize(frameList) - 1);
         return {0, col};
     }
@@ -349,14 +357,6 @@ AnimDefend::AnimDefend(MapDisplay &display,
 {
 }
 
-Uint32 AnimDefend::get_hit_ms(AttackType attType)
-{
-    if (attType == AttackType::ranged) {
-        return RANGED_HIT_MS;
-    }
-    return MELEE_HIT_MS;
-}
-
 void AnimDefend::start()
 {
     auto obj = get_entity(entity_);
@@ -405,23 +405,12 @@ AnimProjectile::AnimProjectile(MapDisplay &display,
     baseState_(),
     img_(img),
     hStart_(hAttacker),
-    angle_(get_angle(hAttacker, hDefender)),
+    angle_(hAttacker.getNeighborDir(hDefender)),
     // Rather than figure out how far the projectile has to fly so its leading
     // edge stops at the target, just shorten the flight distance by a fudge
     // factor.
     pDistToMove_(get_display().pixelDelta(hAttacker, hDefender) * 0.9)
 {
-}
-
-HexDir AnimProjectile::get_angle(const Hex &h1, const Hex &h2)
-{
-    for (HexDir d : HexDir()) {
-        if (h1.getNeighbor(d) == h2) {
-            return d;
-        }
-    }
-
-    return HexDir::n;
 }
 
 void AnimProjectile::start()
@@ -468,4 +457,164 @@ AnimLog::AnimLog(MapDisplay &display, const std::string &message)
 void AnimLog::start()
 {
     SDL_Log(msg_.c_str());
+}
+
+
+AnimHealth::AnimHealth(MapDisplay &display,
+                       int attackerBar,
+                       int defenderBar,
+                       const BattleEvent &event,
+                       const Hex &hAttacker,
+                       const Hex &hDefender,
+                       AttackType attType)
+    : AnimBase(display, get_hit_ms(attType) + DEFEND_MS),
+    attackerId_(attackerBar),
+    defenderId_(defenderBar),
+    startTime_ms_(get_hit_ms(attType)),
+    event_(event),
+    hAttacker_(hAttacker),
+    hDefender_(hDefender)
+{
+}
+
+int AnimHealth::width()
+{
+    // Streaming textures can't be resized, so allow for a 64px HP bar, plus a
+    // 1px border all around.
+    return 66;
+}
+
+int AnimHealth::height()
+{
+    return 4;
+}
+
+void AnimHealth::start()
+{
+    auto attAlign = HexAlign::top;
+    auto defAlign = HexAlign::bottom;
+    auto relDir = hAttacker_.getNeighborDir(hDefender_);
+    if (relDir == HexDir::nw || relDir == HexDir::n || relDir == HexDir::ne) {
+        std::swap(attAlign, defAlign);
+    }
+
+    auto &display = get_display();
+
+    auto attBar = get_entity(attackerId_);
+    attBar.offset = display.alignImage(attackerId_, attAlign);
+    attBar.hex = hAttacker_;
+    attBar.visible = true;
+    draw_hp_bar(attackerId_, event_.attackerHp);
+    update_entity(attBar);
+
+    auto defBar = get_entity(defenderId_);
+    defBar.offset = display.alignImage(defenderId_, defAlign);
+    defBar.hex = hDefender_;
+    defBar.visible = true;
+    draw_hp_bar(defenderId_, event_.defenderHp);
+    update_entity(defBar);
+}
+
+void AnimHealth::update(Uint32 elapsed_ms)
+{
+    if (elapsed_ms < startTime_ms_) {
+        return;
+    }
+
+    auto frac = static_cast<double>(elapsed_ms - startTime_ms_) / DEFEND_MS;
+    frac = std::min(frac, 1.0);
+    draw_hp_bar(defenderId_, event_.defenderHp - frac * event_.damage);
+}
+
+void AnimHealth::stop()
+{
+    draw_hp_bar(defenderId_, event_.defenderHp - event_.damage);
+}
+
+// source: Battle for Wesnoth src/units/drawer.cpp
+void AnimHealth::draw_hp_bar(int entity, int hp)
+{
+    static const SDL_Color BORDER_COLOR = {213, 213, 213, 200};
+    static const SDL_Color BG_COLOR = {0, 0, 0, 80};
+
+    int hpMax = 0;
+    SDL_Rect border;
+    if (entity == attackerId_) {
+        hpMax = event_.attackerStartHp;
+        border = border_rect(event_.attackerRelSize);
+    }
+    else {
+        hpMax = event_.defenderStartHp;
+        border = border_rect(event_.defenderRelSize);
+    }
+
+    auto img = get_display().getEntityImage(entity);
+    SdlEditTexture edit(img);
+    edit.fill_rect(border, BORDER_COLOR);
+
+    SDL_Rect background = {border.x + 1, border.y + 1, border.w - 2, border.h - 2};
+    edit.fill_rect(background, BG_COLOR);
+
+    if (hp > 0) {
+        auto hpFrac = static_cast<double>(hp) / hpMax;
+        auto hpBar = background;
+        hpBar.w *= hpFrac;
+        edit.fill_rect(hpBar, bar_color(hpFrac));
+    }
+}
+
+SDL_Rect AnimHealth::border_rect(int relSize)
+{
+    // Compute the size of the colored HP bar, then allow for a 1px border on all
+    // sides.
+    const int MIN_WIDTH = 16;
+    const int STD_WIDTH = 32;
+    const int LARGE_WIDTH = 48;
+    const int MAX_WIDTH = width() - 2;
+
+    double width = 0;
+    if (relSize > 200) {
+        // Use the largest sizes for units more than 2x bigger than average.
+        // (capped at 10x)
+        auto scaledWidth = std::lerp(LARGE_WIDTH, MAX_WIDTH, (relSize - 200) / 800.0);
+        width = std::min<double>(MAX_WIDTH, scaledWidth);
+    }
+    else if (relSize >= 100) {
+        width = std::lerp(STD_WIDTH, LARGE_WIDTH, (relSize - 100) / 100.0);
+    }
+    else {
+        auto scaledWidth = std::lerp(MIN_WIDTH, STD_WIDTH, relSize / 100.0);
+        width = std::max<double>(MIN_WIDTH, scaledWidth);
+    }
+
+    // Adjust the drawing rectangle to be centered within the texture.
+    SDL_Rect rect = {0, 0, static_cast<int>(width) + 2, height()};
+    rect.x = MAX_WIDTH / 2 - rect.w / 2 + 1;
+
+    return rect;
+}
+
+// source for colors: Battle for Wesnoth src/units/unit.cpp
+SDL_Color AnimHealth::bar_color(double hpFrac)
+{
+    static const SDL_Color GREEN = {33, 225, 0, SDL_ALPHA_OPAQUE};
+    static const SDL_Color YELLOW_GREEN = {170, 255, 0, SDL_ALPHA_OPAQUE};
+    static const SDL_Color LIGHT_ORANGE = {255, 175, 0, SDL_ALPHA_OPAQUE};
+    static const SDL_Color ORANGE = {255, 155, 0, SDL_ALPHA_OPAQUE};
+    static const SDL_Color RED = {255, 0, 0, SDL_ALPHA_OPAQUE};
+
+    if (hpFrac >= 1.0) {
+        return GREEN;
+    }
+    else if (hpFrac >= 0.75) {
+        return YELLOW_GREEN;
+    }
+    else if (hpFrac >= 0.5) {
+        return LIGHT_ORANGE;
+    }
+    else if (hpFrac >= 0.25) {
+        return ORANGE;
+    }
+
+    return RED;
 }

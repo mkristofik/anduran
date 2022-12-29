@@ -276,12 +276,12 @@ SdlEditTexture::SdlEditTexture(SdlTexture &img)
         SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO, "Error locking texture: %s", SDL_GetError());
         return;
     }
+    isLocked_ = true;
 
     // Clear the whole surface (we have to write every pixel at least once).
     SDL_Rect whole = {0, 0, surf_->w, surf_->h};
     SDL_Color clear = {0, 0, 0, SDL_ALPHA_TRANSPARENT};
     fill_rect(whole, clear);
-    isLocked_ = true;
 }
 
 SdlEditTexture::~SdlEditTexture()

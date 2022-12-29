@@ -39,6 +39,7 @@ Anduran::Anduran()
     curPath_(),
     hCurPathEnd_(),
     projectileId_(-1),
+    hpBarIds_(),
     anims_(),
     pathfind_(rmap_, game_),
     units_("data/units.json"s, win_, images_),
@@ -203,14 +204,6 @@ void Anduran::load_players()
     enemy.type = ObjectType::army;
     game_.add_object(enemy);
 
-    // Give the Orc a health bar.
-    auto barImg = make_hp_bar();
-    MapEntity hpBar;
-    hpBar.hex = enemy.hex;
-    hpBar.z = ZOrder::flag;
-    hpBar.alignTopCenter(barImg);
-    rmapView_.addEntity(barImg, hpBar);
-
     Army orcArmy;
     orcArmy.units[0] = {orc, 6};
     orcArmy.entity = enemy.entity;
@@ -219,6 +212,14 @@ void Anduran::load_players()
     // Add a placeholder projectile for ranged units.
     auto arrow = images_.make_texture("missile"s, win_);
     projectileId_ = rmapView_.addHiddenEntity(arrow, ZOrder::projectile);
+
+    // Create streaming textures for the HP bars.
+    for (auto i = 0u; i < size(hpBarIds_); ++i) {
+        auto img = SdlTexture::make_editable_image(win_,
+                                                   AnimHealth::width(),
+                                                   AnimHealth::height());
+        hpBarIds_[i] = rmapView_.addHiddenEntity(img, ZOrder::animating);
+    }
 }
 
 void Anduran::load_villages()
@@ -404,7 +405,10 @@ void Anduran::battle_action(GameObject &player, GameObject &enemy)
     }
 
     endingAnim.insert(AnimLog(rmapView_, endLog));
+    endingAnim.insert(AnimHide(rmapView_, hpBarIds_[0]));
+    endingAnim.insert(AnimHide(rmapView_, hpBarIds_[1]));
     anims_.push(endingAnim);
+
     attacker.update(result.attacker);
     defender.update(result.defender);
     game_.update_army(attacker);
@@ -529,6 +533,13 @@ void Anduran::animate(const GameObject &attacker,
                                     attacker.hex,
                                     AttackType::melee));
         meleeAnim.insert(logMessage);
+        meleeAnim.insert(AnimHealth(rmapView_,
+                                    hpBarIds_[0],
+                                    hpBarIds_[1],
+                                    event,
+                                    attacker.hex,
+                                    defender.hex,
+                                    AttackType::melee));
         anims_.push(meleeAnim);
     }
     else {
@@ -550,6 +561,13 @@ void Anduran::animate(const GameObject &attacker,
                                          units_.get_projectile(attUnitType),
                                          attacker.hex,
                                          defender.hex));
+        rangedAnim.insert(AnimHealth(rmapView_,
+                                     hpBarIds_[0],
+                                     hpBarIds_[1],
+                                     event,
+                                     attacker.hex,
+                                     defender.hex,
+                                     AttackType::ranged));
         rangedAnim.insert(logMessage);
         anims_.push(rangedAnim);
     }

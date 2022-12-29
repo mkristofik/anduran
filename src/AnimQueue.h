@@ -28,7 +28,8 @@ using AnimType = std::variant<std::monostate,
                               AnimRanged,
                               AnimDefend,
                               AnimProjectile,
-                              AnimLog>;
+                              AnimLog,
+                              AnimHealth>;
 
 
 // Set of animations to be run in parallel, such as the parts of a battle.
@@ -42,7 +43,7 @@ public:
     bool finished() const;
 
 private:
-    std::array<AnimType, 4> anims_;
+    std::array<AnimType, 6> anims_;
     int size_;
 };
 
