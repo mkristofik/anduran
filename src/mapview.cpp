@@ -30,6 +30,8 @@ public:
     void update_frame(Uint32 elapsed_ms) override;
 
 private:
+    void place_terrain_objects(const std::string &imgName, ObjectType type);
+
     SdlWindow win_;
     RandomMap rmap_;
     SdlImageManager images_;
@@ -45,15 +47,8 @@ MapViewApp::MapViewApp()
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
-    auto village = images_.make_texture("villages"s, win_);
-    for (auto &hex : rmap_.getObjectTiles(ObjectType::village)) {
-        MapEntity entity;
-        entity.hex = hex;
-        entity.frame = {0, static_cast<int>(rmap_.getTerrain(hex))};
-        entity.z = ZOrder::object;
-
-        rmapView_.addEntity(village, entity, HexAlign::middle);
-    }
+    place_terrain_objects("villages"s, ObjectType::village);
+    place_terrain_objects("camps"s, ObjectType::camp);
 }
 
 void MapViewApp::update_frame(Uint32 elapsed_ms)
@@ -64,6 +59,19 @@ void MapViewApp::update_frame(Uint32 elapsed_ms)
     win_.clear();
     rmapView_.draw();
     win_.update();
+}
+
+void MapViewApp::place_terrain_objects(const std::string &imgName, ObjectType type)
+{
+    auto img = images_.make_texture(imgName, win_);
+    for (auto &hex : rmap_.getObjectTiles(type)) {
+        MapEntity entity;
+        entity.hex = hex;
+        entity.frame = {0, static_cast<int>(rmap_.getTerrain(hex))};
+        entity.z = ZOrder::object;
+
+        rmapView_.addEntity(img, entity, HexAlign::middle);
+    }
 }
 
 

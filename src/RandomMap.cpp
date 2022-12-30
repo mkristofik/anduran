@@ -749,6 +749,9 @@ void RandomMap::placeObjects()
             placeObject(ObjectType::chest, r);
             placeObject(ObjectType::resource, r);
             placeObject(ObjectType::village, r);
+            if (dist2.get() == 1) {
+                placeObject(ObjectType::camp, r);
+            }
         }
 
         if (regionTerrain_[r] == Terrain::desert) {
@@ -758,11 +761,6 @@ void RandomMap::placeObjects()
             if (dist2.get() == 1) {
                 placeObject(ObjectType::windmill, r);
             }
-        }
-        else if (regionTerrain_[r] == Terrain::dirt ||
-                 regionTerrain_[r] == Terrain::snow)
-        {
-            placeObject(ObjectType::camp, r);
         }
     }
 }

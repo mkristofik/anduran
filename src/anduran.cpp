@@ -228,17 +228,18 @@ void Anduran::load_villages()
 
     auto &neutralFlag = flagImages_[Team::neutral];
     for (const auto &hex : rmap_.getObjectTiles(ObjectType::village)) {
-        int terrain = static_cast<int>(rmap_.getTerrain(hex));
+        MapEntity entity;
+        entity.hex = hex;
+        // TODO: add a convenience function for this?
+        entity.frame = {0, static_cast<int>(rmap_.getTerrain(hex))};
+        entity.z = ZOrder::object;
+
         GameObject village;
         village.hex = hex;
-        village.entity = rmapView_.addEntity(villageImage, village.hex, ZOrder::object);
+        village.entity = rmapView_.addEntity(villageImage, entity, HexAlign::middle);
         village.secondary = rmapView_.addEntity(neutralFlag, village.hex, ZOrder::flag);
         village.type = ObjectType::village;
         game_.add_object(village);
-
-        auto entity = rmapView_.getEntity(village.entity);
-        entity.frame = {0, terrain};
-        rmapView_.updateEntity(entity);
     }
 }
 
@@ -257,16 +258,16 @@ void Anduran::load_objects()
     }
 
     // Draw different camp images depending on terrain.
-    const auto campImg = images_.make_texture("camp"s, win_);
-    const auto leantoImg = images_.make_texture("leanto"s, win_);
+    const auto campImg = images_.make_texture("camps"s, win_);
     for (const auto &hex : rmap_.getObjectTiles(ObjectType::camp)) {
+        MapEntity entity;
+        entity.hex = hex;
+        entity.frame = {0, static_cast<int>(rmap_.getTerrain(hex))};
+        entity.z = ZOrder::object;
+
         GameObject obj;
         obj.hex = hex;
-        auto img = campImg;
-        if (rmap_.getTerrain(obj.hex) == Terrain::snow) {
-            img = leantoImg;
-        }
-        obj.entity = rmapView_.addEntity(img, obj.hex, ZOrder::object);
+        obj.entity = rmapView_.addEntity(campImg, entity, HexAlign::middle);
         obj.type = ObjectType::camp;
         game_.add_object(obj);
     }
