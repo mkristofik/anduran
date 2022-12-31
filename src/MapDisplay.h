@@ -79,6 +79,9 @@ struct MapEntity
     // All unit sprites are drawn looking to the right. A unit walking to the left
     // should face left so it always walks forward.
     void faceHex(const Hex &hDest);
+
+    // Many sprite sheets have one image per terrain type.
+    void setTerrainFrame(Terrain terrain);
 };
 
 

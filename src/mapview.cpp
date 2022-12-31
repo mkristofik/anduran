@@ -67,8 +67,8 @@ void MapViewApp::place_terrain_objects(const std::string &imgName, ObjectType ty
     for (auto &hex : rmap_.getObjectTiles(type)) {
         MapEntity entity;
         entity.hex = hex;
-        entity.frame = {0, static_cast<int>(rmap_.getTerrain(hex))};
         entity.z = ZOrder::object;
+        entity.setTerrainFrame(rmap_.getTerrain(hex));
 
         rmapView_.addEntity(img, entity, HexAlign::middle);
     }

@@ -230,9 +230,8 @@ void Anduran::load_villages()
     for (const auto &hex : rmap_.getObjectTiles(ObjectType::village)) {
         MapEntity entity;
         entity.hex = hex;
-        // TODO: add a convenience function for this?
-        entity.frame = {0, static_cast<int>(rmap_.getTerrain(hex))};
         entity.z = ZOrder::object;
+        entity.setTerrainFrame(rmap_.getTerrain(hex));
 
         GameObject village;
         village.hex = hex;
@@ -262,8 +261,8 @@ void Anduran::load_objects()
     for (const auto &hex : rmap_.getObjectTiles(ObjectType::camp)) {
         MapEntity entity;
         entity.hex = hex;
-        entity.frame = {0, static_cast<int>(rmap_.getTerrain(hex))};
         entity.z = ZOrder::object;
+        entity.setTerrainFrame(rmap_.getTerrain(hex));
 
         GameObject obj;
         obj.hex = hex;

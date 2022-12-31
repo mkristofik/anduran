@@ -179,6 +179,11 @@ void MapEntity::faceHex(const Hex &hDest)
     }
 }
 
+void MapEntity::setTerrainFrame(Terrain terrain)
+{
+    frame = {0, static_cast<int>(terrain)};
+}
+
 
 MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
     : window_(&win),
@@ -726,18 +731,18 @@ void MapDisplay::addCastleFloors()
     auto floor = images_->make_texture("tiles-castle"s, *window_);
 
     for (auto &hCastle : map_->getCastleTiles()) {
-        int terrain = static_cast<int>(map_->getTerrain(hCastle));
+        auto terrain = map_->getTerrain(hCastle);
 
         // Draw the floor on the castle hex and all its neighbors.
         int id = addEntity(floor, hCastle, ZOrder::floor);
-        entities_[id].frame = {0, terrain};
+        entities_[id].setTerrainFrame(terrain);
         for (HexDir d : HexDir()) {
             // South neighbor of the castle tile is open
             if (d == HexDir::s) {
                 continue;
             }
             id = addEntity(floor, hCastle.getNeighbor(d), ZOrder::floor);
-            entities_[id].frame = {0, terrain};
+            entities_[id].setTerrainFrame(terrain);
         }
     }
 }
