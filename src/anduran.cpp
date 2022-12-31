@@ -137,19 +137,21 @@ void Anduran::handle_mouse_pos()
 
 void Anduran::load_images()
 {
-    const auto championSurfaces = applyTeamColors(images_.get_surface("champion"s));
-    for (auto i = 0u; i < size(championSurfaces); ++i) {
-        championImages_[i] = SdlTexture::make_image(championSurfaces[i], win_);
+    std::string filenames[] = {"champion1"s, "champion2"s, "champion3"s, "champion4"s};
+    for (auto i = 0u; i < size(filenames); ++i) {
+        auto championSurface = applyTeamColor(images_.get_surface(filenames[i]),
+                                              static_cast<Team>(i));
+        championImages_.push_back(SdlTexture::make_image(championSurface, win_));
     }
 
-    const auto ellipse = images_.get_surface("ellipse"s);
-    const auto ellipseSurfaces = applyTeamColors(ellipseToRefColor(ellipse));
+    auto ellipse = images_.get_surface("ellipse"s);
+    auto ellipseSurfaces = applyTeamColors(ellipseToRefColor(ellipse));
     for (auto i = 0u; i < size(ellipseSurfaces); ++i) {
         ellipseImages_[i] = SdlTexture::make_image(ellipseSurfaces[i], win_);
     }
 
-    const auto flag = images_.get_surface("flag"s);
-    const auto flagSurfaces = applyTeamColors(flagToRefColor(flag));
+    auto flag = images_.get_surface("flag"s);
+    auto flagSurfaces = applyTeamColors(flagToRefColor(flag));
     for (auto i = 0u; i < size(flagSurfaces); ++i) {
         flagImages_[i] = SdlTexture::make_image(flagSurfaces[i], win_);
     }
@@ -160,6 +162,7 @@ void Anduran::load_players()
     // Randomize the starting locations for each player.
     auto castles = rmap_.getCastleTiles();
     SDL_assert(ssize(castles) <= enum_size<Team>());
+    SDL_assert(ssize(castles) == ssize(championImages_));
     randomize(castles);
 
     for (auto i = 0u; i < size(castles); ++i) {
@@ -336,7 +339,7 @@ void Anduran::move_action(GameObject &player, const Path &path)
             game_.update_object(obj);
             moveEndAnim.insert(AnimDisplay(rmapView_,
                                            obj.secondary,
-                                           flagImages_[curPlayerNum_]));
+                                           flagImages_[obj.team]));
         }
         else if (action == ObjectAction::pickup) {
             moveEndAnim.insert(AnimHide(rmapView_, obj.entity));

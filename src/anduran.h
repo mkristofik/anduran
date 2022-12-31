@@ -79,7 +79,7 @@ private:
     AnimQueue anims_;
     Pathfinder pathfind_;
     UnitManager units_;
-    TeamColoredTextures championImages_;
+    std::vector<SdlTexture> championImages_;
     TeamColoredTextures ellipseImages_;
     TeamColoredTextures flagImages_;
 };

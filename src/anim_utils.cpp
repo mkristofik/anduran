@@ -94,16 +94,22 @@ MapEntity AnimBase::get_entity(int id) const
     return get_display().getEntity(id);
 }
 
-void AnimBase::update_entity(const MapEntity &entity)
+void AnimBase::update_entity(MapEntity &entity)
 {
     get_display().updateEntity(entity);
 }
 
-void AnimBase::update_entity(const MapEntity &entity, const SdlTexture &img)
+void AnimBase::update_entity(MapEntity &entity, const SdlTexture &img)
 {
     auto &display = get_display();
+    align_image(entity, img);
     display.updateEntity(entity);
     display.setEntityImage(entity.id, img);
+}
+
+void AnimBase::align_image(MapEntity &entity, const SdlTexture &img) const
+{
+    entity.offset = get_display().alignImage(img, HexAlign::middle);
 }
 
 MapDisplay & AnimBase::get_display()
@@ -259,6 +265,7 @@ AnimMelee::AnimMelee(MapDisplay &display,
 void AnimMelee::start()
 {
     auto obj = get_entity(entity_);
+    align_image(obj, anim_);
 
     // Can't do base state until we get here because other animations might be
     // running.
@@ -316,6 +323,7 @@ AnimRanged::AnimRanged(MapDisplay &display,
 void AnimRanged::start()
 {
     auto obj = get_entity(entity_);
+    align_image(obj, anim_);
 
     baseState_ = obj;
     obj.z = ZOrder::animating;
@@ -360,6 +368,7 @@ AnimDefend::AnimDefend(MapDisplay &display,
 void AnimDefend::start()
 {
     auto obj = get_entity(entity_);
+    align_image(obj, idleImg_);
 
     baseState_ = obj;
     obj.z = ZOrder::animating;

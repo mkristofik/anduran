@@ -36,8 +36,11 @@ public:
 
 protected:
     MapEntity get_entity(int id) const;
-    void update_entity(const MapEntity &entity);
-    void update_entity(const MapEntity &entity, const SdlTexture &img);
+    void update_entity(MapEntity &entity);
+    void update_entity(MapEntity &entity, const SdlTexture &img);
+
+    // Reset the pixel offset so the image is drawn in the center of its hex.
+    void align_image(MapEntity &entity, const SdlTexture &img) const;
 
     MapDisplay & get_display();
     const MapDisplay & get_display() const;

@@ -94,8 +94,8 @@ public:
 
     // Compute the offset to draw the entity image centered horizontally on its
     // hex, with the given vertical alignment.
-    PartialPixel alignImage(int id, HexAlign vAlign);
-    PartialPixel alignImage(const SdlTexture &img, HexAlign vAlign);
+    PartialPixel alignImage(int id, HexAlign vAlign) const;
+    PartialPixel alignImage(const SdlTexture &img, HexAlign vAlign) const;
 
     // Adding new entity returns the new entity id.
     int addEntity(const SdlTexture &img, MapEntity entity, HexAlign vAlign);

@@ -31,6 +31,7 @@ using TeamColoredSurfaces = EnumSizedArray<SdlSurface, Team>;
 using TeamColoredTextures = EnumSizedArray<SdlTexture, Team>;
 
 
+SdlSurface applyTeamColor(const SdlSurface &src, Team team);
 TeamColoredSurfaces applyTeamColors(const SdlSurface &src);
 
 // Ellipses are red, convert them to the reference color so they can be team

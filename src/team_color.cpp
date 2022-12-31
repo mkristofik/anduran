@@ -184,6 +184,11 @@ namespace
 }
 
 
+SdlSurface applyTeamColor(const SdlSurface &src, Team team)
+{
+    return applyColors(src, teamColors[static_cast<int>(team)]);
+}
+
 TeamColoredSurfaces applyTeamColors(const SdlSurface &src)
 {
     TeamColoredSurfaces images;

@@ -271,13 +271,13 @@ void MapDisplay::draw()
     drawEntities();
 }
 
-PartialPixel MapDisplay::alignImage(int id, HexAlign vAlign)
+PartialPixel MapDisplay::alignImage(int id, HexAlign vAlign) const
 {
     SDL_assert(in_bounds(entityImg_, id));
     return alignImage(entityImg_[id], vAlign);
 }
 
-PartialPixel MapDisplay::alignImage(const SdlTexture &img, HexAlign vAlign)
+PartialPixel MapDisplay::alignImage(const SdlTexture &img, HexAlign vAlign) const
 {
     PartialPixel offset;
 
