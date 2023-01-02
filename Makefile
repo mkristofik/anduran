@@ -36,7 +36,8 @@ vpath %.cpp $(SRC_DIR)
 vpath %.c $(SRC_DIR)
 
 RMAPGEN = rmapgen$(EXE)
-RMAPGEN_SRC = RandomMap.cpp \
+RMAPGEN_SRC = ObjectManager.cpp \
+	RandomMap.cpp \
 	RandomRange.cpp \
 	hex_utils.cpp \
 	json_utils.cpp \
@@ -51,6 +52,7 @@ RMAPGEN_DEPS = $(RMAPGEN_OBJS:%.o=%.d)
 
 MAPVIEW = mapview$(EXE)
 MAPVIEW_SRC = MapDisplay.cpp \
+	ObjectManager.cpp \
 	RandomMap.cpp \
 	RandomRange.cpp \
 	SdlApp.cpp \
@@ -69,6 +71,7 @@ ANDURAN = anduran$(EXE)
 ANDURAN_SRC = AnimQueue.cpp \
 	GameState.cpp \
 	MapDisplay.cpp \
+	ObjectManager.cpp \
 	Pathfinder.cpp \
 	RandomMap.cpp \
 	RandomRange.cpp \

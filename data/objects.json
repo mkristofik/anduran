@@ -1,0 +1,59 @@
+{
+    "camp": {
+        "name": "Abandoned camp",
+        "img": "camps",
+        "per-region": 1,
+        "per-castle": 0,
+        "probability": 50,
+        "visit": false
+    },
+    "chest": {
+        "name": "Treasure chest",
+        "img": "chest",
+        "per-region": 1,
+        "per-castle": 2,
+        "visit": false
+    },
+    "oasis": {
+        "name": "Oasis",
+        "img": "oasis",
+        "terrain": [1],
+        "per-region": 1,
+        "per-castle": 1,
+        "visit": true,
+        "flag": false
+    },
+    "resource": {
+        "name": "Gold",
+        "img": "gold",
+        "per-region": 1,
+        "per-castle": 2,
+        "visit": false
+    },
+    "shipwreck": {
+        "name": "Shipwreck",
+        "img": "shipwreck",
+        "terrain": [0],
+        "per-region": 1,
+        "visit": true,
+        "flag": false
+    },
+    "village": {
+        "name": "Village",
+        "img": "villages",
+        "per-region": 1,
+        "per-castle": 0,
+        "visit": true,
+        "flag": true
+    },
+    "windmill": {
+        "name": "Windmill",
+        "img": "windmill",
+        "terrain": [3],
+        "per-region": 1,
+        "per-castle": 1,
+        "probability": 50,
+        "visit": true,
+        "flag": true
+    }
+}

@@ -225,6 +225,12 @@ void Anduran::load_players()
     }
 }
 
+// TODO: simplify this with object manager
+//   - loop over all configured objects
+//   - load texture for image name
+//   - if texture has 6 frames, assume we need to set terrain frame
+//   - if object flaggable, add a secondary with the neutral flag
+//   - else just do it the simple way
 void Anduran::load_villages()
 {
     SdlTexture villageImage = images_.make_texture("villages"s, win_);

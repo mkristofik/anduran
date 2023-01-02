@@ -68,6 +68,7 @@ bool operator<(const Army &lhs, const Army &rhs);
 bool operator<(const Army &lhs, int rhs);
 
 
+// TODO: rename this to BattleAction
 enum class ActionType {attack, retaliate, next_round};
 
 struct BattleEvent

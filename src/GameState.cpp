@@ -81,6 +81,7 @@ GameAction GameState::hex_action(const GameObject &player, const Hex &hex) const
     else {
         auto range = objects_.get<ByHex>().equal_range(hex);
         for (auto objIter = range.first; objIter != range.second; ++objIter) {
+            // TODO: object manager can tell us what the action is
             if ((objIter->type == ObjectType::village ||
                  objIter->type == ObjectType::windmill) &&
                 objIter->team != player.team)

@@ -28,6 +28,7 @@
 #include <iterator>
 #include <memory>
 #include <queue>
+#include <string>
 #include <tuple>
 
 namespace
@@ -36,6 +37,7 @@ namespace
     const int MAX_ALTITUDE = 3;
     const double NOISE_FEATURE_SIZE = 2.0;
     const double OBSTACLE_LEVEL = 0.2;
+    const std::string OBJECT_CONFIG = "data/objects.json";
 
     auto getCastleHexes(const Hex &startHex)
     {
@@ -122,7 +124,8 @@ RandomMap::RandomMap(int width)
     regionTiles_(),
     castles_(),
     castleRegions_(),
-    objectTiles_()
+    objectTiles_(),
+    objectMgr_(OBJECT_CONFIG)
 {
     generateRegions();
     buildNeighborGraphs();
@@ -146,7 +149,8 @@ RandomMap::RandomMap(const char *filename)
     regionTiles_(),
     castles_(),
     castleRegions_(),
-    objectTiles_()
+    objectTiles_(),
+    objectMgr_(OBJECT_CONFIG)
 {
     auto doc = jsonReadFile(filename);
 
@@ -256,6 +260,11 @@ std::vector<Hex> RandomMap::getObjectTiles(ObjectType type)
     auto name = obj_name_from_type(type);
     assert(!name.empty());
     return hexesFromInt(objectTiles_.find(name));
+}
+
+const ObjectManager & RandomMap::getObjectConfig() const
+{
+    return objectMgr_;
 }
 
 Hex RandomMap::hexFromInt(int index) const
@@ -734,6 +743,13 @@ void RandomMap::placeObjects()
     RandomRange dist2(0, 1);
 
     for (int r = 0; r < numRegions_; ++r) {
+        // TODO: use object manager
+        //   - loop over all configured object types
+        //   - if object allowed on this terrain AND at least 1 allowed in this
+        //   region (or castle)
+        //   - for # allowed:
+        //      - compute probability if < 100
+        //      - place object if test passed
         if (regionTerrain_[r] == Terrain::water) {
             placeObject(ObjectType::shipwreck, r);
             continue;

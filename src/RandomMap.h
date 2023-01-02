@@ -14,6 +14,7 @@
 #define RANDOM_MAP_H
 
 #include "FlatMultimap.h"
+#include "ObjectManager.h"
 #include "hex_utils.h"
 #include "iterable_enum_class.h"
 #include "object_types.h"
@@ -47,6 +48,7 @@ public:
 
     // Return a list of tiles containing a given object type.
     std::vector<Hex> getObjectTiles(ObjectType type);
+    const ObjectManager & getObjectConfig() const;
 
     // Convert between integer and Hex representations of a tile location.
     Hex hexFromInt(int index) const;
@@ -113,6 +115,7 @@ private:
     std::vector<int> castles_;  // center tile of each castle
     std::vector<int> castleRegions_;
     FlatMultimap<std::string, int> objectTiles_;
+    ObjectManager objectMgr_;
 };
 
 

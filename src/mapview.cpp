@@ -15,6 +15,8 @@
 #include "SdlApp.h"
 #include "SdlImageManager.h"
 #include "SdlWindow.h"
+#include "iterable_enum_class.h"
+#include "terrain.h"
 
 #include <cstdlib>
 #include <string>
@@ -30,6 +32,7 @@ public:
     void update_frame(Uint32 elapsed_ms) override;
 
 private:
+    void place_objects();
     void place_terrain_objects(const std::string &imgName, ObjectType type);
 
     SdlWindow win_;
@@ -47,8 +50,7 @@ MapViewApp::MapViewApp()
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
-    place_terrain_objects("villages"s, ObjectType::village);
-    place_terrain_objects("camps"s, ObjectType::camp);
+    place_objects();
 }
 
 void MapViewApp::update_frame(Uint32 elapsed_ms)
@@ -61,16 +63,24 @@ void MapViewApp::update_frame(Uint32 elapsed_ms)
     win_.update();
 }
 
-void MapViewApp::place_terrain_objects(const std::string &imgName, ObjectType type)
+void MapViewApp::place_objects()
 {
-    auto img = images_.make_texture(imgName, win_);
-    for (auto &hex : rmap_.getObjectTiles(type)) {
-        MapEntity entity;
-        entity.hex = hex;
-        entity.z = ZOrder::object;
-        entity.setTerrainFrame(rmap_.getTerrain(hex));
+    for (auto &obj : rmap_.getObjectConfig()) {
+        auto img = images_.make_texture(obj.imgName, win_);
 
-        rmapView_.addEntity(img, entity, HexAlign::middle);
+        for (auto &hex : rmap_.getObjectTiles(obj.type)) {
+            MapEntity entity;
+            entity.hex = hex;
+            entity.z = ZOrder::object;
+
+            // Assume any sprite sheet with the same number of frames as there
+            // are terrains is intended to use a terrain frame.
+            if (img.cols() == enum_size<Terrain>()) {
+                entity.setTerrainFrame(rmap_.getTerrain(hex));
+            }
+
+            rmapView_.addEntity(img, entity, HexAlign::middle);
+        }
     }
 }
 
