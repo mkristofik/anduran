@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2020 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2023 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -15,6 +15,7 @@
 #include "GameState.h"
 #include "RandomMap.h"
 #include "container_utils.h"
+#include "terrain.h"
 #include <algorithm>
 
 bool operator>(const EstimatedPathCost &lhs, const EstimatedPathCost &rhs)

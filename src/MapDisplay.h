@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2021 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2023 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -19,6 +19,7 @@
 #include "iterable_enum_class.h"
 #include "object_types.h"
 #include "pixel_utils.h"
+#include "terrain.h"
 
 #include "SDL.h"
 #include <vector>
