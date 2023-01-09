@@ -286,7 +286,7 @@ void Battle::attack(int targetIndex, DamageType dType)
     int dmg = att.damage(dType);
     if (log_) {
         BattleEvent event;
-        event.action = ActionType::attack;
+        event.action = BattleAction::attack;
         event.attackerType = att.type();
         event.attackerHp = att.total_hp();
         event.numAttackers = att.num;
@@ -324,7 +324,7 @@ void Battle::attack(int targetIndex, DamageType dType)
         dmg = def.damage(dType);
         if (log_) {
             BattleEvent event;
-            event.action = ActionType::retaliate;
+            event.action = BattleAction::retaliate;
             event.attackerType = def.type();
             event.attackerHp = def.total_hp();
             event.numAttackers = def.num;
@@ -392,7 +392,7 @@ void Battle::next_round()
             activeUnit_ = i;
             if (log_) {
                 BattleEvent event;
-                event.action = ActionType::next_round;
+                event.action = BattleAction::next_round;
                 log_->push_back(event);
             }
         }

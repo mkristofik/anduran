@@ -169,7 +169,7 @@ BOOST_AUTO_TEST_CASE(manual_battle_state)
     }
 
     for (const auto &event : log) {
-        if (event.action == ActionType::next_round) {
+        if (event.action == BattleAction::next_round) {
             std::cout << "Next round begins\n";
         }
         else {

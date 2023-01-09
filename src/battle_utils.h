@@ -68,12 +68,11 @@ bool operator<(const Army &lhs, const Army &rhs);
 bool operator<(const Army &lhs, int rhs);
 
 
-// TODO: rename this to BattleAction
-enum class ActionType {attack, retaliate, next_round};
+enum class BattleAction {attack, retaliate, next_round};
 
 struct BattleEvent
 {
-    ActionType action = ActionType::attack;
+    BattleAction action = BattleAction::attack;
     int attackerType = -1;
     int attackerStartHp = 0;
     int attackerRelSize = 0;  // relative original size of this unit, 100 is avg

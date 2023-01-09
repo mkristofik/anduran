@@ -326,7 +326,7 @@ void Anduran::battle_action(GameObject &player, GameObject &enemy)
     const auto result = do_battle(make_army_state(attacker, BattleSide::attacker),
                                   make_army_state(defender, BattleSide::defender));
     for (const auto &event : result.log) {
-        if (event.action == ActionType::next_round) {
+        if (event.action == BattleAction::next_round) {
             AnimSet nextRoundMsg;
             nextRoundMsg.insert(AnimLog(rmapView_, "Next round begins"));
             anims_.push(nextRoundMsg);
