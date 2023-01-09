@@ -29,7 +29,8 @@ BOOST_AUTO_TEST_CASE(names)
 
 BOOST_AUTO_TEST_CASE(add_and_remove)
 {
-    GameState game;
+    ObjectManager dummy;
+    GameState game(dummy);
     GameObject obj;
     obj.hex = Hex{5, 5};
     obj.entity = 42;
@@ -59,7 +60,17 @@ BOOST_AUTO_TEST_CASE(add_and_remove)
 
 BOOST_AUTO_TEST_CASE(actions)
 {
-    GameState game;
+    ObjectManager objConfig;
+
+    MapObject obj;
+    obj.type = ObjectType::village;
+    obj.action = ObjectAction::visit;
+    objConfig.insert(obj);
+    obj.type = ObjectType::chest;
+    obj.action = ObjectAction::pickup;
+    objConfig.insert(obj);
+
+    GameState game(objConfig);
 
     GameObject player;
     player.entity = 0;
@@ -100,7 +111,8 @@ BOOST_AUTO_TEST_CASE(actions)
 
 BOOST_AUTO_TEST_CASE(zone_of_control)
 {
-    GameState game;
+    ObjectManager dummy;
+    GameState game(dummy);
 
     GameObject army1;
     army1.hex = Hex{1, 1};

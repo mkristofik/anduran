@@ -31,7 +31,7 @@ Anduran::Anduran()
     rmap_("test.json"),
     images_("img/"s),
     rmapView_(win_, rmap_, images_),
-    game_(),
+    game_(rmap_.getObjectConfig()),
     playerEntityIds_(),
     curPlayerId_(0),
     curPlayerNum_(0),

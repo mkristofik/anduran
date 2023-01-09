@@ -94,10 +94,12 @@ ANDURAN_DEPS = $(ANDURAN_OBJS:%.o=%.d)
 
 UNITTESTS = unittests$(EXE)
 UNITTESTS_SRC = GameState.cpp \
+	ObjectManager.cpp \
 	RandomRange.cpp \
 	UnitData.cpp \
 	battle_utils.cpp \
 	hex_utils.cpp \
+	json_utils.cpp \
 	object_types.cpp \
 	$(wildcard $(TEST_DIR)/*.cpp)
 UNITTESTS_OBJS = $(UNITTESTS_SRC:%.cpp=$(BUILD_DIR)/%.o)

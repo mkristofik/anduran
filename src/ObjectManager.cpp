@@ -46,6 +46,11 @@ bool operator<(const MapObject &lhs, ObjectType rhs)
 }
 
 
+ObjectManager::ObjectManager()
+    : objs_()
+{
+}
+
 ObjectManager::ObjectManager(const std::string &configFile)
     : objs_()
 {
@@ -132,4 +137,10 @@ ObjectAction ObjectManager::get_action(ObjectType type) const
     }
 
     return iter->action;
+}
+
+void ObjectManager::insert(const MapObject &obj)
+{
+    objs_.push_back(obj);
+    sort(std::begin(objs_), std::end(objs_));
 }

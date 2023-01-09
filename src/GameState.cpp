@@ -15,6 +15,14 @@
 #include <algorithm>
 #include <cassert>
 
+GameState::GameState(const ObjectManager &objMgr)
+    : objects_(),
+    armies_(),
+    zoc_(),
+    objConfig_(&objMgr)
+{
+}
+
 void GameState::add_object(const GameObject &obj)
 {
     objects_.insert(obj);
@@ -81,18 +89,12 @@ GameAction GameState::hex_action(const GameObject &player, const Hex &hex) const
     else {
         auto range = objects_.get<ByHex>().equal_range(hex);
         for (auto objIter = range.first; objIter != range.second; ++objIter) {
-            // TODO: object manager can tell us what the action is
-            if ((objIter->type == ObjectType::village ||
-                 objIter->type == ObjectType::windmill) &&
-                objIter->team != player.team)
-            {
+            auto action = objConfig_->get_action(objIter->type);
+            if (action == ObjectAction::visit && objIter->team != player.team) {
                 return {ObjectAction::visit, *objIter};
             }
-            else if (objIter->type == ObjectType::camp ||
-                     objIter->type == ObjectType::chest ||
-                     objIter->type == ObjectType::resource)
-            {
-                return {ObjectAction::pickup, *objIter};
+            else if (action != ObjectAction::none) {
+                return {action, *objIter};
             }
         }
     }

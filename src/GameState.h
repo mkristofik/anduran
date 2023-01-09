@@ -13,6 +13,7 @@
 #ifndef GAME_STATE_H
 #define GAME_STATE_H
 
+#include "ObjectManager.h"
 #include "battle_utils.h"
 #include "hex_utils.h"
 #include "object_types.h"
@@ -54,6 +55,8 @@ struct GameAction
 class GameState
 {
 public:
+    explicit GameState(const ObjectManager &objMgr);
+
     // Fetch/modify objects by value like we do for map entities. Object id is the
     // same as the map entity id.
     void add_object(const GameObject &obj);
@@ -104,6 +107,7 @@ private:
 
     std::vector<Army> armies_;
     boost::container::flat_map<Hex, int> zoc_;
+    const ObjectManager *objConfig_;
 };
 
 #endif

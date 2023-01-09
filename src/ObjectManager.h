@@ -40,7 +40,8 @@ bool operator<(const MapObject &lhs, ObjectType rhs);
 class ObjectManager
 {
 public:
-    ObjectManager(const std::string &configFile);
+    ObjectManager();
+    explicit ObjectManager(const std::string &configFile);
 
     // Required functions to support range-based for-loop
     auto begin() const { return objs_.cbegin(); }
@@ -51,6 +52,9 @@ public:
     // Return the action for the given object type, or none if it's not
     // configured.
     ObjectAction get_action(ObjectType type) const;
+
+    // Support manually configuring object types for unit testing.
+    void insert(const MapObject &obj);
 
 private:
     std::vector<MapObject> objs_;
