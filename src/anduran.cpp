@@ -51,7 +51,6 @@ Anduran::Anduran()
 
     load_images();
     load_players();
-    load_villages();
     load_objects();
 }
 
@@ -225,77 +224,34 @@ void Anduran::load_players()
     }
 }
 
-// TODO: simplify this with object manager
-//   - loop over all configured objects
-//   - load texture for image name
-//   - if texture has 6 frames, assume we need to set terrain frame
-//   - if object flaggable, add a secondary with the neutral flag
-//   - else just do it the simple way
-void Anduran::load_villages()
-{
-    SdlTexture villageImage = images_.make_texture("villages"s, win_);
-
-    auto &neutralFlag = flagImages_[Team::neutral];
-    for (const auto &hex : rmap_.getObjectTiles(ObjectType::village)) {
-        MapEntity entity;
-        entity.hex = hex;
-        entity.z = ZOrder::object;
-        entity.setTerrainFrame(rmap_.getTerrain(hex));
-
-        GameObject village;
-        village.hex = hex;
-        village.entity = rmapView_.addEntity(villageImage, entity, HexAlign::middle);
-        village.secondary = rmapView_.addEntity(neutralFlag, village.hex, ZOrder::flag);
-        village.type = ObjectType::village;
-        game_.add_object(village);
-    }
-}
-
 void Anduran::load_objects()
 {
-    // Windmills are ownable so draw flags on them.
-    const auto windmillImg = images_.make_texture("windmill"s, win_);
-    auto &neutralFlag = flagImages_[Team::neutral];
-    for (const auto &hex : rmap_.getObjectTiles(ObjectType::windmill)) {
-        GameObject windmill;
-        windmill.hex = hex;
-        windmill.entity = rmapView_.addEntity(windmillImg, windmill.hex, ZOrder::object);
-        windmill.secondary = rmapView_.addEntity(neutralFlag, windmill.hex, ZOrder::flag);
-        windmill.type = ObjectType::windmill;
-        game_.add_object(windmill);
-    }
+    for (auto &obj : rmap_.getObjectConfig()) {
+        auto img = images_.make_texture(obj.imgName, win_);
 
-    // Draw different camp images depending on terrain.
-    const auto campImg = images_.make_texture("camps"s, win_);
-    for (const auto &hex : rmap_.getObjectTiles(ObjectType::camp)) {
-        MapEntity entity;
-        entity.hex = hex;
-        entity.z = ZOrder::object;
-        entity.setTerrainFrame(rmap_.getTerrain(hex));
+        for (auto &hex : rmap_.getObjectTiles(obj.type)) {
+            MapEntity entity;
+            entity.hex = hex;
+            entity.z = ZOrder::object;
 
-        GameObject obj;
-        obj.hex = hex;
-        obj.entity = rmapView_.addEntity(campImg, entity, HexAlign::middle);
-        obj.type = ObjectType::camp;
-        game_.add_object(obj);
-    }
+            // Assume any sprite sheet with the same number of frames as there
+            // are terrains is intended to use a terrain frame.
+            if (img.cols() == enum_size<Terrain>()) {
+                entity.setTerrainFrame(rmap_.getTerrain(hex));
+            }
 
-    // The remaining object types have nothing special about them (yet).
-    load_simple_object(ObjectType::chest, "chest"s);
-    load_simple_object(ObjectType::resource, "gold"s);
-    load_simple_object(ObjectType::oasis, "oasis"s);
-    load_simple_object(ObjectType::shipwreck, "shipwreck"s);
-}
+            GameObject gameObj;
+            gameObj.hex = hex;
+            gameObj.entity = rmapView_.addEntity(img, entity, HexAlign::middle);
+            gameObj.type = obj.type;
 
-void Anduran::load_simple_object(ObjectType type, const std::string &imgName)
-{
-    const auto img = images_.make_texture(imgName, win_);
-    for (const auto &hex : rmap_.getObjectTiles(type)) {
-        GameObject obj;
-        obj.hex = hex;
-        obj.entity = rmapView_.addEntity(img, obj.hex, ZOrder::object);
-        obj.type = type;
-        game_.add_object(obj);
+            if (obj.flaggable) {
+                gameObj.secondary = rmapView_.addEntity(flagImages_[Team::neutral],
+                                                        hex,
+                                                        ZOrder::flag);
+            }
+            game_.add_object(gameObj);
+        }
     }
 }
 

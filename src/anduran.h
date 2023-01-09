@@ -47,9 +47,7 @@ private:
 
     // Load objects and draw them on the map.
     void load_players();
-    void load_villages();
     void load_objects();
-    void load_simple_object(ObjectType type, const std::string &imgName);
 
     Path find_path(const GameObject &obj, const Hex &hDest);
     void move_action(GameObject &player, const Path &path);
