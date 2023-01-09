@@ -740,42 +740,24 @@ int RandomMap::findObjectSpot(int startTile, int region)
 
 void RandomMap::placeObjects()
 {
-    RandomRange dist2(0, 1);
+    RandomRange pct(1, 100);
 
     for (int r = 0; r < numRegions_; ++r) {
-        // TODO: use object manager
-        //   - loop over all configured object types
-        //   - if object allowed on this terrain AND at least 1 allowed in this
-        //   region (or castle)
-        //   - for # allowed:
-        //      - compute probability if < 100
-        //      - place object if test passed
-        if (regionTerrain_[r] == Terrain::water) {
-            placeObject(ObjectType::shipwreck, r);
-            continue;
-        }
-
-        if (contains(castleRegions_, r)) {
-            placeObject(ObjectType::chest, r);
-            placeObject(ObjectType::chest, r);
-            placeObject(ObjectType::resource, r);
-            placeObject(ObjectType::resource, r);
-        }
-        else {
-            placeObject(ObjectType::chest, r);
-            placeObject(ObjectType::resource, r);
-            placeObject(ObjectType::village, r);
-            if (dist2.get() == 1) {
-                placeObject(ObjectType::camp, r);
+        for (auto &obj : objectMgr_) {
+            // Skip if not allowed to be placed on this terrain type.
+            if (!obj.terrain.empty() && !contains(obj.terrain, regionTerrain_[r])) {
+                continue;
             }
-        }
 
-        if (regionTerrain_[r] == Terrain::desert) {
-            placeObject(ObjectType::oasis, r);
-        }
-        else if (regionTerrain_[r] == Terrain::grass) {
-            if (dist2.get() == 1) {
-                placeObject(ObjectType::windmill, r);
+            int numAllowed = obj.numPerRegion;
+            if (contains(castleRegions_, r)) {
+                numAllowed = obj.numPerCastle;
+            }
+
+            for (int i = 0; i < numAllowed; ++i) {
+                if (obj.probability == 100 || pct.get() <= obj.probability) {
+                    placeObject(obj.type, r);
+                }
             }
         }
     }
