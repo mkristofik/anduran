@@ -93,7 +93,7 @@ GameAction GameState::hex_action(const GameObject &player, const Hex &hex) const
             if (action == ObjectAction::visit && objIter->team != player.team) {
                 return {ObjectAction::visit, *objIter};
             }
-            else if (action != ObjectAction::none) {
+            else if (action != ObjectAction::none && action != ObjectAction::visit) {
                 return {action, *objIter};
             }
         }
