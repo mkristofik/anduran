@@ -13,6 +13,7 @@
 #include "ObjectManager.h"
 
 #include "json_utils.h"
+#include "x_macros.h"
 
 #include <algorithm>
 #include <filesystem>
@@ -21,6 +22,11 @@
 
 namespace
 {
+#define X(str) #str ## s,
+    using namespace std::string_literals;
+    const std::array objNames = {OBJ_TYPES};
+#undef X
+
     // TODO: can we use string_view in place of const char * or char [] args?
     void warn_unexpected(std::string_view dataType,
                          const std::string &objName,
@@ -143,4 +149,15 @@ void ObjectManager::insert(const MapObject &obj)
 {
     objs_.push_back(obj);
     sort(std::begin(objs_), std::end(objs_));
+}
+
+
+const std::string & obj_name_from_type(ObjectType type)
+{
+    return xname_from_xtype(objNames, type);
+}
+
+ObjectType obj_type_from_name(const std::string &name)
+{
+    return xtype_from_xname<ObjectType>(objNames, name);
 }

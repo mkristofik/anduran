@@ -17,8 +17,6 @@
 #include "ObjectManager.h"
 #include "hex_utils.h"
 #include "iterable_enum_class.h"
-// TODO: consolidate this into ObjectManager.h
-#include "object_types.h"
 #include "terrain.h"
 #include <string>
 #include <vector>

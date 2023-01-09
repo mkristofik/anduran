@@ -13,11 +13,31 @@
 #ifndef OBJECT_MANAGER_H
 #define OBJECT_MANAGER_H
 
-#include "object_types.h"
+#include "iterable_enum_class.h"
 #include "terrain.h"
 
 #include <string>
 #include <vector>
+
+
+#define OBJ_TYPES \
+    X(army) \
+    X(camp) \
+    X(castle) \
+    X(champion) \
+    X(chest) \
+    X(oasis) \
+    X(resource) \
+    X(shipwreck) \
+    X(village) \
+    X(windmill)
+
+#define X(str) str,
+    enum class ObjectType {OBJ_TYPES invalid};
+#undef X
+
+ITERABLE_ENUM_CLASS(ObjectAction, none, battle, visit, pickup);
+
 
 struct MapObject
 {
@@ -59,5 +79,9 @@ public:
 private:
     std::vector<MapObject> objs_;
 };
+
+
+const std::string & obj_name_from_type(ObjectType type);
+ObjectType obj_type_from_name(const std::string &name);
 
 #endif

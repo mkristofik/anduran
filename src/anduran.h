@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2022 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2022-2023 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -25,7 +25,6 @@
 #include "battle_utils.h"
 #include "container_utils.h"
 #include "hex_utils.h"
-#include "object_types.h"
 #include "team_color.h"
 
 #include <string>

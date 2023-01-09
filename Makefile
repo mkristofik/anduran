@@ -1,4 +1,4 @@
-#    Copyright (C) 2016-2022 by Michael Kristofik <kristo605@gmail.com>
+#    Copyright (C) 2016-2023 by Michael Kristofik <kristo605@gmail.com>
 #    Part of the Champions of Anduran project.
 # 
 #    This program is free software; you can redistribute it and/or modify
@@ -41,7 +41,6 @@ RMAPGEN_SRC = ObjectManager.cpp \
 	RandomRange.cpp \
 	hex_utils.cpp \
 	json_utils.cpp \
-	object_types.cpp \
 	rmapgen.cpp
 RMAPGEN_OBJS = $(RMAPGEN_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-noise.o
 RMAPGEN_DEPS = $(RMAPGEN_OBJS:%.o=%.d)
@@ -62,8 +61,7 @@ MAPVIEW_SRC = MapDisplay.cpp \
 	SdlWindow.cpp \
 	hex_utils.cpp \
 	json_utils.cpp \
-	mapview.cpp \
-	object_types.cpp
+	mapview.cpp
 MAPVIEW_OBJS = $(MAPVIEW_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-noise.o
 MAPVIEW_DEPS = $(MAPVIEW_OBJS:%.o=%.d)
 
@@ -87,7 +85,6 @@ ANDURAN_SRC = AnimQueue.cpp \
 	battle_utils.cpp \
 	hex_utils.cpp \
 	json_utils.cpp \
-	object_types.cpp \
 	team_color.cpp
 ANDURAN_OBJS = $(ANDURAN_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-noise.o
 ANDURAN_DEPS = $(ANDURAN_OBJS:%.o=%.d)
@@ -100,7 +97,6 @@ UNITTESTS_SRC = GameState.cpp \
 	battle_utils.cpp \
 	hex_utils.cpp \
 	json_utils.cpp \
-	object_types.cpp \
 	$(wildcard $(TEST_DIR)/*.cpp)
 UNITTESTS_OBJS = $(UNITTESTS_SRC:%.cpp=$(BUILD_DIR)/%.o)
 UNITTESTS_DEPS = $(UNITTESTS_OBJS:%.o=%.d)

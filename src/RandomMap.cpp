@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2021 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2023 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -745,6 +745,7 @@ void RandomMap::placeObjects()
     for (int r = 0; r < numRegions_; ++r) {
         for (auto &obj : objectMgr_) {
             // Skip if not allowed to be placed on this terrain type.
+            // TODO: enum-sized bitset?
             if (!obj.terrain.empty() && !contains(obj.terrain, regionTerrain_[r])) {
                 continue;
             }

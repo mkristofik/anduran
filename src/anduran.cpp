@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2022 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2023 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -12,6 +12,7 @@
 */
 #include "anduran.h"
 
+#include "ObjectManager.h"
 #include "SdlSurface.h"
 #include "SdlTexture.h"
 #include "anim_utils.h"

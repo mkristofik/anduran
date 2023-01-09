@@ -13,11 +13,11 @@
 #ifndef MAP_DISPLAY_H
 #define MAP_DISPLAY_H
 
+#include "ObjectManager.h"
 #include "RandomMap.h"
 #include "SdlTexture.h"
 #include "hex_utils.h"
 #include "iterable_enum_class.h"
-#include "object_types.h"
 #include "pixel_utils.h"
 #include "terrain.h"
 
