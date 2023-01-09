@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2022 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2023 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anudran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -32,6 +32,7 @@
 #define ITERABLE_ENUM_CLASS_H
 
 #include <array>
+#include <bitset>
 #include <concepts>
 #include <cstddef>
 #include <type_traits>
@@ -75,22 +76,52 @@ class EnumSizedArray : public std::array<T, enum_size<E>()>
 public:
     using std::array<T, enum_size<E>()>::operator[];
 
-    T & operator[](E index);
-    const T & operator[](E index) const;
+    constexpr T & operator[](E index);
+    constexpr const T & operator[](E index) const;
+
+private:
+    using size_type = typename std::underlying_type_t<E>;
 };
 
 template <typename T, IterableEnum E>
-T & EnumSizedArray<T, E>::operator[](E index)
+constexpr T & EnumSizedArray<T, E>::operator[](E index)
 {
-    using U = typename std::underlying_type_t<E>;
-    return operator[](static_cast<U>(index));
+    return operator[](static_cast<size_type>(index));
 }
 
 template <typename T, IterableEnum E>
-const T & EnumSizedArray<T, E>::operator[](E index) const
+constexpr const T & EnumSizedArray<T, E>::operator[](E index) const
 {
-    using U = typename std::underlying_type_t<E>;
-    return operator[](static_cast<U>(index));
+    return operator[](static_cast<size_type>(index));
+}
+
+
+// Convenience type similar to EnumSizedArray, but for bitsets.
+template <IterableEnum E>
+class EnumSizedBitset : public std::bitset<enum_size<E>()>
+{
+public:
+    using std::bitset<enum_size<E>()>::operator[];
+    constexpr bool operator[](E index) const;
+
+    using std::bitset<enum_size<E>()>::set;
+    EnumSizedBitset<E> & set(E index);
+
+private:
+    using size_type = typename std::underlying_type_t<E>;
+};
+
+template <IterableEnum E>
+constexpr bool EnumSizedBitset<E>::operator[](E index) const
+{
+    return operator[](static_cast<size_type>(index));
+}
+
+template <IterableEnum E>
+EnumSizedBitset<E> & EnumSizedBitset<E>::set(E index)
+{
+    set(static_cast<size_type>(index));
+    return *this;
 }
 
 #endif

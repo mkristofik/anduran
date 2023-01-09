@@ -745,8 +745,7 @@ void RandomMap::placeObjects()
     for (int r = 0; r < numRegions_; ++r) {
         for (auto &obj : objectMgr_) {
             // Skip if not allowed to be placed on this terrain type.
-            // TODO: enum-sized bitset?
-            if (!obj.terrain.empty() && !contains(obj.terrain, regionTerrain_[r])) {
+            if (!obj.terrain[regionTerrain_[r]]) {
                 continue;
             }
 

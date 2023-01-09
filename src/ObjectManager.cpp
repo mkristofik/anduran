@@ -27,7 +27,6 @@ namespace
     const std::array objNames = {OBJ_TYPES};
 #undef X
 
-    // TODO: can we use string_view in place of const char * or char [] args?
     void warn_unexpected(std::string_view dataType,
                          const std::string &objName,
                          const std::string &fieldName)
@@ -66,7 +65,9 @@ ObjectManager::ObjectManager(const std::string &configFile)
         return;
     }
 
+    std::vector<Terrain> tmpTerrain;
     auto doc = jsonReadFile(configFile.c_str());
+
     for (auto m = doc.MemberBegin(); m != doc.MemberEnd(); ++m) {
         std::string name = m->name.GetString();
         auto objType = obj_type_from_name(name);
@@ -122,13 +123,22 @@ ObjectManager::ObjectManager(const std::string &configFile)
                     warn_unexpected("array", name, field);
                     continue;
                 }
-                jsonGetArray(m->value, "terrain", obj.terrain);
+
+                tmpTerrain.clear();
+                jsonGetArray(m->value, "terrain", tmpTerrain);
+                for (auto t : tmpTerrain) {
+                    obj.terrain.set(t);
+                }
             }
             else {
                 warn_unexpected("unknown type", name, field);
             }
         }
 
+        // If terrain wasn't set, allow all terrain types.
+        if (obj.terrain.none()) {
+            obj.terrain.set();
+        }
         objs_.push_back(obj);
     }
 

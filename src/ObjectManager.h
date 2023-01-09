@@ -43,7 +43,7 @@ struct MapObject
 {
     std::string name;
     std::string imgName;
-    std::vector<Terrain> terrain;
+    EnumSizedBitset<Terrain> terrain;
     int numPerRegion = 1;
     int numPerCastle = 0;
     int probability = 100;

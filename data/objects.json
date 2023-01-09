@@ -38,6 +38,7 @@
         "img": "shipwreck",
         "terrain": [0],
         "per-region": 1,
+        "probability": 50,
         "visit": true,
         "flag": false
     },
