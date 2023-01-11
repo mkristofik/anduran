@@ -33,7 +33,6 @@ public:
 
 private:
     void place_objects();
-    void place_terrain_objects(const std::string &imgName, ObjectType type);
 
     SdlWindow win_;
     RandomMap rmap_;
