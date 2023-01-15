@@ -251,6 +251,16 @@ is next to or in front of a castle
     * refactor obstacle assignment
 * randomly assign starting towns for 4 players
 * store castle locations as Hex?
+* placing wandering monsters
+    * find all tiles with neighbor in a different region, both sides walkable and
+    free from objects
+        * neither region contains a castle
+        * randomize this list, ensure each region pair is only chosen once
+        * place an army there
+- disallow objects within a one-hex radius of a village
+    - prevents two villages from being placed next to each other
+- compute each region's distance from a castle
+    - use these to choose wandering army strength
 
 
 # Containers

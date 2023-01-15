@@ -84,6 +84,7 @@ private:
     // Clear obstacles so each region can reach at least one other region. Also,
     // ensure that every open tile within each region can reach every other open
     // tile within that region.
+    void findBorderTiles();
     void avoidIsolatedRegions();
     void avoidIsolatedTiles();
     void exploreWalkableTiles(int startTile, std::vector<signed char> &visited);
@@ -99,6 +100,7 @@ private:
     int findObjectSpot(int startTile, int region);
     void placeObjects();
     void placeObject(ObjectType type, int region);
+    void placeArmies();
 
     int width_;
     int size_;
@@ -108,6 +110,7 @@ private:
     std::vector<signed char> tileObstacles_;
     std::vector<signed char> tileOccupied_;
     std::vector<signed char> tileWalkable_;
+    std::vector<std::pair<int, int>> borderTiles_;  // neighbors in different regions
     FlatMultimap<int, int> regionNeighbors_;
     std::vector<Terrain> regionTerrain_;
     FlatMultimap<int, int> regionTiles_;  // which tiles belong to each region

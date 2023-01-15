@@ -33,6 +33,7 @@ public:
 
 private:
     void place_objects();
+    void place_armies();
 
     SdlWindow win_;
     RandomMap rmap_;
@@ -50,6 +51,7 @@ MapViewApp::MapViewApp()
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
     place_objects();
+    place_armies();
 }
 
 void MapViewApp::update_frame(Uint32 elapsed_ms)
@@ -80,6 +82,14 @@ void MapViewApp::place_objects()
 
             rmapView_.addEntity(img, entity, HexAlign::middle);
         }
+    }
+}
+
+void MapViewApp::place_armies()
+{
+    auto img = images_.make_texture("random-unit", win_);
+    for (auto &hex : rmap_.getObjectTiles(ObjectType::army)) {
+        rmapView_.addEntity(img, hex, ZOrder::unit);
     }
 }
 

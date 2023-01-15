@@ -119,6 +119,7 @@ RandomMap::RandomMap(int width)
     tileObstacles_(size_, 0),
     tileOccupied_(size_, 0),
     tileWalkable_(size_, 1),
+    borderTiles_(),
     regionNeighbors_(),
     regionTerrain_(),
     regionTiles_(),
@@ -130,9 +131,11 @@ RandomMap::RandomMap(int width)
     generateRegions();
     buildNeighborGraphs();
     assignTerrain();
+    findBorderTiles();
     placeCastles();
     placeObjects();
     assignObstacles();
+    placeArmies();
 }
 
 RandomMap::RandomMap(const char *filename)
@@ -144,6 +147,7 @@ RandomMap::RandomMap(const char *filename)
     tileObstacles_(),
     tileOccupied_(),
     tileWalkable_(),
+    borderTiles_(),
     regionNeighbors_(),
     regionTerrain_(),
     regionTiles_(),
@@ -485,37 +489,51 @@ void RandomMap::clearObstacle(int index)
     tileWalkable_[index] = 1;
 }
 
+void RandomMap::findBorderTiles()
+{
+    for (int i = 0; i < size_; ++i) {
+        for (int nbr : tileNeighbors_.find(i)) {
+            auto region = tileRegions_[i];
+            auto nbrRegion = tileRegions_[nbr];
+            if (region != nbrRegion) {
+                // Not concerned about duplicates.
+                borderTiles_.push_back({i, nbr});
+            }
+        }
+    }
+
+    // Multiple steps depend on this list, ensure we're not processing it in tile
+    // index order every time.
+    randomize(borderTiles_);
+}
+
 void RandomMap::avoidIsolatedRegions()
 {
     std::vector<signed char> regionVisited(numRegions_, 0);
 
     // Clear obstacles from the first pair of hexes we see from each pair of
     // adjacent regions.
-    for (int i = 0; i < size_; ++i) {
-        for (const auto &nbr : tileNeighbors_.find(i)) {
-            const auto region = tileRegions_[i];
-            const auto nbrRegion = tileRegions_[nbr];
-            if ((region == nbrRegion) ||
-                (regionVisited[region] && regionVisited[nbrRegion]))
-            {
-                continue;
-            }
+    for (auto [tile, nbr] : borderTiles_) {
+        auto region = tileRegions_[tile];
+        auto nbrRegion = tileRegions_[nbr];
+        if (regionVisited[region] && regionVisited[nbrRegion]) {
+            continue;
+        }
 
-            // If we can already reach the neighbor region, stop.
-            if (tileWalkable_[i] && tileWalkable_[nbr]) {
-                regionVisited[region] = 1;
-                regionVisited[nbrRegion] = 1;
-            }
-            // If obstacles on both sides, clear them. Also clear this side only if
-            // the neighbor tile is walkable.
-            else if (tileObstacles_[i] &&
-                     (tileObstacles_[nbr] >= 0 || tileWalkable_[nbr]))
-            {
-                clearObstacle(i);
-                clearObstacle(nbr);
-                regionVisited[region] = 1;
-                regionVisited[nbrRegion] = 1;
-            }
+        // If we can already reach the neighbor region, stop.
+        if (tileWalkable_[tile] && tileWalkable_[nbr]) {
+            regionVisited[region] = 1;
+            regionVisited[nbrRegion] = 1;
+        }
+        // If obstacles on both sides, clear them. Also clear this side only if
+        // the neighbor tile is walkable.
+        else if (tileObstacles_[tile] &&
+                 (tileObstacles_[nbr] >= 0 || tileWalkable_[nbr]))
+        {
+            clearObstacle(tile);
+            clearObstacle(nbr);
+            regionVisited[region] = 1;
+            regionVisited[nbrRegion] = 1;
         }
     }
 }
@@ -772,5 +790,49 @@ void RandomMap::placeObject(ObjectType type, int region)
         assert(!name.empty());
         objectTiles_.insert(name, tile);
         tileOccupied_[tile] = 1;  // object tiles are walkable
+    }
+}
+
+void RandomMap::placeArmies()
+{
+    auto armyType = obj_name_from_type(ObjectType::army);
+
+    // Place a random army on the border between each pair of adjacent regions.
+    boost::container::flat_set<std::pair<int, int>> placed;
+
+    // Avoid placing an army within another's zone of control.
+    boost::container::flat_set<int> controlled;
+
+    for (auto [tile, nbr] : borderTiles_) {
+        if (tileOccupied_[tile] || !tileWalkable_[tile] || !tileWalkable_[nbr]) {
+            continue;
+        }
+        if (controlled.contains(tile)) {
+            continue;
+        }
+
+        auto region = tileRegions_[tile];
+        auto nbrRegion = tileRegions_[nbr];
+        if (regionTerrain_[region] == Terrain::water ||
+            regionTerrain_[nbrRegion] == Terrain::water)
+        {
+            continue;
+        }
+
+        if (placed.contains({region, nbrRegion})) {
+            continue;
+        }
+        if (contains(castleRegions_, region) || contains(castleRegions_, nbrRegion)) {
+            continue;
+        }
+
+        objectTiles_.insert(armyType, tile);
+        tileOccupied_[tile] = 1;
+        placed.insert({region, nbrRegion});
+        placed.insert({nbrRegion, region});
+
+        for (int zoc : tileNeighbors_.find(tile)) {
+            controlled.insert(zoc);
+        }
     }
 }
