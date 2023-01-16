@@ -48,7 +48,7 @@ struct MapObject
     int numPerCastle = 0;
     int probability = 100;
     ObjectType type = ObjectType::invalid;
-    ObjectAction action = ObjectAction::visit;
+    ObjectAction action = ObjectAction::none;
     bool flaggable = false;
 };
 
@@ -68,6 +68,9 @@ public:
     auto end() const { return objs_.cend(); }
     auto size() const { return objs_.size(); }
     bool empty() const { return objs_.empty(); }
+
+    // Lookup an object by type.  Return invalid object if not found.
+    const MapObject & find(ObjectType type) const;
 
     // Return the action for the given object type, or none if it's not
     // configured.

@@ -98,8 +98,10 @@ private:
     // Randomly place various objects in each region.
     int getRandomTile(int region);
     int findObjectSpot(int startTile, int region);
+    void placeVillages();
     void placeObjects();
-    void placeObject(ObjectType type, int region);
+    int numObjectsAllowed(const MapObject &obj, int region) const;
+    int placeObject(ObjectType type, int region);
     void placeArmies();
 
     int width_;
@@ -116,6 +118,7 @@ private:
     FlatMultimap<int, int> regionTiles_;  // which tiles belong to each region
     std::vector<int> castles_;  // center tile of each castle
     std::vector<int> castleRegions_;
+    std::vector<signed char> villageNeighbors_;
     FlatMultimap<std::string, int> objectTiles_;
     ObjectManager objectMgr_;
 };

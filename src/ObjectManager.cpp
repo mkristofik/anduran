@@ -145,14 +145,26 @@ ObjectManager::ObjectManager(const std::string &configFile)
     sort(std::begin(objs_), std::end(objs_));
 }
 
-ObjectAction ObjectManager::get_action(ObjectType type) const
+const MapObject & ObjectManager::find(ObjectType type) const
 {
+    static const MapObject invalid;
+
     auto iter = lower_bound(begin(), end(), type);
     if (iter == end() || iter->type != type) {
+        return invalid;
+    }
+
+    return *iter;
+}
+
+ObjectAction ObjectManager::get_action(ObjectType type) const
+{
+    auto &obj = find(type);
+    if (obj.type != type) {
         return ObjectAction::none;
     }
 
-    return iter->action;
+    return obj.action;
 }
 
 void ObjectManager::insert(const MapObject &obj)

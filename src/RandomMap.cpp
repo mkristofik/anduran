@@ -125,6 +125,7 @@ RandomMap::RandomMap(int width)
     regionTiles_(),
     castles_(),
     castleRegions_(),
+    villageNeighbors_(size_, 0),
     objectTiles_(),
     objectMgr_(OBJECT_CONFIG)
 {
@@ -133,6 +134,7 @@ RandomMap::RandomMap(int width)
     assignTerrain();
     findBorderTiles();
     placeCastles();
+    placeVillages();
     placeObjects();
     assignObstacles();
     placeArmies();
@@ -153,6 +155,7 @@ RandomMap::RandomMap(const char *filename)
     regionTiles_(),
     castles_(),
     castleRegions_(),
+    villageNeighbors_(),
     objectTiles_(),
     objectMgr_(OBJECT_CONFIG)
 {
@@ -737,7 +740,7 @@ int RandomMap::findObjectSpot(int startTile, int region)
         visited.insert(tile);
         bfsQ.pop();
 
-        if (offGrid(tile) || tileRegions_[tile] != region) {
+        if (offGrid(tile) || tileRegions_[tile] != region || villageNeighbors_[tile]) {
             continue;
         }
 
@@ -756,41 +759,82 @@ int RandomMap::findObjectSpot(int startTile, int region)
     return invalidIndex;
 }
 
-void RandomMap::placeObjects()
+int RandomMap::numObjectsAllowed(const MapObject &obj, int region) const
 {
-    RandomRange pct(1, 100);
+    int numAllowed = 0;
 
+    // Skip if not allowed to be placed on this terrain type.
+    if (!obj.terrain[regionTerrain_[region]]) {
+        return 0;
+    }
+
+    int maxAllowed = obj.numPerRegion;
+    if (contains(castleRegions_, region)) {
+        maxAllowed = obj.numPerCastle;
+    }
+
+    RandomRange pct(1, 100);
+    for (int i = 0; i < maxAllowed; ++i) {
+        if (obj.probability == 100 || pct.get() <= obj.probability) {
+            ++numAllowed;
+        }
+    }
+
+    return numAllowed;
+}
+
+void RandomMap::placeVillages()
+{
     for (int r = 0; r < numRegions_; ++r) {
-        for (auto &obj : objectMgr_) {
-            // Skip if not allowed to be placed on this terrain type.
-            if (!obj.terrain[regionTerrain_[r]]) {
+        auto &village = objectMgr_.find(ObjectType::village);
+        assert(village.type == ObjectType::village);
+
+        int allowed = numObjectsAllowed(village, r);
+        for (int i = 0; i < allowed; ++i) {
+            int tile = placeObject(ObjectType::village, r);
+            if (offGrid(tile)) {
                 continue;
             }
 
-            int numAllowed = obj.numPerRegion;
-            if (contains(castleRegions_, r)) {
-                numAllowed = obj.numPerCastle;
-            }
-
-            for (int i = 0; i < numAllowed; ++i) {
-                if (obj.probability == 100 || pct.get() <= obj.probability) {
-                    placeObject(obj.type, r);
-                }
+            // Block off a one-hex radius around villages to prevent two from
+            // being placed next to each other.
+            villageNeighbors_[tile] = 1;
+            for (int nbr : tileNeighbors_.find(tile)) {
+                villageNeighbors_[nbr] = 1;
             }
         }
     }
 }
 
-void RandomMap::placeObject(ObjectType type, int region)
+void RandomMap::placeObjects()
 {
-    const auto startTile = getRandomTile(region);
-    const auto tile = findObjectSpot(startTile, region);
+    for (int r = 0; r < numRegions_; ++r) {
+        for (auto &obj : objectMgr_) {
+            // Villages handled separately.
+            if (obj.type == ObjectType::village) {
+                continue;
+            }
+
+            int allowed = numObjectsAllowed(obj, r);
+            for (int i = 0; i < allowed; ++i) {
+                placeObject(obj.type, r);
+            }
+        }
+    }
+}
+
+int RandomMap::placeObject(ObjectType type, int region)
+{
+    int startTile = getRandomTile(region);
+    int tile = findObjectSpot(startTile, region);
     if (!offGrid(tile)) {
         auto name = obj_name_from_type(type);
         assert(!name.empty());
         objectTiles_.insert(name, tile);
         tileOccupied_[tile] = 1;  // object tiles are walkable
     }
+
+    return tile;
 }
 
 void RandomMap::placeArmies()
@@ -807,7 +851,7 @@ void RandomMap::placeArmies()
         if (tileOccupied_[tile] || !tileWalkable_[tile] || !tileWalkable_[nbr]) {
             continue;
         }
-        if (controlled.contains(tile)) {
+        if (controlled.contains(tile) || villageNeighbors_[tile]) {
             continue;
         }
 
