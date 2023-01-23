@@ -42,6 +42,23 @@ destination hex
 * highlight current path
 
 
+# Boats
+-------
+- traverse regions to identify contiguous landmasses, coastal regions, coastal tiles
+- place one lighthouse per landmass adjacent to water
+    - flaggable
+    - used to build boats
+    - pick random region furthest from castles
+- neutral boats are walkable
+    - embarking changes the champion image to the team-colored boat
+    - hide the neutral boat
+    - disembarking does the opposite, make sure to match the facing
+    - water tiles become walkable if you're in a boat
+    - walkability is a game state, not just a property of the tile
+        - map tile is walkable if it doesn't contain an obstacle or part of a castle
+        - game will have more rules on top of that
+
+
 # Polish
 --------
 - delay for a beat before scrolling the map when mouse is near the edge
@@ -259,10 +276,10 @@ is next to or in front of a castle
         * place an army there
 * disallow objects within a one-hex radius of a village
     * prevents two villages from being placed next to each other
-- compute each region's distance from a castle
+* compute each region's distance from a castle
     - use these to choose wandering army strength
 - do we want to prevent armies with overlapping zones of control?
-- what about when a castle is cut off by water?
+* what about when a castle is cut off by water?
 
 
 # Containers

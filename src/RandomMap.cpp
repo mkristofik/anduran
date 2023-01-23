@@ -125,6 +125,7 @@ RandomMap::RandomMap(int width)
     regionTiles_(),
     castles_(),
     castleRegions_(),
+    regionCastleDistance_(),
     villageNeighbors_(size_, 0),
     objectTiles_(),
     objectMgr_(OBJECT_CONFIG)
@@ -168,6 +169,7 @@ RandomMap::RandomMap(const char *filename)
     jsonGetArray(doc, "tile-occupied", tileOccupied_);
     jsonGetArray(doc, "tile-walkable", tileWalkable_);
     jsonGetArray(doc, "castles", castles_);
+    jsonGetArray(doc, "region-castle-distance", regionCastleDistance_);
     size_ = tileRegions_.size();
     width_ = std::sqrt(size_);
 
@@ -193,6 +195,7 @@ void RandomMap::writeFile(const char *filename)
     jsonSetArray<int>(doc, "tile-occupied", tileOccupied_);
     jsonSetArray<int>(doc, "tile-walkable", tileWalkable_);
     jsonSetArray<int>(doc, "castles", castles_);
+    jsonSetArray<int>(doc, "region-castle-distance", regionCastleDistance_);
     jsonSetMultimap(doc, "objects", objectTiles_);
 
     jsonWriteFile(filename, doc);
@@ -666,6 +669,8 @@ void RandomMap::placeCastles()
         castles_.push_back(centerTile);
         castleRegions_.push_back(tileRegions_[centerTile]);
     }
+
+    computeCastleDistance();
 }
 
 Hex RandomMap::findCastleSpot(int startTile)
@@ -717,6 +722,58 @@ Hex RandomMap::findCastleSpot(int startTile)
 
     // Couldn't find a valid spot on the entire map, this is an error.
     return {};
+}
+
+void RandomMap::computeCastleDistance()
+{
+    regionCastleDistance_.resize(numRegions_);
+    for (int r = 0; r < numRegions_; ++r) {
+        int distance = 0;
+        if (!contains(castleRegions_, r)) {
+            distance = computeCastleDistance(r);
+        }
+
+        regionCastleDistance_[r] = distance;
+    }
+}
+
+int RandomMap::computeCastleDistance(int region)
+{
+    boost::container::flat_map<int, int> cameFrom;
+    std::queue<int> bfsQ;
+
+    // Breadth-first search for the nearest castle region.
+    bfsQ.push(region);
+    while (!bfsQ.empty()) {
+        int r = bfsQ.front();
+        bfsQ.pop();
+
+        for (auto nbr : regionNeighbors_.find(r)) {
+            if (nbr == region || cameFrom.find(nbr) != std::cend(cameFrom)) {
+                continue;
+            }
+            else if (!contains(castleRegions_, nbr)) {
+                bfsQ.push(nbr);
+                cameFrom.emplace(nbr, r);
+            }
+            else {
+                // Castle found in neighboring region, count back to starting
+                // region.
+                int distance = 1;
+                auto iter = cameFrom.find(r);
+                while (iter != std::cend(cameFrom)) {
+                    ++distance;
+                    iter = cameFrom.find(iter->second);
+                }
+                return distance;
+            }
+        }
+    }
+
+    // Can't get here unless we messed up region neighbors or don't have any
+    // castles.
+    assert(false);
+    return -1;
 }
 
 int RandomMap::getRandomTile(int region)
