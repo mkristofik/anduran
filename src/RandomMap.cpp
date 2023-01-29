@@ -29,6 +29,7 @@
 #include <memory>
 #include <queue>
 #include <string>
+#include <stdexcept>
 #include <tuple>
 
 namespace
@@ -162,7 +163,6 @@ RandomMap::RandomMap(const char *filename)
 {
     auto doc = jsonReadFile(filename);
 
-    // TODO: report errors if this ever fails?
     jsonGetArray(doc, "tile-regions", tileRegions_);
     jsonGetArray(doc, "region-terrain", regionTerrain_);
     jsonGetArray(doc, "tile-obstacles", tileObstacles_);
@@ -679,6 +679,7 @@ Hex RandomMap::findCastleSpot(int startTile)
 
     std::queue<int> bfsQ;
     std::vector<signed char> visited(size_, 0);
+    std::vector<signed char> regionRuledOut(numRegions_, 0);
 
     // Breadth-first search to find a suitable location for each castle.
     bfsQ.push(startTile);
@@ -689,18 +690,15 @@ Hex RandomMap::findCastleSpot(int startTile)
 
         // all tiles must be in the same region
         // can't be in water
-        // can't be in the same region as another castle
-        // TODO: can't also be in a region adjacent to another castle?
+        // can't be in the same or adjacent region as another castle
         // if so, return that tile
         // if not, push the neighbors onto the queue
         const auto curRegion = tileRegions_[tile];
-        if (regionTerrain_[curRegion] != Terrain::water &&
-            !contains(castleRegions_, curRegion))
-        {
+        if (!regionRuledOut[curRegion] && isCastleRegionValid(curRegion)) {
             bool validSpot = true;
             for (const auto &hex : getCastleHexes(hexFromInt(tile))) {
                 const auto index = intFromHex(hex);
-                if (offGrid(hex) ||
+                if (!validSpot || offGrid(hex) ||
                     tileRegions_[index] != curRegion ||
                     tileOccupied_[index])
                 {
@@ -712,6 +710,9 @@ Hex RandomMap::findCastleSpot(int startTile)
                 return hexFromInt(tile);
             }
         }
+        else {
+            regionRuledOut[curRegion] = 1;
+        }
 
         for (const auto &nbr : tileNeighbors_.find(tile)) {
             if (!visited[nbr]) {
@@ -720,8 +721,22 @@ Hex RandomMap::findCastleSpot(int startTile)
         }
     }
 
-    // Couldn't find a valid spot on the entire map, this is an error.
-    return {};
+    throw std::runtime_error("Couldn't find valid castle spot");
+}
+
+bool RandomMap::isCastleRegionValid(int region)
+{
+    if (regionTerrain_[region] == Terrain::water || contains(castleRegions_, region)) {
+        return false;
+    }
+
+    for (auto nbrRegion : regionNeighbors_.find(region)) {
+        if (contains(castleRegions_, nbrRegion)) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 void RandomMap::computeCastleDistance()
@@ -772,8 +787,7 @@ int RandomMap::computeCastleDistance(int region)
 
     // Can't get here unless we messed up region neighbors or don't have any
     // castles.
-    assert(false);
-    return -1;
+    throw std::runtime_error("Couldn't find nearest castle from region");
 }
 
 int RandomMap::getRandomTile(int region)
@@ -901,7 +915,7 @@ void RandomMap::placeArmies()
     // Place a random army on the border between each pair of adjacent regions.
     boost::container::flat_set<std::pair<int, int>> placed;
 
-    // Avoid placing an army within another's zone of control.
+    // Avoid placing an army such that zones of control overlap.
     boost::container::flat_set<int> controlled;
 
     for (auto [tile, nbr] : borderTiles_) {
@@ -933,7 +947,9 @@ void RandomMap::placeArmies()
         placed.insert({nbrRegion, region});
 
         for (int zoc : tileNeighbors_.find(tile)) {
-            controlled.insert(zoc);
+            for (int zoc2 : tileNeighbors_.find(zoc)) {
+                controlled.insert(zoc2);
+            }
         }
     }
 }

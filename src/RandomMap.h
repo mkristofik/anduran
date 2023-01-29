@@ -94,6 +94,7 @@ private:
     // Ensure the castle entrances are walkable.
     void placeCastles();
     Hex findCastleSpot(int startTile);
+    bool isCastleRegionValid(int region);
 
     // Compute the distance (in regions) each region is from the nearest castle.
     // We'll use this to place certain objects and generate wandering army sizes.

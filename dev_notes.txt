@@ -278,7 +278,7 @@ is next to or in front of a castle
     * prevents two villages from being placed next to each other
 * compute each region's distance from a castle
     - use these to choose wandering army strength
-- do we want to prevent armies with overlapping zones of control?
+* do we want to prevent armies with overlapping zones of control?
 * what about when a castle is cut off by water?
 
 
