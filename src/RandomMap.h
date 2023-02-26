@@ -21,6 +21,19 @@
 #include <string>
 #include <vector>
 
+// A landmass is a contiguous set of regions that are either all land or all
+// water.  Coastlines are the tiles that border each adjacent landmass.  The land
+// side and water side are two separate coastlines.
+struct Coastline
+{
+    std::pair<int, int> landmasses;
+    std::vector<int> tiles;
+    EnumSizedBitset<Terrain> terrain;
+
+    explicit Coastline(const std::pair<int, int> landmassPair);
+};
+
+
 class RandomMap
 {
 public:
@@ -64,6 +77,7 @@ public:
 private:
     void generateRegions();
     void buildNeighborGraphs();
+    void landmass();
     void assignTerrain();
     void assignObstacles();
 
@@ -84,7 +98,6 @@ private:
     // Clear obstacles so each region can reach at least one other region. Also,
     // ensure that every open tile within each region can reach every other open
     // tile within that region.
-    void findBorderTiles();
     void avoidIsolatedRegions();
     void avoidIsolatedTiles();
     void exploreWalkableTiles(int startTile, std::vector<signed char> &visited);
@@ -101,13 +114,17 @@ private:
     void computeCastleDistance();
     int computeCastleDistance(int region);
 
+    void computeLandmasses();
+    void computeCoastlines();
+
     // Randomly place various objects in each region.
     int getRandomTile(int region);
     int findObjectSpot(int startTile, int region);
+    int numObjectsAllowed(const MapObject &obj, int region) const;
     void placeVillages();
     void placeObjects();
-    int numObjectsAllowed(const MapObject &obj, int region) const;
-    int placeObject(ObjectType type, int region);
+    int placeObjectInRegion(ObjectType type, int region);
+    void placeObject(ObjectType type, int tile);
     void placeArmies();
 
     int width_;
@@ -122,6 +139,8 @@ private:
     FlatMultimap<int, int> regionNeighbors_;
     std::vector<Terrain> regionTerrain_;
     FlatMultimap<int, int> regionTiles_;  // which tiles belong to each region
+    std::vector<int> regionLandmass_;
+    std::vector<Coastline> coastlines_;
     std::vector<int> castles_;  // center tile of each castle
     std::vector<int> castleRegions_;
     std::vector<int> regionCastleDistance_;  // how far from nearest castle?

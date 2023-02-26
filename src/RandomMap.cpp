@@ -109,6 +109,17 @@ double Noise::get(int x, int y)
 }
 
 
+Coastline::Coastline(const std::pair<int, int> landmassPair)
+    : landmasses(landmassPair)
+{
+}
+
+bool operator==(const Coastline &lhs, const std::pair<int, int> &rhs)
+{
+    return lhs.landmasses == rhs;
+}
+
+
 const int RandomMap::invalidIndex = -1;
 
 RandomMap::RandomMap(int width)
@@ -124,6 +135,8 @@ RandomMap::RandomMap(int width)
     regionNeighbors_(),
     regionTerrain_(),
     regionTiles_(),
+    regionLandmass_(),
+    coastlines_(),
     castles_(),
     castleRegions_(),
     regionCastleDistance_(),
@@ -134,7 +147,7 @@ RandomMap::RandomMap(int width)
     generateRegions();
     buildNeighborGraphs();
     assignTerrain();
-    findBorderTiles();
+    computeLandmasses();
     placeCastles();
     placeVillages();
     placeObjects();
@@ -155,6 +168,8 @@ RandomMap::RandomMap(const char *filename)
     regionNeighbors_(),
     regionTerrain_(),
     regionTiles_(),
+    regionLandmass_(),
+    coastlines_(),
     castles_(),
     castleRegions_(),
     villageNeighbors_(),
@@ -348,13 +363,20 @@ void RandomMap::buildNeighborGraphs()
             if (region == nbrRegion) {
                 continue;
             }
+
             regionNeighbors_.insert(region, nbrRegion);
+            // Not concerned about duplicates.
+            borderTiles_.push_back({i, nbrTile});
         }
     }
 
     // Won't be inserting any new elements after this.
     tileNeighbors_.shrink_to_fit();
     regionNeighbors_.shrink_to_fit();
+
+    // Multiple steps depend on this list, ensure we're not processing it in tile
+    // index order every time.
+    randomize(borderTiles_);
 }
 
 void RandomMap::assignTerrain()
@@ -442,8 +464,7 @@ std::vector<Hex> RandomMap::voronoi()
 
     // Erase any empty regions.  Repeated runs of the Voronoi algorithm sometimes
     // causes small regions to be absorbed by their neighbors.
-    centers.erase(remove(begin(centers), end(centers), Hex::invalid()),
-                  end(centers));
+    erase(centers, Hex::invalid());
 
     return centers;
 }
@@ -493,24 +514,6 @@ void RandomMap::clearObstacle(int index)
     tileObstacles_[index] = 0;
     tileOccupied_[index] = 0;
     tileWalkable_[index] = 1;
-}
-
-void RandomMap::findBorderTiles()
-{
-    for (int i = 0; i < size_; ++i) {
-        for (int nbr : tileNeighbors_.find(i)) {
-            auto region = tileRegions_[i];
-            auto nbrRegion = tileRegions_[nbr];
-            if (region != nbrRegion) {
-                // Not concerned about duplicates.
-                borderTiles_.push_back({i, nbr});
-            }
-        }
-    }
-
-    // Multiple steps depend on this list, ensure we're not processing it in tile
-    // index order every time.
-    randomize(borderTiles_);
 }
 
 void RandomMap::avoidIsolatedRegions()
@@ -790,6 +793,84 @@ int RandomMap::computeCastleDistance(int region)
     throw std::runtime_error("Couldn't find nearest castle from region");
 }
 
+void RandomMap::computeLandmasses()
+{
+    regionLandmass_.resize(numRegions_, -1);
+    int curLandmass = 0;
+
+    for (int r = 0; r < numRegions_; ++r) {
+        if (regionLandmass_[r] >= 0) {
+            continue;
+        }
+
+        // Breadth-first search for all contiguous regions that are similar
+        // (either land or water) to this one.
+        bool isWater = (regionTerrain_[r] == Terrain::water);
+        std::queue<int> bfsQ;
+        bfsQ.push(r);
+        while (!bfsQ.empty()) {
+            int region = bfsQ.front();
+            bfsQ.pop();
+            regionLandmass_[region] = curLandmass;
+
+            for (int nbr : regionNeighbors_.find(region)) {
+                if (regionLandmass_[nbr] >= 0) {
+                    continue;
+                }
+                if (isWater == (regionTerrain_[nbr] == Terrain::water)) {
+                    bfsQ.push(nbr);
+                }
+            }
+        }
+
+        ++curLandmass;
+    }
+
+    computeCoastlines();
+}
+
+// TODO: Placing per-coastline objects
+// find a tile in the coastline list...
+// - that isn't occupied
+// - at max region castle distance
+// - with one of the object's allowed terrain types
+// Harbour Master at fair castle distance
+// Shipwreck can be random
+void RandomMap::computeCoastlines()
+{
+    for (auto [tile, nbr] : borderTiles_) {
+        int reg = tileRegions_[tile];
+        int nbrReg = tileRegions_[nbr];
+        int myLand = regionLandmass_[reg];
+        int nbrLand = regionLandmass_[nbrReg];
+        if (myLand == nbrLand) {
+            continue;
+        }
+
+        auto landmassPair = std::make_pair(myLand, nbrLand);
+        auto iter = find(begin(coastlines_), end(coastlines_), landmassPair);
+        if (iter == end(coastlines_)) {
+            coastlines_.emplace_back(landmassPair);
+            iter = prev(end(coastlines_));
+        }
+        iter->tiles.push_back(tile);
+        iter->terrain.set(regionTerrain_[reg]);
+    }
+
+    for (auto &coast : coastlines_) {
+        // Some tiles can be adjacent to multiple tiles in the neighboring
+        // landmass.  Prune this list down to unique tiles.  We don't want to
+        // overweight certain tiles when choosing possible object locations.
+        std::ranges::sort(coast.tiles);
+        auto [first, last] = std::ranges::unique(coast.tiles);
+        coast.tiles.erase(first, last);
+
+        // We will place objects based on this list, ensure we're not processing
+        // it in tile index order every time.
+        randomize(coast.tiles);
+    }
+}
+
 int RandomMap::getRandomTile(int region)
 {
     const auto regTiles = regionTiles_.find(region);
@@ -862,7 +943,7 @@ void RandomMap::placeVillages()
 
         int allowed = numObjectsAllowed(village, r);
         for (int i = 0; i < allowed; ++i) {
-            int tile = placeObject(ObjectType::village, r);
+            int tile = placeObjectInRegion(ObjectType::village, r);
             if (offGrid(tile)) {
                 continue;
             }
@@ -888,24 +969,29 @@ void RandomMap::placeObjects()
 
             int allowed = numObjectsAllowed(obj, r);
             for (int i = 0; i < allowed; ++i) {
-                placeObject(obj.type, r);
+                placeObjectInRegion(obj.type, r);
             }
         }
     }
 }
 
-int RandomMap::placeObject(ObjectType type, int region)
+int RandomMap::placeObjectInRegion(ObjectType type, int region)
 {
     int startTile = getRandomTile(region);
     int tile = findObjectSpot(startTile, region);
     if (!offGrid(tile)) {
-        auto name = obj_name_from_type(type);
-        assert(!name.empty());
-        objectTiles_.insert(name, tile);
-        tileOccupied_[tile] = 1;  // object tiles are walkable
+        placeObject(type, tile);
     }
 
     return tile;
+}
+
+void RandomMap::placeObject(ObjectType type, int tile)
+{
+    auto name = obj_name_from_type(type);
+    assert(!name.empty());
+    objectTiles_.insert(name, tile);
+    tileOccupied_[tile] = 1;  // object tiles are walkable
 }
 
 void RandomMap::placeArmies()
