@@ -52,7 +52,7 @@ destination hex
     * pick random region furthest from castles
 - neutral boats are walkable
     - embarking changes the champion image to the team-colored boat
-    - hide the neutral boat
+    - what happens to the neutral boat?
     - disembarking does the opposite, make sure to match the facing
     - water tiles become walkable if you're in a boat
     - walkability is a game state, not just a property of the tile

@@ -259,13 +259,18 @@ void Anduran::load_objects()
 Path Anduran::find_path(const GameObject &obj, const Hex &hDest)
 {
     auto path = pathfind_.find_path(obj, hDest);
+    if (path.empty()) {
+        return {};
+    }
 
     // Path must stop early at first hex where an action occurs.
-    auto stopAt = std::ranges::find_if(path, [this, &obj] (const auto &hex) {
+    auto first = next(std::begin(path));  // ...but not the hex we're standing on
+    auto last = std::end(path);
+    auto stopAt = find_if(first, last, [this, &obj] (const auto &hex) {
         return game_.hex_action(obj, hex).action != ObjectAction::none;
     });
-    if (stopAt != std::ranges::end(path)) {
-        path.erase(next(stopAt), end(path));
+    if (stopAt != last) {
+        path.erase(next(stopAt), last);
     }
 
     return path;
@@ -297,7 +302,8 @@ void Anduran::move_action(GameObject &player, const Path &path)
 
         // If we land on an object with a flag, change the flag color to
         // match the player's.
-        if (action == ObjectAction::visit) {
+        // TODO: objects that trigger a battle (shipwreck)
+        if (action == ObjectAction::visit && obj.secondary >= 0) {
             obj.team = player.team;
             game_.update_object(obj);
             moveEndAnim.insert(AnimDisplay(rmapView_,

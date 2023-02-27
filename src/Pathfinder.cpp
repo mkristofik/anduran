@@ -150,7 +150,7 @@ Neighbors<int> Pathfinder::get_neighbors(int index) const
 
 bool Pathfinder::is_reachable(int index) const
 {
-    if (!rmap_->getWalkable(index) || rmap_->getTerrain(index) == Terrain::water) {
+    if (!rmap_->getWalkable(index)) {
         return false;
     }
 
@@ -179,6 +179,15 @@ bool Pathfinder::is_reachable(int index) const
     // Game objects are only walkable if they're on the destination hex or if
     // they match the player's team color.
     if (hex != hDest_ && action != ObjectAction::none) {
+        return false;
+    }
+
+    // Water hexes are only walkable if they're the destination hex with a game
+    // object on them.
+    // TODO: add support for boats
+    if (rmap_->getTerrain(index) == Terrain::water &&
+        (hex != hDest_ || action == ObjectAction::none))
+    {
         return false;
     }
 
