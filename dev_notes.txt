@@ -40,15 +40,16 @@ destination hex
     * display an attack arrow
 * region boundary stops movement
 * highlight current path
+- visitable objects (shipwrecks) are walkable regardless of terrain
 
 
 # Boats
 -------
-- traverse regions to identify contiguous landmasses, coastal regions, coastal tiles
-- place one lighthouse per landmass adjacent to water
-    - flaggable
-    - used to build boats
-    - pick random region furthest from castles
+* traverse regions to identify contiguous landmasses, coastal regions, coastal tiles
+* place one lighthouse per landmass adjacent to water
+    * flaggable
+    * used to build boats
+    * pick random region furthest from castles
 - neutral boats are walkable
     - embarking changes the champion image to the team-colored boat
     - hide the neutral boat
@@ -127,6 +128,7 @@ is next to or in front of a castle
 * flaggable? (default false)
 * map display needs to return multiple objects per tile (to allow flags and creatures)
 - objects with an army guarding them
+- one-time visit objects change image after they've been visited, no longer visitable
 
 
 # Game state

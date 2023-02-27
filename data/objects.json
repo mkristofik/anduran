@@ -16,6 +16,15 @@
         "per-castle": 2,
         "visit": false
     },
+    "harbor": {
+        "name": "Harbor Master",
+        "img": "lighthouse",
+        "terrain": [1, 2, 3, 4, 5],
+        "per-coastline": 1,
+        "visit": true,
+        "flag": true,
+        "fair-distance": true
+    },
     "oasis": {
         "name": "Oasis",
         "img": "oasis",
@@ -37,8 +46,7 @@
         "name": "Shipwreck",
         "img": "shipwreck",
         "terrain": [0],
-        "per-region": 1,
-        "probability": 50,
+        "per-coastline": 1,
         "visit": true,
         "flag": false
     },

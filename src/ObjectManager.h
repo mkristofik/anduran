@@ -26,6 +26,7 @@
     X(castle) \
     X(champion) \
     X(chest) \
+    X(harbor) \
     X(oasis) \
     X(resource) \
     X(shipwreck) \
@@ -44,12 +45,14 @@ struct MapObject
     std::string name;
     std::string imgName;
     EnumSizedBitset<Terrain> terrain;
-    int numPerRegion = 1;
+    int numPerRegion = 0;
     int numPerCastle = 0;
+    int numPerCoastline = 0;
     int probability = 100;
     ObjectType type = ObjectType::invalid;
     ObjectAction action = ObjectAction::none;
     bool flaggable = false;
+    bool fairDistance = false;  // try to place as far as possible from all castles
 };
 
 // Compare by object type.

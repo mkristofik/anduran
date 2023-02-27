@@ -123,6 +123,7 @@ private:
     int numObjectsAllowed(const MapObject &obj, int region) const;
     void placeVillages();
     void placeObjects();
+    void placeCoastalObject(const MapObject &obj);
     int placeObjectInRegion(ObjectType type, int region);
     void placeObject(ObjectType type, int tile);
     void placeArmies();

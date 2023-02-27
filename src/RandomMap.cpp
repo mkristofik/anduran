@@ -59,6 +59,19 @@ namespace
 
         return hexes;
     }
+
+    int randomObjCount(const MapObject &obj, int max)
+    {
+        int count = 0;
+        RandomRange pct(1, 100);
+        for (int i = 0; i < max; ++i) {
+            if (obj.probability == 100 || pct.get() <= obj.probability) {
+                ++count;
+            }
+        }
+
+        return count;
+    }
 }
 
 
@@ -829,13 +842,6 @@ void RandomMap::computeLandmasses()
     computeCoastlines();
 }
 
-// TODO: Placing per-coastline objects
-// find a tile in the coastline list...
-// - that isn't occupied
-// - at max region castle distance
-// - with one of the object's allowed terrain types
-// Harbour Master at fair castle distance
-// Shipwreck can be random
 void RandomMap::computeCoastlines()
 {
     for (auto [tile, nbr] : borderTiles_) {
@@ -857,6 +863,7 @@ void RandomMap::computeCoastlines()
         iter->terrain.set(regionTerrain_[reg]);
     }
 
+    // TODO: does this actually matter?
     for (auto &coast : coastlines_) {
         // Some tiles can be adjacent to multiple tiles in the neighboring
         // landmass.  Prune this list down to unique tiles.  We don't want to
@@ -913,8 +920,6 @@ int RandomMap::findObjectSpot(int startTile, int region)
 
 int RandomMap::numObjectsAllowed(const MapObject &obj, int region) const
 {
-    int numAllowed = 0;
-
     // Skip if not allowed to be placed on this terrain type.
     if (!obj.terrain[regionTerrain_[region]]) {
         return 0;
@@ -925,14 +930,7 @@ int RandomMap::numObjectsAllowed(const MapObject &obj, int region) const
         maxAllowed = obj.numPerCastle;
     }
 
-    RandomRange pct(1, 100);
-    for (int i = 0; i < maxAllowed; ++i) {
-        if (obj.probability == 100 || pct.get() <= obj.probability) {
-            ++numAllowed;
-        }
-    }
-
-    return numAllowed;
+    return randomObjCount(obj, maxAllowed);
 }
 
 void RandomMap::placeVillages()
@@ -970,6 +968,51 @@ void RandomMap::placeObjects()
             int allowed = numObjectsAllowed(obj, r);
             for (int i = 0; i < allowed; ++i) {
                 placeObjectInRegion(obj.type, r);
+            }
+        }
+    }
+
+    for (auto &obj : objectMgr_) {
+        if (obj.numPerCoastline > 0) {
+            placeCoastalObject(obj);
+        }
+    }
+}
+
+void RandomMap::placeCoastalObject(const MapObject &obj)
+{
+    for (auto &coast : coastlines_) {
+        if ((obj.terrain & coast.terrain).none()) {
+            continue;
+        }
+
+        int numToPlace = randomObjCount(obj, obj.numPerCoastline);
+        for (int i = 0; i < numToPlace; ++i) {
+            int bestTile = -1;
+            int castleDistance = -1;
+            for (int tile : coast.tiles) {
+                int region = tileRegions_[tile];
+                if (!obj.terrain[regionTerrain_[region]]) {
+                    continue;
+                }
+                if (tileOccupied_[tile] || villageNeighbors_[tile]) {
+                    continue;
+                }
+
+                int dist = regionCastleDistance_[region];
+                if (!obj.fairDistance) {
+                    // Tile list is randomized, we can just pick the first one.
+                    bestTile = tile;
+                    break;
+                }
+                else if (dist > castleDistance) {
+                    bestTile = tile;
+                    castleDistance = dist;
+                }
+            }
+
+            if (bestTile >= 0) {
+                placeObject(obj.type, bestTile);
             }
         }
     }

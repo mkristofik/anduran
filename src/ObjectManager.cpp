@@ -99,6 +99,9 @@ ObjectManager::ObjectManager(const std::string &configFile)
                 else if (field == "per-castle") {
                     obj.numPerCastle = val;
                 }
+                else if (field == "per-coastline") {
+                    obj.numPerCoastline = val;
+                }
                 else if (field == "probability") {
                     obj.probability = val;
                 }
@@ -113,6 +116,9 @@ ObjectManager::ObjectManager(const std::string &configFile)
                 }
                 else if (field == "flag") {
                     obj.flaggable = val;
+                }
+                else if (field == "fair-distance") {
+                    obj.fairDistance = val;
                 }
                 else {
                     warn_unexpected("boolean", name, field);
