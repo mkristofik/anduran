@@ -515,7 +515,7 @@ std::vector<int> RandomMap::randomAltitudes()
 
 void RandomMap::setObstacle(int index)
 {
-    assert(!offGrid(index));
+    assert(!offGrid(index) && !tileOccupied_[index]);
     tileObstacles_[index] = 1;
     tileOccupied_[index] = 1;
     tileWalkable_[index] = 0;
@@ -524,6 +524,10 @@ void RandomMap::setObstacle(int index)
 void RandomMap::clearObstacle(int index)
 {
     assert(!offGrid(index));
+    if (!tileObstacles_[index]) {
+        return;
+    }
+
     tileObstacles_[index] = 0;
     tileOccupied_[index] = 0;
     tileWalkable_[index] = 1;
@@ -899,11 +903,11 @@ int RandomMap::findObjectSpot(int startTile, int region)
         visited.insert(tile);
         bfsQ.pop();
 
-        if (offGrid(tile) || tileRegions_[tile] != region || villageNeighbors_[tile]) {
+        if (offGrid(tile) || tileRegions_[tile] != region) {
             continue;
         }
 
-        if (!tileOccupied_[tile]) {
+        if (!tileOccupied_[tile] && !villageNeighbors_[tile]) {
             return tile;
         }
 
@@ -1011,7 +1015,7 @@ void RandomMap::placeCoastalObject(const MapObject &obj)
                 }
             }
 
-            if (bestTile >= 0) {
+            if (!offGrid(bestTile)) {
                 placeObject(obj.type, bestTile);
             }
         }
@@ -1039,8 +1043,6 @@ void RandomMap::placeObject(ObjectType type, int tile)
 
 void RandomMap::placeArmies()
 {
-    auto armyType = obj_name_from_type(ObjectType::army);
-
     // Place a random army on the border between each pair of adjacent regions.
     boost::container::flat_set<std::pair<int, int>> placed;
 
@@ -1070,8 +1072,7 @@ void RandomMap::placeArmies()
             continue;
         }
 
-        objectTiles_.insert(armyType, tile);
-        tileOccupied_[tile] = 1;
+        placeObject(ObjectType::army, tile);
         placed.insert({region, nbrRegion});
         placed.insert({nbrRegion, region});
 
