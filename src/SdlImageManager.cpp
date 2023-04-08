@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2021 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2023 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -58,23 +58,24 @@ SdlImageManager::SdlImageManager(const std::string &pathname)
     }
 }
 
-SdlImageData SdlImageManager::get(const std::string &name) const
+SdlImageData SdlImageManager::get(std::string_view name) const
 {
     const auto iter = images_.find(name);
     if (iter == end(images_)) {
-        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO, "Image not found: %s", name.c_str());
+        std::string nameStr(name.data(), name.size());
+        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO, "Image not found: %s", nameStr.c_str());
         return {};
     }
 
     return iter->second;
 }
 
-SdlSurface SdlImageManager::get_surface(const std::string &name) const
+SdlSurface SdlImageManager::get_surface(std::string_view name) const
 {
     return get(name).surface;
 }
 
-SdlTexture SdlImageManager::make_texture(const std::string &name, SdlWindow &win) const
+SdlTexture SdlImageManager::make_texture(std::string_view name, SdlWindow &win) const
 {
     const auto data = get(name);
     if (!data) {

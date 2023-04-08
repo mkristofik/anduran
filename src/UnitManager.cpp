@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2022 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2023 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -131,11 +131,12 @@ UnitManager::UnitManager(const std::string &configFile,
     }
 }
 
-int UnitManager::get_type(const std::string &key) const
+int UnitManager::get_type(std::string_view key) const
 {
     const auto iter = types_.find(key);
     if (iter == end(types_)) {
-        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Unit not found: %s", key.c_str());
+        std::string keyStr(key.data(), key.size());
+        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Unit not found: %s", keyStr.c_str());
         return -1;
     }
 
@@ -175,7 +176,7 @@ const UnitData & UnitManager::get_data(int unitType) const
     return data_[unitType];
 }
 
-TeamColoredTextures UnitManager::load_image_set(const std::string &name)
+TeamColoredTextures UnitManager::load_image_set(std::string_view name)
 {
     TeamColoredTextures images;
     
@@ -192,7 +193,7 @@ TeamColoredTextures UnitManager::load_image_set(const std::string &name)
     return images;
 }
 
-SdlTexture UnitManager::load_image(const std::string &name)
+SdlTexture UnitManager::load_image(std::string_view name)
 {
     return imgSource_->make_texture(name, *window_);
 }

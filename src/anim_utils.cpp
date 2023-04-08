@@ -457,9 +457,9 @@ void AnimProjectile::stop()
 }
 
 
-AnimLog::AnimLog(MapDisplay &display, const std::string &message)
+AnimLog::AnimLog(MapDisplay &display, std::string_view message)
     : AnimBase(display, 0),
-    msg_(message)
+    msg_(message.data(), message.size())
 {
 }
 

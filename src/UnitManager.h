@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2021 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2023 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -15,11 +15,12 @@
 
 #include "SdlTexture.h"
 #include "UnitData.h"
+#include "container_utils.h"
 #include "team_color.h"
 
 #include "boost/container/flat_map.hpp"
 #include <string>
-#include <unordered_map>
+#include <string_view>
 #include <vector>
 
 class SdlImageManager;
@@ -47,19 +48,19 @@ public:
                 SdlWindow &win,
                 SdlImageManager &imgMgr);
 
-    int get_type(const std::string &key) const;
+    int get_type(std::string_view key) const;
 
     SdlTexture get_image(int unitType, ImageType imgType, Team team) const;
     SdlTexture get_projectile(int unitType) const;
     const UnitData & get_data(int unitType) const;
 
 private:
-    TeamColoredTextures load_image_set(const std::string &name);
-    SdlTexture load_image(const std::string &name);
+    TeamColoredTextures load_image_set(std::string_view name);
+    SdlTexture load_image(std::string_view name);
 
     SdlWindow *window_;
     SdlImageManager *imgSource_;
-    std::unordered_map<std::string, int> types_;
+    StringHashMap<int> types_;
     std::vector<UnitMedia> media_;
     std::vector<UnitData> data_;
 };

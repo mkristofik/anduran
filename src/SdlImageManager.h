@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2021 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2023 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -15,9 +15,10 @@
 
 #include "SdlSurface.h"
 #include "SdlTexture.h"
+#include "container_utils.h"
 
 #include <string>
-#include <unordered_map>
+#include <string_view>
 #include <vector>
 
 class SdlWindow;
@@ -61,16 +62,16 @@ class SdlImageManager
 public:
     SdlImageManager(const std::string &pathname);
 
-    SdlImageData get(const std::string &name) const;
-    SdlSurface get_surface(const std::string &name) const;
+    SdlImageData get(std::string_view name) const;
+    SdlSurface get_surface(std::string_view name) const;
 
     // Convenience function for constructing a texture from image data.
-    SdlTexture make_texture(const std::string &name, SdlWindow &win) const;
+    SdlTexture make_texture(std::string_view name, SdlWindow &win) const;
 
 private:
     void load_config(const std::string &filename);
 
-    std::unordered_map<std::string, SdlImageData> images_;
+    StringHashMap<SdlImageData> images_;
 };
 
 #endif

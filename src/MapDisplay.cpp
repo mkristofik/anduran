@@ -30,6 +30,7 @@ namespace
     const int SCROLL_PX_SEC = 500;  // map scroll rate in pixels per second
     const int BORDER_WIDTH = 20;
 
+    // TODO: these could be EnumSizedArray
     std::string tileFilename(Terrain t)
     {
         switch(t) {
@@ -225,14 +226,14 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
     addCastleFloors();
     addCastleWalls();
 
-    const auto shadowImg = images_->make_texture("hex-shadow"s, *window_);
+    const auto shadowImg = images_->make_texture("hex-shadow", *window_);
     hexShadowId_ = addHiddenEntity(shadowImg, ZOrder::shadow);
-    const auto highlightImg = images_->make_texture("hex-yellow"s, *window_);
+    const auto highlightImg = images_->make_texture("hex-yellow", *window_);
     hexHighlightId_ = addHiddenEntity(highlightImg, ZOrder::highlight);
-    pathImg_[ObjectAction::none] = images_->make_texture("footsteps"s, *window_);
-    pathImg_[ObjectAction::battle] = images_->make_texture("new-battle"s, *window_);
-    pathImg_[ObjectAction::visit] = images_->make_texture("visit-object"s, *window_);
-    pathImg_[ObjectAction::pickup] = images_->make_texture("visit-object"s, *window_);
+    pathImg_[ObjectAction::none] = images_->make_texture("footsteps", *window_);
+    pathImg_[ObjectAction::battle] = images_->make_texture("new-battle", *window_);
+    pathImg_[ObjectAction::visit] = images_->make_texture("visit-object", *window_);
+    pathImg_[ObjectAction::pickup] = images_->make_texture("visit-object", *window_);
 }
 
 void MapDisplay::draw()
@@ -638,12 +639,12 @@ void MapDisplay::loadTerrainImages()
     }
 
     // Special edge transitions to water.
-    edgeImg_.push_back(images_->make_texture("edges-grass-water"s, *window_));
-    edgeImg_.push_back(images_->make_texture("edges-dirt-water"s, *window_));
-    edgeImg_.push_back(images_->make_texture("edges-snow-water"s, *window_));
+    edgeImg_.push_back(images_->make_texture("edges-grass-water", *window_));
+    edgeImg_.push_back(images_->make_texture("edges-dirt-water", *window_));
+    edgeImg_.push_back(images_->make_texture("edges-snow-water", *window_));
 
     // Edge transition between two regions with the same terrain type.
-    edgeImg_.push_back(images_->make_texture("edges-same-terrain"s, *window_));
+    edgeImg_.push_back(images_->make_texture("edges-same-terrain", *window_));
 }
 
 void MapDisplay::addBorderTiles()
@@ -728,7 +729,7 @@ void MapDisplay::addBorderTiles()
 
 void MapDisplay::addCastleFloors()
 {
-    auto floor = images_->make_texture("tiles-castle"s, *window_);
+    auto floor = images_->make_texture("tiles-castle", *window_);
 
     for (auto &hCastle : map_->getCastleTiles()) {
         auto terrain = map_->getTerrain(hCastle);

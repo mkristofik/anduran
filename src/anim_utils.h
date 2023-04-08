@@ -22,6 +22,8 @@
 
 #include "SDL.h"
 #include <memory>
+#include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -202,7 +204,7 @@ private:
 class AnimLog : public AnimBase
 {
 public:
-    AnimLog(MapDisplay &display, const std::string &message);
+    AnimLog(MapDisplay &display, std::string_view message);
 
 private:
     void start() override;

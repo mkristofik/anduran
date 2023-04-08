@@ -144,13 +144,13 @@ void Anduran::load_images()
         championImages_.push_back(SdlTexture::make_image(championSurface, win_));
     }
 
-    auto ellipse = images_.get_surface("ellipse"s);
+    auto ellipse = images_.get_surface("ellipse");
     auto ellipseSurfaces = applyTeamColors(ellipseToRefColor(ellipse));
     for (auto i = 0u; i < size(ellipseSurfaces); ++i) {
         ellipseImages_[i] = SdlTexture::make_image(ellipseSurfaces[i], win_);
     }
 
-    auto flag = images_.get_surface("flag"s);
+    auto flag = images_.get_surface("flag");
     auto flagSurfaces = applyTeamColors(flagToRefColor(flag));
     for (auto i = 0u; i < size(flagSurfaces); ++i) {
         flagImages_[i] = SdlTexture::make_image(flagSurfaces[i], win_);
@@ -190,15 +190,15 @@ void Anduran::load_players()
 
         // Each player gets the same starting army for now.
         Army army;
-        army.units[0] = {units_.get_type("swordsman"s), 4};
-        army.units[1] = {units_.get_type("archer"s), 4};
+        army.units[0] = {units_.get_type("swordsman"), 4};
+        army.units[1] = {units_.get_type("archer"), 4};
         army.entity = champion.entity;
         game_.add_army(army);
     }
     curPlayerId_ = playerEntityIds_[0];
 
     // Add a wandering army to attack.
-    const auto orc = units_.get_type("orc"s);
+    const auto orc = units_.get_type("orc");
     auto orcImg = units_.get_image(orc, ImageType::img_idle, Team::neutral);
     GameObject enemy;
     enemy.hex = {5, 8};
@@ -213,7 +213,7 @@ void Anduran::load_players()
     game_.add_army(orcArmy);
 
     // Add a placeholder projectile for ranged units.
-    auto arrow = images_.make_texture("missile"s, win_);
+    auto arrow = images_.make_texture("missile", win_);
     projectileId_ = rmapView_.addHiddenEntity(arrow, ZOrder::projectile);
 
     // Create streaming textures for the HP bars.
@@ -263,6 +263,9 @@ Path Anduran::find_path(const GameObject &obj, const Hex &hDest)
         return {};
     }
 
+    // TODO: this isn't going to do the right thing for a battle taking place on
+    // the adjacent hex (so the resulting path would only include the current hex)
+    //
     // Path must stop early at first hex where an action occurs.
     auto first = next(std::begin(path));  // ...but not the hex we're standing on
     auto last = std::end(path);
