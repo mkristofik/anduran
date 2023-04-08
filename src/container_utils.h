@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2022 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2023 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,11 @@
 #include "RandomRange.h"
 
 #include <algorithm>
+#include <functional>
 #include <iterator>
+#include <string>
+#include <string_view>
+#include <unordered_map>
 
 template <typename C>
 constexpr bool in_bounds(const C &cont, int index)
@@ -37,5 +41,22 @@ void randomize(C &cont)
 {
     std::ranges::shuffle(cont, RandomRange::engine);
 }
+
+
+// Helper struct for looking up multiple string types in an unordered container
+// (need both the Hash and KeyEqual types to support transparent lookup)
+//
+// source: https://www.cppstories.com/2021/heterogeneous-access-cpp20/
+struct StringHash {
+    using is_transparent = void;
+    using hash_type = std::hash<std::string_view>;
+
+    size_t operator()(std::string_view txt) const   { return hash_type{}(txt); }
+    size_t operator()(const std::string &txt) const { return hash_type{}(txt); }
+    size_t operator()(const char *txt) const        { return hash_type{}(txt); }
+};
+
+template <typename T>
+using StringHashMap = std::unordered_map<std::string, T, StringHash, std::equal_to<>>;
 
 #endif
