@@ -30,97 +30,41 @@ namespace
     const int SCROLL_PX_SEC = 500;  // map scroll rate in pixels per second
     const int BORDER_WIDTH = 20;
 
-    // TODO: these could be EnumSizedArray
-    std::string tileFilename(Terrain t)
-    {
-        switch(t) {
-            case Terrain::water:
-                return "tiles-water"s;
-            case Terrain::desert:
-                return "tiles-desert"s;
-            case Terrain::swamp:
-                return "tiles-swamp"s;
-            case Terrain::grass:
-                return "tiles-grass"s;
-            case Terrain::dirt:
-                return "tiles-dirt"s;
-            case Terrain::snow:
-                return "tiles-snow"s;
-            default:
-                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Unrecognized terrain %d",
-                            static_cast<int>(t));
-                return "tiles-water"s;
-        }
-    }
+    const EnumSizedArray<std::string, Terrain> tileFilename = {
+        "tiles-water"s,
+        "tiles-desert"s,
+        "tiles-swamp"s,
+        "tiles-grass"s,
+        "tiles-dirt"s,
+        "tiles-snow"s
+    };
 
-    std::string obstacleFilename(Terrain t)
-    {
-        switch(t) {
-            case Terrain::water:
-                return "obstacles-water"s;
-            case Terrain::desert:
-                return "obstacles-desert"s;
-            case Terrain::swamp:
-                return "obstacles-swamp"s;
-            case Terrain::grass:
-                return "obstacles-grass"s;
-            case Terrain::dirt:
-                return "obstacles-dirt"s;
-            case Terrain::snow:
-                return "obstacles-snow"s;
-            default:
-                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
-                            "Unrecognized obstacle terrain %d",
-                            static_cast<int>(t));
-                return "obstacles-water"s;
-        }
-    }
+    const EnumSizedArray<std::string, Terrain> obstacleFilename = {
+        "obstacles-water"s,
+        "obstacles-desert"s,
+        "obstacles-swamp"s,
+        "obstacles-grass"s,
+        "obstacles-dirt"s,
+        "obstacles-snow"s
+    };
 
-    std::string edgeFilename(Terrain t)
-    {
-        switch(t) {
-            case Terrain::water:
-                return "edges-water"s;
-            case Terrain::desert:
-                return "edges-desert"s;
-            case Terrain::swamp:
-                return "edges-swamp"s;
-            case Terrain::grass:
-                return "edges-grass"s;
-            case Terrain::dirt:
-                return "edges-dirt"s;
-            case Terrain::snow:
-                return "edges-snow"s;
-            default:
-                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
-                            "Unrecognized edge terrain %d",
-                            static_cast<int>(t));
-                return "edges-water"s;
-        }
-    }
+    const EnumSizedArray<std::string, Terrain> edgeFilename = {
+        "edges-water"s,
+        "edges-desert"s,
+        "edges-swamp"s,
+        "edges-grass"s,
+        "edges-dirt"s,
+        "edges-snow"s
+    };
 
-    std::string castleFilename(Terrain t)
-    {
-        switch(t) {
-            case Terrain::water:
-                return "castle-walls-water"s;
-            case Terrain::desert:
-                return "castle-walls-desert"s;
-            case Terrain::swamp:
-                return "castle-walls-swamp"s;
-            case Terrain::grass:
-                return "castle-walls-grass"s;
-            case Terrain::dirt:
-                return "castle-walls-dirt"s;
-            case Terrain::snow:
-                return "castle-walls-snow"s;
-            default:
-                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
-                            "Unsupported castle terrain %d",
-                            static_cast<int>(t));
-                return "castle-walls-dirt"s;
-        }
-    }
+    const EnumSizedArray<std::string, Terrain> castleFilename = {
+        "castle-walls-water"s,
+        "castle-walls-desert"s,
+        "castle-walls-swamp"s,
+        "castle-walls-grass"s,
+        "castle-walls-dirt"s,
+        "castle-walls-snow"s
+    };
     
     SDL_Point pixelFromHex(const Hex &hex)
     {
@@ -633,9 +577,9 @@ void MapDisplay::doMultiEdges(Neighbors<TileEdge> &edges)
 void MapDisplay::loadTerrainImages()
 {
     for (auto t : Terrain()) {
-        tileImg_[t] = images_->make_texture(tileFilename(t), *window_);
-        obstacleImg_[t] = images_->make_texture(obstacleFilename(t), *window_);
-        edgeImg_.push_back(images_->make_texture(edgeFilename(t), *window_));
+        tileImg_[t] = images_->make_texture(tileFilename[t], *window_);
+        obstacleImg_[t] = images_->make_texture(obstacleFilename[t], *window_);
+        edgeImg_.push_back(images_->make_texture(edgeFilename[t], *window_));
     }
 
     // Special edge transitions to water.
@@ -752,7 +696,7 @@ void MapDisplay::addCastleWalls()
 {
     EnumSizedArray<SdlTexture, Terrain> walls;
     for (Terrain t : Terrain()) {
-        walls[t] = images_->make_texture(castleFilename(t), *window_);
+        walls[t] = images_->make_texture(castleFilename[t], *window_);
     }
 
     for (auto &hCastle : map_->getCastleTiles()) {

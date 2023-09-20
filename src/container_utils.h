@@ -44,16 +44,10 @@ void randomize(C &cont)
 
 
 // Helper struct for looking up multiple string types in an unordered container
-// (need both the Hash and KeyEqual types to support transparent lookup)
-//
-// source: https://www.cppstories.com/2021/heterogeneous-access-cpp20/
-struct StringHash {
+// (need both the hash and comparison types to support transparent lookup)
+struct StringHash : public std::hash<std::string_view>
+{
     using is_transparent = void;
-    using hash_type = std::hash<std::string_view>;
-
-    size_t operator()(std::string_view txt) const   { return hash_type{}(txt); }
-    size_t operator()(const std::string &txt) const { return hash_type{}(txt); }
-    size_t operator()(const char *txt) const        { return hash_type{}(txt); }
 };
 
 template <typename T>

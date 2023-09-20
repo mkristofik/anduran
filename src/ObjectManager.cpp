@@ -28,8 +28,8 @@ namespace
 #undef X
 
     void warn_unexpected(std::string_view dataType,
-                         const std::string &objName,
-                         const std::string &fieldName)
+                         std::string_view objName,
+                         std::string_view fieldName)
     {
         std::cerr << "WARNING: unrecognized object " <<
             dataType << " field [" <<
