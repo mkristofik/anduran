@@ -29,6 +29,18 @@
     * SDL_CreateTexture, SDL_GetWindowPixelFormat, SDL_TEXTUREACCESS_STREAMING
     * SDL_AllocFormat, SDL_FreeFormat
     * SDL_LockTexture, SDL_UnlockTexture
+* borders
+- minimap
+    - 144x144 means every hex gets 4 pixels, no scaling algorithm needed
+    - color each pixel by terrain type
+    - influence map by region
+        - champions, castles, and villages are sources of influence
+        - each player flood fill each neighbor region with 1 influence outward from
+        each region they control
+            - can't spread influence to a region controlled by another player
+            - all players get to spread influence at the same time
+    - shade controlled regions with the player's color
+- info on currently selected champion
 
 
 # Pathfinding

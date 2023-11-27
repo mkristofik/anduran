@@ -89,7 +89,10 @@ struct MapEntity
 class MapDisplay
 {
 public:
-    MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr);
+    MapDisplay(SdlWindow &win,
+               const SDL_Rect &displayRect,
+               RandomMap &rmap,
+               SdlImageManager &imgMgr);
 
     void draw();
 

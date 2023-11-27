@@ -73,11 +73,6 @@ namespace
         return {px, py};
     }
 
-    [[maybe_unused]] SDL_Point pixelCenter(const Hex &hex)
-    {
-        return pixelFromHex(hex) + SDL_Point{HEX_SIZE / 2, HEX_SIZE / 2};
-    }
-
     SDL_Point getMousePos()
     {
         SDL_Point mouse;
@@ -130,7 +125,10 @@ void MapEntity::setTerrainFrame(Terrain terrain)
 }
 
 
-MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
+MapDisplay::MapDisplay(SdlWindow &win,
+                       const SDL_Rect &displayRect,
+                       RandomMap &rmap,
+                       SdlImageManager &imgMgr)
     : window_(&win),
     map_(&rmap),
     images_(&imgMgr),
@@ -138,7 +136,7 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
     obstacleImg_(),
     edgeImg_(),
     tiles_(map_->size()),
-    displayArea_(window_->getBounds()),
+    displayArea_(displayRect),
     displayOffset_(),
     entities_(),
     entityImg_(),
@@ -818,30 +816,48 @@ std::vector<int> MapDisplay::getEntityDrawOrder() const
 
 bool MapDisplay::scrollDisplay(Uint32 elapsed_ms)
 {
-    // Is the mouse near the boundary?
-    static const SDL_Rect insideBoundary = {displayArea_.x + BORDER_WIDTH,
-                                            displayArea_.y + BORDER_WIDTH,
-                                            displayArea_.w - BORDER_WIDTH * 2,
-                                            displayArea_.h - BORDER_WIDTH * 2};
-    const auto mouse = getMousePos();
-    if (SDL_PointInRect(&mouse, &insideBoundary) == SDL_TRUE) {
-        return false;
-    }
+    static const SDL_Rect leftBoundary = {
+        displayArea_.x,
+        displayArea_.y,
+        BORDER_WIDTH,
+        displayArea_.h
+    };
+    static const SDL_Rect rightBoundary = {
+        displayArea_.x + displayArea_.w - BORDER_WIDTH,
+        displayArea_.y,
+        BORDER_WIDTH,
+        displayArea_.h
+    };
+    static const SDL_Rect topBoundary = {
+        displayArea_.x,
+        displayArea_.y,
+        displayArea_.w,
+        BORDER_WIDTH
+    };
+    static const SDL_Rect bottomBoundary = {
+        displayArea_.x,
+        displayArea_.y + displayArea_.h - BORDER_WIDTH,
+        displayArea_.w,
+        BORDER_WIDTH,
+    };
 
+    // Using doubles here because this might scroll by less than one pixel if the
+    // computer is fast enough.
     auto scrollX = 0.0;
     auto scrollY = 0.0;
     const auto scrollDist = SCROLL_PX_SEC * elapsed_ms / 1000.0;
 
-    if (mouse.x - displayArea_.x < BORDER_WIDTH) {
+    const auto mouse = getMousePos();
+    if (SDL_PointInRect(&mouse, &leftBoundary) == SDL_TRUE) {
         scrollX = -scrollDist;
     }
-    else if (displayArea_.x + displayArea_.w - mouse.x < BORDER_WIDTH) {
+    else if (SDL_PointInRect(&mouse, &rightBoundary) == SDL_TRUE) {
         scrollX = scrollDist;
     }
-    if (mouse.y - displayArea_.y < BORDER_WIDTH) {
+    if (SDL_PointInRect(&mouse, &topBoundary) == SDL_TRUE) {
         scrollY = -scrollDist;
     }
-    else if (displayArea_.y + displayArea_.h - mouse.y < BORDER_WIDTH) {
+    else if (SDL_PointInRect(&mouse, &bottomBoundary) == SDL_TRUE) {
         scrollY = scrollDist;
     }
 
@@ -851,8 +867,6 @@ bool MapDisplay::scrollDisplay(Uint32 elapsed_ms)
     static const auto pMaxX = lowerRight.x - displayArea_.w + HEX_SIZE;
     static const auto pMaxY = lowerRight.y - displayArea_.h + HEX_SIZE;
 
-    // Using doubles here because this might scroll by less than one pixel if the
-    // computer is fast enough.
     const auto newX = std::clamp<double>(displayOffset_.x + scrollX, 0, pMaxX);
     const auto newY = std::clamp<double>(displayOffset_.y + scrollY, 0, pMaxY);
     const bool scrolling = (newX != displayOffset_.x || newY != displayOffset_.y);

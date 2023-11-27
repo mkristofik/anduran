@@ -31,7 +31,7 @@ Anduran::Anduran()
     win_(1280, 720, "Champions of Anduran"),
     rmap_("test.json"),
     images_("img/"s),
-    rmapView_(win_, rmap_, images_),
+    rmapView_(win_, win_.getBounds(), rmap_, images_),
     game_(rmap_.getObjectConfig()),
     playerEntityIds_(),
     curPlayerId_(0),

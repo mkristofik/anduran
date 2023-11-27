@@ -18,10 +18,24 @@
 #include "iterable_enum_class.h"
 #include "terrain.h"
 
+#include <array>
 #include <cstdlib>
 #include <string>
 
 using namespace std::string_literals;
+
+namespace
+{
+    SDL_Rect map_display_area(const SdlWindow &win)
+    {
+        auto winRect = win.getBounds();
+
+        // 24 px top and bottom border
+        // 12 px left and right border
+        // 144 px for minimap on the right side, plus another 12px border
+        return {winRect.x + 12, winRect.y + 24, winRect.w - 168, winRect.h - 48};
+    }
+}
 
 
 class MapViewApp : public SdlApp
@@ -46,7 +60,7 @@ MapViewApp::MapViewApp()
     win_(1280, 720, "Anduran Map Viewer"),
     rmap_("test2.json"),
     images_("img/"),
-    rmapView_(win_, rmap_, images_)
+    rmapView_(win_, map_display_area(win_), rmap_, images_)
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
@@ -61,6 +75,20 @@ void MapViewApp::update_frame(Uint32 elapsed_ms)
     }
     win_.clear();
     rmapView_.draw();
+
+    static const auto winRect = win_.getBounds();
+    static const std::array borders = {
+        // top
+        SDL_Rect{winRect.x, winRect.y, winRect.w, 24},
+        // bottom
+        SDL_Rect{winRect.x, winRect.y + winRect.h - 24, winRect.w, 24},
+        // left
+        SDL_Rect{winRect.x, winRect.y, 12, winRect.h},
+        // right side plus minimap
+        SDL_Rect{winRect.x + winRect.w - 168, winRect.y, 168, winRect.h}
+    };
+    SDL_RenderFillRects(win_.renderer(), &borders[0], borders.size());
+
     win_.update();
 }
 
