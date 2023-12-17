@@ -441,8 +441,8 @@ void MapDisplay::computeTileEdges()
     // Define how the terrain types overlap.
     EnumSizedArray<int, Terrain> priority;
     priority[Terrain::water] = 0;
-    priority[Terrain::dirt] = 1;
-    priority[Terrain::swamp] = 2;
+    priority[Terrain::swamp] = 1;
+    priority[Terrain::dirt] = 2;
     priority[Terrain::grass] = 3;
     priority[Terrain::desert] = 4;
     priority[Terrain::snow] = 5;
