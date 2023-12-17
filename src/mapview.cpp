@@ -16,6 +16,7 @@
 #include "SdlImageManager.h"
 #include "SdlWindow.h"
 #include "iterable_enum_class.h"
+#include "team_color.h"
 #include "terrain.h"
 
 #include <array>
@@ -32,8 +33,9 @@ namespace
 
         // 24 px top and bottom border
         // 12 px left and right border
-        // 144 px for minimap on the right side, plus another 12px border
-        return {winRect.x + 12, winRect.y + 24, winRect.w - 168, winRect.h - 48};
+        // room for minimap on the right side, plus another 12px border
+        // chosen so a full hex is visible on the right edge of the main map
+        return {winRect.x + 12, winRect.y + 24, winRect.w - 182, winRect.h - 48};
     }
 }
 
@@ -48,11 +50,15 @@ public:
 private:
     void place_objects();
     void place_armies();
+    void update_minimap();
 
     SdlWindow win_;
     RandomMap rmap_;
     SdlImageManager images_;
     MapDisplay rmapView_;
+    SdlTexture minimap_;
+    SdlSurface minimapUpdate_;
+    SdlSurface obstacles_;
 };
 
 MapViewApp::MapViewApp()
@@ -60,12 +66,31 @@ MapViewApp::MapViewApp()
     win_(1280, 720, "Anduran Map Viewer"),
     rmap_("test2.json"),
     images_("img/"),
-    rmapView_(win_, map_display_area(win_), rmap_, images_)
+    rmapView_(win_, map_display_area(win_), rmap_, images_),
+    minimap_(SdlTexture::make_editable_image(win_, 158, 158)),  // TODO: magic numbers
+    minimapUpdate_(),
+    obstacles_()
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
     place_objects();
     place_armies();
+
+    SdlEditTexture edit(minimap_);
+    auto *surf = SDL_CreateRGBSurfaceWithFormat(0,
+                                                rmap_.width(),
+                                                rmap_.width(),
+                                                edit.pixel_depth(),
+                                                edit.pixel_format());
+    if (!surf) {
+        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
+                    "Warning, couldn't create new surface from texture: %s",
+                    SDL_GetError());
+        return;
+    }
+    minimapUpdate_ = SdlSurface(surf);
+    obstacles_ = minimapUpdate_.clone();
+    SDL_SetSurfaceBlendMode(obstacles_.get(), SDL_BLENDMODE_BLEND);
 }
 
 void MapViewApp::update_frame(Uint32 elapsed_ms)
@@ -77,6 +102,7 @@ void MapViewApp::update_frame(Uint32 elapsed_ms)
     rmapView_.draw();
 
     static const auto winRect = win_.getBounds();
+    // TODO: these are all magic numbers
     static const std::array borders = {
         // top
         SDL_Rect{winRect.x, winRect.y, winRect.w, 24},
@@ -85,9 +111,12 @@ void MapViewApp::update_frame(Uint32 elapsed_ms)
         // left
         SDL_Rect{winRect.x, winRect.y, 12, winRect.h},
         // right side plus minimap
-        SDL_Rect{winRect.x + winRect.w - 168, winRect.y, 168, winRect.h}
+        SDL_Rect{winRect.x + winRect.w - 182, winRect.y, 182, winRect.h}
     };
     SDL_RenderFillRects(win_.renderer(), &borders[0], borders.size());
+
+    update_minimap();
+    minimap_.draw({winRect.x + winRect.w - 170, 24});
 
     win_.update();
 }
@@ -119,6 +148,90 @@ void MapViewApp::place_armies()
     for (auto &hex : rmap_.getObjectTiles(ObjectType::army)) {
         rmapView_.addEntity(img, hex, ZOrder::unit);
     }
+}
+
+void MapViewApp::update_minimap()
+{
+    static const EnumSizedArray<SDL_Color, Terrain> terrainColors = {
+        SDL_Color{10, 96, 154, SDL_ALPHA_OPAQUE},  // water
+        SDL_Color{224, 204, 149, SDL_ALPHA_OPAQUE},  // desert
+        SDL_Color{65, 67, 48, SDL_ALPHA_OPAQUE},  // swamp
+        SDL_Color{69, 128, 24, SDL_ALPHA_OPAQUE},  // grass
+        SDL_Color{136, 110, 66, SDL_ALPHA_OPAQUE},  // dirt
+        SDL_Color{230, 240, 254, SDL_ALPHA_OPAQUE}  // snow
+    };
+
+    // TODO: obstacle layer only needs to be done once, they never change.
+    {
+        SdlLockSurface guard(obstacles_);
+        auto surf = obstacles_.get();
+        SDL_assert(surf->format->BytesPerPixel == 4);
+
+        auto pixels = static_cast<Uint32 *>(surf->pixels);
+        for (int i = 0; i < surf->w * surf->h; ++i) {
+            if (rmap_.getObstacle(i)) {
+                pixels[i] = SDL_MapRGBA(surf->format, 120, 67, 21, 64);  // brown
+            }
+            else {
+                pixels[i] = SDL_MapRGBA(surf->format, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
+            }
+        }
+
+        const auto &neutral = getTeamColor(Team::neutral);
+        for (auto &hVillage : rmap_.getObjectTiles(ObjectType::village)) {
+            int index = rmap_.intFromHex(hVillage);
+            pixels[index] = pixel_from_color(neutral, surf->format);
+        }
+        for (auto &hCastle : rmap_.getCastleTiles()) {
+            int index = rmap_.intFromHex(hCastle);
+            pixels[index] = pixel_from_color(neutral, surf->format);
+            for (HexDir d : HexDir()) {
+                index = rmap_.intFromHex(hCastle.getNeighbor(d));
+                pixels[index] = pixel_from_color(neutral, surf->format);
+            }
+        }
+    }
+
+    {
+        SdlLockSurface guard(minimapUpdate_);
+        auto surf = minimapUpdate_.get();
+        SDL_assert(surf->format->BytesPerPixel == 4);
+
+        auto pixel = static_cast<Uint32 *>(surf->pixels);
+        const auto endPixels = pixel + surf->w * surf->h;
+        for (int i = 0; pixel != endPixels; ++pixel, ++i) {
+            const auto &color = terrainColors[rmap_.getTerrain(i)];
+            *pixel = pixel_from_color(color, surf->format);
+        }
+    }
+
+    int status = SDL_BlitSurface(obstacles_.get(),
+                                 nullptr,
+                                 minimapUpdate_.get(),
+                                 nullptr);
+    if (status < 0) {
+        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
+                    "Warning, couldn't copy surface to another: %s",
+                    SDL_GetError());
+    }
+
+    SdlEditTexture edit(minimap_);
+    status = SDL_BlitScaled(minimapUpdate_.get(), nullptr, edit.get(), nullptr);
+    if (status < 0) {
+        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
+                    "Warning, couldn't scale surface to another: %s",
+                    SDL_GetError());
+    }
+
+    // Ideas:
+    // - create another surface layer
+    // - SDL_SetSurfaceBlendMode(<surface>, SDL_BLENDMODE_BLEND)
+    // - black pixels at 50% opacity to represent obstacles
+    // - if this works, same trick could be used to do other things
+    //     - influence mapping
+    //     - marking villages and castles by owners
+
+    // TODO: create a branch for all this
 }
 
 
