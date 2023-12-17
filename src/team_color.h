@@ -31,6 +31,7 @@ using TeamColoredSurfaces = EnumSizedArray<SdlSurface, Team>;
 using TeamColoredTextures = EnumSizedArray<SdlTexture, Team>;
 
 
+const SDL_Color & getTeamColor(Team team);
 SdlSurface applyTeamColor(const SdlSurface &src, Team team);
 TeamColoredSurfaces applyTeamColors(const SdlSurface &src);
 

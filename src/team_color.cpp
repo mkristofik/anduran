@@ -15,6 +15,7 @@
 
 #include "RandomMap.h"
 #include "container_utils.h"
+#include "pixel_utils.h"
 
 #include "SDL.h"
 #include <algorithm>
@@ -129,22 +130,6 @@ namespace
         return -1;
     }
 
-    // Helper functions for converting between a pixel value and an SDL color
-    // struct.  Assumes 32-bit colors.
-    SDL_Color getColor(Uint32 pixel, const SDL_PixelFormat *fmt)
-    {
-        SDL_assert(fmt->BytesPerPixel == 4);
-        SDL_Color color;
-        SDL_GetRGBA(pixel, fmt, &color.r, &color.g, &color.b, &color.a);
-        return color;
-    }
-
-    Uint32 setColor(const SDL_Color &color, const SDL_PixelFormat *fmt)
-    {
-        SDL_assert(fmt->BytesPerPixel == 4);
-        return SDL_MapRGBA(fmt, color.r, color.g, color.b, color.a);
-    }
-
     // Copy an image, replacing any reference colors with the corresponding team
     // colors.
     // source: Battle for Wesnoth, recolor_image() in sdl/utils.cpp
@@ -163,7 +148,7 @@ namespace
         auto pixel = static_cast<Uint32 *>(surf->pixels);
         const auto endPixels = pixel + surf->w * surf->h;
         for (; pixel != endPixels; ++pixel) {
-            const auto pixelColor = getColor(*pixel, surf->format);
+            const auto pixelColor = color_from_pixel(*pixel, surf->format);
             if (pixelColor.a == SDL_ALPHA_TRANSPARENT) {
                 continue;
             }
@@ -173,7 +158,7 @@ namespace
             if (i >= 0) {
                 auto newColor = teamColors[i];
                 newColor.a = pixelColor.a;
-                *pixel = setColor(newColor, surf->format);
+                *pixel = pixel_from_color(newColor, surf->format);
             }
         }
 
@@ -183,6 +168,11 @@ namespace
     const auto teamColors = initColors();
 }
 
+
+const SDL_Color & getTeamColor(Team team)
+{
+    return teamBaseColors[team];
+}
 
 SdlSurface applyTeamColor(const SdlSurface &src, Team team)
 {
@@ -215,11 +205,11 @@ SdlSurface ellipseToRefColor(const SdlSurface &src)
     const auto endPixels = pixel + surf->w * surf->h;
     for (; pixel != endPixels; ++pixel) {
         // Replace all non-invisible pixels with the base reference color
-        const auto pixelColor = getColor(*pixel, surf->format);
+        const auto pixelColor = color_from_pixel(*pixel, surf->format);
         if (pixelColor.a > 0) {
             auto newColor = refColors[14];
             newColor.a = pixelColor.a;
-            *pixel = setColor(newColor, surf->format);
+            *pixel = pixel_from_color(newColor, surf->format);
         }
     }
 
@@ -242,7 +232,7 @@ SdlSurface flagToRefColor(const SdlSurface &src)
     const auto endPixels = pixel + surf->w * surf->h;
     for (; pixel != endPixels; ++pixel) {
         // Convert all green pixels to the closest reference color.
-        const auto pixelColor = getColor(*pixel, surf->format);
+        const auto pixelColor = color_from_pixel(*pixel, surf->format);
         if (pixelColor.a > 0 && pixelColor.r == 0 && pixelColor.b == 0) {
             // Divide the colorspace into 15 equal regions corresponding to the
             // reference color and the 14 darker colors below it.
@@ -250,7 +240,7 @@ SdlSurface flagToRefColor(const SdlSurface &src)
             auto index = std::clamp(pixelColor.g / 17, 0, 14);
             auto newColor = refColors[index];
             newColor.a = pixelColor.a;
-            *pixel = setColor(newColor, surf->format);
+            *pixel = pixel_from_color(newColor, surf->format);
         }
     }
 

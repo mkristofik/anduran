@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2019 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2023 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -35,6 +35,11 @@ constexpr PartialPixel operator/(const SDL_Point &lhs, double rhs);
 
 constexpr SDL_Point operator+(const SDL_Point &lhs, const SDL_Point &rhs);
 constexpr SDL_Point operator-(const SDL_Point &lhs, const SDL_Point &rhs);
+
+// Helper functions for converting between a pixel value and an SDL color
+// struct.  Assumes 32-bit colors.
+SDL_Color color_from_pixel(Uint32 pixel, const SDL_PixelFormat *fmt);
+Uint32 pixel_from_color(const SDL_Color &color, const SDL_PixelFormat *fmt);
 
 
 constexpr PartialPixel::operator SDL_Point() const
