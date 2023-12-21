@@ -163,45 +163,33 @@ void MapViewApp::update_minimap()
 
     // TODO: obstacle layer only needs to be done once, they never change.
     {
-        SdlLockSurface guard(obstacles_);
-        auto surf = obstacles_.get();
-        SDL_assert(surf->format->BytesPerPixel == 4);
+        SdlEditSurface edit(obstacles_);
 
-        auto pixels = static_cast<Uint32 *>(surf->pixels);
-        for (int i = 0; i < surf->w * surf->h; ++i) {
+        for (int i = 0; i < edit.size(); ++i) {
             if (rmap_.getObstacle(i)) {
-                pixels[i] = SDL_MapRGBA(surf->format, 120, 67, 21, 64);  // brown
+                edit.set_pixel(i, 120, 67, 21, 64);  // brown, 25%
             }
             else {
-                pixels[i] = SDL_MapRGBA(surf->format, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
+                edit.set_pixel(i, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
             }
         }
 
         const auto &neutral = getTeamColor(Team::neutral);
         for (auto &hVillage : rmap_.getObjectTiles(ObjectType::village)) {
-            int index = rmap_.intFromHex(hVillage);
-            pixels[index] = pixel_from_color(neutral, surf->format);
+            edit.set_pixel(rmap_.intFromHex(hVillage), neutral);
         }
         for (auto &hCastle : rmap_.getCastleTiles()) {
-            int index = rmap_.intFromHex(hCastle);
-            pixels[index] = pixel_from_color(neutral, surf->format);
+            edit.set_pixel(rmap_.intFromHex(hCastle), neutral);
             for (HexDir d : HexDir()) {
-                index = rmap_.intFromHex(hCastle.getNeighbor(d));
-                pixels[index] = pixel_from_color(neutral, surf->format);
+                edit.set_pixel(rmap_.intFromHex(hCastle.getNeighbor(d)), neutral);
             }
         }
     }
 
     {
-        SdlLockSurface guard(minimapUpdate_);
-        auto surf = minimapUpdate_.get();
-        SDL_assert(surf->format->BytesPerPixel == 4);
-
-        auto pixel = static_cast<Uint32 *>(surf->pixels);
-        const auto endPixels = pixel + surf->w * surf->h;
-        for (int i = 0; pixel != endPixels; ++pixel, ++i) {
-            const auto &color = terrainColors[rmap_.getTerrain(i)];
-            *pixel = pixel_from_color(color, surf->format);
+        SdlEditSurface edit(minimapUpdate_);
+        for (int i = 0; i < edit.size(); ++i) {
+            edit.set_pixel(i, terrainColors[rmap_.getTerrain(i)]);
         }
     }
 
@@ -230,8 +218,6 @@ void MapViewApp::update_minimap()
     // - if this works, same trick could be used to do other things
     //     - influence mapping
     //     - marking villages and castles by owners
-
-    // TODO: create a branch for all this
 }
 
 

@@ -140,25 +140,19 @@ namespace
             return {};
         }
 
-        SdlLockSurface guard(imgCopy);
-
-        auto surf = imgCopy.get();
-        SDL_assert(surf->format->BytesPerPixel == 4);
-
-        auto pixel = static_cast<Uint32 *>(surf->pixels);
-        const auto endPixels = pixel + surf->w * surf->h;
-        for (; pixel != endPixels; ++pixel) {
-            const auto pixelColor = color_from_pixel(*pixel, surf->format);
+        SdlEditSurface edit(imgCopy);
+        for (int i = 0; i < edit.size(); ++i) {
+            const auto pixelColor = edit.get_pixel(i);
             if (pixelColor.a == SDL_ALPHA_TRANSPARENT) {
                 continue;
             }
 
             // If the pixel matches one of the reference colors, replace it.
-            const auto i = getRefColorIndex(pixelColor);
-            if (i >= 0) {
-                auto newColor = teamColors[i];
+            int c = getRefColorIndex(pixelColor);
+            if (c >= 0) {
+                auto newColor = teamColors[c];
                 newColor.a = pixelColor.a;
-                *pixel = pixel_from_color(newColor, surf->format);
+                edit.set_pixel(i, newColor);
             }
         }
 
@@ -196,20 +190,14 @@ SdlSurface ellipseToRefColor(const SdlSurface &src)
         return {};
     }
 
-    SdlLockSurface guard(imgCopy);
-
-    auto surf = imgCopy.get();
-    SDL_assert(surf->format->BytesPerPixel == 4);
-
-    auto pixel = static_cast<Uint32 *>(surf->pixels);
-    const auto endPixels = pixel + surf->w * surf->h;
-    for (; pixel != endPixels; ++pixel) {
+    SdlEditSurface edit(imgCopy);
+    for (int i = 0; i < edit.size(); ++i) {
         // Replace all non-invisible pixels with the base reference color
-        const auto pixelColor = color_from_pixel(*pixel, surf->format);
+        const auto pixelColor = edit.get_pixel(i);
         if (pixelColor.a > 0) {
             auto newColor = refColors[14];
             newColor.a = pixelColor.a;
-            *pixel = pixel_from_color(newColor, surf->format);
+            edit.set_pixel(i, newColor);
         }
     }
 
@@ -223,24 +211,18 @@ SdlSurface flagToRefColor(const SdlSurface &src)
         return {};
     }
 
-    SdlLockSurface guard(imgCopy);
-
-    auto surf = imgCopy.get();
-    SDL_assert(surf->format->BytesPerPixel == 4);
-
-    auto pixel = static_cast<Uint32 *>(surf->pixels);
-    const auto endPixels = pixel + surf->w * surf->h;
-    for (; pixel != endPixels; ++pixel) {
+    SdlEditSurface edit(imgCopy);
+    for (int i = 0; i < edit.size(); ++i) {
         // Convert all green pixels to the closest reference color.
-        const auto pixelColor = color_from_pixel(*pixel, surf->format);
+        const auto pixelColor = edit.get_pixel(i);
         if (pixelColor.a > 0 && pixelColor.r == 0 && pixelColor.b == 0) {
             // Divide the colorspace into 15 equal regions corresponding to the
             // reference color and the 14 darker colors below it.
             // (255 / 17 == 15)
-            auto index = std::clamp(pixelColor.g / 17, 0, 14);
-            auto newColor = refColors[index];
+            auto c = std::clamp(pixelColor.g / 17, 0, 14);
+            auto newColor = refColors[c];
             newColor.a = pixelColor.a;
-            *pixel = pixel_from_color(newColor, surf->format);
+            edit.set_pixel(i, newColor);
         }
     }
 

@@ -15,6 +15,7 @@
 
 #include "SDL.h"
 #include <memory>
+#include <span>
 
 // Wrapper around a raw SDL image.
 //
@@ -42,19 +43,25 @@ private:
 
 // Some SDL surfaces have to be locked before you can read or modify the raw
 // pixels. This is an RAII wrapper to help with that.
-class SdlLockSurface
+class SdlEditSurface
 {
 public:
-    SdlLockSurface(const SdlSurface &img);
-    ~SdlLockSurface();
+    SdlEditSurface(const SdlSurface &img);
+    ~SdlEditSurface();
 
-    SdlLockSurface(const SdlLockSurface &) = delete;
-    SdlLockSurface & operator=(const SdlLockSurface &) = delete;
-    SdlLockSurface(SdlLockSurface &&) = delete;
-    SdlLockSurface & operator=(SdlLockSurface &&) = delete;
+    SdlEditSurface(const SdlEditSurface &) = delete;
+    SdlEditSurface & operator=(const SdlEditSurface &) = delete;
+    SdlEditSurface(SdlEditSurface &&) = delete;
+    SdlEditSurface & operator=(SdlEditSurface &&) = delete;
+
+    int size() const;
+    SDL_Color get_pixel(int index) const;
+    void set_pixel(int index, const SDL_Color &color);
+    void set_pixel(int index, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 
 private:
     SDL_Surface *surf_;
+    std::span<Uint32> pixels_;
     bool isLocked_;
 };
 
