@@ -50,6 +50,8 @@ public:
 private:
     void place_objects();
     void place_armies();
+    void make_terrain_layer();
+    void make_obstacle_layer();
     void update_minimap();
 
     SdlWindow win_;
@@ -57,8 +59,8 @@ private:
     SdlImageManager images_;
     MapDisplay rmapView_;
     SdlTexture minimap_;
-    SdlSurface minimapUpdate_;
-    SdlSurface obstacles_;
+    SdlSurface terrain_;
+    SdlSurface objects_;
 };
 
 MapViewApp::MapViewApp()
@@ -68,29 +70,23 @@ MapViewApp::MapViewApp()
     images_("img/"),
     rmapView_(win_, map_display_area(win_), rmap_, images_),
     minimap_(SdlTexture::make_editable_image(win_, 158, 158)),  // TODO: magic numbers
-    minimapUpdate_(),
-    obstacles_()
+    terrain_(),
+    objects_()
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
     place_objects();
     place_armies();
 
+    // The obstacles and other map objects will be blended with the terrain layer
+    // to compose the final minimap view.
     SdlEditTexture edit(minimap_);
-    auto *surf = SDL_CreateRGBSurfaceWithFormat(0,
-                                                rmap_.width(),
-                                                rmap_.width(),
-                                                edit.pixel_depth(),
-                                                edit.pixel_format());
-    if (!surf) {
-        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
-                    "Warning, couldn't create new surface from texture: %s",
-                    SDL_GetError());
-        return;
-    }
-    minimapUpdate_ = SdlSurface(surf);
-    obstacles_ = minimapUpdate_.clone();
-    SDL_SetSurfaceBlendMode(obstacles_.get(), SDL_BLENDMODE_BLEND);
+    terrain_ = edit.make_surface(rmap_.width(), rmap_.width());
+    objects_ = terrain_.clone();
+    SDL_SetSurfaceBlendMode(objects_.get(), SDL_BLENDMODE_BLEND);
+
+    make_terrain_layer();
+    make_obstacle_layer();
 }
 
 void MapViewApp::update_frame(Uint32 elapsed_ms)
@@ -150,9 +146,9 @@ void MapViewApp::place_armies()
     }
 }
 
-void MapViewApp::update_minimap()
+void MapViewApp::make_terrain_layer()
 {
-    static const EnumSizedArray<SDL_Color, Terrain> terrainColors = {
+    const EnumSizedArray<SDL_Color, Terrain> terrainColors = {
         SDL_Color{10, 96, 154, SDL_ALPHA_OPAQUE},  // water
         SDL_Color{224, 204, 149, SDL_ALPHA_OPAQUE},  // desert
         SDL_Color{65, 67, 48, SDL_ALPHA_OPAQUE},  // swamp
@@ -161,19 +157,34 @@ void MapViewApp::update_minimap()
         SDL_Color{230, 240, 254, SDL_ALPHA_OPAQUE}  // snow
     };
 
-    // TODO: obstacle layer only needs to be done once, they never change.
-    {
-        SdlEditSurface edit(obstacles_);
+    SdlEditSurface edit(terrain_);
+    for (int i = 0; i < edit.size(); ++i) {
+        edit.set_pixel(i, terrainColors[rmap_.getTerrain(i)]);
+    }
+}
 
-        for (int i = 0; i < edit.size(); ++i) {
-            if (rmap_.getObstacle(i)) {
-                edit.set_pixel(i, 120, 67, 21, 64);  // brown, 25%
-            }
-            else {
-                edit.set_pixel(i, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
-            }
+void MapViewApp::make_obstacle_layer()
+{
+    SdlEditSurface edit(objects_);
+
+    for (int i = 0; i < edit.size(); ++i) {
+        if (rmap_.getObstacle(i)) {
+            // TODO: can't see this very well on dirt, not at all on swamp.
+            edit.set_pixel(i, 120, 67, 21, 64);  // brown, 25%
         }
+        else {
+            edit.set_pixel(i, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
+        }
+    }
+}
 
+void MapViewApp::update_minimap()
+{
+    // Can't blit surfaces while locked, this needs its own block.
+    {
+        SdlEditSurface edit(objects_);
+
+        // TODO: set the colors based on game state.
         const auto &neutral = getTeamColor(Team::neutral);
         for (auto &hVillage : rmap_.getObjectTiles(ObjectType::village)) {
             edit.set_pixel(rmap_.intFromHex(hVillage), neutral);
@@ -186,35 +197,14 @@ void MapViewApp::update_minimap()
         }
     }
 
-    {
-        SdlEditSurface edit(minimapUpdate_);
-        for (int i = 0; i < edit.size(); ++i) {
-            edit.set_pixel(i, terrainColors[rmap_.getTerrain(i)]);
-        }
-    }
-
-    int status = SDL_BlitSurface(obstacles_.get(),
-                                 nullptr,
-                                 minimapUpdate_.get(),
-                                 nullptr);
-    if (status < 0) {
-        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
-                    "Warning, couldn't copy surface to another: %s",
-                    SDL_GetError());
-    }
-
     SdlEditTexture edit(minimap_);
-    status = SDL_BlitScaled(minimapUpdate_.get(), nullptr, edit.get(), nullptr);
-    if (status < 0) {
-        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
-                    "Warning, couldn't scale surface to another: %s",
-                    SDL_GetError());
-    }
+    edit.update(terrain_);
+    edit.update(objects_);
 
     // Ideas:
-    // - create another surface layer
-    // - SDL_SetSurfaceBlendMode(<surface>, SDL_BLENDMODE_BLEND)
-    // - black pixels at 50% opacity to represent obstacles
+    // * create another surface layer
+    // * SDL_SetSurfaceBlendMode(<surface>, SDL_BLENDMODE_BLEND)
+    // * black pixels at 50% opacity to represent obstacles
     // - if this works, same trick could be used to do other things
     //     - influence mapping
     //     - marking villages and castles by owners

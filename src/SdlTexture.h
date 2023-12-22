@@ -105,9 +105,18 @@ public:
     SdlEditTexture(SdlEditTexture &&) = delete;
     SdlEditTexture & operator=(SdlEditTexture &&) = delete;
 
+    // Create a new surface with the same format as this texture, suitable for
+    // passing to update() below.
+    SdlSurface make_surface(int width, int height) const;
+
     // Draw a rectangle of the given color.  Coordinates are relative to the size
     // of the texture.
     void fill_rect(const SDL_Rect &rect, const SDL_Color &color);
+
+    // Update the entire texture with the contents of the given surface, scaling
+    // as needed.  Default behavior is to overwrite all pixels, call
+    // SDL_SetSurfaceBlendMode on the raw 'from' surface to change that.
+    void update(const SdlSurface &from);
 
 private:
     SDL_Texture *texture_;
