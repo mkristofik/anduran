@@ -180,7 +180,7 @@ MapDisplay::MapDisplay(SdlWindow &win,
 
 void MapDisplay::draw()
 {
-    ClipTo guard(*window_, displayArea_);
+    SdlWindowClip guard(*window_, displayArea_);
     setTileVisibility();
 
     // Draw terrain tiles.

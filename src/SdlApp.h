@@ -14,6 +14,7 @@
 #define SDL_APP_H
 
 #include "SDL.h"
+#include "boost/core/noncopyable.hpp"
 
 // Wrapper around boilerplate SDL code to start and teardown a program.
 // Inherit from this class and write a main function like this:
@@ -26,17 +27,11 @@
 //     return app.run();
 // }
 
-class SdlApp
+class SdlApp : private boost::noncopyable
 {
 public:
     SdlApp();
     ~SdlApp();
-
-    // Prevent uses of this class other than the given example.
-    SdlApp(const SdlApp &) = delete;
-    SdlApp & operator=(const SdlApp &) = delete;
-    SdlApp(SdlApp &&) = delete;
-    SdlApp & operator=(SdlApp &&) = delete;
 
     int run();
 

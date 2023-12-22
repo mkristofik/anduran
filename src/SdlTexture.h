@@ -14,6 +14,8 @@
 #define SDL_TEXTURE_H
 
 #include "SdlSurface.h"
+#include "boost/core/noncopyable.hpp"
+
 #include <memory>
 #include <vector>
 
@@ -94,16 +96,11 @@ private:
 
 // Streaming textures (created with make_editable_image) have to be locked before
 // you can set the raw pixels.  This is an RAII wrapper to help with that.
-class SdlEditTexture
+class SdlEditTexture : private boost::noncopyable
 {
 public:
     SdlEditTexture(SdlTexture &img);
     ~SdlEditTexture();
-
-    SdlEditTexture(const SdlEditTexture &) = delete;
-    SdlEditTexture & operator=(const SdlEditTexture &) = delete;
-    SdlEditTexture(SdlEditTexture &&) = delete;
-    SdlEditTexture & operator=(SdlEditTexture &&) = delete;
 
     // Create a new surface with the same format as this texture, suitable for
     // passing to update() below.

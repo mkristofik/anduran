@@ -66,7 +66,7 @@ SDL_Renderer * SdlWindow::renderer() const
 }
 
 
-ClipTo::ClipTo(const SdlWindow &win, const SDL_Rect &rect)
+SdlWindowClip::SdlWindowClip(const SdlWindow &win, const SDL_Rect &rect)
     : renderer_(win.renderer()),
     orig_()
 {
@@ -75,7 +75,7 @@ ClipTo::ClipTo(const SdlWindow &win, const SDL_Rect &rect)
     SDL_RenderSetClipRect(renderer_, &rect);
 }
 
-ClipTo::~ClipTo()
+SdlWindowClip::~SdlWindowClip()
 {
     if (orig_.w > 0 && orig_.h > 0) {
         SDL_RenderSetClipRect(renderer_, &orig_);

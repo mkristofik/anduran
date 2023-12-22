@@ -14,6 +14,8 @@
 #define SDL_SURFACE_H
 
 #include "SDL.h"
+#include "boost/core/noncopyable.hpp"
+
 #include <memory>
 #include <span>
 
@@ -43,16 +45,11 @@ private:
 
 // Some SDL surfaces have to be locked before you can read or modify the raw
 // pixels. This is an RAII wrapper to help with that.
-class SdlEditSurface
+class SdlEditSurface : private boost::noncopyable
 {
 public:
     SdlEditSurface(const SdlSurface &img);
     ~SdlEditSurface();
-
-    SdlEditSurface(const SdlEditSurface &) = delete;
-    SdlEditSurface & operator=(const SdlEditSurface &) = delete;
-    SdlEditSurface(SdlEditSurface &&) = delete;
-    SdlEditSurface & operator=(SdlEditSurface &&) = delete;
 
     int size() const;
     SDL_Color get_pixel(int index) const;
