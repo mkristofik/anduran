@@ -163,9 +163,9 @@ namespace
 }
 
 
-const SDL_Color & getTeamColor(Team team)
+const SDL_Color & getTeamColor(Team team, ColorShade shade)
 {
-    return teamBaseColors[team];
+    return teamColors[team][static_cast<int>(shade)];
 }
 
 SdlSurface applyTeamColor(const SdlSurface &src, Team team)

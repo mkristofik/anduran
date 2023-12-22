@@ -155,13 +155,22 @@ void MapViewApp::make_obstacle_layer()
     SdlEditSurface edit(objects_);
 
     for (int i = 0; i < edit.size(); ++i) {
-        if (rmap_.getObstacle(i)) {
-            // TODO: can't see this very well on dirt, not at all on swamp.
-            edit.set_pixel(i, 120, 67, 21, 64);  // brown, 25%
-        }
-        else {
+        if (!rmap_.getObstacle(i)) {
             edit.set_pixel(i, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
+            continue;
         }
+
+        // Increase opacity for certain terrain types so the obstacle markings are
+        // more visible.
+        SDL_Color brown = {120, 67, 21, 64};  // 25% opacity
+        auto terrain = rmap_.getTerrain(i);
+        if (terrain == Terrain::dirt) {
+            brown.a = 96;
+        }
+        else if (terrain == Terrain::swamp) {
+            brown.a = 160;
+        }
+        edit.set_pixel(i, brown);
     }
 }
 
@@ -172,7 +181,7 @@ void MapViewApp::update_minimap()
         SdlEditSurface edit(objects_);
 
         // TODO: set the colors based on game state.
-        const auto &neutral = getTeamColor(Team::neutral);
+        const auto &neutral = getTeamColor(Team::neutral, ColorShade::darker25);
         for (auto &hVillage : rmap_.getObjectTiles(ObjectType::village)) {
             edit.set_pixel(rmap_.intFromHex(hVillage), neutral);
         }
