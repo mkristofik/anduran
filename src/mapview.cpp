@@ -35,7 +35,7 @@ namespace
         // 12 px left and right border
         // room for minimap on the right side, plus another 12px border
         // chosen so a full hex is visible on the right edge of the main map
-        return {winRect.x + 12, winRect.y + 24, winRect.w - 182, winRect.h - 48};
+        return {winRect.x + 12, winRect.y + 24, winRect.w - 194, winRect.h - 48};
     }
 }
 
@@ -98,19 +98,6 @@ void MapViewApp::update_frame(Uint32 elapsed_ms)
     rmapView_.draw();
 
     static const auto winRect = win_.getBounds();
-    // TODO: these are all magic numbers
-    static const std::array borders = {
-        // top
-        SDL_Rect{winRect.x, winRect.y, winRect.w, 24},
-        // bottom
-        SDL_Rect{winRect.x, winRect.y + winRect.h - 24, winRect.w, 24},
-        // left
-        SDL_Rect{winRect.x, winRect.y, 12, winRect.h},
-        // right side plus minimap
-        SDL_Rect{winRect.x + winRect.w - 182, winRect.y, 182, winRect.h}
-    };
-    SDL_RenderFillRects(win_.renderer(), &borders[0], borders.size());
-
     update_minimap();
     minimap_.draw({winRect.x + winRect.w - 170, 24});
 
@@ -200,14 +187,6 @@ void MapViewApp::update_minimap()
     SdlEditTexture edit(minimap_);
     edit.update(terrain_);
     edit.update(objects_);
-
-    // Ideas:
-    // * create another surface layer
-    // * SDL_SetSurfaceBlendMode(<surface>, SDL_BLENDMODE_BLEND)
-    // * black pixels at 50% opacity to represent obstacles
-    // - if this works, same trick could be used to do other things
-    //     - influence mapping
-    //     - marking villages and castles by owners
 }
 
 

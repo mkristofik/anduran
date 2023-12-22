@@ -35,4 +35,23 @@ private:
     std::shared_ptr<SDL_Renderer> renderer_;
 };
 
+
+// RAII helper for setting/restoring the render clipping rectangle.
+class ClipTo
+{
+public:
+    ClipTo(const SdlWindow &win, const SDL_Rect &rect);
+    ~ClipTo();
+
+    // TODO: boost::noncopyable?
+    ClipTo(const ClipTo &) = delete;
+    ClipTo & operator=(const ClipTo &) = delete;
+    ClipTo(ClipTo &&) = delete;
+    ClipTo & operator=(ClipTo &&) = delete;
+
+private:
+    SDL_Renderer *renderer_;
+    SDL_Rect orig_;
+};
+
 #endif
