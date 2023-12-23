@@ -26,7 +26,20 @@ using namespace std::string_literals;
 
 namespace
 {
+    /*
+       hex size
+       |  |
+        _     _
+       / \_    tiling height
+       \_/ \  _
+         \_/
+       |   |
+       tiling width
+    */
     const int HEX_SIZE = 72;
+    const int HEX_TILING_WIDTH = HEX_SIZE * 3 / 2;
+    const int HEX_TILING_HEIGHT = HEX_SIZE;
+
     const int SCROLL_PX_SEC = 500;  // map scroll rate in pixels per second
     const int BORDER_WIDTH = 20;
 
@@ -176,6 +189,43 @@ MapDisplay::MapDisplay(SdlWindow &win,
     pathImg_[ObjectAction::battle] = images_->make_texture("new-battle", *window_);
     pathImg_[ObjectAction::visit] = images_->make_texture("visit-object", *window_);
     pathImg_[ObjectAction::pickup] = images_->make_texture("visit-object", *window_);
+}
+
+int MapDisplay::pxMapWidth() const
+{
+    // Every two overlapping hexes is one tiling width.
+    return map_->width() / 2 * HEX_TILING_WIDTH;
+}
+
+int MapDisplay::pxMapHeight() const
+{
+    // Bottom hex in the odd columns is tiled a half hex lower.
+    return (map_->width() + 0.5) * HEX_TILING_HEIGHT;
+}
+
+int MapDisplay::pxDisplayWidth() const
+{
+    return displayArea_.w;
+}
+
+int MapDisplay::pxDisplayHeight() const
+{
+    return displayArea_.h;
+}
+
+SDL_Point MapDisplay::pxDisplayOffset() const
+{
+    return SDL_Point(displayOffset_);
+}
+
+SDL_Point MapDisplay::maxDisplayOffset() const
+{
+    static const auto lowerRight =
+        pixelFromHex(Hex{map_->width() - 1, map_->width() - 1});
+    static const int pMaxX = lowerRight.x - displayArea_.w - displayArea_.x + HEX_SIZE;
+    static const int pMaxY = lowerRight.y - displayArea_.h - displayArea_.y + HEX_SIZE;
+
+    return {pMaxX, pMaxY};
 }
 
 void MapDisplay::draw()
@@ -328,24 +378,15 @@ void MapDisplay::handleMousePos(Uint32 elapsed_ms)
 // source: Battle for Wesnoth, display::pixel_position_to_hex()
 Hex MapDisplay::hexFromMousePos() const
 {
-    // tilingWidth
-    // |   |
-    //  _     _
-    // / \_    tilingHeight
-    // \_/ \  _
-    //   \_/
-    const int tilingWidth = HEX_SIZE * 3 / 2;
-    const int tilingHeight = HEX_SIZE;
-
     const auto adjMouse = static_cast<SDL_Point>(getMousePos() + displayOffset_);
 
     // I'm not going to pretend to know why the rest of this works.
-    int hx = adjMouse.x / tilingWidth * 2;
-    const int xMod = adjMouse.x % tilingWidth;
-    int hy = adjMouse.y / tilingHeight;
-    const int yMod = adjMouse.y % tilingHeight;
+    int hx = adjMouse.x / HEX_TILING_WIDTH * 2;
+    const int xMod = adjMouse.x % HEX_TILING_WIDTH;
+    int hy = adjMouse.y / HEX_TILING_HEIGHT;
+    const int yMod = adjMouse.y % HEX_TILING_HEIGHT;
 
-    if (yMod < tilingHeight / 2) {
+    if (yMod < HEX_TILING_HEIGHT / 2) {
         if ((xMod * 2 + yMod) < (HEX_SIZE / 2)) {
             --hx;
             --hy;
@@ -862,14 +903,9 @@ bool MapDisplay::scrollDisplay(Uint32 elapsed_ms)
         scrollY = scrollDist;
     }
 
-    // Stop scrolling when the lower right hex is just inside the window.
-    static const auto lowerRight =
-        pixelFromHex(Hex{map_->width() - 1, map_->width() - 1});
-    static const auto pMaxX = lowerRight.x - displayArea_.w + HEX_SIZE;
-    static const auto pMaxY = lowerRight.y - displayArea_.h + HEX_SIZE;
-
-    const auto newX = std::clamp<double>(displayOffset_.x + scrollX, 0, pMaxX);
-    const auto newY = std::clamp<double>(displayOffset_.y + scrollY, 0, pMaxY);
+    static const auto pMax = maxDisplayOffset();
+    const auto newX = std::clamp<double>(displayOffset_.x + scrollX, 0, pMax.x);
+    const auto newY = std::clamp<double>(displayOffset_.y + scrollY, 0, pMax.y);
     const bool scrolling = (newX != displayOffset_.x || newY != displayOffset_.y);
 
     displayOffset_ = {newX, newY};

@@ -162,15 +162,15 @@ void MapViewApp::make_obstacle_layer()
 
         // Increase opacity for certain terrain types so the obstacle markings are
         // more visible.
-        SDL_Color brown = {120, 67, 21, 64};  // 25% opacity
+        SDL_Color color = {120, 67, 21, 64};  // brown, 25% opacity
         auto terrain = rmap_.getTerrain(i);
         if (terrain == Terrain::dirt) {
-            brown.a = 96;
+            color.a = 96;
         }
         else if (terrain == Terrain::swamp) {
-            brown.a = 160;
+            color.a = 160;
         }
-        edit.set_pixel(i, brown);
+        edit.set_pixel(i, color);
     }
 }
 
@@ -196,6 +196,50 @@ void MapViewApp::update_minimap()
     SdlEditTexture edit(minimap_);
     edit.update(terrain_);
     edit.update(objects_);
+
+    // How far has the map scrolled relative to its total size?
+    auto offset = rmapView_.pxDisplayOffset();
+    int xScaled = static_cast<double>(offset.x) / rmapView_.pxMapWidth() *
+        minimap_.width();
+    int yScaled = static_cast<double>(offset.y) / rmapView_.pxMapHeight() *
+        minimap_.height();
+
+    // View size relative to the whole map if you could see it all.
+    static const int wScaled = static_cast<double>(rmapView_.pxDisplayWidth()) /
+        rmapView_.pxMapWidth() * minimap_.width();
+    static const int hScaled = static_cast<double>(rmapView_.pxDisplayHeight()) /
+        rmapView_.pxMapHeight() * minimap_.height();
+
+    // Snap the box to the edge if we've reached the limit.  We might not
+    // otherwise get there due to floating point rounding.
+    auto maxOffset = rmapView_.maxDisplayOffset();
+    if (offset.x == maxOffset.x) {
+        xScaled = minimap_.width() - wScaled;
+    }
+    if (offset.y == maxOffset.y) {
+        yScaled = minimap_.height() - hScaled;
+    }
+
+    SDL_Rect box = {xScaled, yScaled, wScaled, hScaled};
+    SDL_Color color = {0, 0, 0, SDL_ALPHA_OPAQUE};
+    int spaceSize = 4;
+    int dashSize = spaceSize * 3 / 2;
+
+    // Top and bottom edges
+    int px = box.x;
+    while (px < box.x + box.w - dashSize) {
+        edit.fill_rect({px, box.y, dashSize, 1}, color);
+        edit.fill_rect({px, box.y + box.h - 1, dashSize, 1}, color);
+        px += spaceSize + dashSize;
+    }
+
+    // Left and right edges
+    int py = box.y;
+    while (py < box.y + box.h - dashSize) {
+        edit.fill_rect({box.x, py, 1, dashSize}, color);
+        edit.fill_rect({box.x + box.w - 1, py, 1, dashSize}, color);
+        py += spaceSize + dashSize;
+    }
 }
 
 

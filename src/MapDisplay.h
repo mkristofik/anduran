@@ -94,6 +94,17 @@ public:
                RandomMap &rmap,
                SdlImageManager &imgMgr);
 
+    // Total map size and visible area, in pixels.
+    int pxMapWidth() const;
+    int pxMapHeight() const;
+    int pxDisplayWidth() const;
+    int pxDisplayHeight() const;
+
+    // How many pixels the map has been scrolled in each direction?  Stop
+    // scrolling when the lower right hex is fully visible inside the window.
+    SDL_Point pxDisplayOffset() const;
+    SDL_Point maxDisplayOffset() const;
+
     void draw();
 
     // Compute the offset to draw the entity image centered horizontally on its
