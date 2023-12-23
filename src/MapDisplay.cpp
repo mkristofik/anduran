@@ -78,13 +78,6 @@ namespace
         "castle-walls-dirt"s,
         "castle-walls-snow"s
     };
-    
-    SDL_Point pixelFromHex(const Hex &hex)
-    {
-        const int px = hex.x * HEX_SIZE * 0.75;
-        const int py = (hex.y + 0.5 * abs(hex.x % 2)) * HEX_SIZE;
-        return {px, py};
-    }
 
     SDL_Point getMousePos()
     {
@@ -378,7 +371,9 @@ void MapDisplay::handleMousePos(Uint32 elapsed_ms)
 // source: Battle for Wesnoth, display::pixel_position_to_hex()
 Hex MapDisplay::hexFromMousePos() const
 {
-    const auto adjMouse = static_cast<SDL_Point>(getMousePos() + displayOffset_);
+    auto adjMouse = static_cast<SDL_Point>(getMousePos() + displayOffset_);
+    adjMouse.x -= displayArea_.x;
+    adjMouse.y -= displayArea_.y;
 
     // I'm not going to pretend to know why the rest of this works.
     int hx = adjMouse.x / HEX_TILING_WIDTH * 2;
@@ -471,6 +466,13 @@ void MapDisplay::clearPath()
     for (auto id : pathIds_) {
         hideEntity(id);
     }
+}
+
+SDL_Point MapDisplay::pixelFromHex(const Hex &hex) const
+{
+    const int px = hex.x * HEX_SIZE * 0.75;
+    const int py = (hex.y + 0.5 * abs(hex.x % 2)) * HEX_SIZE;
+    return {px + displayArea_.x, py + displayArea_.y};
 }
 
 SDL_Point MapDisplay::pixelDelta(const Hex &hSrc, const Hex &hDest) const

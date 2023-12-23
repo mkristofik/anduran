@@ -104,6 +104,7 @@ public:
     // scrolling when the lower right hex is fully visible inside the window.
     SDL_Point pxDisplayOffset() const;
     SDL_Point maxDisplayOffset() const;
+    // TODO: setDisplayOffset(), assert between 0,0 and max offset
 
     void draw();
 
@@ -134,6 +135,7 @@ public:
     void showPath(const Path &path, ObjectAction lastStep);
     void clearPath();
 
+    SDL_Point pixelFromHex(const Hex &hex) const;
     SDL_Point pixelDelta(const Hex &hSrc, const Hex &hDest) const;
 
 private:
