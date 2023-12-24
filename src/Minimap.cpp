@@ -1,0 +1,168 @@
+/*
+    Copyright (C) 2023 by Michael Kristofik <kristo605@gmail.com>
+    Part of the Champions of Anduran project.
+ 
+    This program is free software; you can redistribute it and/or modify
+    it under the terms of the GNU General Public License version 2
+    or at your option any later version.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY.
+ 
+    See the COPYING.txt file for more details.
+*/
+#include "Minimap.h"
+
+#include "team_color.h"
+
+
+Minimap::Minimap(SdlWindow &win,
+                 const SDL_Rect &displayRect,
+                 RandomMap &rmap,
+                 MapDisplay &mapView)
+    : rmap_(&rmap),
+    rmapView_(&mapView),
+    displayRect_(displayRect),
+    displayPos_{displayRect_.x, displayRect_.y},
+    texture_(SdlTexture::make_editable_image(win, displayRect_.w, displayRect_.h)),
+    terrain_(),
+    objects_(),
+    box_{0, 0, 0, 0}
+{
+    // The obstacles and other map objects will be blended with the terrain layer
+    // to compose the final minimap view.
+    SdlEditTexture edit(texture_);
+    terrain_ = edit.make_surface(rmap_->width(), rmap_->width());
+    objects_ = terrain_.clone();
+    SDL_SetSurfaceBlendMode(objects_.get(), SDL_BLENDMODE_BLEND);
+
+    make_terrain_layer();
+    make_obstacle_layer();
+
+    // View size relative to the whole map if you could see it all.
+    box_.w = static_cast<double>(rmapView_->pxDisplayWidth()) /
+        rmapView_->pxMapWidth() * displayRect.w;
+    box_.h = static_cast<double>(rmapView_->pxDisplayHeight()) /
+        rmapView_->pxMapHeight() * displayRect.h;
+}
+
+void Minimap::draw()
+{
+    update_objects();
+    update_map_view();
+
+    // Can't render while locked, this needs its own block.
+    {
+        SdlEditTexture edit(texture_);
+        edit.update(terrain_);
+        edit.update(objects_);
+        draw_map_view(edit);
+    }
+
+    texture_.draw(displayPos_);
+}
+
+void Minimap::make_terrain_layer()
+{
+    const EnumSizedArray<SDL_Color, Terrain> terrainColors = {
+        SDL_Color{10, 96, 154, SDL_ALPHA_OPAQUE},  // water
+        SDL_Color{224, 204, 149, SDL_ALPHA_OPAQUE},  // desert
+        SDL_Color{65, 67, 48, SDL_ALPHA_OPAQUE},  // swamp
+        SDL_Color{69, 128, 24, SDL_ALPHA_OPAQUE},  // grass
+        SDL_Color{136, 110, 66, SDL_ALPHA_OPAQUE},  // dirt
+        SDL_Color{230, 240, 254, SDL_ALPHA_OPAQUE}  // snow
+    };
+
+    SdlEditSurface edit(terrain_);
+    for (int i = 0; i < edit.size(); ++i) {
+        edit.set_pixel(i, terrainColors[rmap_->getTerrain(i)]);
+    }
+}
+
+void Minimap::make_obstacle_layer()
+{
+    SdlEditSurface edit(objects_);
+
+    for (int i = 0; i < edit.size(); ++i) {
+        if (!rmap_->getObstacle(i)) {
+            edit.set_pixel(i, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
+            continue;
+        }
+
+        // Increase opacity for certain terrain types so the obstacle markings are
+        // more visible.
+        SDL_Color color = {120, 67, 21, 64};  // brown, 25% opacity
+        auto terrain = rmap_->getTerrain(i);
+        if (terrain == Terrain::dirt) {
+            color.a = 96;
+        }
+        else if (terrain == Terrain::swamp) {
+            color.a = 160;
+        }
+        edit.set_pixel(i, color);
+    }
+}
+
+void Minimap::update_objects()
+{
+    SdlEditSurface edit(objects_);
+
+    // TODO: set the colors based on game state.
+    const auto &neutral = getTeamColor(Team::neutral, ColorShade::darker25);
+    for (auto &hVillage : rmap_->getObjectTiles(ObjectType::village)) {
+        edit.set_pixel(rmap_->intFromHex(hVillage), neutral);
+    }
+    for (auto &hCastle : rmap_->getCastleTiles()) {
+        edit.set_pixel(rmap_->intFromHex(hCastle), neutral);
+        for (HexDir d : HexDir()) {
+            edit.set_pixel(rmap_->intFromHex(hCastle.getNeighbor(d)), neutral);
+        }
+    }
+}
+
+void Minimap::update_map_view()
+{
+    auto offset = rmapView_->pxDisplayOffset();
+    auto maxOffset = rmapView_->maxDisplayOffset();
+
+    if (offset.x != maxOffset.x) {
+        // How far has the map scrolled relative to its total size?
+        box_.x = static_cast<double>(offset.x) / rmapView_->pxMapWidth() *
+            displayRect_.w;
+    }
+    else {
+        // Snap the box to the edge if we've reached the limit.  We might not
+        // otherwise get there due to floating point rounding.
+        box_.x = displayRect_.w - box_.w;
+    }
+
+    if (offset.y != maxOffset.y) {
+        box_.y = static_cast<double>(offset.y) / rmapView_->pxMapHeight() *
+            displayRect_.h;
+    }
+    else {
+        box_.y = displayRect_.h - box_.h;
+    }
+}
+
+void Minimap::draw_map_view(SdlEditTexture &edit)
+{
+    const SDL_Color color = {0, 0, 0, SDL_ALPHA_OPAQUE};
+    int spaceSize = 4;
+    int dashSize = spaceSize * 3 / 2;
+
+    // Top and bottom edges
+    int px = box_.x;
+    while (px < box_.x + box_.w - dashSize) {
+        edit.fill_rect({px, box_.y, dashSize, 1}, color);
+        edit.fill_rect({px, box_.y + box_.h - 1, dashSize, 1}, color);
+        px += spaceSize + dashSize;
+    }
+
+    // Left and right edges
+    int py = box_.y;
+    while (py < box_.y + box_.h - dashSize) {
+        edit.fill_rect({box_.x, py, 1, dashSize}, color);
+        edit.fill_rect({box_.x + box_.w - 1, py, 1, dashSize}, color);
+        py += spaceSize + dashSize;
+    }
+}

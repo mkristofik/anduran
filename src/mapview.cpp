@@ -11,12 +11,12 @@
     See the COPYING.txt file for more details.
 */
 #include "MapDisplay.h"
+#include "Minimap.h"
 #include "RandomMap.h"
 #include "SdlApp.h"
 #include "SdlImageManager.h"
 #include "SdlWindow.h"
 #include "iterable_enum_class.h"
-#include "team_color.h"
 #include "terrain.h"
 
 #include <array>
@@ -27,6 +27,7 @@ using namespace std::string_literals;
 
 namespace
 {
+    // TODO: all these are magic numbers
     SDL_Rect map_display_area(const SdlWindow &win)
     {
         auto winRect = win.getBounds();
@@ -35,7 +36,18 @@ namespace
         // 12 px left and right border
         // room for minimap on the right side, plus another 12px border
         // chosen so a full hex is visible on the right edge of the main map
-        return {winRect.x + 12, winRect.y + 24, winRect.w - 194, winRect.h - 48};
+        return {
+            winRect.x + 12,
+            winRect.y + 24,
+            winRect.x + winRect.w - 194,
+            winRect.y + winRect.h - 48
+        };
+    }
+
+    SDL_Rect minimap_display_area(const SdlWindow &win)
+    {
+        auto winRect = win.getBounds();
+        return {winRect.x + winRect.w - 170, winRect.y + 24, 158, 158};
     }
 }
 
@@ -58,9 +70,7 @@ private:
     RandomMap rmap_;
     SdlImageManager images_;
     MapDisplay rmapView_;
-    SdlTexture minimap_;
-    SdlSurface terrain_;
-    SdlSurface objects_;
+    Minimap minimap_;
 };
 
 MapViewApp::MapViewApp()
@@ -69,24 +79,12 @@ MapViewApp::MapViewApp()
     rmap_("test2.json"),
     images_("img/"),
     rmapView_(win_, map_display_area(win_), rmap_, images_),
-    minimap_(SdlTexture::make_editable_image(win_, 158, 158)),  // TODO: magic numbers
-    terrain_(),
-    objects_()
+    minimap_(win_, minimap_display_area(win_), rmap_, rmapView_)
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
     place_objects();
     place_armies();
-
-    // The obstacles and other map objects will be blended with the terrain layer
-    // to compose the final minimap view.
-    SdlEditTexture edit(minimap_);
-    terrain_ = edit.make_surface(rmap_.width(), rmap_.width());
-    objects_ = terrain_.clone();
-    SDL_SetSurfaceBlendMode(objects_.get(), SDL_BLENDMODE_BLEND);
-
-    make_terrain_layer();
-    make_obstacle_layer();
 }
 
 void MapViewApp::update_frame(Uint32 elapsed_ms)
@@ -94,13 +92,10 @@ void MapViewApp::update_frame(Uint32 elapsed_ms)
     if (mouse_in_window()) {
         rmapView_.handleMousePos(elapsed_ms);
     }
+
     win_.clear();
     rmapView_.draw();
-
-    static const auto winRect = win_.getBounds();
-    update_minimap();
-    minimap_.draw({winRect.x + winRect.w - 170, 24});
-
+    minimap_.draw();
     win_.update();
 }
 
@@ -130,115 +125,6 @@ void MapViewApp::place_armies()
     auto img = images_.make_texture("random-unit", win_);
     for (auto &hex : rmap_.getObjectTiles(ObjectType::army)) {
         rmapView_.addEntity(img, hex, ZOrder::unit);
-    }
-}
-
-void MapViewApp::make_terrain_layer()
-{
-    const EnumSizedArray<SDL_Color, Terrain> terrainColors = {
-        SDL_Color{10, 96, 154, SDL_ALPHA_OPAQUE},  // water
-        SDL_Color{224, 204, 149, SDL_ALPHA_OPAQUE},  // desert
-        SDL_Color{65, 67, 48, SDL_ALPHA_OPAQUE},  // swamp
-        SDL_Color{69, 128, 24, SDL_ALPHA_OPAQUE},  // grass
-        SDL_Color{136, 110, 66, SDL_ALPHA_OPAQUE},  // dirt
-        SDL_Color{230, 240, 254, SDL_ALPHA_OPAQUE}  // snow
-    };
-
-    SdlEditSurface edit(terrain_);
-    for (int i = 0; i < edit.size(); ++i) {
-        edit.set_pixel(i, terrainColors[rmap_.getTerrain(i)]);
-    }
-}
-
-void MapViewApp::make_obstacle_layer()
-{
-    SdlEditSurface edit(objects_);
-
-    for (int i = 0; i < edit.size(); ++i) {
-        if (!rmap_.getObstacle(i)) {
-            edit.set_pixel(i, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
-            continue;
-        }
-
-        // Increase opacity for certain terrain types so the obstacle markings are
-        // more visible.
-        SDL_Color color = {120, 67, 21, 64};  // brown, 25% opacity
-        auto terrain = rmap_.getTerrain(i);
-        if (terrain == Terrain::dirt) {
-            color.a = 96;
-        }
-        else if (terrain == Terrain::swamp) {
-            color.a = 160;
-        }
-        edit.set_pixel(i, color);
-    }
-}
-
-void MapViewApp::update_minimap()
-{
-    // Can't blit surfaces while locked, this needs its own block.
-    {
-        SdlEditSurface edit(objects_);
-
-        // TODO: set the colors based on game state.
-        const auto &neutral = getTeamColor(Team::neutral, ColorShade::darker25);
-        for (auto &hVillage : rmap_.getObjectTiles(ObjectType::village)) {
-            edit.set_pixel(rmap_.intFromHex(hVillage), neutral);
-        }
-        for (auto &hCastle : rmap_.getCastleTiles()) {
-            edit.set_pixel(rmap_.intFromHex(hCastle), neutral);
-            for (HexDir d : HexDir()) {
-                edit.set_pixel(rmap_.intFromHex(hCastle.getNeighbor(d)), neutral);
-            }
-        }
-    }
-
-    SdlEditTexture edit(minimap_);
-    edit.update(terrain_);
-    edit.update(objects_);
-
-    // How far has the map scrolled relative to its total size?
-    auto offset = rmapView_.pxDisplayOffset();
-    int xScaled = static_cast<double>(offset.x) / rmapView_.pxMapWidth() *
-        minimap_.width();
-    int yScaled = static_cast<double>(offset.y) / rmapView_.pxMapHeight() *
-        minimap_.height();
-
-    // View size relative to the whole map if you could see it all.
-    static const int wScaled = static_cast<double>(rmapView_.pxDisplayWidth()) /
-        rmapView_.pxMapWidth() * minimap_.width();
-    static const int hScaled = static_cast<double>(rmapView_.pxDisplayHeight()) /
-        rmapView_.pxMapHeight() * minimap_.height();
-
-    // Snap the box to the edge if we've reached the limit.  We might not
-    // otherwise get there due to floating point rounding.
-    auto maxOffset = rmapView_.maxDisplayOffset();
-    if (offset.x == maxOffset.x) {
-        xScaled = minimap_.width() - wScaled;
-    }
-    if (offset.y == maxOffset.y) {
-        yScaled = minimap_.height() - hScaled;
-    }
-
-    SDL_Rect box = {xScaled, yScaled, wScaled, hScaled};
-    SDL_Color color = {0, 0, 0, SDL_ALPHA_OPAQUE};
-    int spaceSize = 4;
-    int dashSize = spaceSize * 3 / 2;
-
-    // Top and bottom edges
-    int px = box.x;
-    while (px < box.x + box.w - dashSize) {
-        edit.fill_rect({px, box.y, dashSize, 1}, color);
-        edit.fill_rect({px, box.y + box.h - 1, dashSize, 1}, color);
-        px += spaceSize + dashSize;
-    }
-
-    // Left and right edges
-    int py = box.y;
-    while (py < box.y + box.h - dashSize) {
-        edit.fill_rect({box.x, py, 1, dashSize}, color);
-        edit.fill_rect({box.x + box.w - 1, py, 1, dashSize}, color);
-        py += spaceSize + dashSize;
     }
 }
 
