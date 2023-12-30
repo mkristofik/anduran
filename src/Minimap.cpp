@@ -12,19 +12,8 @@
 */
 #include "Minimap.h"
 
+#include "pixel_utils.h"
 #include "team_color.h"
-
-
-namespace
-{
-    // TODO: refactor this into pixel_utils
-    SDL_Point getMousePos()
-    {
-        SDL_Point mouse;
-        SDL_GetMouseState(&mouse.x, &mouse.y);
-        return mouse;
-    }
-}
 
 
 Minimap::Minimap(SdlWindow &win,
@@ -82,7 +71,7 @@ void Minimap::handle_mouse_pos(Uint32)
 
     // Center the box on the mouse position by scrolling the map an appropriate
     // amount.  update_map_view() will draw it at the new position.
-    auto newBoxPos = getMousePos() - SDL_Point{box_.w / 2, box_.h / 2};
+    auto newBoxPos = get_mouse_pos() - SDL_Point{box_.w / 2, box_.h / 2};
     auto relPos = newBoxPos - displayPos_;
     auto xFrac = static_cast<double>(relPos.x) / (displayRect_.w - box_.w);
     auto yFrac = static_cast<double>(relPos.y) / (displayRect_.h - box_.h);

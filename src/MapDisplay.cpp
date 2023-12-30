@@ -17,6 +17,7 @@
 #include "SdlImageManager.h"
 #include "SdlWindow.h"
 #include "container_utils.h"
+#include "pixel_utils.h"
 
 #include "boost/container/flat_map.hpp"
 #include <algorithm>
@@ -78,13 +79,6 @@ namespace
         "castle-walls-dirt"s,
         "castle-walls-snow"s
     };
-
-    SDL_Point getMousePos()
-    {
-        SDL_Point mouse;
-        SDL_GetMouseState(&mouse.x, &mouse.y);
-        return mouse;
-    }
 }
 
 
@@ -380,7 +374,7 @@ void MapDisplay::handleMousePos(Uint32 elapsed_ms)
 // source: Battle for Wesnoth, display::pixel_position_to_hex()
 Hex MapDisplay::hexFromMousePos() const
 {
-    auto adjMouse = static_cast<SDL_Point>(getMousePos() + displayOffset_);
+    auto adjMouse = static_cast<SDL_Point>(get_mouse_pos() + displayOffset_);
     adjMouse.x -= displayArea_.x;
     adjMouse.y -= displayArea_.y;
 
@@ -900,7 +894,7 @@ bool MapDisplay::scrollDisplay(Uint32 elapsed_ms)
     auto scrollY = 0.0;
     const auto scrollDist = SCROLL_PX_SEC * elapsed_ms / 1000.0;
 
-    const auto mouse = getMousePos();
+    const auto mouse = get_mouse_pos();
     if (SDL_PointInRect(&mouse, &leftBoundary) == SDL_TRUE) {
         scrollX = -scrollDist;
     }

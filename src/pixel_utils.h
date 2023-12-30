@@ -36,6 +36,8 @@ constexpr PartialPixel operator/(const SDL_Point &lhs, double rhs);
 constexpr SDL_Point operator+(const SDL_Point &lhs, const SDL_Point &rhs);
 constexpr SDL_Point operator-(const SDL_Point &lhs, const SDL_Point &rhs);
 
+SDL_Point get_mouse_pos();
+
 
 constexpr PartialPixel::operator SDL_Point() const
 {
