@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2018 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2023 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -91,6 +91,12 @@ bool SdlApp::poll_events()
         switch (event.type) {
             case SDL_QUIT:
                 return false;
+
+            case SDL_MOUSEBUTTONDOWN:
+                if (event.button.button == SDL_BUTTON_LEFT) {
+                    handle_lmouse_down();
+                }
+                break;
 
             case SDL_MOUSEBUTTONUP:
                 if (event.button.button == SDL_BUTTON_LEFT) {

@@ -102,9 +102,12 @@ public:
 
     // How many pixels the map has been scrolled in each direction?  Stop
     // scrolling when the lower right hex is fully visible inside the window.
+    // TODO: is this better represented as a fraction?
     SDL_Point pxDisplayOffset() const;
     SDL_Point maxDisplayOffset() const;
-    // TODO: setDisplayOffset(), assert between 0,0 and max offset
+
+    // Scroll the map by a fraction of the total range [0.0, 1.0].
+    void setDisplayOffset(double xFrac, double yFrac);
 
     void draw();
 

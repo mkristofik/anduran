@@ -58,6 +58,8 @@ public:
     MapViewApp();
 
     void update_frame(Uint32 elapsed_ms) override;
+    void handle_lmouse_down() override;
+    void handle_lmouse_up() override;
 
 private:
     void place_objects();
@@ -85,18 +87,36 @@ MapViewApp::MapViewApp()
 
     place_objects();
     place_armies();
+
+    // TODO: add SDL_Rects for map view and minimap
+    // add handle_lmouse_up() and handle_lmouse_down()
+    // if mouse within rect for minimap, pass along event
+    // what if we always process every event and let the minimap decide whether
+    // to handle it?  that would allow for more than one widget to take action
+    // for the same event, not just the one the mouse is over.
 }
 
 void MapViewApp::update_frame(Uint32 elapsed_ms)
 {
     if (mouse_in_window()) {
         rmapView_.handleMousePos(elapsed_ms);
+        minimap_.handle_mouse_pos(elapsed_ms);
     }
 
     win_.clear();
     rmapView_.draw();
     minimap_.draw();
     win_.update();
+}
+
+void MapViewApp::handle_lmouse_down()
+{
+    minimap_.handle_lmouse_down();
+}
+
+void MapViewApp::handle_lmouse_up()
+{
+    minimap_.handle_lmouse_up();
 }
 
 void MapViewApp::place_objects()

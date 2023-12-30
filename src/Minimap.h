@@ -33,6 +33,12 @@ public:
 
     void draw();
 
+    // TODO: precursor for a generic event handler.  Some widgets will need to
+    // know the elapsed frame time.  This one won't.
+    void handle_mouse_pos(Uint32);
+    void handle_lmouse_down();
+    void handle_lmouse_up();
+
 private:
     void make_terrain_layer();
     void make_obstacle_layer();
@@ -51,6 +57,7 @@ private:
     SdlSurface terrain_;
     SdlSurface objects_;
     SDL_Rect box_;  // relative to the texture
+    bool isMouseClicked_;
 };
 
 #endif

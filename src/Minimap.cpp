@@ -15,6 +15,18 @@
 #include "team_color.h"
 
 
+namespace
+{
+    // TODO: refactor this into pixel_utils
+    SDL_Point getMousePos()
+    {
+        SDL_Point mouse;
+        SDL_GetMouseState(&mouse.x, &mouse.y);
+        return mouse;
+    }
+}
+
+
 Minimap::Minimap(SdlWindow &win,
                  const SDL_Rect &displayRect,
                  RandomMap &rmap,
@@ -26,7 +38,8 @@ Minimap::Minimap(SdlWindow &win,
     texture_(SdlTexture::make_editable_image(win, displayRect_.w, displayRect_.h)),
     terrain_(),
     objects_(),
-    box_{0, 0, 0, 0}
+    box_{0, 0, 0, 0},
+    isMouseClicked_(false)
 {
     // The obstacles and other map objects will be blended with the terrain layer
     // to compose the final minimap view.
@@ -40,9 +53,9 @@ Minimap::Minimap(SdlWindow &win,
 
     // View size relative to the whole map if you could see it all.
     box_.w = static_cast<double>(rmapView_->pxDisplayWidth()) /
-        rmapView_->pxMapWidth() * displayRect.w;
+        rmapView_->pxMapWidth() * displayRect_.w;
     box_.h = static_cast<double>(rmapView_->pxDisplayHeight()) /
-        rmapView_->pxMapHeight() * displayRect.h;
+        rmapView_->pxMapHeight() * displayRect_.h;
 }
 
 void Minimap::draw()
@@ -59,6 +72,32 @@ void Minimap::draw()
     }
 
     texture_.draw(displayPos_);
+}
+
+void Minimap::handle_mouse_pos(Uint32)
+{
+    if (!isMouseClicked_) {
+        return;
+    }
+
+    // Center the box on the mouse position by scrolling the map an appropriate
+    // amount.  update_map_view() will draw it at the new position.
+    auto newBoxPos = getMousePos() - SDL_Point{box_.w / 2, box_.h / 2};
+    auto relPos = newBoxPos - displayPos_;
+    auto xFrac = static_cast<double>(relPos.x) / (displayRect_.w - box_.w);
+    auto yFrac = static_cast<double>(relPos.y) / (displayRect_.h - box_.h);
+    rmapView_->setDisplayOffset(std::clamp(xFrac, 0.0, 1.0),
+                                std::clamp(yFrac, 0.0, 1.0));
+}
+
+void Minimap::handle_lmouse_down()
+{
+    isMouseClicked_ = true;
+}
+
+void Minimap::handle_lmouse_up()
+{
+    isMouseClicked_ = false;
 }
 
 void Minimap::make_terrain_layer()

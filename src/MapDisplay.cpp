@@ -221,6 +221,15 @@ SDL_Point MapDisplay::maxDisplayOffset() const
     return {pMaxX, pMaxY};
 }
 
+void MapDisplay::setDisplayOffset(double xFrac, double yFrac)
+{
+    SDL_assert(xFrac >= 0.0 && xFrac <= 1.0 && yFrac >= 0.0 && yFrac <= 1.0);
+
+    static const auto maxOff = maxDisplayOffset();
+    displayOffset_.x = xFrac * maxOff.x;
+    displayOffset_.y = yFrac * maxOff.y;
+}
+
 void MapDisplay::draw()
 {
     SdlWindowClip guard(*window_, displayArea_);

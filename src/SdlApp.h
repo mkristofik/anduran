@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2018 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2023 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -40,6 +40,7 @@ protected:
 
 private:
     virtual void update_frame(Uint32 elapsed_ms) = 0;
+    virtual void handle_lmouse_down() {}
     virtual void handle_lmouse_up() {}
 
     void do_game_loop();
