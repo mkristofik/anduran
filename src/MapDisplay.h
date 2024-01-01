@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2023 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -94,11 +94,8 @@ public:
                RandomMap &rmap,
                SdlImageManager &imgMgr);
 
-    // Total map size and visible area, in pixels.
-    int pxMapWidth() const;
-    int pxMapHeight() const;
-    int pxDisplayWidth() const;
-    int pxDisplayHeight() const;
+    // Fraction of the map inside the visible area, range (0.0, 1.0].
+    PartialPixel getDisplayFrac() const;
 
     // Scroll the map by a fraction of the total range [0.0, 1.0].
     void setDisplayOffset(double xFrac, double yFrac);

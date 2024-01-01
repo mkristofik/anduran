@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2023 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -185,26 +185,15 @@ MapDisplay::MapDisplay(SdlWindow &win,
     pathImg_[ObjectAction::pickup] = images_->make_texture("visit-object", *window_);
 }
 
-int MapDisplay::pxMapWidth() const
+PartialPixel MapDisplay::getDisplayFrac() const
 {
     // Every two overlapping hexes is one tiling width.
-    return map_->width() / 2 * HEX_TILING_WIDTH;
-}
-
-int MapDisplay::pxMapHeight() const
-{
+    auto totalWidth = map_->width() / 2 * HEX_TILING_WIDTH;
     // Bottom hex in the odd columns is tiled a half hex lower.
-    return (map_->width() + 0.5) * HEX_TILING_HEIGHT;
-}
+    auto totalHeight = (map_->width() + 0.5) * HEX_TILING_HEIGHT;
 
-int MapDisplay::pxDisplayWidth() const
-{
-    return displayArea_.w;
-}
-
-int MapDisplay::pxDisplayHeight() const
-{
-    return displayArea_.h;
+    return {static_cast<double>(displayArea_.w) / totalWidth,
+        static_cast<double>(displayArea_.h) / totalHeight};
 }
 
 void MapDisplay::setDisplayOffset(double xFrac, double yFrac)

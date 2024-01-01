@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2023 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2023-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -41,10 +41,9 @@ Minimap::Minimap(SdlWindow &win,
     make_obstacle_layer();
 
     // View size relative to the whole map if you could see it all.
-    box_.w = static_cast<double>(rmapView_->pxDisplayWidth()) /
-        rmapView_->pxMapWidth() * displayRect_.w;
-    box_.h = static_cast<double>(rmapView_->pxDisplayHeight()) /
-        rmapView_->pxMapHeight() * displayRect_.h;
+    auto viewFrac = rmapView_->getDisplayFrac();
+    box_.w = viewFrac.x * displayRect_.w;
+    box_.h = viewFrac.y * displayRect_.h;
 }
 
 void Minimap::draw()
