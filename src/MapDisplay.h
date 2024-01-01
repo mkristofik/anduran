@@ -100,14 +100,9 @@ public:
     int pxDisplayWidth() const;
     int pxDisplayHeight() const;
 
-    // How many pixels the map has been scrolled in each direction?  Stop
-    // scrolling when the lower right hex is fully visible inside the window.
-    // TODO: is this better represented as a fraction?
-    SDL_Point pxDisplayOffset() const;
-    SDL_Point maxDisplayOffset() const;
-
     // Scroll the map by a fraction of the total range [0.0, 1.0].
     void setDisplayOffset(double xFrac, double yFrac);
+    PartialPixel getDisplayOffsetFrac() const;
 
     void draw();
 
@@ -186,6 +181,7 @@ private:
     std::vector<TileDisplay> tiles_;
     SDL_Rect displayArea_;
     PartialPixel displayOffset_;
+    SDL_Point maxOffset_;
     std::vector<MapEntity> entities_;
     std::vector<SdlTexture> entityImg_;
     int hexShadowId_;

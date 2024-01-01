@@ -149,27 +149,9 @@ void Minimap::update_objects()
 
 void Minimap::update_map_view()
 {
-    auto offset = rmapView_->pxDisplayOffset();
-    auto maxOffset = rmapView_->maxDisplayOffset();
-
-    if (offset.x != maxOffset.x) {
-        // How far has the map scrolled relative to its total size?
-        box_.x = static_cast<double>(offset.x) / rmapView_->pxMapWidth() *
-            displayRect_.w;
-    }
-    else {
-        // Snap the box to the edge if we've reached the limit.  We might not
-        // otherwise get there due to floating point rounding.
-        box_.x = displayRect_.w - box_.w;
-    }
-
-    if (offset.y != maxOffset.y) {
-        box_.y = static_cast<double>(offset.y) / rmapView_->pxMapHeight() *
-            displayRect_.h;
-    }
-    else {
-        box_.y = displayRect_.h - box_.h;
-    }
+    auto offsetFrac = rmapView_->getDisplayOffsetFrac();
+    box_.x = offsetFrac.x * (displayRect_.w - box_.w);
+    box_.y = offsetFrac.y * (displayRect_.h - box_.h);
 }
 
 void Minimap::draw_map_view(SdlEditTexture &edit)

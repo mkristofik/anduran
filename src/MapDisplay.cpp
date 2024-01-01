@@ -138,6 +138,7 @@ MapDisplay::MapDisplay(SdlWindow &win,
     tiles_(map_->size()),
     displayArea_(displayRect),
     displayOffset_(),
+    maxOffset_(),
     entities_(),
     entityImg_(),
     hexShadowId_(-1),
@@ -145,6 +146,12 @@ MapDisplay::MapDisplay(SdlWindow &win,
     pathImg_(),
     pathIds_()
 {
+    // Set the scroll limit such that the lower right hex is fully visible inside
+    // the window.
+    auto lowerRight = pixelFromHex(Hex{map_->width() - 1, map_->width() - 1});
+    maxOffset_.x = lowerRight.x - displayArea_.w - displayArea_.x + HEX_SIZE;
+    maxOffset_.y = lowerRight.y - displayArea_.h - displayArea_.y + HEX_SIZE;
+
     loadTerrainImages();
 
     // Assume all tile and obstacle images have the same number of frames.
@@ -200,28 +207,18 @@ int MapDisplay::pxDisplayHeight() const
     return displayArea_.h;
 }
 
-SDL_Point MapDisplay::pxDisplayOffset() const
-{
-    return SDL_Point(displayOffset_);
-}
-
-SDL_Point MapDisplay::maxDisplayOffset() const
-{
-    static const auto lowerRight =
-        pixelFromHex(Hex{map_->width() - 1, map_->width() - 1});
-    static const int pMaxX = lowerRight.x - displayArea_.w - displayArea_.x + HEX_SIZE;
-    static const int pMaxY = lowerRight.y - displayArea_.h - displayArea_.y + HEX_SIZE;
-
-    return {pMaxX, pMaxY};
-}
-
 void MapDisplay::setDisplayOffset(double xFrac, double yFrac)
 {
     SDL_assert(xFrac >= 0.0 && xFrac <= 1.0 && yFrac >= 0.0 && yFrac <= 1.0);
 
-    static const auto maxOff = maxDisplayOffset();
-    displayOffset_.x = xFrac * maxOff.x;
-    displayOffset_.y = yFrac * maxOff.y;
+    displayOffset_.x = xFrac * maxOffset_.x;
+    displayOffset_.y = yFrac * maxOffset_.y;
+}
+
+PartialPixel MapDisplay::getDisplayOffsetFrac() const
+{
+    return {static_cast<double>(displayOffset_.x) / maxOffset_.x,
+        static_cast<double>(displayOffset_.y) / maxOffset_.y};
 }
 
 void MapDisplay::draw()
@@ -908,9 +905,8 @@ bool MapDisplay::scrollDisplay(Uint32 elapsed_ms)
         scrollY = scrollDist;
     }
 
-    static const auto pMax = maxDisplayOffset();
-    const auto newX = std::clamp<double>(displayOffset_.x + scrollX, 0, pMax.x);
-    const auto newY = std::clamp<double>(displayOffset_.y + scrollY, 0, pMax.y);
+    const auto newX = std::clamp<double>(displayOffset_.x + scrollX, 0, maxOffset_.x);
+    const auto newY = std::clamp<double>(displayOffset_.y + scrollY, 0, maxOffset_.y);
     const bool scrolling = (newX != displayOffset_.x || newY != displayOffset_.y);
 
     displayOffset_ = {newX, newY};
