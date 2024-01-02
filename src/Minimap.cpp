@@ -1,13 +1,13 @@
 /*
     Copyright (C) 2023-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License version 2
     or at your option any later version.
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY.
- 
+
     See the COPYING.txt file for more details.
 */
 #include "Minimap.h"
@@ -80,7 +80,9 @@ void Minimap::handle_mouse_pos(Uint32)
 
 void Minimap::handle_lmouse_down()
 {
-    isMouseClicked_ = true;
+    if (mouse_in_rect(displayRect_)) {
+        isMouseClicked_ = true;
+    }
 }
 
 void Minimap::handle_lmouse_up()
