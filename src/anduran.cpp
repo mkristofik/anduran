@@ -1,13 +1,13 @@
 /*
-    Copyright (C) 2016-2023 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License version 2
     or at your option any later version.
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY.
- 
+
     See the COPYING.txt file for more details.
 */
 #include "anduran.h"
@@ -57,10 +57,6 @@ Anduran::Anduran()
 
 void Anduran::update_frame(Uint32 elapsed_ms)
 {
-    if (mouse_in_window()) {
-        rmapView_.handleMousePos(elapsed_ms);
-        handle_mouse_pos();
-    }
     win_.clear();
     anims_.run(elapsed_ms);
     rmapView_.draw();
@@ -110,8 +106,10 @@ void Anduran::handle_lmouse_up()
     }
 }
 
-void Anduran::handle_mouse_pos()
+void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
 {
+    rmapView_.handleMousePos(elapsed_ms);
+
     if (!championSelected_) {
         return;
     }

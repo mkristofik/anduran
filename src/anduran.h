@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2022-2023 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2022-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -37,9 +37,9 @@ public:
 
     void update_frame(Uint32 elapsed_ms) override;
     void handle_lmouse_up() override;
+    void handle_mouse_pos(Uint32 elapsed_ms) override;
 
 private:
-    void handle_mouse_pos();
 
     // Load images that aren't tied to units.
     void load_images();

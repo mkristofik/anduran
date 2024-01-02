@@ -1,13 +1,13 @@
 /*
-    Copyright (C) 2016-2023 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License version 2
     or at your option any later version.
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY.
- 
+
     See the COPYING.txt file for more details.
 */
 #ifndef SDL_APP_H
@@ -35,11 +35,9 @@ public:
 
     int run();
 
-protected:
-    bool mouse_in_window() const;
-
 private:
     virtual void update_frame(Uint32 elapsed_ms) = 0;
+    virtual void handle_mouse_pos(Uint32 /*elapsed_ms*/) {}
     virtual void handle_lmouse_down() {}
     virtual void handle_lmouse_up() {}
 

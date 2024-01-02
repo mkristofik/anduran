@@ -1,13 +1,13 @@
 /*
-    Copyright (C) 2023 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2023-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License version 2
     or at your option any later version.
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY.
- 
+
     See the COPYING.txt file for more details.
 */
 #ifndef MINIMAP_H
@@ -33,8 +33,6 @@ public:
 
     void draw();
 
-    // TODO: precursor for a generic event handler.  Some widgets will need to
-    // know the elapsed frame time.  This one won't.
     void handle_mouse_pos(Uint32);
     void handle_lmouse_down();
     void handle_lmouse_up();

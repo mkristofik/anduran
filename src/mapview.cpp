@@ -1,13 +1,13 @@
 /*
-    Copyright (C) 2016-2023 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License version 2
     or at your option any later version.
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY.
- 
+
     See the COPYING.txt file for more details.
 */
 #include "MapDisplay.h"
@@ -57,7 +57,8 @@ class MapViewApp : public SdlApp
 public:
     MapViewApp();
 
-    void update_frame(Uint32 elapsed_ms) override;
+    void update_frame(Uint32) override;
+    void handle_mouse_pos(Uint32 elapsed_ms) override;
     void handle_lmouse_down() override;
     void handle_lmouse_up() override;
 
@@ -87,26 +88,20 @@ MapViewApp::MapViewApp()
 
     place_objects();
     place_armies();
-
-    // TODO: add SDL_Rects for map view and minimap
-    // add handle_lmouse_up() and handle_lmouse_down()
-    // if mouse within rect for minimap, pass along event
-    // what if we always process every event and let the minimap decide whether
-    // to handle it?  that would allow for more than one widget to take action
-    // for the same event, not just the one the mouse is over.
 }
 
-void MapViewApp::update_frame(Uint32 elapsed_ms)
+void MapViewApp::update_frame(Uint32)
 {
-    if (mouse_in_window()) {
-        rmapView_.handleMousePos(elapsed_ms);
-        minimap_.handle_mouse_pos(elapsed_ms);
-    }
-
     win_.clear();
     rmapView_.draw();
     minimap_.draw();
     win_.update();
+}
+
+void MapViewApp::handle_mouse_pos(Uint32 elapsed_ms)
+{
+    rmapView_.handleMousePos(elapsed_ms);
+    minimap_.handle_mouse_pos(elapsed_ms);
 }
 
 void MapViewApp::handle_lmouse_down()
