@@ -28,14 +28,14 @@ using namespace std::string_literals;
 namespace
 {
     /*
-       hex size
+       hex size (full width of one hex)
        |  |
         _     _
-       / \_    tiling height
+       / \_    tiling height (same as hex size)
        \_/ \  _
          \_/
        |   |
-       tiling width
+       tiling width (end of second hex's bottom edge)
     */
     const int HEX_SIZE = 72;
     const int HEX_TILING_WIDTH = HEX_SIZE * 3 / 2;
@@ -187,10 +187,8 @@ MapDisplay::MapDisplay(SdlWindow &win,
 
 PartialPixel MapDisplay::getDisplayFrac() const
 {
-    // Every two overlapping hexes is one tiling width.
-    auto totalWidth = map_->width() / 2 * HEX_TILING_WIDTH;
-    // Bottom hex in the odd columns is tiled a half hex lower.
-    auto totalHeight = (map_->width() + 0.5) * HEX_TILING_HEIGHT;
+    auto totalWidth = maxOffset_.x + displayArea_.x + displayArea_.w;
+    auto totalHeight = maxOffset_.y + displayArea_.y + displayArea_.h;
 
     return {static_cast<double>(displayArea_.w) / totalWidth,
         static_cast<double>(displayArea_.h) / totalHeight};

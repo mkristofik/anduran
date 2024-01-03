@@ -35,19 +35,19 @@ namespace
         // 24 px top and bottom border
         // 12 px left and right border
         // room for minimap on the right side, plus another 12px border
-        // chosen so a full hex is visible on the right edge of the main map
         return {
             winRect.x + 12,
             winRect.y + 24,
-            winRect.x + winRect.w - 194,
-            winRect.y + winRect.h - 48
+            winRect.w - 228,
+            winRect.h - 48
         };
     }
 
     SDL_Rect minimap_display_area(const SdlWindow &win)
     {
+        // 15% of the window width
         auto winRect = win.getBounds();
-        return {winRect.x + winRect.w - 170, winRect.y + 24, 158, 158};
+        return {winRect.x + winRect.w - 204, winRect.y + 24, 192, 192};
     }
 }
 
