@@ -60,6 +60,7 @@ MAPVIEW_SRC = MapDisplay.cpp \
 	SdlSurface.cpp \
 	SdlTexture.cpp \
 	SdlWindow.cpp \
+	WindowConfig.cpp \
 	hex_utils.cpp \
 	json_utils.cpp \
 	mapview.cpp \

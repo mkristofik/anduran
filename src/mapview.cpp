@@ -16,6 +16,7 @@
 #include "SdlApp.h"
 #include "SdlImageManager.h"
 #include "SdlWindow.h"
+#include "WindowConfig.h"
 #include "iterable_enum_class.h"
 #include "terrain.h"
 
@@ -24,32 +25,6 @@
 #include <string>
 
 using namespace std::string_literals;
-
-namespace
-{
-    // TODO: all these are magic numbers
-    SDL_Rect map_display_area(const SdlWindow &win)
-    {
-        auto winRect = win.getBounds();
-
-        // 24 px top and bottom border
-        // 12 px left and right border
-        // room for minimap on the right side, plus another 12px border
-        return {
-            winRect.x + 12,
-            winRect.y + 24,
-            winRect.w - 228,
-            winRect.h - 48
-        };
-    }
-
-    SDL_Rect minimap_display_area(const SdlWindow &win)
-    {
-        // 15% of the window width
-        auto winRect = win.getBounds();
-        return {winRect.x + winRect.w - 204, winRect.y + 24, 192, 192};
-    }
-}
 
 
 class MapViewApp : public SdlApp
@@ -70,6 +45,7 @@ private:
     void update_minimap();
 
     SdlWindow win_;
+    WindowConfig config_;
     RandomMap rmap_;
     SdlImageManager images_;
     MapDisplay rmapView_;
@@ -79,10 +55,11 @@ private:
 MapViewApp::MapViewApp()
     : SdlApp(),
     win_(1280, 720, "Anduran Map Viewer"),
+    config_("data/window.json"s, win_),
     rmap_("test2.json"),
     images_("img/"),
-    rmapView_(win_, map_display_area(win_), rmap_, images_),
-    minimap_(win_, minimap_display_area(win_), rmap_, rmapView_)
+    rmapView_(win_, config_.map_bounds(), rmap_, images_),
+    minimap_(win_, config_.minimap_bounds(), rmap_, rmapView_)
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
