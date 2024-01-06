@@ -13,8 +13,6 @@
 #ifndef WINDOW_CONFIG_H
 #define WINDOW_CONFIG_H
 
-#include "SdlWindow.h"
-
 #include "SDL.h"
 #include <string>
 
@@ -43,12 +41,16 @@
 class WindowConfig
 {
 public:
-    WindowConfig(const std::string &configFile, const SdlWindow &win);
+    WindowConfig(const std::string &configFile);
 
+    int width() const;
+    int height() const;
     const SDL_Rect & map_bounds() const;
     const SDL_Rect & minimap_bounds() const;
 
 private:
+    int width_;
+    int height_;
     SDL_Rect map_;
     SDL_Rect minimap_;
 };

@@ -15,9 +15,11 @@
 #include "json_utils.h"
 #include <filesystem>
 
-WindowConfig::WindowConfig(const std::string &configFile, const SdlWindow &win)
-    // Suitable defaults if config file is missing, assumes 1280x720 window
-    : map_{12, 24, 1052, 672},
+WindowConfig::WindowConfig(const std::string &configFile)
+    // Suitable defaults if config file is missing.
+    : width_(1280),
+    height_(720),
+    map_{12, 24, 1052, 672},
     minimap_{1076, 24, 192, 192}
 {
     if (!std::filesystem::exists(configFile)) {
@@ -34,41 +36,63 @@ WindowConfig::WindowConfig(const std::string &configFile, const SdlWindow &win)
     int bottomBorder = 0;
     int minimapWidth = 0;
 
-    auto winRect = win.getBounds();
+    // First pass to get window sizes, everything else depends on them.
     auto doc = jsonReadFile(configFile.c_str());
     for (auto m = doc.MemberBegin(); m != doc.MemberEnd(); ++m) {
         std::string name = m->name.GetString();
         int value = m->value.GetInt();
 
+        if (name == "window-width") {
+            width_ = value;
+        }
+        else if (name == "window-height") {
+            height_ = value;
+        }
+    }
+
+    for (auto m = doc.MemberBegin(); m != doc.MemberEnd(); ++m) {
+        std::string name = m->name.GetString();
+        int value = m->value.GetInt();
+
         if (name == "top-border-pct") {
-            topBorder = value / 100.0 * winRect.h;
+            topBorder = value / 100.0 * height_;
         }
         else if (name == "left-border-pct") {
-            leftBorder = value / 100.0 * winRect.w;
+            leftBorder = value / 100.0 * width_;
         }
         else if (name == "inner-border-pct") {
-            innerBorder = value / 100.0 * winRect.w;
+            innerBorder = value / 100.0 * width_;
         }
         else if (name == "right-border-pct") {
-            rightBorder = value / 100.0 * winRect.w;
+            rightBorder = value / 100.0 * width_;
         }
         else if (name == "bottom-border-pct") {
-            bottomBorder = value / 100.0 * winRect.h;
+            bottomBorder = value / 100.0 * height_;
         }
         else if (name == "minimap-width-pct") {
-            minimapWidth = value / 100.0 * winRect.w;
+            minimapWidth = value / 100.0 * width_;
         }
     }
 
     minimap_.w = minimapWidth;
     minimap_.h = minimap_.w;
-    minimap_.x = winRect.x + winRect.w - minimap_.w - rightBorder;
-    minimap_.y = winRect.y + topBorder;
+    minimap_.x = width_ - minimap_.w - rightBorder;
+    minimap_.y = topBorder;
 
-    map_.x = winRect.x + leftBorder;
-    map_.y = winRect.y + topBorder;
+    map_.x = leftBorder;
+    map_.y = topBorder;
     map_.w = minimap_.x - map_.x - innerBorder;
-    map_.h = winRect.h - topBorder - bottomBorder;
+    map_.h = height_ - topBorder - bottomBorder;
+}
+
+int WindowConfig::width() const
+{
+    return width_;
+}
+
+int WindowConfig::height() const
+{
+    return height_;
 }
 
 const SDL_Rect & WindowConfig::map_bounds() const

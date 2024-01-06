@@ -31,7 +31,7 @@
     * SDL_LockTexture, SDL_UnlockTexture
 * borders
 - info on currently selected champion
-- data driven config of window elements (main map, minimap, etc.)
+* data driven config of window elements (main map, minimap, etc.)
 
 
 # Minimap

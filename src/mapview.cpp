@@ -44,8 +44,8 @@ private:
     void make_obstacle_layer();
     void update_minimap();
 
-    SdlWindow win_;
     WindowConfig config_;
+    SdlWindow win_;
     RandomMap rmap_;
     SdlImageManager images_;
     MapDisplay rmapView_;
@@ -54,8 +54,8 @@ private:
 
 MapViewApp::MapViewApp()
     : SdlApp(),
-    win_(1280, 720, "Anduran Map Viewer"),
-    config_("data/window.json"s, win_),
+    config_("data/window.json"s),
+    win_(config_.width(), config_.height(), "Anduran Map Viewer"),
     rmap_("test2.json"),
     images_("img/"),
     rmapView_(win_, config_.map_bounds(), rmap_, images_),
