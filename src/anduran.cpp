@@ -28,10 +28,12 @@ using namespace std::string_literals;
 
 Anduran::Anduran()
     : SdlApp(),
-    win_(1280, 720, "Champions of Anduran"),
+    config_("data/window.json"s),
+    win_(config_.width(), config_.height(), "Champions of Anduran"),
     rmap_("test.json"),
     images_("img/"s),
-    rmapView_(win_, win_.getBounds(), rmap_, images_),
+    rmapView_(win_, config_.map_bounds(), rmap_, images_),
+    minimap_(win_, config_.minimap_bounds(), rmap_, rmapView_),
     game_(rmap_.getObjectConfig()),
     playerEntityIds_(),
     curPlayerId_(0),
@@ -60,11 +62,19 @@ void Anduran::update_frame(Uint32 elapsed_ms)
     win_.clear();
     anims_.run(elapsed_ms);
     rmapView_.draw();
+    minimap_.draw();
     win_.update();
+}
+
+void Anduran::handle_lmouse_down()
+{
+    minimap_.handle_lmouse_down();
 }
 
 void Anduran::handle_lmouse_up()
 {
+    minimap_.handle_lmouse_up();
+
     if (!anims_.empty()) {
         return;
     }
@@ -109,6 +119,7 @@ void Anduran::handle_lmouse_up()
 void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
 {
     rmapView_.handleMousePos(elapsed_ms);
+    minimap_.handle_mouse_pos(elapsed_ms);
 
     if (!championSelected_) {
         return;
@@ -227,15 +238,16 @@ void Anduran::load_objects()
 {
     for (auto &obj : rmap_.getObjectConfig()) {
         auto img = images_.make_texture(obj.imgName, win_);
+        // Assume any sprite sheet with the same number of frames as there are
+        // terrains is intended to use a terrain frame.
+        bool hasTerrainFrames = img.cols() == enum_size<Terrain>();
 
         for (auto &hex : rmap_.getObjectTiles(obj.type)) {
             MapEntity entity;
             entity.hex = hex;
             entity.z = ZOrder::object;
 
-            // Assume any sprite sheet with the same number of frames as there
-            // are terrains is intended to use a terrain frame.
-            if (img.cols() == enum_size<Terrain>()) {
+            if (hasTerrainFrames) {
                 entity.setTerrainFrame(rmap_.getTerrain(hex));
             }
 

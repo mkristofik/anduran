@@ -358,6 +358,10 @@ void MapDisplay::handleMousePos(Uint32 elapsed_ms)
 // source: Battle for Wesnoth, display::pixel_position_to_hex()
 Hex MapDisplay::hexFromMousePos() const
 {
+    if (!mouse_in_rect(displayArea_)) {
+        return Hex::invalid();
+    }
+
     auto adjMouse = static_cast<SDL_Point>(get_mouse_pos() + displayOffset_);
     adjMouse.x -= displayArea_.x;
     adjMouse.y -= displayArea_.y;
@@ -878,17 +882,16 @@ bool MapDisplay::scrollDisplay(Uint32 elapsed_ms)
     auto scrollY = 0.0;
     const auto scrollDist = SCROLL_PX_SEC * elapsed_ms / 1000.0;
 
-    const auto mouse = get_mouse_pos();
-    if (SDL_PointInRect(&mouse, &leftBoundary) == SDL_TRUE) {
+    if (mouse_in_rect(leftBoundary)) {
         scrollX = -scrollDist;
     }
-    else if (SDL_PointInRect(&mouse, &rightBoundary) == SDL_TRUE) {
+    else if (mouse_in_rect(rightBoundary)) {
         scrollX = scrollDist;
     }
-    if (SDL_PointInRect(&mouse, &topBoundary) == SDL_TRUE) {
+    if (mouse_in_rect(topBoundary)) {
         scrollY = -scrollDist;
     }
-    else if (SDL_PointInRect(&mouse, &bottomBoundary) == SDL_TRUE) {
+    else if (mouse_in_rect(bottomBoundary)) {
         scrollY = scrollDist;
     }
 

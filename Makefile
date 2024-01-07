@@ -1,4 +1,4 @@
-#    Copyright (C) 2016-2023 by Michael Kristofik <kristo605@gmail.com>
+#    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
 #    Part of the Champions of Anduran project.
 # 
 #    This program is free software; you can redistribute it and/or modify
@@ -73,6 +73,7 @@ ANDURAN = anduran$(EXE)
 ANDURAN_SRC = AnimQueue.cpp \
 	GameState.cpp \
 	MapDisplay.cpp \
+	Minimap.cpp \
 	ObjectManager.cpp \
 	Pathfinder.cpp \
 	RandomMap.cpp \
@@ -84,6 +85,7 @@ ANDURAN_SRC = AnimQueue.cpp \
 	SdlWindow.cpp \
 	UnitData.cpp \
 	UnitManager.cpp \
+	WindowConfig.cpp \
 	anduran.cpp \
 	anim_utils.cpp \
 	battle_utils.cpp \

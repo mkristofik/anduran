@@ -23,6 +23,5 @@ SDL_Point get_mouse_pos()
 bool mouse_in_rect(const SDL_Rect &rect)
 {
     auto mouse = get_mouse_pos();
-    SDL_Rect mouseRect = {mouse.x, mouse.y, 1, 1};
-    return SDL_HasIntersection(&mouseRect, &rect) == SDL_TRUE;
+    return SDL_PointInRect(&mouse, &rect) == SDL_TRUE;
 }

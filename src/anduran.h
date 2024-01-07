@@ -16,12 +16,14 @@
 #include "AnimQueue.h"
 #include "GameState.h"
 #include "MapDisplay.h"
+#include "Minimap.h"
 #include "Pathfinder.h"
 #include "RandomMap.h"
 #include "SdlApp.h"
 #include "SdlImageManager.h"
 #include "SdlWindow.h"
 #include "UnitManager.h"
+#include "WindowConfig.h"
 #include "battle_utils.h"
 #include "container_utils.h"
 #include "hex_utils.h"
@@ -36,6 +38,7 @@ public:
     Anduran();
 
     void update_frame(Uint32 elapsed_ms) override;
+    void handle_lmouse_down() override;
     void handle_lmouse_up() override;
     void handle_mouse_pos(Uint32 elapsed_ms) override;
 
@@ -60,10 +63,12 @@ private:
                  const GameObject &defender,
                  const BattleEvent &event);
 
+    WindowConfig config_;
     SdlWindow win_;
     RandomMap rmap_;
     SdlImageManager images_;
     MapDisplay rmapView_;
+    Minimap minimap_;
     GameState game_;
     std::vector<int> playerEntityIds_;
     int curPlayerId_;
