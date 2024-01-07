@@ -17,8 +17,11 @@
 #include "RandomMap.h"
 #include "SdlSurface.h"
 #include "SdlTexture.h"
+#include "hex_utils.h"
+#include "team_color.h"
 
 #include "SDL.h"
+#include "boost/container/flat_map.hpp"
 
 class SdlWindow;
 
@@ -36,6 +39,8 @@ public:
     void handle_mouse_pos(Uint32);
     void handle_lmouse_down();
     void handle_lmouse_up();
+
+    void set_owner(const Hex &hex, Team team);
 
 private:
     void make_terrain_layer();
@@ -55,6 +60,7 @@ private:
     SdlSurface terrain_;
     SdlSurface objects_;
     SDL_Rect box_;  // relative to the texture
+    boost::container::flat_map<int, Team> tileOwner_;
     bool isMouseClicked_;
 };
 

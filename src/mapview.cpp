@@ -108,6 +108,17 @@ void MapViewApp::place_objects()
             }
 
             rmapView_.addEntity(img, entity, HexAlign::middle);
+
+            if (obj.type == ObjectType::village) {
+                minimap_.set_owner(hex, Team::neutral);
+            }
+        }
+    }
+
+    for (auto &hCastle : rmap_.getCastleTiles()) {
+        minimap_.set_owner(hCastle, Team::neutral);
+        for (auto d : HexDir()) {
+            minimap_.set_owner(hCastle.getNeighbor(d), Team::neutral);
         }
     }
 }

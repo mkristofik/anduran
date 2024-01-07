@@ -84,6 +84,7 @@ private:
     std::vector<SdlTexture> championImages_;
     TeamColoredTextures ellipseImages_;
     TeamColoredTextures flagImages_;
+    bool stateChanged_;
 };
 
 #endif

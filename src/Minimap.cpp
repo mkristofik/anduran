@@ -11,9 +11,7 @@
     See the COPYING.txt file for more details.
 */
 #include "Minimap.h"
-
 #include "pixel_utils.h"
-#include "team_color.h"
 
 
 Minimap::Minimap(SdlWindow &win,
@@ -28,6 +26,7 @@ Minimap::Minimap(SdlWindow &win,
     terrain_(),
     objects_(),
     box_{0, 0, 0, 0},
+    tileOwner_(),
     isMouseClicked_(false)
 {
     // The obstacles and other map objects will be blended with the terrain layer
@@ -90,6 +89,14 @@ void Minimap::handle_lmouse_up()
     isMouseClicked_ = false;
 }
 
+void Minimap::set_owner(const Hex &hex, Team team)
+{
+    int index = rmap_->intFromHex(hex);
+    SDL_assert(index >= 0);
+
+    tileOwner_.insert_or_assign(index, team);
+}
+
 void Minimap::make_terrain_layer()
 {
     const EnumSizedArray<SDL_Color, Terrain> terrainColors = {
@@ -135,16 +142,9 @@ void Minimap::update_objects()
 {
     SdlEditSurface edit(objects_);
 
-    // TODO: set the colors based on game state.
-    const auto &neutral = getTeamColor(Team::neutral, ColorShade::darker25);
-    for (auto &hVillage : rmap_->getObjectTiles(ObjectType::village)) {
-        edit.set_pixel(rmap_->intFromHex(hVillage), neutral);
-    }
-    for (auto &hCastle : rmap_->getCastleTiles()) {
-        edit.set_pixel(rmap_->intFromHex(hCastle), neutral);
-        for (HexDir d : HexDir()) {
-            edit.set_pixel(rmap_->intFromHex(hCastle.getNeighbor(d)), neutral);
-        }
+    for (auto & [index, team] : tileOwner_) {
+        auto &color = getTeamColor(team, ColorShade::darker25);
+        edit.set_pixel(index, color);
     }
 }
 

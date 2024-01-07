@@ -48,7 +48,8 @@ Anduran::Anduran()
     units_("data/units.json"s, win_, images_),
     championImages_(),
     ellipseImages_(),
-    flagImages_()
+    flagImages_(),
+    stateChanged_(true)
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
@@ -61,6 +62,20 @@ void Anduran::update_frame(Uint32 elapsed_ms)
 {
     win_.clear();
     anims_.run(elapsed_ms);
+
+    // Wait until animations have finished running before updating the minimap.
+    if (anims_.empty() && stateChanged_) {
+        for (auto &hVillage : rmap_.getObjectTiles(ObjectType::village)) {
+            for (auto &obj : game_.objects_in_hex(hVillage)) {
+                // Assume for now the first one is the village itself.
+                minimap_.set_owner(hVillage, obj.team);
+                break;
+            }
+        }
+
+        stateChanged_ = false;
+    }
+
     rmapView_.draw();
     minimap_.draw();
     win_.update();
@@ -182,6 +197,12 @@ void Anduran::load_players()
         castle.team = static_cast<Team>(i);
         castle.type = ObjectType::castle;
         game_.add_object(castle);
+
+        // TODO: better way to manage who owns each castle.
+        minimap_.set_owner(castle.hex, castle.team);
+        for (auto d : HexDir()) {
+            minimap_.set_owner(castle.hex.getNeighbor(d), castle.team);
+        }
 
         // Draw a champion in the hex due south of each castle.
         GameObject champion;
@@ -333,6 +354,8 @@ void Anduran::move_action(GameObject &player, const Path &path)
     else {
         battle_action(player, obj);
     }
+
+    stateChanged_ = true;
 }
 
 void Anduran::battle_action(GameObject &player, GameObject &enemy)
