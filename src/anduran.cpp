@@ -203,6 +203,7 @@ void Anduran::load_players()
         for (auto d : HexDir()) {
             minimap_.set_owner(castle.hex.getNeighbor(d), castle.team);
         }
+        minimap_.set_region_owner(rmap_.getRegion(castle.hex), castle.team);
 
         // Draw a champion in the hex due south of each castle.
         GameObject champion;

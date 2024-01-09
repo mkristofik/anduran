@@ -53,14 +53,14 @@ format)
     * snow: 230, 240, 254
 * dotted box to indicate current map position
 * click and drag on minimap moves the main map too
-- mark villages and castles by owner
+* mark villages and castles by owner
 - influence map by region
     - champions, castles, and villages are sources of influence
     - each player flood fill each neighbor region with 1 influence outward from
     each region they control
         - can't spread influence to a region controlled by another player
         - all players get to spread influence at the same time
-- shade controlled regions with the player's color
+* shade controlled regions with the player's color
 
 
 # Event handling

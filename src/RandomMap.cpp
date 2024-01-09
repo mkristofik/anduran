@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2023 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -133,8 +133,6 @@ bool operator==(const Coastline &lhs, const std::pair<int, int> &rhs)
 }
 
 
-const int RandomMap::invalidIndex = -1;
-
 RandomMap::RandomMap(int width)
     : width_(width),
     size_(width_ * width_),
@@ -145,6 +143,7 @@ RandomMap::RandomMap(int width)
     tileOccupied_(size_, 0),
     tileWalkable_(size_, 1),
     borderTiles_(),
+    tileRegionNeighbors_(),
     regionNeighbors_(),
     regionTerrain_(),
     regionTiles_(),
@@ -178,6 +177,7 @@ RandomMap::RandomMap(const char *filename)
     tileOccupied_(),
     tileWalkable_(),
     borderTiles_(),
+    tileRegionNeighbors_(),
     regionNeighbors_(),
     regionTerrain_(),
     regionTiles_(),
@@ -200,6 +200,7 @@ RandomMap::RandomMap(const char *filename)
     jsonGetArray(doc, "region-castle-distance", regionCastleDistance_);
     size_ = tileRegions_.size();
     width_ = std::sqrt(size_);
+    numRegions_ = regionTerrain_.size();
 
     // All map objects live in the aptly-named sub-object below. Each member is
     // an array of tile indexes.
@@ -237,6 +238,11 @@ int RandomMap::size() const
 int RandomMap::width() const
 {
     return width_;
+}
+
+int RandomMap::numRegions() const
+{
+    return numRegions_;
 }
 
 int RandomMap::getRegion(int index) const
@@ -303,6 +309,11 @@ std::vector<Hex> RandomMap::getObjectTiles(ObjectType type)
 const ObjectManager & RandomMap::getObjectConfig() const
 {
     return objectMgr_;
+}
+
+FlatMultimap<int, int>::ValueRange RandomMap::getTileRegionNeighbors(int index)
+{
+    return tileRegionNeighbors_.find(index);
 }
 
 Hex RandomMap::hexFromInt(int index) const
@@ -390,6 +401,11 @@ void RandomMap::buildNeighborGraphs()
     // Multiple steps depend on this list, ensure we're not processing it in tile
     // index order every time.
     randomize(borderTiles_);
+
+    for (auto [tile, nbr] : borderTiles_) {
+        tileRegionNeighbors_.insert(tile, tileRegions_[nbr]);
+    }
+    tileRegionNeighbors_.shrink_to_fit();
 }
 
 void RandomMap::assignTerrain()

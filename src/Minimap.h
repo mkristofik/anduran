@@ -41,6 +41,7 @@ public:
     void handle_lmouse_up();
 
     void set_owner(const Hex &hex, Team team);
+    void set_region_owner(int region, Team team);
 
 private:
     void make_terrain_layer();
@@ -60,7 +61,8 @@ private:
     SdlSurface terrain_;
     SdlSurface objects_;
     SDL_Rect box_;  // relative to the texture
-    boost::container::flat_map<int, Team> tileOwner_;
+    boost::container::flat_map<int, Team> tileOwners_;
+    std::vector<Team> regionOwners_;
     bool isMouseClicked_;
 };
 

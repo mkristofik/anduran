@@ -11,6 +11,7 @@
     See the COPYING.txt file for more details.
 */
 #include "Minimap.h"
+#include "container_utils.h"
 #include "pixel_utils.h"
 
 
@@ -26,7 +27,8 @@ Minimap::Minimap(SdlWindow &win,
     terrain_(),
     objects_(),
     box_{0, 0, 0, 0},
-    tileOwner_(),
+    tileOwners_(),
+    regionOwners_(rmap_->numRegions(), Team::neutral),
     isMouseClicked_(false)
 {
     // The obstacles and other map objects will be blended with the terrain layer
@@ -94,7 +96,13 @@ void Minimap::set_owner(const Hex &hex, Team team)
     int index = rmap_->intFromHex(hex);
     SDL_assert(index >= 0);
 
-    tileOwner_.insert_or_assign(index, team);
+    tileOwners_.insert_or_assign(index, team);
+}
+
+void Minimap::set_region_owner(int region, Team team)
+{
+    SDL_assert(in_bounds(regionOwners_, region));
+    regionOwners_[region] = team;
 }
 
 void Minimap::make_terrain_layer()
@@ -142,7 +150,28 @@ void Minimap::update_objects()
 {
     SdlEditSurface edit(objects_);
 
-    for (auto & [index, team] : tileOwner_) {
+    for (int i = 0; i < rmap_->size(); ++i) {
+        int region = rmap_->getRegion(i);
+        Team owner = regionOwners_[region];
+        if (owner == Team::neutral) {
+            continue;
+        }
+
+        // Shade the region with its owner's color.
+        const auto &color = getTeamColor(owner);
+        Uint8 alpha = 96;
+
+        // Draw a brighter border around the edges of a controlled region.
+        for (auto rNbr : rmap_->getTileRegionNeighbors(i)) {
+            if (owner != regionOwners_[rNbr]) {
+                alpha = SDL_ALPHA_OPAQUE;
+                break;
+            }
+        }
+        edit.set_pixel(i, color.r, color.g, color.b, alpha);
+    }
+
+    for (auto [index, team] : tileOwners_) {
         auto &color = getTeamColor(team, ColorShade::darker25);
         edit.set_pixel(index, color);
     }
