@@ -46,7 +46,7 @@ public:
 private:
     void make_terrain_layer();
     void make_obstacle_layer();
-    void update_objects();
+    void update_influence();
 
     // Draw a dotted line box around the area of the map that's visible in the
     // display window.
@@ -59,7 +59,8 @@ private:
     SDL_Point displayPos_;
     SdlTexture texture_;
     SdlSurface terrain_;
-    SdlSurface objects_;
+    SdlSurface obstacles_;
+    SdlSurface influence_;
     SDL_Rect box_;  // relative to the texture
     boost::container::flat_map<int, Team> tileOwners_;
     std::vector<Team> regionOwners_;

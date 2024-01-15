@@ -66,6 +66,7 @@ public:
     // Return the region(s) adjacent to the given border tile, or an empty range
     // if tile is not on a border with another region.
     FlatMultimap<int, int>::ValueRange getTileRegionNeighbors(int index);
+    FlatMultimap<int, int>::ValueRange getRegionNeighbors(int region);
 
     // Convert between integer and Hex representations of a tile location.
     Hex hexFromInt(int index) const;

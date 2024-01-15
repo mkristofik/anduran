@@ -21,6 +21,7 @@
 
 #include "SDL.h"
 #include <algorithm>
+#include <queue>
 #include <sstream>
 
 using namespace std::string_literals;
@@ -66,15 +67,11 @@ void Anduran::update_frame(Uint32 elapsed_ms)
     // Wait until animations have finished running before updating the minimap.
     if (anims_.empty() && stateChanged_) {
         std::vector<EnumSizedArray<int, Team>> influence(rmap_.numRegions());
-        // TODO: fibonacci influence
-        // +8 player's castle
-        // +5 champion in region
-        // +3 village owned by player
-        // +2 champion in adjacent region
-        // 1 flood fill to adjacent regions if nobody has score >= 2
-        //    - if my score was 0, set it to 1.  otherwise leave it alone.
-        // region owner has highest score with no ties, otherwise neutral
 
+        // Fibonacci influence for things owned by a player:
+        // +5 player's castle
+        // +3 champion in region
+        // +2 village owned by player
         for (const auto &castle : game_.objects_by_type(ObjectType::castle)) {
             const Hex &hex = castle.hex;
             Team team = castle.team;
@@ -82,12 +79,91 @@ void Anduran::update_frame(Uint32 elapsed_ms)
             for (auto d : HexDir()) {
                 minimap_.set_owner(hex.getNeighbor(d), team);
             }
-            minimap_.set_region_owner(rmap_.getRegion(hex), team);
+
+            influence[rmap_.getRegion(hex)][team] += 5;
+        }
+
+        for (const auto &champion : game_.objects_by_type(ObjectType::champion)) {
+            influence[rmap_.getRegion(champion.hex)][champion.team] += 3;
         }
 
         for (const auto &village : game_.objects_by_type(ObjectType::village)) {
             minimap_.set_owner(village.hex, village.team);
-            minimap_.set_region_owner(rmap_.getRegion(village.hex), village.team);
+            influence[rmap_.getRegion(village.hex)][village.team] += 2;
+        }
+
+        // Relaxation step, flood fill outward from regions where we have
+        // influence.  This has the effect of claiming regions that are cut off
+        // from the other players.
+        for (Team team : Team()) {
+            if (team == Team::neutral) {
+                continue;
+            }
+
+            // Start with regions where we already have influence.
+            std::queue<int> bfsQ;
+            std::vector<signed char> visited(ssize(influence), 0);
+            for (int r = 0; r < ssize(influence); ++r) {
+                if (influence[r][team] > 0) {
+                    bfsQ.push(r);
+                }
+            }
+
+            // Project influence to all neighboring regions.
+            while (!bfsQ.empty()) {
+                int region = bfsQ.front();
+                visited[region] = 1;
+                bfsQ.pop();
+                // Doesn't add to any influence already present, just gives us
+                // something nonzero if we can reach it.
+                if (influence[region][team] < 2) {
+                    influence[region][team] = 1;
+                }
+
+                for (int rNbr : rmap_.getRegionNeighbors(region)) {
+                    if (visited[rNbr] == 1) {
+                        continue;
+                    }
+
+                    // If anybody else has at least partial claim to this region,
+                    // consider it disputed and don't project influence.
+                    bool disputed = false;
+                    for (Team other : Team()) {
+                        if (other == team || other == Team::neutral) {
+                            continue;
+                        }
+                        if (influence[rNbr][other] >= 2) {
+                            disputed = true;
+                            break;
+                        }
+                    }
+                    if (!disputed) {
+                        bfsQ.push(rNbr);
+                    }
+                }
+            }
+        }
+
+        for (int r = 0; r < ssize(influence); ++r) {
+            auto &scores = influence[r];
+            SDL_Log("region %d: %d %d %d %d %d", r, scores[Team::blue], scores[Team::red], scores[Team::green], scores[Team::purple], scores[Team::neutral]);
+            int maxScore = 0;
+            Team winner = Team::neutral;
+            for (Team team : Team()) {
+                if (team == Team::neutral) {
+                    continue;
+                }
+                if (scores[team] > maxScore) {
+                    maxScore = scores[team];
+                    winner = team;
+                }
+                else if (scores[team] == maxScore) {
+                    winner = Team::neutral;
+                }
+            }
+            SDL_Log("winner %d", static_cast<int>(winner));
+
+            minimap_.set_region_owner(r, winner);
         }
 
         stateChanged_ = false;
@@ -342,6 +418,7 @@ void Anduran::move_action(GameObject &player, const Path &path)
     // move/battle decision.
     player.hex = destHex;
     game_.update_object(player);
+    SDL_Log("Move action ended in region %d", rmap_.getRegion(destHex));
 
     if (action != ObjectAction::battle) {
         AnimSet moveEndAnim;

@@ -316,6 +316,11 @@ FlatMultimap<int, int>::ValueRange RandomMap::getTileRegionNeighbors(int index)
     return tileRegionNeighbors_.find(index);
 }
 
+FlatMultimap<int, int>::ValueRange RandomMap::getRegionNeighbors(int region)
+{
+    return regionNeighbors_.find(region);
+}
+
 Hex RandomMap::hexFromInt(int index) const
 {
     if (offGrid(index)) {

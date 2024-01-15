@@ -25,7 +25,8 @@ Minimap::Minimap(SdlWindow &win,
     displayPos_{displayRect_.x, displayRect_.y},
     texture_(SdlTexture::make_editable_image(win, displayRect_.w, displayRect_.h)),
     terrain_(),
-    objects_(),
+    obstacles_(),
+    influence_(),
     box_{0, 0, 0, 0},
     tileOwners_(),
     regionOwners_(rmap_->numRegions(), Team::neutral),
@@ -35,8 +36,10 @@ Minimap::Minimap(SdlWindow &win,
     // to compose the final minimap view.
     SdlEditTexture edit(texture_);
     terrain_ = edit.make_surface(rmap_->width(), rmap_->width());
-    objects_ = terrain_.clone();
-    SDL_SetSurfaceBlendMode(objects_.get(), SDL_BLENDMODE_BLEND);
+    obstacles_ = terrain_.clone();
+    SDL_SetSurfaceBlendMode(obstacles_.get(), SDL_BLENDMODE_BLEND);
+    influence_ = terrain_.clone();
+    SDL_SetSurfaceBlendMode(influence_.get(), SDL_BLENDMODE_BLEND);
 
     make_terrain_layer();
     make_obstacle_layer();
@@ -49,14 +52,16 @@ Minimap::Minimap(SdlWindow &win,
 
 void Minimap::draw()
 {
-    update_objects();
+    // TODO: can we only paint when something has changed?
+    update_influence();
     update_map_view();
 
     // Can't render while locked, this needs its own block.
     {
         SdlEditTexture edit(texture_);
         edit.update(terrain_);
-        edit.update(objects_);
+        edit.update(obstacles_);
+        edit.update(influence_);
         draw_map_view(edit);
     }
 
@@ -124,7 +129,7 @@ void Minimap::make_terrain_layer()
 
 void Minimap::make_obstacle_layer()
 {
-    SdlEditSurface edit(objects_);
+    SdlEditSurface edit(obstacles_);
 
     for (int i = 0; i < edit.size(); ++i) {
         if (!rmap_->getObstacle(i)) {
@@ -146,14 +151,15 @@ void Minimap::make_obstacle_layer()
     }
 }
 
-void Minimap::update_objects()
+void Minimap::update_influence()
 {
-    SdlEditSurface edit(objects_);
+    SdlEditSurface edit(influence_);
 
     for (int i = 0; i < rmap_->size(); ++i) {
         int region = rmap_->getRegion(i);
         Team owner = regionOwners_[region];
         if (owner == Team::neutral) {
+            edit.set_pixel(i, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
             continue;
         }
 
