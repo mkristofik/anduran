@@ -54,13 +54,16 @@ format)
 * dotted box to indicate current map position
 * click and drag on minimap moves the main map too
 * mark villages and castles by owner
-- influence map by region
-    - champions, castles, and villages are sources of influence
-    - each player flood fill each neighbor region with 1 influence outward from
+* influence map by region
+    * champions, castles, and villages are sources of influence
+    * each player flood fill each neighbor region with 1 influence outward from
     each region they control
-        - can't spread influence to a region controlled by another player
-        - all players get to spread influence at the same time
+        * can't spread influence to a region controlled by another player
+        * all players get to spread influence at the same time
 * shade controlled regions with the player's color
+- influence mapping as a separate class so an AI player could use it to evaluate
+future game states
+    - with that in mind, create a simplified game state object
 
 
 # Event handling
@@ -127,6 +130,9 @@ destination hex
 * screen flashes white briefly when first loading
 * try to cap the framerate to save CPU
 * SDL_LogSetAllPriority
+- render a full-scale map and scale it down to minimap size
+    - team-colored hexes
+    - pretty edge transitions between player-owned regions
 
 
 # Improving edge transitions
@@ -234,6 +240,9 @@ is next to or in front of a castle
     - regeneration
     - life drain
     - zombify
+- KISS principle: he who gets there first with the most, wins
+    - none of these ideas matter unless we can render them so the player can see
+    their effects
 
 
 # Image management

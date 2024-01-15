@@ -27,6 +27,7 @@
 #include "battle_utils.h"
 #include "container_utils.h"
 #include "hex_utils.h"
+#include "iterable_enum_class.h"
 #include "team_color.h"
 
 #include <string>
@@ -43,7 +44,6 @@ public:
     void handle_mouse_pos(Uint32 elapsed_ms) override;
 
 private:
-
     // Load images that aren't tied to units.
     void load_images();
 
@@ -62,6 +62,15 @@ private:
     void animate(const GameObject &attacker,
                  const GameObject &defender,
                  const BattleEvent &event);
+
+    // Assign influence for objects owned by each player.
+    void assign_influence();
+    // Relaxation step, flood fill outward from regions where each player has
+    // influence.  This has the effect of claiming regions that are cut off from
+    // the other players.
+    void relax_influence();
+    // Return team with highest influence in a given region, or neutral if tied.
+    Team most_influence(int region) const;
 
     WindowConfig config_;
     SdlWindow win_;
@@ -85,6 +94,7 @@ private:
     TeamColoredTextures ellipseImages_;
     TeamColoredTextures flagImages_;
     bool stateChanged_;
+    std::vector<EnumSizedArray<int, Team>> influence_;
 };
 
 #endif
