@@ -65,12 +65,29 @@ void Anduran::update_frame(Uint32 elapsed_ms)
 
     // Wait until animations have finished running before updating the minimap.
     if (anims_.empty() && stateChanged_) {
-        for (auto &hVillage : rmap_.getObjectTiles(ObjectType::village)) {
-            for (auto &obj : game_.objects_in_hex(hVillage)) {
-                // Assume for now the first one is the village itself.
-                minimap_.set_owner(hVillage, obj.team);
-                break;
+        std::vector<EnumSizedArray<int, Team>> influence(rmap_.numRegions());
+        // TODO: fibonacci influence
+        // +8 player's castle
+        // +5 champion in region
+        // +3 village owned by player
+        // +2 champion in adjacent region
+        // 1 flood fill to adjacent regions if nobody has score >= 2
+        //    - if my score was 0, set it to 1.  otherwise leave it alone.
+        // region owner has highest score with no ties, otherwise neutral
+
+        for (const auto &castle : game_.objects_by_type(ObjectType::castle)) {
+            const Hex &hex = castle.hex;
+            Team team = castle.team;
+            minimap_.set_owner(hex, team);
+            for (auto d : HexDir()) {
+                minimap_.set_owner(hex.getNeighbor(d), team);
             }
+            minimap_.set_region_owner(rmap_.getRegion(hex), team);
+        }
+
+        for (const auto &village : game_.objects_by_type(ObjectType::village)) {
+            minimap_.set_owner(village.hex, village.team);
+            minimap_.set_region_owner(rmap_.getRegion(village.hex), village.team);
         }
 
         stateChanged_ = false;
@@ -193,17 +210,12 @@ void Anduran::load_players()
         GameObject castle;
         castle.hex = castles[i];
         // No need for drawable entity, map view builds castle artwork.
-        // TODO: use a flag as the castle entity?
+        // GameState needs a unique entity id to keep track of the castles.
+        // TODO: use a hidden entity as a placeholder
+        castle.entity = 10000 * (i + 1);
         castle.team = static_cast<Team>(i);
         castle.type = ObjectType::castle;
         game_.add_object(castle);
-
-        // TODO: better way to manage who owns each castle.
-        minimap_.set_owner(castle.hex, castle.team);
-        for (auto d : HexDir()) {
-            minimap_.set_owner(castle.hex.getNeighbor(d), castle.team);
-        }
-        minimap_.set_region_owner(rmap_.getRegion(castle.hex), castle.team);
 
         // Draw a champion in the hex due south of each castle.
         GameObject champion;

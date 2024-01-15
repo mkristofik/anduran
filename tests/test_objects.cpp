@@ -43,8 +43,14 @@ BOOST_AUTO_TEST_CASE(add_and_remove)
     BOOST_TEST(obj.type == obj2.type);
 
     auto objsHere = game.objects_in_hex(obj.hex);
-    BOOST_TEST(objsHere.size() == 1);
-    BOOST_TEST(objsHere[0].entity == obj.entity);
+    BOOST_TEST(!objsHere.empty());
+    BOOST_TEST(objsHere.front().entity == obj.entity);
+    // Forward boost iterator range doesn't support size.
+    int count = 0;
+    for ([[maybe_unused]] auto &o : objsHere) {
+        ++count;
+    }
+    BOOST_TEST(count == 1);
 
     // Verify zone of control.
     BOOST_TEST(std::ranges::all_of(obj.hex.getAllNeighbors(),

@@ -19,11 +19,11 @@
 #include "team_color.h"
 
 #include "boost/container/flat_map.hpp"
-#include "boost/container/static_vector.hpp"
 #include "boost/multi_index_container.hpp"
 #include "boost/multi_index/member.hpp"
 #include "boost/multi_index/ordered_index.hpp"
 #include "boost/multi_index/tag.hpp"
+#include "boost/range/iterator_range.hpp"
 
 #include <optional>
 #include <vector>
@@ -39,9 +39,6 @@ struct GameObject
     Team team = Team::neutral;
     ObjectType type = ObjectType::invalid;
 };
-
-// expect to never have more than this many objects per hex
-using ObjVector = boost::container::static_vector<GameObject, 4>;
 
 
 struct GameAction
@@ -63,8 +60,10 @@ public:
     void update_object(const GameObject &obj);
     void remove_object(int id);
 
-    // Expect to use this to support right-click popups.
-    ObjVector objects_in_hex(const Hex &hex) const;
+    // These return a boost::iterator_range (MultiIndex container makes the
+    // actual type awkward to spell).
+    auto objects_in_hex(const Hex &hex) const;
+    auto objects_by_type(ObjectType type) const;
 
     // Armies have a 1-hex zone of control around them.  Return the entity id of
     // the given hex's controller, or -1 if uncontrolled.  No bounds checking is
@@ -108,5 +107,17 @@ private:
     boost::container::flat_map<Hex, int> zoc_;
     const ObjectManager *objConfig_;
 };
+
+inline auto GameState::objects_in_hex(const Hex &hex) const
+{
+    auto range = objects_.get<ByHex>().equal_range(hex);
+    return boost::make_iterator_range(range.first, range.second);
+}
+
+inline auto GameState::objects_by_type(ObjectType type) const
+{
+    auto range = objects_.get<ByType>().equal_range(type);
+    return boost::make_iterator_range(range.first, range.second);
+}
 
 #endif
