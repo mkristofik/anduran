@@ -203,13 +203,14 @@ void Anduran::load_players()
     SDL_assert(ssize(castles) == ssize(championImages_));
     randomize(castles);
 
+    // MapDisplay handles building the castle artwork, but we need something so
+    // each castle has a unique entity id.
+    auto castleImg = images_.make_texture("hex-blank", win_);
+
     for (auto i = 0u; i < size(castles); ++i) {
         GameObject castle;
         castle.hex = castles[i];
-        // No need for drawable entity, map view builds castle artwork.
-        // GameState needs a unique entity id to keep track of the castles.
-        // TODO: use a hidden entity as a placeholder
-        castle.entity = 10000 * (i + 1);
+        castle.entity = rmapView_.addHiddenEntity(castleImg, ZOrder::floor);
         castle.team = static_cast<Team>(i);
         castle.type = ObjectType::castle;
         game_.add_object(castle);

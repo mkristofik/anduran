@@ -317,33 +317,6 @@ void Battle::attack(int targetIndex, DamageType dType)
     }
     ++def.timesAttacked;
 
-    // TODO: retaliation might needlessly complicate things.  Retaliation can make
-    // it appear that certain units get two turns back-to-back.
-    /*
-    if (def.alive() && !def.retaliated) {
-        dmg = def.damage(dType);
-        if (log_) {
-            BattleEvent event;
-            event.action = BattleAction::retaliate;
-            event.attackerType = def.type();
-            event.attackerHp = def.total_hp();
-            event.numAttackers = def.num;
-            event.defenderType = att.type();
-            event.defenderHp = att.total_hp();
-            event.numDefenders = att.num;
-            event.damage = dmg;
-
-            att.take_damage(dmg);
-            event.losses = event.numDefenders - att.num;
-            log_->push_back(event);
-        }
-        else {
-            att.take_damage(dmg);
-        }
-        def.retaliated = true;
-    }
-    */
-
     next_turn();
 }
 

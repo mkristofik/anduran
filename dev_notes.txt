@@ -231,6 +231,7 @@ is next to or in front of a castle
     - spells
     - limited shots for ranged creatures
     - luck, morale
+    - retaliation
 - additional traits
     - steadfast, unlimited retaliation
     - double strike
@@ -243,6 +244,7 @@ is next to or in front of a castle
 - KISS principle: he who gets there first with the most, wins
     - none of these ideas matter unless we can render them so the player can see
     their effects
+    - right now retaliation appears to give certain units two turns in a row
 
 
 # Image management

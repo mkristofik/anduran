@@ -888,7 +888,6 @@ void RandomMap::computeCoastlines()
         iter->terrain.set(regionTerrain_[reg]);
     }
 
-    // TODO: does this actually matter?
     for (auto &coast : coastlines_) {
         // Some tiles can be adjacent to multiple tiles in the neighboring
         // landmass.  Prune this list down to unique tiles.  We don't want to
