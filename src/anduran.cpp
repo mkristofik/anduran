@@ -1,13 +1,13 @@
 /*
-    Copyright (C) 2016-2023 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License version 2
     or at your option any later version.
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY.
- 
+
     See the COPYING.txt file for more details.
 */
 #include "anduran.h"
@@ -17,10 +17,10 @@
 #include "SdlTexture.h"
 #include "anim_utils.h"
 #include "container_utils.h"
-#include "iterable_enum_class.h"
 
 #include "SDL.h"
 #include <algorithm>
+#include <queue>
 #include <sstream>
 
 using namespace std::string_literals;
@@ -28,10 +28,12 @@ using namespace std::string_literals;
 
 Anduran::Anduran()
     : SdlApp(),
-    win_(1280, 720, "Champions of Anduran"),
+    config_("data/window.json"s),
+    win_(config_.width(), config_.height(), "Champions of Anduran"),
     rmap_("test.json"),
     images_("img/"s),
-    rmapView_(win_, rmap_, images_),
+    rmapView_(win_, config_.map_bounds(), rmap_, images_),
+    minimap_(win_, config_.minimap_bounds(), rmap_, rmapView_),
     game_(rmap_.getObjectConfig()),
     playerEntityIds_(),
     curPlayerId_(0),
@@ -46,7 +48,9 @@ Anduran::Anduran()
     units_("data/units.json"s, win_, images_),
     championImages_(),
     ellipseImages_(),
-    flagImages_()
+    flagImages_(),
+    stateChanged_(true),
+    influence_(rmap_.numRegions())
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
@@ -57,18 +61,49 @@ Anduran::Anduran()
 
 void Anduran::update_frame(Uint32 elapsed_ms)
 {
-    if (mouse_in_window()) {
-        rmapView_.handleMousePos(elapsed_ms);
-        handle_mouse_pos();
-    }
     win_.clear();
     anims_.run(elapsed_ms);
+
+    // Wait until animations have finished running before updating the minimap.
+    if (anims_.empty() && stateChanged_) {
+        // Assign owners to objects on the minimap.
+        for (const auto &castle : game_.objects_by_type(ObjectType::castle)) {
+            const Hex &hex = castle.hex;
+            Team team = castle.team;
+            minimap_.set_owner(hex, team);
+            for (auto d : HexDir()) {
+                minimap_.set_owner(hex.getNeighbor(d), team);
+            }
+        }
+
+        for (const auto &village : game_.objects_by_type(ObjectType::village)) {
+            minimap_.set_owner(village.hex, village.team);
+        }
+
+        // Identify the owners of each region and which regions are disputed.
+        assign_influence();
+        relax_influence();
+        for (int r = 0; r < rmap_.numRegions(); ++r) {
+            minimap_.set_region_owner(r, most_influence(r));
+        }
+
+        stateChanged_ = false;
+    }
+
     rmapView_.draw();
+    minimap_.draw();
     win_.update();
+}
+
+void Anduran::handle_lmouse_down()
+{
+    minimap_.handle_lmouse_down();
 }
 
 void Anduran::handle_lmouse_up()
 {
+    minimap_.handle_lmouse_up();
+
     if (!anims_.empty()) {
         return;
     }
@@ -110,8 +145,11 @@ void Anduran::handle_lmouse_up()
     }
 }
 
-void Anduran::handle_mouse_pos()
+void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
 {
+    rmapView_.handleMousePos(elapsed_ms);
+    minimap_.handle_mouse_pos(elapsed_ms);
+
     if (!championSelected_) {
         return;
     }
@@ -169,7 +207,9 @@ void Anduran::load_players()
         GameObject castle;
         castle.hex = castles[i];
         // No need for drawable entity, map view builds castle artwork.
-        // TODO: use a flag as the castle entity?
+        // GameState needs a unique entity id to keep track of the castles.
+        // TODO: use a hidden entity as a placeholder
+        castle.entity = 10000 * (i + 1);
         castle.team = static_cast<Team>(i);
         castle.type = ObjectType::castle;
         game_.add_object(castle);
@@ -229,15 +269,16 @@ void Anduran::load_objects()
 {
     for (auto &obj : rmap_.getObjectConfig()) {
         auto img = images_.make_texture(obj.imgName, win_);
+        // Assume any sprite sheet with the same number of frames as there are
+        // terrains is intended to use a terrain frame.
+        bool hasTerrainFrames = img.cols() == enum_size<Terrain>();
 
         for (auto &hex : rmap_.getObjectTiles(obj.type)) {
             MapEntity entity;
             entity.hex = hex;
             entity.z = ZOrder::object;
 
-            // Assume any sprite sheet with the same number of frames as there
-            // are terrains is intended to use a terrain frame.
-            if (img.cols() == enum_size<Terrain>()) {
+            if (hasTerrainFrames) {
                 entity.setTerrainFrame(rmap_.getTerrain(hex));
             }
 
@@ -323,6 +364,8 @@ void Anduran::move_action(GameObject &player, const Path &path)
     else {
         battle_action(player, obj);
     }
+
+    stateChanged_ = true;
 }
 
 void Anduran::battle_action(GameObject &player, GameObject &enemy)
@@ -532,6 +575,105 @@ void Anduran::animate(const GameObject &attacker,
     anims_.push(animSet);
 }
 
+void Anduran::assign_influence()
+{
+    for (auto &scores : influence_) {
+        scores.fill(0);
+    }
+
+    // Using Fibonacci numbers for now:
+    // +5 player's castle
+    // +3 champion in region
+    // +2 village owned by player
+    for (const auto &castle : game_.objects_by_type(ObjectType::castle)) {
+        influence_[rmap_.getRegion(castle.hex)][castle.team] += 5;
+    }
+
+    for (const auto &champion : game_.objects_by_type(ObjectType::champion)) {
+        influence_[rmap_.getRegion(champion.hex)][champion.team] += 3;
+    }
+
+    for (const auto &village : game_.objects_by_type(ObjectType::village)) {
+        influence_[rmap_.getRegion(village.hex)][village.team] += 2;
+    }
+}
+
+void Anduran::relax_influence()
+{
+    std::queue<int> bfsQ;
+    std::vector<signed char> visited(rmap_.numRegions(), 0);
+
+    for (Team team : Team()) {
+        if (team == Team::neutral) {
+            continue;
+        }
+
+        // Start with regions where we already have influence.
+        for (int r = 0; r < rmap_.numRegions(); ++r) {
+            if (influence_[r][team] > 0) {
+                bfsQ.push(r);
+            }
+        }
+
+        // Project influence to all neighboring regions.
+        std::ranges::fill(visited, 0);
+        while (!bfsQ.empty()) {
+            int region = bfsQ.front();
+            visited[region] = 1;
+            bfsQ.pop();
+
+            // Don't add to any influence already present, just give us
+            // something nonzero if we can reach it.
+            if (influence_[region][team] < 2) {
+                influence_[region][team] = 1;
+            }
+
+            for (int rNbr : rmap_.getRegionNeighbors(region)) {
+                if (visited[rNbr] == 1) {
+                    continue;
+                }
+
+                // If anybody else has at least partial claim to this region,
+                // consider it disputed and don't project influence.
+                bool disputed = false;
+                for (Team other : Team()) {
+                    if (other == team || other == Team::neutral) {
+                        continue;
+                    }
+                    if (influence_[rNbr][other] >= 2) {
+                        disputed = true;
+                        break;
+                    }
+                }
+                if (!disputed) {
+                    bfsQ.push(rNbr);
+                }
+            }
+        }
+    }
+}
+
+Team Anduran::most_influence(int region) const
+{
+    const auto &scores = influence_[region];
+    int maxScore = 0;
+    Team winner = Team::neutral;
+
+    for (Team team : Team()) {
+        if (team == Team::neutral) {
+            continue;
+        }
+        if (scores[team] > maxScore) {
+            maxScore = scores[team];
+            winner = team;
+        }
+        else if (scores[team] == maxScore) {
+            winner = Team::neutral;
+        }
+    }
+
+    return winner;
+}
 
 int main(int, char *[])  // two-argument form required by SDL
 {

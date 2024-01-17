@@ -64,3 +64,23 @@ SDL_Renderer * SdlWindow::renderer() const
 {
     return renderer_.get();
 }
+
+
+SdlWindowClip::SdlWindowClip(const SdlWindow &win, const SDL_Rect &rect)
+    : renderer_(win.renderer()),
+    orig_()
+{
+    // This will be empty if no clipping rectangle was set.
+    SDL_RenderGetClipRect(renderer_, &orig_);
+    SDL_RenderSetClipRect(renderer_, &rect);
+}
+
+SdlWindowClip::~SdlWindowClip()
+{
+    if (orig_.w > 0 && orig_.h > 0) {
+        SDL_RenderSetClipRect(renderer_, &orig_);
+    }
+    else {
+        SDL_RenderSetClipRect(renderer_, nullptr);
+    }
+}

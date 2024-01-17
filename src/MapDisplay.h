@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2023 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -89,7 +89,18 @@ struct MapEntity
 class MapDisplay
 {
 public:
-    MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr);
+    MapDisplay(SdlWindow &win,
+               const SDL_Rect &displayRect,
+               RandomMap &rmap,
+               SdlImageManager &imgMgr);
+
+    // Fraction of the map inside the visible area, range (0.0, 1.0].
+    PartialPixel getDisplayFrac() const;
+
+    // Scroll the map by a fraction of the total range [0.0, 1.0].
+    void setDisplayOffset(double xFrac, double yFrac);
+    PartialPixel getDisplayOffsetFrac() const;
+    bool isScrolling() const;
 
     void draw();
 
@@ -120,6 +131,7 @@ public:
     void showPath(const Path &path, ObjectAction lastStep);
     void clearPath();
 
+    SDL_Point pixelFromHex(const Hex &hex) const;
     SDL_Point pixelDelta(const Hex &hSrc, const Hex &hDest) const;
 
 private:
@@ -154,9 +166,8 @@ private:
     // Return a list of entity ids in the order they should be drawn.
     std::vector<int> getEntityDrawOrder() const;
 
-    // Scroll the map display if the mouse is near the edge. Return true if the
-    // map is moving.
-    bool scrollDisplay(Uint32 elapsed_ms);
+    // Scroll the map display if the mouse is near the edge.
+    void scrollDisplay(Uint32 elapsed_ms);
 
     SdlWindow *window_;
     RandomMap *map_;
@@ -167,6 +178,8 @@ private:
     std::vector<TileDisplay> tiles_;
     SDL_Rect displayArea_;
     PartialPixel displayOffset_;
+    SDL_Point maxOffset_;
+    bool scrolling_;
     std::vector<MapEntity> entities_;
     std::vector<SdlTexture> entityImg_;
     int hexShadowId_;

@@ -14,6 +14,8 @@
 #define SDL_WINDOW_H
 
 #include "SDL.h"
+#include "boost/core/noncopyable.hpp"
+
 #include <memory>
 
 // Wrapper around SDL_Window and SDL_Renderer.
@@ -33,6 +35,19 @@ public:
 private:
     std::shared_ptr<SDL_Window> window_;
     std::shared_ptr<SDL_Renderer> renderer_;
+};
+
+
+// RAII helper for setting/restoring the render clipping rectangle.
+class SdlWindowClip : private boost::noncopyable
+{
+public:
+    SdlWindowClip(const SdlWindow &win, const SDL_Rect &rect);
+    ~SdlWindowClip();
+
+private:
+    SDL_Renderer *renderer_;
+    SDL_Rect orig_;
 };
 
 #endif

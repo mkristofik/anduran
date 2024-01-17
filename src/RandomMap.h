@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2023 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -44,6 +44,7 @@ public:
 
     int size() const;
     int width() const;
+    int numRegions() const;
 
     int getRegion(int index) const;
     int getRegion(const Hex &hex) const;
@@ -62,6 +63,11 @@ public:
     std::vector<Hex> getObjectTiles(ObjectType type);
     const ObjectManager & getObjectConfig() const;
 
+    // Return the region(s) adjacent to the given border tile, or an empty range
+    // if tile is not on a border with another region.
+    FlatMultimap<int, int>::ValueRange getTileRegionNeighbors(int index);
+    FlatMultimap<int, int>::ValueRange getRegionNeighbors(int region);
+
     // Convert between integer and Hex representations of a tile location.
     Hex hexFromInt(int index) const;
     int intFromHex(const Hex &hex) const;
@@ -72,7 +78,7 @@ public:
     bool offGrid(int index) const;
     bool offGrid(const Hex &hex) const;
 
-    static const int invalidIndex;
+    static constexpr int invalidIndex = -1;
 
 private:
     void generateRegions();
@@ -137,6 +143,7 @@ private:
     std::vector<signed char> tileOccupied_;
     std::vector<signed char> tileWalkable_;
     std::vector<std::pair<int, int>> borderTiles_;  // neighbors in different regions
+    FlatMultimap<int, int> tileRegionNeighbors_;  // region(s) tile is adjacent to
     FlatMultimap<int, int> regionNeighbors_;
     std::vector<Terrain> regionTerrain_;
     FlatMultimap<int, int> regionTiles_;  // which tiles belong to each region

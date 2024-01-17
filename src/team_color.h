@@ -31,6 +31,14 @@ using TeamColoredSurfaces = EnumSizedArray<SdlSurface, Team>;
 using TeamColoredTextures = EnumSizedArray<SdlTexture, Team>;
 
 
+// Corresponds to indices in the team color palette.
+enum class ColorShade {
+    darker25 = 10,
+    normal = 14,
+    lighter20 = 15
+};
+
+const SDL_Color & getTeamColor(Team team, ColorShade shade = ColorShade::normal);
 SdlSurface applyTeamColor(const SdlSurface &src, Team team);
 TeamColoredSurfaces applyTeamColors(const SdlSurface &src);
 

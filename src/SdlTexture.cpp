@@ -291,6 +291,27 @@ SdlEditTexture::~SdlEditTexture()
     }
 }
 
+SdlSurface SdlEditTexture::make_surface(int width, int height) const
+{
+    if (!isLocked_) {
+        return {};
+    }
+
+    auto *surf = SDL_CreateRGBSurfaceWithFormat(0,
+                                                width,
+                                                height,
+                                                surf_->format->BitsPerPixel,
+                                                surf_->format->format);
+    if (!surf) {
+        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
+                    "Warning, couldn't create new surface from texture: %s",
+                    SDL_GetError());
+        return {};
+    }
+
+    return surf;
+}
+
 void SdlEditTexture::fill_rect(const SDL_Rect &rect, const SDL_Color &color)
 {
     if (!isLocked_) {
@@ -300,6 +321,19 @@ void SdlEditTexture::fill_rect(const SDL_Rect &rect, const SDL_Color &color)
     auto colorVal = SDL_MapRGBA(surf_->format, color.r, color.g, color.b, color.a);
     if (SDL_FillRect(surf_, &rect, colorVal) < 0) {
         SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO, "Error drawing to texture: %s",
+                    SDL_GetError());
+    }
+}
+
+void SdlEditTexture::update(const SdlSurface &from)
+{
+    if (!isLocked_) {
+        return;
+    }
+
+    if (SDL_BlitScaled(from.get(), nullptr, surf_, nullptr) < 0) {
+        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
+                    "Warning, couldn't update texture: %s",
                     SDL_GetError());
     }
 }

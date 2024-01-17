@@ -48,7 +48,7 @@ SdlSurface SdlSurface::clone() const
         return {};
     }
 
-    SdlLockSurface guard(*this);
+    SdlEditSurface guard(*this);
     memcpy(dest->pixels, orig->pixels,
            orig->w * orig->h * orig->format->BytesPerPixel);
     return dest;
@@ -62,7 +62,6 @@ SDL_Surface * SdlSurface::get() const
 
 SDL_Surface * SdlSurface::operator->() const
 {
-    SDL_assert(*this);
     return get();
 }
 
@@ -72,8 +71,9 @@ SdlSurface::operator bool() const
 }
 
 
-SdlLockSurface::SdlLockSurface(const SdlSurface &img)
+SdlEditSurface::SdlEditSurface(const SdlSurface &img)
     : surf_(img.get()),
+    pixels_(),
     isLocked_(false)
 {
     if (SDL_MUSTLOCK(surf_)) {
@@ -86,11 +86,36 @@ SdlLockSurface::SdlLockSurface(const SdlSurface &img)
                         SDL_GetError());
         }
     }
+
+    SDL_assert(surf_->format->BytesPerPixel == 4);
+    pixels_ = std::span(static_cast<Uint32 *>(surf_->pixels), surf_->w * surf_->h);
 }
 
-SdlLockSurface::~SdlLockSurface()
+SdlEditSurface::~SdlEditSurface()
 {
     if (isLocked_) {
         SDL_UnlockSurface(surf_);
     }
+}
+
+int SdlEditSurface::size() const
+{
+    return ssize(pixels_);
+}
+
+SDL_Color SdlEditSurface::get_pixel(int index) const
+{
+    SDL_Color color;
+    SDL_GetRGBA(pixels_[index], surf_->format, &color.r, &color.g, &color.b, &color.a);
+    return color;
+}
+
+void SdlEditSurface::set_pixel(int index, const SDL_Color &color)
+{
+    set_pixel(index, color.r, color.g, color.b, color.a);
+}
+
+void SdlEditSurface::set_pixel(int index, Uint8 r, Uint8 g, Uint8 b, Uint8 a)
+{
+    pixels_[index] = SDL_MapRGBA(surf_->format, r, g, b, a);
 }

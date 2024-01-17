@@ -1,4 +1,4 @@
-#    Copyright (C) 2016-2023 by Michael Kristofik <kristo605@gmail.com>
+#    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
 #    Part of the Champions of Anduran project.
 # 
 #    This program is free software; you can redistribute it and/or modify
@@ -51,6 +51,7 @@ RMAPGEN_DEPS = $(RMAPGEN_OBJS:%.o=%.d)
 
 MAPVIEW = mapview$(EXE)
 MAPVIEW_SRC = MapDisplay.cpp \
+	Minimap.cpp \
 	ObjectManager.cpp \
 	RandomMap.cpp \
 	RandomRange.cpp \
@@ -59,9 +60,12 @@ MAPVIEW_SRC = MapDisplay.cpp \
 	SdlSurface.cpp \
 	SdlTexture.cpp \
 	SdlWindow.cpp \
+	WindowConfig.cpp \
 	hex_utils.cpp \
 	json_utils.cpp \
-	mapview.cpp
+	mapview.cpp \
+	pixel_utils.cpp \
+	team_color.cpp
 MAPVIEW_OBJS = $(MAPVIEW_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-noise.o
 MAPVIEW_DEPS = $(MAPVIEW_OBJS:%.o=%.d)
 
@@ -69,6 +73,7 @@ ANDURAN = anduran$(EXE)
 ANDURAN_SRC = AnimQueue.cpp \
 	GameState.cpp \
 	MapDisplay.cpp \
+	Minimap.cpp \
 	ObjectManager.cpp \
 	Pathfinder.cpp \
 	RandomMap.cpp \
@@ -80,11 +85,13 @@ ANDURAN_SRC = AnimQueue.cpp \
 	SdlWindow.cpp \
 	UnitData.cpp \
 	UnitManager.cpp \
+	WindowConfig.cpp \
 	anduran.cpp \
 	anim_utils.cpp \
 	battle_utils.cpp \
 	hex_utils.cpp \
 	json_utils.cpp \
+	pixel_utils.cpp \
 	team_color.cpp
 ANDURAN_OBJS = $(ANDURAN_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-noise.o
 ANDURAN_DEPS = $(ANDURAN_OBJS:%.o=%.d)

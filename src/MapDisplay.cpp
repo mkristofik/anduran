@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2023 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -17,6 +17,7 @@
 #include "SdlImageManager.h"
 #include "SdlWindow.h"
 #include "container_utils.h"
+#include "pixel_utils.h"
 
 #include "boost/container/flat_map.hpp"
 #include <algorithm>
@@ -26,7 +27,20 @@ using namespace std::string_literals;
 
 namespace
 {
+    /*
+       hex size (full width of one hex)
+       |  |
+        _     _
+       / \_    tiling height (same as hex size)
+       \_/ \  _
+         \_/
+       |   |
+       tiling width (end of second hex's bottom edge)
+    */
     const int HEX_SIZE = 72;
+    const int HEX_TILING_WIDTH = HEX_SIZE * 3 / 2;
+    const int HEX_TILING_HEIGHT = HEX_SIZE;
+
     const int SCROLL_PX_SEC = 500;  // map scroll rate in pixels per second
     const int BORDER_WIDTH = 20;
 
@@ -65,25 +79,6 @@ namespace
         "castle-walls-dirt"s,
         "castle-walls-snow"s
     };
-    
-    SDL_Point pixelFromHex(const Hex &hex)
-    {
-        const int px = hex.x * HEX_SIZE * 0.75;
-        const int py = (hex.y + 0.5 * abs(hex.x % 2)) * HEX_SIZE;
-        return {px, py};
-    }
-
-    [[maybe_unused]] SDL_Point pixelCenter(const Hex &hex)
-    {
-        return pixelFromHex(hex) + SDL_Point{HEX_SIZE / 2, HEX_SIZE / 2};
-    }
-
-    SDL_Point getMousePos()
-    {
-        SDL_Point mouse;
-        SDL_GetMouseState(&mouse.x, &mouse.y);
-        return mouse;
-    }
 }
 
 
@@ -130,7 +125,10 @@ void MapEntity::setTerrainFrame(Terrain terrain)
 }
 
 
-MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
+MapDisplay::MapDisplay(SdlWindow &win,
+                       const SDL_Rect &displayRect,
+                       RandomMap &rmap,
+                       SdlImageManager &imgMgr)
     : window_(&win),
     map_(&rmap),
     images_(&imgMgr),
@@ -138,8 +136,10 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
     obstacleImg_(),
     edgeImg_(),
     tiles_(map_->size()),
-    displayArea_(window_->getBounds()),
+    displayArea_(displayRect),
     displayOffset_(),
+    maxOffset_(),
+    scrolling_(false),
     entities_(),
     entityImg_(),
     hexShadowId_(-1),
@@ -147,6 +147,12 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
     pathImg_(),
     pathIds_()
 {
+    // Set the scroll limit such that the lower right hex is fully visible inside
+    // the window.
+    auto lowerRight = pixelFromHex(Hex{map_->width() - 1, map_->width() - 1});
+    maxOffset_.x = lowerRight.x - displayArea_.w - displayArea_.x + HEX_SIZE;
+    maxOffset_.y = lowerRight.y - displayArea_.h - displayArea_.y + HEX_SIZE;
+
     loadTerrainImages();
 
     // Assume all tile and obstacle images have the same number of frames.
@@ -180,8 +186,37 @@ MapDisplay::MapDisplay(SdlWindow &win, RandomMap &rmap, SdlImageManager &imgMgr)
     pathImg_[ObjectAction::pickup] = images_->make_texture("visit-object", *window_);
 }
 
+PartialPixel MapDisplay::getDisplayFrac() const
+{
+    auto totalWidth = maxOffset_.x + displayArea_.x + displayArea_.w;
+    auto totalHeight = maxOffset_.y + displayArea_.y + displayArea_.h;
+
+    return {static_cast<double>(displayArea_.w) / totalWidth,
+        static_cast<double>(displayArea_.h) / totalHeight};
+}
+
+void MapDisplay::setDisplayOffset(double xFrac, double yFrac)
+{
+    SDL_assert(xFrac >= 0.0 && xFrac <= 1.0 && yFrac >= 0.0 && yFrac <= 1.0);
+
+    displayOffset_.x = xFrac * maxOffset_.x;
+    displayOffset_.y = yFrac * maxOffset_.y;
+}
+
+PartialPixel MapDisplay::getDisplayOffsetFrac() const
+{
+    return {static_cast<double>(displayOffset_.x) / maxOffset_.x,
+        static_cast<double>(displayOffset_.y) / maxOffset_.y};
+}
+
+bool MapDisplay::isScrolling() const
+{
+    return scrolling_;
+}
+
 void MapDisplay::draw()
 {
+    SdlWindowClip guard(*window_, displayArea_);
     setTileVisibility();
 
     // Draw terrain tiles.
@@ -312,12 +347,12 @@ void MapDisplay::hideEntity(int id)
 
 void MapDisplay::handleMousePos(Uint32 elapsed_ms)
 {
-    const auto scrolling = scrollDisplay(elapsed_ms);
+    scrollDisplay(elapsed_ms);
 
     // Move the hex shadow to the hex under the mouse.
     auto &shadow = entities_[hexShadowId_];
     const auto mouseHex = hexFromMousePos();
-    if (scrolling || map_->offGrid(mouseHex)) {
+    if (scrolling_ || map_->offGrid(mouseHex)) {
         shadow.visible = false;
     }
     else {
@@ -329,24 +364,21 @@ void MapDisplay::handleMousePos(Uint32 elapsed_ms)
 // source: Battle for Wesnoth, display::pixel_position_to_hex()
 Hex MapDisplay::hexFromMousePos() const
 {
-    // tilingWidth
-    // |   |
-    //  _     _
-    // / \_    tilingHeight
-    // \_/ \  _
-    //   \_/
-    const int tilingWidth = HEX_SIZE * 3 / 2;
-    const int tilingHeight = HEX_SIZE;
+    if (!mouse_in_rect(displayArea_)) {
+        return Hex::invalid();
+    }
 
-    const auto adjMouse = static_cast<SDL_Point>(getMousePos() + displayOffset_);
+    auto adjMouse = static_cast<SDL_Point>(get_mouse_pos() + displayOffset_);
+    adjMouse.x -= displayArea_.x;
+    adjMouse.y -= displayArea_.y;
 
     // I'm not going to pretend to know why the rest of this works.
-    int hx = adjMouse.x / tilingWidth * 2;
-    const int xMod = adjMouse.x % tilingWidth;
-    int hy = adjMouse.y / tilingHeight;
-    const int yMod = adjMouse.y % tilingHeight;
+    int hx = adjMouse.x / HEX_TILING_WIDTH * 2;
+    const int xMod = adjMouse.x % HEX_TILING_WIDTH;
+    int hy = adjMouse.y / HEX_TILING_HEIGHT;
+    const int yMod = adjMouse.y % HEX_TILING_HEIGHT;
 
-    if (yMod < tilingHeight / 2) {
+    if (yMod < HEX_TILING_HEIGHT / 2) {
         if ((xMod * 2 + yMod) < (HEX_SIZE / 2)) {
             --hx;
             --hy;
@@ -433,6 +465,13 @@ void MapDisplay::clearPath()
     }
 }
 
+SDL_Point MapDisplay::pixelFromHex(const Hex &hex) const
+{
+    const int px = hex.x * HEX_SIZE * 0.75;
+    const int py = (hex.y + 0.5 * abs(hex.x % 2)) * HEX_SIZE;
+    return {px + displayArea_.x, py + displayArea_.y};
+}
+
 SDL_Point MapDisplay::pixelDelta(const Hex &hSrc, const Hex &hDest) const
 {
     return pixelFromHex(hDest) - pixelFromHex(hSrc);
@@ -443,8 +482,8 @@ void MapDisplay::computeTileEdges()
     // Define how the terrain types overlap.
     EnumSizedArray<int, Terrain> priority;
     priority[Terrain::water] = 0;
-    priority[Terrain::dirt] = 1;
-    priority[Terrain::swamp] = 2;
+    priority[Terrain::swamp] = 1;
+    priority[Terrain::dirt] = 2;
     priority[Terrain::grass] = 3;
     priority[Terrain::desert] = 4;
     priority[Terrain::snow] = 5;
@@ -816,47 +855,54 @@ std::vector<int> MapDisplay::getEntityDrawOrder() const
     return order;
 }
 
-bool MapDisplay::scrollDisplay(Uint32 elapsed_ms)
+void MapDisplay::scrollDisplay(Uint32 elapsed_ms)
 {
-    // Is the mouse near the boundary?
-    static const SDL_Rect insideBoundary = {displayArea_.x + BORDER_WIDTH,
-                                            displayArea_.y + BORDER_WIDTH,
-                                            displayArea_.w - BORDER_WIDTH * 2,
-                                            displayArea_.h - BORDER_WIDTH * 2};
-    const auto mouse = getMousePos();
-    if (SDL_PointInRect(&mouse, &insideBoundary) == SDL_TRUE) {
-        return false;
-    }
+    static const SDL_Rect leftBoundary = {
+        displayArea_.x,
+        displayArea_.y,
+        BORDER_WIDTH,
+        displayArea_.h
+    };
+    static const SDL_Rect rightBoundary = {
+        displayArea_.x + displayArea_.w - BORDER_WIDTH,
+        displayArea_.y,
+        BORDER_WIDTH,
+        displayArea_.h
+    };
+    static const SDL_Rect topBoundary = {
+        displayArea_.x,
+        displayArea_.y,
+        displayArea_.w,
+        BORDER_WIDTH
+    };
+    static const SDL_Rect bottomBoundary = {
+        displayArea_.x,
+        displayArea_.y + displayArea_.h - BORDER_WIDTH,
+        displayArea_.w,
+        BORDER_WIDTH,
+    };
 
+    // Using doubles here because this might scroll by less than one pixel if the
+    // computer is fast enough.
     auto scrollX = 0.0;
     auto scrollY = 0.0;
     const auto scrollDist = SCROLL_PX_SEC * elapsed_ms / 1000.0;
 
-    if (mouse.x - displayArea_.x < BORDER_WIDTH) {
+    if (mouse_in_rect(leftBoundary)) {
         scrollX = -scrollDist;
     }
-    else if (displayArea_.x + displayArea_.w - mouse.x < BORDER_WIDTH) {
+    else if (mouse_in_rect(rightBoundary)) {
         scrollX = scrollDist;
     }
-    if (mouse.y - displayArea_.y < BORDER_WIDTH) {
+    if (mouse_in_rect(topBoundary)) {
         scrollY = -scrollDist;
     }
-    else if (displayArea_.y + displayArea_.h - mouse.y < BORDER_WIDTH) {
+    else if (mouse_in_rect(bottomBoundary)) {
         scrollY = scrollDist;
     }
 
-    // Stop scrolling when the lower right hex is just inside the window.
-    static const auto lowerRight =
-        pixelFromHex(Hex{map_->width() - 1, map_->width() - 1});
-    static const auto pMaxX = lowerRight.x - displayArea_.w + HEX_SIZE;
-    static const auto pMaxY = lowerRight.y - displayArea_.h + HEX_SIZE;
-
-    // Using doubles here because this might scroll by less than one pixel if the
-    // computer is fast enough.
-    const auto newX = std::clamp<double>(displayOffset_.x + scrollX, 0, pMaxX);
-    const auto newY = std::clamp<double>(displayOffset_.y + scrollY, 0, pMaxY);
-    const bool scrolling = (newX != displayOffset_.x || newY != displayOffset_.y);
-
+    const auto newX = std::clamp<double>(displayOffset_.x + scrollX, 0, maxOffset_.x);
+    const auto newY = std::clamp<double>(displayOffset_.y + scrollY, 0, maxOffset_.y);
+    scrolling_ = (newX != displayOffset_.x || newY != displayOffset_.y);
     displayOffset_ = {newX, newY};
-    return scrolling;
 }

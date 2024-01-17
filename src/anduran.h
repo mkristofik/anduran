@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2022-2023 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2022-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -16,15 +16,18 @@
 #include "AnimQueue.h"
 #include "GameState.h"
 #include "MapDisplay.h"
+#include "Minimap.h"
 #include "Pathfinder.h"
 #include "RandomMap.h"
 #include "SdlApp.h"
 #include "SdlImageManager.h"
 #include "SdlWindow.h"
 #include "UnitManager.h"
+#include "WindowConfig.h"
 #include "battle_utils.h"
 #include "container_utils.h"
 #include "hex_utils.h"
+#include "iterable_enum_class.h"
 #include "team_color.h"
 
 #include <string>
@@ -36,11 +39,11 @@ public:
     Anduran();
 
     void update_frame(Uint32 elapsed_ms) override;
+    void handle_lmouse_down() override;
     void handle_lmouse_up() override;
+    void handle_mouse_pos(Uint32 elapsed_ms) override;
 
 private:
-    void handle_mouse_pos();
-
     // Load images that aren't tied to units.
     void load_images();
 
@@ -60,10 +63,21 @@ private:
                  const GameObject &defender,
                  const BattleEvent &event);
 
+    // Assign influence for objects owned by each player.
+    void assign_influence();
+    // Relaxation step, flood fill outward from regions where each player has
+    // influence.  This has the effect of claiming regions that are cut off from
+    // the other players.
+    void relax_influence();
+    // Return team with highest influence in a given region, or neutral if tied.
+    Team most_influence(int region) const;
+
+    WindowConfig config_;
     SdlWindow win_;
     RandomMap rmap_;
     SdlImageManager images_;
     MapDisplay rmapView_;
+    Minimap minimap_;
     GameState game_;
     std::vector<int> playerEntityIds_;
     int curPlayerId_;
@@ -79,6 +93,8 @@ private:
     std::vector<SdlTexture> championImages_;
     TeamColoredTextures ellipseImages_;
     TeamColoredTextures flagImages_;
+    bool stateChanged_;
+    std::vector<EnumSizedArray<int, Team>> influence_;
 };
 
 #endif

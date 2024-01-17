@@ -1,13 +1,13 @@
 /*
-    Copyright (C) 2016-2018 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License version 2
     or at your option any later version.
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY.
- 
+
     See the COPYING.txt file for more details.
 */
 #include "SdlApp.h"
@@ -59,11 +59,6 @@ int SdlApp::run()
     return EXIT_SUCCESS;
 }
 
-bool SdlApp::mouse_in_window() const
-{
-    return mouseInWindow_;
-}
-
 void SdlApp::do_game_loop()
 {
     while (true) {
@@ -73,6 +68,9 @@ void SdlApp::do_game_loop()
 
         if (!poll_events()) {
             return;
+        }
+        if (mouseInWindow_) {
+            handle_mouse_pos(elapsed_ms);
         }
         update_frame(elapsed_ms);
 
@@ -91,6 +89,12 @@ bool SdlApp::poll_events()
         switch (event.type) {
             case SDL_QUIT:
                 return false;
+
+            case SDL_MOUSEBUTTONDOWN:
+                if (event.button.button == SDL_BUTTON_LEFT) {
+                    handle_lmouse_down();
+                }
+                break;
 
             case SDL_MOUSEBUTTONUP:
                 if (event.button.button == SDL_BUTTON_LEFT) {

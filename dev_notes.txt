@@ -29,6 +29,63 @@
     * SDL_CreateTexture, SDL_GetWindowPixelFormat, SDL_TEXTUREACCESS_STREAMING
     * SDL_AllocFormat, SDL_FreeFormat
     * SDL_LockTexture, SDL_UnlockTexture
+* borders
+- info on currently selected champion
+* data driven config of window elements (main map, minimap, etc.)
+
+
+# Minimap
+---------
+* SdlTexture::make_editable_image(win, 144, 144)
+    * SdlEditTexture will lock it, add accessors for the BitsPerPixel and format
+    of underlying surface
+* SDL_CreateRGBSurfaceWithFormat(0, <map-width>, <map-width>, BitsPerPixel,
+format)
+    * need SdlLockSurface before we can edit the pixels
+    * team_color.cpp, applyColors shows how to set each pixel
+    * may need to refactor this to pixel_utils
+* color each pixel by terrain type
+    * water RGB: 10, 96, 154
+    * desert: 224, 204, 149
+    * swamp: 65, 67, 48
+    * grass: 69, 128, 24
+    * dirt: 136, 110, 66
+    * snow: 230, 240, 254
+* dotted box to indicate current map position
+* click and drag on minimap moves the main map too
+* mark villages and castles by owner
+* influence map by region
+    * champions, castles, and villages are sources of influence
+    * each player flood fill each neighbor region with 1 influence outward from
+    each region they control
+        * can't spread influence to a region controlled by another player
+        * all players get to spread influence at the same time
+* shade controlled regions with the player's color
+- influence mapping as a separate class so an AI player could use it to evaluate
+future game states
+    - with that in mind, create a simplified game state object
+
+
+# Event handling
+----------------
+- base class with virtual functions for mouse events
+    - each widget that implements any events inherits from it
+- register each widget with an event manager in SdlApp
+    - Anduran wants to register itself so it can do game-specific logic
+- instead of SdlApp dispatching events to all the widgets, the event manager takes
+care of it
+- every widget gets a chance to process every event
+    - it's up to them to reject events outside their display region
+- if there's a generic window layout manager, maybe it passes along events to each
+widget?
+- is this all overkill?
+    - there are only two apps, each with different behavior
+    - we can continue to name stuff the same just in case
+- ideas:
+    - MapViewApp shows details (debug info?) on the selected hex
+    - MapDisplay handles right-click to pop up description of an object
+    - MapDisplay::hexFromMousePos() has to return invalid if mouse is outside the
+    display area
 
 
 # Pathfinding
@@ -73,6 +130,9 @@ destination hex
 * screen flashes white briefly when first loading
 * try to cap the framerate to save CPU
 * SDL_LogSetAllPriority
+- render a full-scale map and scale it down to minimap size
+    - team-colored hexes
+    - pretty edge transitions between player-owned regions
 
 
 # Improving edge transitions
@@ -180,6 +240,9 @@ is next to or in front of a castle
     - regeneration
     - life drain
     - zombify
+- KISS principle: he who gets there first with the most, wins
+    - none of these ideas matter unless we can render them so the player can see
+    their effects
 
 
 # Image management

@@ -1,13 +1,13 @@
 /*
-    Copyright (C) 2019-2023 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License version 2
     or at your option any later version.
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY.
- 
+
     See the COPYING.txt file for more details.
 */
 #include "GameState.h"
@@ -60,15 +60,6 @@ void GameState::remove_object(int id)
     update_zoc();
 }
 
-ObjVector GameState::objects_in_hex(const Hex &hex) const
-{
-    auto range = objects_.get<ByHex>().equal_range(hex);
-    assert(std::distance(range.first, range.second) <=
-           static_cast<int>(ObjVector::static_capacity));
-
-    return ObjVector(range.first, range.second);
-}
-
 // This could be private or inlined, but it makes a good unit test.
 int GameState::hex_controller(const Hex &hex) const
 {
@@ -87,14 +78,13 @@ GameAction GameState::hex_action(const GameObject &player, const Hex &hex) const
         return {ObjectAction::battle, get_object(zoc)};
     }
     else {
-        auto range = objects_.get<ByHex>().equal_range(hex);
-        for (auto objIter = range.first; objIter != range.second; ++objIter) {
-            auto action = objConfig_->get_action(objIter->type);
-            if (action == ObjectAction::visit && objIter->team != player.team) {
-                return {ObjectAction::visit, *objIter};
+        for (auto &obj : objects_in_hex(hex)) {
+            auto action = objConfig_->get_action(obj.type);
+            if (action == ObjectAction::visit && obj.team != player.team) {
+                return {ObjectAction::visit, obj};
             }
             else if (action != ObjectAction::none && action != ObjectAction::visit) {
-                return {action, *objIter};
+                return {action, obj};
             }
         }
     }
@@ -126,25 +116,23 @@ void GameState::update_zoc()
 {
     zoc_.clear();
 
-    auto range = objects_.get<ByType>().equal_range(ObjectType::army);
-    for (auto i = range.first; i != range.second; ++i) {
-        if (i->hex == Hex::invalid()) {
+    for (auto &army : objects_by_type(ObjectType::army)) {
+        if (army.hex == Hex::invalid()) {
             continue;
         }
 
-        zoc_.insert_or_assign(i->hex, i->entity);
-        for (auto &hex : i->hex.getAllNeighbors()) {
+        zoc_.insert_or_assign(army.hex, army.entity);
+        for (auto &hex : army.hex.getAllNeighbors()) {
             // Just in case two armies are next to each other, ensure we don't
             // overwrite a ZoC that already exists.
-            zoc_.insert({hex, i->entity});
+            zoc_.insert({hex, army.entity});
         }
     }
 
     // Champions control their hex only.
-    range = objects_.get<ByType>().equal_range(ObjectType::champion);
-    for (auto i = range.first; i != range.second; ++i) {
-        if (i->hex != Hex::invalid()) {
-            zoc_.insert_or_assign(i->hex, i->entity);
+    for (auto &champion : objects_by_type(ObjectType::champion)) {
+        if (champion.hex != Hex::invalid()) {
+            zoc_.insert_or_assign(champion.hex, champion.entity);
         }
     }
 }
