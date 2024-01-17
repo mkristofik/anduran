@@ -30,7 +30,8 @@ Minimap::Minimap(SdlWindow &win,
     box_{0, 0, 0, 0},
     tileOwners_(),
     regionOwners_(rmap_->numRegions(), Team::neutral),
-    isMouseClicked_(false)
+    isMouseClicked_(false),
+    isDirty_(true)
 {
     // The obstacles and other map objects will be blended with the terrain layer
     // to compose the final minimap view.
@@ -52,20 +53,22 @@ Minimap::Minimap(SdlWindow &win,
 
 void Minimap::draw()
 {
-    // TODO: can we only paint when something has changed?
-    update_influence();
-    update_map_view();
+    if (rmapView_->isScrolling() || isDirty_) {
+        update_influence();
+        update_map_view();
 
-    // Can't render while locked, this needs its own block.
-    {
-        SdlEditTexture edit(texture_);
-        edit.update(terrain_);
-        edit.update(obstacles_);
-        edit.update(influence_);
-        draw_map_view(edit);
+        // Can't render while locked, this needs its own block.
+        {
+            SdlEditTexture edit(texture_);
+            edit.update(terrain_);
+            edit.update(obstacles_);
+            edit.update(influence_);
+            draw_map_view(edit);
+        }
     }
 
     texture_.draw(displayPos_);
+    isDirty_ = false;
 }
 
 void Minimap::handle_mouse_pos(Uint32)
@@ -82,6 +85,7 @@ void Minimap::handle_mouse_pos(Uint32)
     auto yFrac = static_cast<double>(relPos.y) / (displayRect_.h - box_.h);
     rmapView_->setDisplayOffset(std::clamp(xFrac, 0.0, 1.0),
                                 std::clamp(yFrac, 0.0, 1.0));
+    isDirty_ = true;
 }
 
 void Minimap::handle_lmouse_down()
@@ -102,12 +106,14 @@ void Minimap::set_owner(const Hex &hex, Team team)
     SDL_assert(index >= 0);
 
     tileOwners_.insert_or_assign(index, team);
+    isDirty_ = true;
 }
 
 void Minimap::set_region_owner(int region, Team team)
 {
     SDL_assert(in_bounds(regionOwners_, region));
     regionOwners_[region] = team;
+    isDirty_ = true;
 }
 
 void Minimap::make_terrain_layer()

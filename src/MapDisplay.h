@@ -100,6 +100,7 @@ public:
     // Scroll the map by a fraction of the total range [0.0, 1.0].
     void setDisplayOffset(double xFrac, double yFrac);
     PartialPixel getDisplayOffsetFrac() const;
+    bool isScrolling() const;
 
     void draw();
 
@@ -165,9 +166,8 @@ private:
     // Return a list of entity ids in the order they should be drawn.
     std::vector<int> getEntityDrawOrder() const;
 
-    // Scroll the map display if the mouse is near the edge. Return true if the
-    // map is moving.
-    bool scrollDisplay(Uint32 elapsed_ms);
+    // Scroll the map display if the mouse is near the edge.
+    void scrollDisplay(Uint32 elapsed_ms);
 
     SdlWindow *window_;
     RandomMap *map_;
@@ -179,6 +179,7 @@ private:
     SDL_Rect displayArea_;
     PartialPixel displayOffset_;
     SDL_Point maxOffset_;
+    bool scrolling_;
     std::vector<MapEntity> entities_;
     std::vector<SdlTexture> entityImg_;
     int hexShadowId_;

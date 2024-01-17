@@ -139,6 +139,7 @@ MapDisplay::MapDisplay(SdlWindow &win,
     displayArea_(displayRect),
     displayOffset_(),
     maxOffset_(),
+    scrolling_(false),
     entities_(),
     entityImg_(),
     hexShadowId_(-1),
@@ -206,6 +207,11 @@ PartialPixel MapDisplay::getDisplayOffsetFrac() const
 {
     return {static_cast<double>(displayOffset_.x) / maxOffset_.x,
         static_cast<double>(displayOffset_.y) / maxOffset_.y};
+}
+
+bool MapDisplay::isScrolling() const
+{
+    return scrolling_;
 }
 
 void MapDisplay::draw()
@@ -341,12 +347,12 @@ void MapDisplay::hideEntity(int id)
 
 void MapDisplay::handleMousePos(Uint32 elapsed_ms)
 {
-    const auto scrolling = scrollDisplay(elapsed_ms);
+    scrollDisplay(elapsed_ms);
 
     // Move the hex shadow to the hex under the mouse.
     auto &shadow = entities_[hexShadowId_];
     const auto mouseHex = hexFromMousePos();
-    if (scrolling || map_->offGrid(mouseHex)) {
+    if (scrolling_ || map_->offGrid(mouseHex)) {
         shadow.visible = false;
     }
     else {
@@ -849,7 +855,7 @@ std::vector<int> MapDisplay::getEntityDrawOrder() const
     return order;
 }
 
-bool MapDisplay::scrollDisplay(Uint32 elapsed_ms)
+void MapDisplay::scrollDisplay(Uint32 elapsed_ms)
 {
     static const SDL_Rect leftBoundary = {
         displayArea_.x,
@@ -897,8 +903,6 @@ bool MapDisplay::scrollDisplay(Uint32 elapsed_ms)
 
     const auto newX = std::clamp<double>(displayOffset_.x + scrollX, 0, maxOffset_.x);
     const auto newY = std::clamp<double>(displayOffset_.y + scrollY, 0, maxOffset_.y);
-    const bool scrolling = (newX != displayOffset_.x || newY != displayOffset_.y);
-
+    scrolling_ = (newX != displayOffset_.x || newY != displayOffset_.y);
     displayOffset_ = {newX, newY};
-    return scrolling;
 }

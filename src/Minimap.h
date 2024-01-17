@@ -65,6 +65,7 @@ private:
     boost::container::flat_map<int, Team> tileOwners_;
     std::vector<Team> regionOwners_;
     bool isMouseClicked_;
+    bool isDirty_;
 };
 
 #endif
