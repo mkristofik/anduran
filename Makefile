@@ -21,6 +21,7 @@ endif
 
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror -O3
+# TODO: newer gcc than 13.2 needed for C++23 support
 CXXFLAGS = -g -Wall -Wextra -Werror -std=c++20
 
 BUILD_DIR = build

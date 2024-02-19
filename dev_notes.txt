@@ -84,7 +84,7 @@ widget?
 - ideas:
     - MapViewApp shows details (debug info?) on the selected hex
     - MapDisplay handles right-click to pop up description of an object
-    - MapDisplay::hexFromMousePos() has to return invalid if mouse is outside the
+    * MapDisplay::hexFromMousePos() has to return invalid if mouse is outside the
     display area
 
 
@@ -98,6 +98,7 @@ destination hex
 * region boundary stops movement
 * highlight current path
 - visitable objects (shipwrecks) are walkable regardless of terrain
+    - do we want that?  you'd have to spend a whole day's movement just to go one hex
 
 
 # Boats

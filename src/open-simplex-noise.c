@@ -1,31 +1,4 @@
 /*
-    This is free and unencumbered software released into the public domain.
-
-    Anyone is free to copy, modify, publish, use, compile, sell, or
-    distribute this software, either in source code form or as a compiled
-    binary, for any purpose, commercial or non-commercial, and by any
-    means.
-
-    In jurisdictions that recognize copyright laws, the author or authors
-    of this software dedicate any and all copyright interest in the
-    software to the public domain. We make this dedication for the benefit
-    of the public at large and to the detriment of our heirs and
-    successors. We intend this dedication to be an overt act of
-    relinquishment in perpetuity of all present and future rights to this
-    software under copyright law.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-    EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-    MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-    IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
-    OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
-    ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
-    OTHER DEALINGS IN THE SOFTWARE.
-
-    For more information, please refer to <http://unlicense.org>
-*/
-
-/*
  * OpenSimplex (Simplectic) Noise in C.
  * Ported by Stephen M. Cameron from Kurt Spencer's java implementation
  * 
@@ -121,27 +94,27 @@ static const signed char gradients4D[] = {
 	-3, -1, -1, -1,     -1, -3, -1, -1,     -1, -1, -3, -1,     -1, -1, -1, -3,
 };
 
-static double extrapolate2(struct osn_context *ctx, int xsb, int ysb, double dx, double dy)
+static double extrapolate2(const struct osn_context *ctx, int xsb, int ysb, double dx, double dy)
 {
-	int16_t *perm = ctx->perm;	
+	const int16_t *perm = ctx->perm;
 	int index = perm[(perm[xsb & 0xFF] + ysb) & 0xFF] & 0x0E;
 	return gradients2D[index] * dx
 		+ gradients2D[index + 1] * dy;
 }
 	
-static double extrapolate3(struct osn_context *ctx, int xsb, int ysb, int zsb, double dx, double dy, double dz)
+static double extrapolate3(const struct osn_context *ctx, int xsb, int ysb, int zsb, double dx, double dy, double dz)
 {
-	int16_t *perm = ctx->perm;	
-	int16_t *permGradIndex3D = ctx->permGradIndex3D;
+	const int16_t *perm = ctx->perm;
+	const int16_t *permGradIndex3D = ctx->permGradIndex3D;
 	int index = permGradIndex3D[(perm[(perm[xsb & 0xFF] + ysb) & 0xFF] + zsb) & 0xFF];
 	return gradients3D[index] * dx
 		+ gradients3D[index + 1] * dy
 		+ gradients3D[index + 2] * dz;
 }
 	
-static double extrapolate4(struct osn_context *ctx, int xsb, int ysb, int zsb, int wsb, double dx, double dy, double dz, double dw)
+static double extrapolate4(const struct osn_context *ctx, int xsb, int ysb, int zsb, int wsb, double dx, double dy, double dz, double dw)
 {
-	int16_t *perm = ctx->perm;
+	const int16_t *perm = ctx->perm;
 	int index = perm[(perm[(perm[(perm[xsb & 0xFF] + ysb) & 0xFF] + zsb) & 0xFF] + wsb) & 0xFF] & 0xFC;
 	return gradients4D[index] * dx
 		+ gradients4D[index + 1] * dy
@@ -216,14 +189,15 @@ int open_simplex_noise(int64_t seed, struct osn_context **ctx)
 	perm = (*ctx)->perm;
 	permGradIndex3D = (*ctx)->permGradIndex3D;
 
+	uint64_t seedU = seed;
 	for (i = 0; i < 256; i++)
 		source[i] = (int16_t) i;
-	seed = seed * 6364136223846793005LL + 1442695040888963407LL;
-	seed = seed * 6364136223846793005LL + 1442695040888963407LL;
-	seed = seed * 6364136223846793005LL + 1442695040888963407LL;
+	seedU = seedU * 6364136223846793005ULL + 1442695040888963407ULL;
+	seedU = seedU * 6364136223846793005ULL + 1442695040888963407ULL;
+	seedU = seedU * 6364136223846793005ULL + 1442695040888963407ULL;
 	for (i = 255; i >= 0; i--) {
-		seed = seed * 6364136223846793005LL + 1442695040888963407LL;
-		r = (int)((seed + 31) % (i + 1));
+		seedU = seedU * 6364136223846793005ULL + 1442695040888963407ULL;
+		r = (int)((seedU + 31) % (i + 1));
 		if (r < 0)
 			r += (i + 1);
 		perm[i] = source[r];
@@ -249,7 +223,7 @@ void open_simplex_noise_free(struct osn_context *ctx)
 }
 	
 /* 2D OpenSimplex (Simplectic) Noise. */
-double open_simplex_noise2(struct osn_context *ctx, double x, double y) 
+double open_simplex_noise2(const struct osn_context *ctx, double x, double y)
 {
 	
 	/* Place input coordinates onto grid. */
@@ -377,7 +351,7 @@ double open_simplex_noise2(struct osn_context *ctx, double x, double y)
 /*
  * 3D OpenSimplex (Simplectic) Noise
  */
-double open_simplex_noise3(struct osn_context *ctx, double x, double y, double z)
+double open_simplex_noise3(const struct osn_context *ctx, double x, double y, double z)
 {
 
 	/* Place input coordinates on simplectic honeycomb. */
@@ -723,22 +697,22 @@ double open_simplex_noise3(struct osn_context *ctx, double x, double y, double z
 		if (p3 > 1) {
 			score = p3 - 1;
 			if (aScore <= bScore && aScore < score) {
-				aScore = score;
+				// aScore = score; dead store
 				aPoint = 0x06;
 				aIsFurtherSide = 1;
 			} else if (aScore > bScore && bScore < score) {
-				bScore = score;
+				// bScore = score; dead store
 				bPoint = 0x06;
 				bIsFurtherSide = 1;
 			}
 		} else {
 			score = 1 - p3;
 			if (aScore <= bScore && aScore < score) {
-				aScore = score;
+				// aScore = score; dead store
 				aPoint = 0x01;
 				aIsFurtherSide = 0;
 			} else if (aScore > bScore && bScore < score) {
-				bScore = score;
+				// bScore = score; dead store
 				bPoint = 0x01;
 				bIsFurtherSide = 0;
 			}
@@ -950,7 +924,7 @@ double open_simplex_noise3(struct osn_context *ctx, double x, double y, double z
 /* 
  * 4D OpenSimplex (Simplectic) Noise.
  */
-double open_simplex_noise4(struct osn_context *ctx, double x, double y, double z, double w)
+double open_simplex_noise4(const struct osn_context *ctx, double x, double y, double z, double w)
 {
 	double uins;
 	double dx1, dy1, dz1, dw1;
@@ -1490,11 +1464,11 @@ double open_simplex_noise4(struct osn_context *ctx, double x, double y, double z
 		/* Decide if (0,0,0,1) is closer. */
 		p4 = 2 - inSum + wins;
 		if (aScore >= bScore && p4 > bScore) {
-			bScore = p4;
+			// bScore = p4; dead store
 			bPoint = 0x08;
 			bIsBiggerSide = 0;
 		} else if (aScore < bScore && p4 > aScore) {
-			aScore = p4;
+			// aScore = p4; dead store
 			aPoint = 0x08;
 			aIsBiggerSide = 0;
 		}
@@ -1914,11 +1888,11 @@ double open_simplex_noise4(struct osn_context *ctx, double x, double y, double z
 		/* Decide if (1,1,1,0) is closer. */
 		p4 = 3 - inSum + wins;
 		if (aScore <= bScore && p4 < bScore) {
-			bScore = p4;
+			// bScore = p4; dead store
 			bPoint = 0x07;
 			bIsBiggerSide = 0;
 		} else if (aScore > bScore && p4 < aScore) {
-			aScore = p4;
+			// aScore = p4; dead store
 			aPoint = 0x07;
 			aIsBiggerSide = 0;
 		}
