@@ -52,10 +52,11 @@ private:
     void load_objects();
 
     Path find_path(const GameObject &obj, const Hex &hDest);
-    void do_actions(GameObject &player);
-    void move_action(GameObject &player, const Path &path);
-    bool battle_action(GameObject &player, GameObject &enemy);
-    void local_action(GameObject &player);
+    // Execute all necessary game actions along the given path.
+    void do_actions(int entity, const Path &path);
+    void move_action(int entity, const Path &path);
+    bool battle_action(int playerId, int enemyId);
+    void local_action(int entity);
 
     std::string army_log(const Army &army) const;
     std::string battle_result_log(const Army &before, const BattleResult &result) const;

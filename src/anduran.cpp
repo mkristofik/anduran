@@ -141,7 +141,7 @@ void Anduran::handle_lmouse_up()
         championSelected_ = false;
         rmapView_.clearHighlight();
         rmapView_.clearPath();
-        do_actions(player);
+        do_actions(curPlayerId_, curPath_);
     }
 }
 
@@ -323,119 +323,78 @@ Path Anduran::find_path(const GameObject &obj, const Hex &hDest)
     return path;
 }
 
-void Anduran::do_actions(GameObject &player)
+void Anduran::do_actions(int entity, const Path &path)
 {
-    SDL_assert(!curPath_.empty());
+    SDL_assert(!path.empty());
 
-    auto ellipse = player.secondary;
-
-    // TODO: what kind of action is happening?
-    // if battle, is it a direct battle?  is the hex of the controlling army the
-    // same as the destHex?
-    //     - stop one hex short
-    //     - execute the battle
-    //     - if you win, move on to the destHex if that wouldn't trigger another
-    //     battle
-    //     - same goes for visiting a Shipwreck or attacking a Village or Castle
-    // if ZoC battle and you win, is there anything to pick up in the destHex?
-    // don't restore the battle winner's ellipse until the very end
-    /*
-    AnimSet moveAnim;
-    moveAnim.insert(AnimHide(rmapView_, ellipse));
-    moveAnim.insert(AnimMove(rmapView_, champion, curPath_));
-    anims_.push(moveAnim);
-    */
-
+    auto player = game_.get_object(entity);
+    int lastStep = ssize(path) - 1;
+    auto hLast = path.back();
+    auto [action, obj] = game_.hex_action(player, hLast);
     bool playerSurvives = true;
-    int lastStep = ssize(curPath_) - 1;
-    auto [action, obj] = game_.hex_action(player, curPath_[lastStep]);
 
-    anims_.push(AnimHide(rmapView_, ellipse));
+    // Hide the player's ellipse while we do all the animations.
+    anims_.push(AnimHide(rmapView_, player.secondary));
 
     // TODO: objects that trigger a battle (shipwreck)
+    //   - idea, defenders might be a hidden army you can't see with no ZoC
     if (action == ObjectAction::battle) {
-        if (curPath_[lastStep] == obj.hex) {
+        if (hLast == obj.hex) {
             // User clicked directly on the army they want to battle, stop moving one
             // hex early to represent battling over control of that hex.
             if (lastStep > 1) {
                 // TODO: create a PathView using std::span
-                Path shortenedPath(&curPath_[0], &curPath_[lastStep]);
-                move_action(player, shortenedPath);
+                Path shortenedPath(&path[0], &path[lastStep]);
+                move_action(entity, shortenedPath);
+                hLast = shortenedPath.back();
             }
 
-            playerSurvives = battle_action(player, obj);
+            playerSurvives = battle_action(entity, obj.entity);
             if (playerSurvives) {
                 // If taking the clicked-on hex wouldn't trigger another battle,
                 // move there.
-                auto [nextAction, _] = game_.hex_action(player, curPath_[lastStep]);
+                auto [nextAction, _] = game_.hex_action(player, path.back());
                 if (nextAction != ObjectAction::battle) {
-                    Path lastMove(&curPath_[lastStep - 1], &curPath_[lastStep + 1]);
-                    move_action(player, lastMove);
+                    Path lastMove(&path[lastStep - 1], &path[lastStep + 1]);
+                    move_action(entity, lastMove);
+                    hLast = lastMove.back();
                 }
             }
         }
         else {
             // User clicked on a hex within an army's zone of control.
-            move_action(player, curPath_);
-            playerSurvives = battle_action(player, obj);
+            move_action(entity, path);
+            playerSurvives = battle_action(entity, obj.entity);
         }
     }
     else {
-        move_action(player, curPath_);
+        move_action(entity, path);
     }
 
     if (playerSurvives) {
         // Pick up or flag an object we may have landed on.
-        local_action(player);
-        anims_.push(AnimDisplay(rmapView_, ellipse, player.hex));
+        local_action(entity);
+        // Restore the player's ellipse at the final location.
+        anims_.push(AnimDisplay(rmapView_, player.secondary, hLast));
     }
-
-    /*
-    // Do this here so the player's ZoC at the destination hex doesn't affect the
-    // move/battle decision.
-    player.hex = destHex;
-    game_.update_object(player);
-
-    if (action != ObjectAction::battle) {
-        AnimSet moveEndAnim;
-        moveEndAnim.insert(AnimDisplay(rmapView_, ellipse, destHex));
-
-        // If we land on an object with a flag, change the flag color to
-        // match the player's.
-        // TODO: objects that trigger a battle (shipwreck)
-        if (action == ObjectAction::visit && obj.secondary >= 0) {
-            obj.team = player.team;
-            game_.update_object(obj);
-            moveEndAnim.insert(AnimDisplay(rmapView_,
-                                           obj.secondary,
-                                           flagImages_[obj.team]));
-        }
-        else if (action == ObjectAction::pickup) {
-            moveEndAnim.insert(AnimHide(rmapView_, obj.entity));
-            game_.remove_object(obj.entity);
-        }
-
-        anims_.push(moveEndAnim);
-    }
-    else {
-        battle_action(player, obj);
-    }
-    */
 
     stateChanged_ = true;
 }
 
-void Anduran::move_action(GameObject &player, const Path &path)
+void Anduran::move_action(int entity, const Path &path)
 {
+    auto player = game_.get_object(entity);
     anims_.push(AnimMove(rmapView_, player.entity, path));
     player.hex = path.back();
     game_.update_object(player);
 }
 
-bool Anduran::battle_action(GameObject &player, GameObject &enemy)
+bool Anduran::battle_action(int playerId, int enemyId)
 {
-    auto attacker = game_.get_army(player.entity);
-    auto defender = game_.get_army(enemy.entity);
+    auto player = game_.get_object(playerId);
+    auto attacker = game_.get_army(playerId);
+    auto enemy = game_.get_object(enemyId);
+    auto defender = game_.get_army(enemyId);
 
     std::string introLog = army_log(attacker) + "\n    vs.\n" + army_log(defender);
     SDL_Log(introLog.c_str());
@@ -500,8 +459,9 @@ bool Anduran::battle_action(GameObject &player, GameObject &enemy)
 }
 
 // Is there anything to do on the current hex?
-void Anduran::local_action(GameObject &player)
+void Anduran::local_action(int entity)
 {
+    auto player = game_.get_object(entity);
     auto [action, obj] = game_.hex_action(player, player.hex);
 
     // If we land on an object with a flag, change the flag color to
