@@ -18,6 +18,7 @@
 #include <compare>
 #include <concepts>
 #include <ostream>
+#include <span>
 #include <vector>
 
 ITERABLE_ENUM_CLASS(HexDir, n, ne, se, s, sw, nw);
@@ -57,8 +58,9 @@ struct Hex
     friend void swap(Hex &lhs, Hex &rhs) noexcept;
 };
 
-// Standard type for pathfinding.
+// Standard types for pathfinding.
 using Path = std::vector<Hex>;
+using PathView = std::span<Hex>;
 
 Hex operator+(Hex lhs, const Hex &rhs);
 Hex operator-(Hex lhs, const Hex &rhs);

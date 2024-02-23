@@ -184,11 +184,11 @@ void AnimDisplay::start()
 
 AnimMove::AnimMove(MapDisplay &display,
                    int mover,
-                   const std::vector<Hex> &path)
+                   PathView path)
     : AnimBase(display, MOVE_STEP_MS * (size(path) - 1)),
     entity_(mover),
     pathStep_(1),  // first element of the path is the starting hex
-    path_(path),
+    path_(begin(path), end(path)),
     baseState_(),
     distToMove_()
 {

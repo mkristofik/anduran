@@ -51,10 +51,9 @@ private:
     void load_players();
     void load_objects();
 
-    Path find_path(const GameObject &obj, const Hex &hDest);
     // Execute all necessary game actions along the given path.
-    void do_actions(int entity, const Path &path);
-    void move_action(int entity, const Path &path);
+    void do_actions(int entity, PathView path);
+    void move_action(int entity, PathView path);
     bool battle_action(int playerId, int enemyId);
     void local_action(int entity);
 

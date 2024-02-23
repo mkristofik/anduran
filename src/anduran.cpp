@@ -166,8 +166,6 @@ void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
 
     rmapView_.clearPath();
     auto player = game_.get_object(curPlayerId_);
-    // TODO: path goes all the way to the target hex, even if it's a battle
-    // if battling on the path end, stop one short, then move after battle is won
     curPath_ = pathfind_.find_path(player, hCurPathEnd_);
     if (!curPath_.empty()) {
         auto [action, _] = game_.hex_action(player, hCurPathEnd_);
@@ -300,35 +298,12 @@ void Anduran::load_objects()
     }
 }
 
-Path Anduran::find_path(const GameObject &obj, const Hex &hDest)
-{
-    auto path = pathfind_.find_path(obj, hDest);
-    if (path.empty()) {
-        return {};
-    }
-
-    // TODO: this isn't going to do the right thing for a battle taking place on
-    // the adjacent hex (so the resulting path would only include the current hex)
-    //
-    // Path must stop early at first hex where an action occurs.
-    auto first = next(std::begin(path));  // ...but not the hex we're standing on
-    auto last = std::end(path);
-    auto stopAt = find_if(first, last, [this, &obj] (const auto &hex) {
-        return game_.hex_action(obj, hex).action != ObjectAction::none;
-    });
-    if (stopAt != last) {
-        path.erase(next(stopAt), last);
-    }
-
-    return path;
-}
-
-void Anduran::do_actions(int entity, const Path &path)
+void Anduran::do_actions(int entity, PathView path)
 {
     SDL_assert(!path.empty());
 
     auto player = game_.get_object(entity);
-    int lastStep = ssize(path) - 1;
+    auto pathSize = size(path);
     auto hLast = path.back();
     auto [action, obj] = game_.hex_action(player, hLast);
     bool playerSurvives = true;
@@ -342,9 +317,8 @@ void Anduran::do_actions(int entity, const Path &path)
         if (hLast == obj.hex) {
             // User clicked directly on the army they want to battle, stop moving one
             // hex early to represent battling over control of that hex.
-            if (lastStep > 1) {
-                // TODO: create a PathView using std::span
-                Path shortenedPath(&path[0], &path[lastStep]);
+            if (pathSize > 2) {
+                auto shortenedPath = path.first(pathSize - 1);
                 move_action(entity, shortenedPath);
                 hLast = shortenedPath.back();
             }
@@ -355,9 +329,8 @@ void Anduran::do_actions(int entity, const Path &path)
                 // move there.
                 auto [nextAction, _] = game_.hex_action(player, path.back());
                 if (nextAction != ObjectAction::battle) {
-                    Path lastMove(&path[lastStep - 1], &path[lastStep + 1]);
-                    move_action(entity, lastMove);
-                    hLast = lastMove.back();
+                    move_action(entity, path.last(2));
+                    hLast = path.back();
                 }
             }
         }
@@ -381,7 +354,7 @@ void Anduran::do_actions(int entity, const Path &path)
     stateChanged_ = true;
 }
 
-void Anduran::move_action(int entity, const Path &path)
+void Anduran::move_action(int entity, PathView path)
 {
     auto player = game_.get_object(entity);
     anims_.push(AnimMove(rmapView_, player.entity, path));

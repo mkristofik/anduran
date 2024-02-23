@@ -93,7 +93,7 @@ private:
 class AnimMove : public AnimBase
 {
 public:
-    AnimMove(MapDisplay &display, int mover, const std::vector<Hex> &path);
+    AnimMove(MapDisplay &display, int mover, PathView path);
 
 private:
     void start() override;
@@ -102,7 +102,7 @@ private:
 
     int entity_;
     unsigned int pathStep_;
-    std::vector<Hex> path_;
+    Path path_;
     MapEntity baseState_;
     SDL_Point distToMove_;
 };
