@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2022 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anudran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -11,9 +11,12 @@
     See the COPYING.txt file for more details.
 */
 #include "hex_utils.h"
+
 #include <algorithm>
 #include <cassert>
 #include <limits>
+#include <sstream>
+#include <stdexcept>
 #include <tuple>
 
 Hex::Hex()
@@ -113,8 +116,9 @@ HexDir Hex::getNeighborDir(const Hex &hNbr) const
     }
 
     // Should never get here.
-    assert(false);
-    return HexDir::n;
+    std::ostringstream ostr;
+    ostr << "Hexes " << *this << " and " << hNbr << " were not adjacent";
+    throw std::invalid_argument(ostr.str());
 }
 
 void swap(Hex &lhs, Hex &rhs) noexcept
