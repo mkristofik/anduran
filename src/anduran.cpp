@@ -303,7 +303,6 @@ void Anduran::do_actions(int entity, PathView path)
     SDL_assert(!path.empty());
 
     auto player = game_.get_object(entity);
-    auto pathSize = size(path);
     auto hLast = path.back();
     auto [action, obj] = game_.hex_action(player, hLast);
     bool playerSurvives = true;
@@ -317,6 +316,7 @@ void Anduran::do_actions(int entity, PathView path)
         if (hLast == obj.hex) {
             // User clicked directly on the army they want to battle, stop moving one
             // hex early to represent battling over control of that hex.
+            auto pathSize = size(path);
             if (pathSize > 2) {
                 auto shortenedPath = path.first(pathSize - 1);
                 move_action(entity, shortenedPath);
