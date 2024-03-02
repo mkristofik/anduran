@@ -86,9 +86,21 @@
         "frames": [1, 8],
         "timing_ms": [120, 240, 360, 480, 600, 720, 840, 960]
     },
+    "skeleton-attack-melee": {
+        "frames": [1, 10],
+        "timing_ms": [75, 150, 225, 300, 375, 450, 525, 600, 675, 750]
+    },
+    "skeleton-die": {
+        "frames": [1, 7],
+        "timing_ms": [100, 200, 300, 400, 500, 600, 700]
+    },
     "swordsman-attack-melee": {
         "frames": [1, 4],
         "timing_ms": [75, 150, 300, 400]
+    },
+    "swordsman-die": {
+        "frames": [1, 9],
+        "timing_ms": [75, 150, 225, 300, 375, 450, 525, 600, 675]
     },
     "tiles-castle": {
         "frames": [1, 6]

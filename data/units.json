@@ -20,6 +20,16 @@
         "anim-attack": "orc-grunt-attack-melee",
         "anim-die": "orc-grunt-die"
     },
+    "skel": {
+        "name": "Skeleton",
+        "speed": 4,
+        "hp": 4,
+        "damage": [2, 3],
+        "img-idle": "skeleton",
+        "img-defend": "skeleton-defend",
+        "anim-attack": "skeleton-attack-melee",
+        "anim-die": "skeleton-die"
+    },
     "swordsman": {
         "name": "Swordsman",
         "speed": 4,
@@ -27,6 +37,7 @@
         "damage": [5, 9],
         "img-idle": "swordsman",
         "img-defend": "swordsman-defend",
-        "anim-attack": "swordsman-attack-melee"
+        "anim-attack": "swordsman-attack-melee",
+        "anim-die": "swordsman-die"
     }
 }
