@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2023 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2023-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -44,6 +44,7 @@ struct MapObject
 {
     std::string name;
     std::string imgName;
+    std::string defender;
     EnumSizedBitset<Terrain> terrain;
     int numPerRegion = 0;
     int numPerCastle = 0;

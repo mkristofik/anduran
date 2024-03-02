@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2023 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2023-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -31,6 +31,7 @@ namespace
                          std::string_view objName,
                          std::string_view fieldName)
     {
+        // TODO: stdout and stderr seem to be swallowed by SDL
         std::cerr << "WARNING: unrecognized object " <<
             dataType << " field [" <<
             objName << "] : " <<
@@ -86,6 +87,9 @@ ObjectManager::ObjectManager(const std::string &configFile)
                 }
                 else if (field == "img") {
                     obj.imgName = value;
+                }
+                else if (field == "defender") {
+                    obj.defender = value;
                 }
                 else {
                     warn_unexpected("string", name, field);

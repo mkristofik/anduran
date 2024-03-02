@@ -48,7 +48,8 @@
         "terrain": [0],
         "per-coastline": 1,
         "visit": true,
-        "flag": false
+        "flag": false,
+        "defender": "skel"
     },
     "village": {
         "name": "Village",

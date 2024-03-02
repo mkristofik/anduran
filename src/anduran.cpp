@@ -294,6 +294,32 @@ void Anduran::load_objects()
                                                         ZOrder::flag);
             }
             game_.add_object(gameObj);
+
+            if (!obj.defender.empty()) {
+                // TODO: what if the defender isn't a registered unit?
+                auto defUnit = units_.get_type(obj.defender);
+                auto defImg = units_.get_image(defUnit,
+                                               ImageType::img_idle,
+                                               Team::neutral);
+                MapEntity defEntity;
+                defEntity.hex = hex;
+                defEntity.z = ZOrder::unit;
+                defEntity.visible = false;
+
+                GameObject defender;
+                defender.hex = hex;
+                defender.entity = rmapView_.addEntity(defImg,
+                                                      defEntity,
+                                                      HexAlign::middle);
+                defender.type = ObjectType::champion;  // only ZoC is this hex
+                game_.add_object(defender);
+
+                Army defArmy;
+                // TODO: assign random amount based on troop growth?
+                defArmy.units[0] = {defUnit, 25};
+                defArmy.entity = defender.entity;
+                game_.add_army(defArmy);
+            }
         }
     }
 }
@@ -310,8 +336,6 @@ void Anduran::do_actions(int entity, PathView path)
     // Hide the player's ellipse while we do all the animations.
     anims_.push(AnimHide(rmapView_, player.secondary));
 
-    // TODO: objects that trigger a battle (shipwreck)
-    //   - idea, defenders might be a hidden army you can't see with no ZoC
     if (action == ObjectAction::battle) {
         if (hLast == obj.hex) {
             // User clicked directly on the army they want to battle, stop moving one
@@ -554,11 +578,11 @@ void Anduran::animate(const GameObject &attacker,
     AnimSet animSet;
     animSet.insert(AnimLog(rmapView_, battle_event_log(event)));
     animSet.insert(AnimDefend(rmapView_,
-                                defender.entity,
-                                defIdle,
-                                defAnim,
-                                attacker.hex,
-                                attType));
+                              defender.entity,
+                              defIdle,
+                              defAnim,
+                              attacker.hex,
+                              attType));
     animSet.insert(AnimHealth(rmapView_,
                               hpBarIds_[0],
                               hpBarIds_[1],
@@ -607,7 +631,10 @@ void Anduran::assign_influence()
     }
 
     for (const auto &champion : game_.objects_by_type(ObjectType::champion)) {
-        influence_[rmap_.getRegion(champion.hex)][champion.team] += 3;
+        // Champions that have been defeated don't project influence anymore.
+        if (champion.hex != Hex::invalid()) {
+            influence_[rmap_.getRegion(champion.hex)][champion.team] += 3;
+        }
     }
 
     for (const auto &village : game_.objects_by_type(ObjectType::village)) {
