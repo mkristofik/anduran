@@ -107,6 +107,8 @@ void SdlImageManager::load_config(const std::string &filename)
             data.frames.col = tmpFrames[1];
         }
         jsonGetArray(m->value, "timing_ms", data.timing_ms);
+        // TODO: also support a ms_per_frame to make it easier to specify
+        // regularly-timed frames
 
         const std::string name = m->name.GetString();
         if (data.timing_ms.empty() || ssize(data.timing_ms) == data.frames.col) {

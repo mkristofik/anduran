@@ -31,6 +31,7 @@
 #include "team_color.h"
 
 #include <string>
+#include <string_view>
 #include <vector>
 
 class Anduran : public SdlApp
@@ -50,6 +51,8 @@ private:
     // Load objects and draw them on the map.
     void load_players();
     void load_objects();
+    void load_object_defenders(std::string_view defenderUnitKey,
+                               const std::vector<Hex> &hexes);
 
     // Execute all necessary game actions along the given path.
     void do_actions(int entity, PathView path);

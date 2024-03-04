@@ -1,5 +1,5 @@
 {
-    "archer": {
+    "arch": {
         "name": "Archer",
         "speed": 2,
         "hp": 10,
@@ -10,7 +10,7 @@
         "anim-ranged": "archer-attack-ranged",
         "projectile": "missile"
     },
-    "orc": {
+    "grunt": {
         "name": "Orc",
         "speed": 4,
         "hp": 20,
@@ -30,7 +30,7 @@
         "anim-attack": "skeleton-attack-melee",
         "anim-die": "skeleton-die"
     },
-    "swordsman": {
+    "sword": {
         "name": "Swordsman",
         "speed": 4,
         "hp": 25,

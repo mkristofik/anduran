@@ -31,7 +31,6 @@ namespace
                          std::string_view objName,
                          std::string_view fieldName)
     {
-        // TODO: stdout and stderr seem to be swallowed by SDL
         std::cerr << "WARNING: unrecognized object " <<
             dataType << " field [" <<
             objName << "] : " <<

@@ -134,6 +134,7 @@ destination hex
 - render a full-scale map and scale it down to minimap size
     - team-colored hexes
     - pretty edge transitions between player-owned regions
+- unified logging interface that supports both SDL logging and std::cerr
 
 
 # Improving edge transitions

@@ -395,13 +395,18 @@ void AnimDefend::update(Uint32 elapsed_ms)
 
 void AnimDefend::stop()
 {
-    // If we're showing a defend image, revert back to the base image when done.
-    if (anim_.duration_ms() == 0) {
-        auto obj = get_entity(entity_);
-        set_idle(obj, baseState_);
-        update_entity(obj, idleImg_);
+    auto obj = get_entity(entity_);
+    set_idle(obj, baseState_);
+    // If we're showing a die animation, hide it so the user doesn't see it revert
+    // back to the base image.
+    if (anim_.duration_ms() > 0) {
+        obj.visible = false;
     }
+    update_entity(obj, idleImg_);
 }
+// TODO: dedicated AnimDie where the image fades out
+// either show the defend img and fade out slowly, or the die anim and fade out
+// quicker
 
 
 AnimProjectile::AnimProjectile(MapDisplay &display,

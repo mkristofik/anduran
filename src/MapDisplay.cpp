@@ -829,6 +829,8 @@ void MapDisplay::drawEntities()
         if (SDL_HasIntersection(&dest, &displayArea_) == SDL_FALSE) {
             continue;
         }
+        // TODO: SDL_SetTextureAlphaMod to support transparency.  This function
+        // affects the texture itself, have to restore it when done.
         if (e.mirrored) {
             img.draw_mirrored(pixel, e.frame);
         }

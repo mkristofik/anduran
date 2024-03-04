@@ -108,12 +108,16 @@ void Anduran::handle_lmouse_up()
         return;
     }
 
+    const auto mouseHex = rmapView_.hexFromMousePos();
+    if (mouseHex == Hex::invalid()) {
+        return;
+    }
+
     // Move a champion:
     // - user selects the champion hex (clicking again deselects it)
     // - highlight that hex when selected
     // - user clicks on a walkable hex
     // - champion moves to the new hex, engages in battle if appropriate
-    const auto mouseHex = rmapView_.hexFromMousePos();
     for (auto i = 0; i < ssize(playerEntityIds_); ++i) {
         if (auto player = game_.get_object(playerEntityIds_[i]); player.hex == mouseHex) {
             if (curPlayerNum_ != i) {
@@ -231,15 +235,15 @@ void Anduran::load_players()
 
         // Each player gets the same starting army for now.
         Army army;
-        army.units[0] = {units_.get_type("swordsman"), 4};
-        army.units[1] = {units_.get_type("archer"), 4};
+        army.units[0] = {units_.get_type("sword"), 4};
+        army.units[1] = {units_.get_type("arch"), 4};
         army.entity = champion.entity;
         game_.add_army(army);
     }
     curPlayerId_ = playerEntityIds_[0];
 
     // Add a wandering army to attack.
-    const auto orc = units_.get_type("orc");
+    const auto orc = units_.get_type("grunt");
     auto orcImg = units_.get_image(orc, ImageType::img_idle, Team::neutral);
     GameObject enemy;
     enemy.hex = {5, 8};
@@ -270,11 +274,13 @@ void Anduran::load_objects()
 {
     for (auto &obj : rmap_.getObjectConfig()) {
         auto img = images_.make_texture(obj.imgName, win_);
+        auto objHexes = rmap_.getObjectTiles(obj.type);
+
         // Assume any sprite sheet with the same number of frames as there are
         // terrains is intended to use a terrain frame.
         bool hasTerrainFrames = img.cols() == enum_size<Terrain>();
 
-        for (auto &hex : rmap_.getObjectTiles(obj.type)) {
+        for (auto &hex : objHexes) {
             MapEntity entity;
             entity.hex = hex;
             entity.z = ZOrder::object;
@@ -294,33 +300,52 @@ void Anduran::load_objects()
                                                         ZOrder::flag);
             }
             game_.add_object(gameObj);
-
-            if (!obj.defender.empty()) {
-                // TODO: what if the defender isn't a registered unit?
-                auto defUnit = units_.get_type(obj.defender);
-                auto defImg = units_.get_image(defUnit,
-                                               ImageType::img_idle,
-                                               Team::neutral);
-                MapEntity defEntity;
-                defEntity.hex = hex;
-                defEntity.z = ZOrder::unit;
-                defEntity.visible = false;
-
-                GameObject defender;
-                defender.hex = hex;
-                defender.entity = rmapView_.addEntity(defImg,
-                                                      defEntity,
-                                                      HexAlign::middle);
-                defender.type = ObjectType::champion;  // only ZoC is this hex
-                game_.add_object(defender);
-
-                Army defArmy;
-                // TODO: assign random amount based on troop growth?
-                defArmy.units[0] = {defUnit, 25};
-                defArmy.entity = defender.entity;
-                game_.add_army(defArmy);
-            }
         }
+
+        if (!obj.defender.empty()) {
+            load_object_defenders(obj.defender, objHexes);
+        }
+    }
+}
+
+void Anduran::load_object_defenders(std::string_view defenderUnitKey,
+                                    const std::vector<Hex> &hexes)
+{
+    int defUnit = units_.get_type(defenderUnitKey);
+    if (defUnit < 0) {
+        return;
+    }
+
+    auto defImg = units_.get_image(defUnit,
+                                   ImageType::img_idle,
+                                   Team::neutral);
+    for (auto &hex : hexes) {
+        MapEntity defEntity;
+        defEntity.hex = hex;
+        defEntity.z = ZOrder::unit;
+        defEntity.visible = false;
+
+        MapEntity defEllipse;
+        defEllipse.hex = hex;
+        defEllipse.z = ZOrder::ellipse;
+        defEllipse.visible = false;
+
+        GameObject defender;
+        defender.hex = hex;
+        defender.entity = rmapView_.addEntity(defImg,
+                                              defEntity,
+                                              HexAlign::middle);
+        defender.secondary = rmapView_.addEntity(ellipseImages_[Team::neutral],
+                                                 defEllipse,
+                                                 HexAlign::middle);
+        defender.type = ObjectType::champion;  // only ZoC is this hex
+        game_.add_object(defender);
+
+        Army defArmy;
+        // TODO: assign random amount based on troop growth?
+        defArmy.units[0] = {defUnit, 25};
+        defArmy.entity = defender.entity;
+        game_.add_army(defArmy);
     }
 }
 
