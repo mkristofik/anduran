@@ -84,15 +84,15 @@
     },
     "orc-grunt-die": {
         "frames": [1, 8],
-        "timing_ms": [120, 240, 360, 480, 600, 720, 840, 960]
+        "ms_per_frame": 120
     },
     "skeleton-attack-melee": {
         "frames": [1, 10],
-        "timing_ms": [75, 150, 225, 300, 375, 450, 525, 600, 675, 750]
+        "ms_per_frame": 75
     },
     "skeleton-die": {
         "frames": [1, 7],
-        "timing_ms": [100, 200, 300, 400, 500, 600, 700]
+        "ms_per_frame": 100
     },
     "swordsman-attack-melee": {
         "frames": [1, 4],
@@ -100,7 +100,7 @@
     },
     "swordsman-die": {
         "frames": [1, 9],
-        "timing_ms": [75, 150, 225, 300, 375, 450, 525, 600, 675]
+        "ms_per_frame": 75
     },
     "tiles-castle": {
         "frames": [1, 6]
