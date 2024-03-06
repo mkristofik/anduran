@@ -189,7 +189,7 @@ is next to or in front of a castle
 * probability to appear (default 100)
 * flaggable? (default false)
 * map display needs to return multiple objects per tile (to allow flags and creatures)
-- objects with an army guarding them
+* objects with an army guarding them
 - one-time visit objects change image after they've been visited, no longer visitable
 
 
@@ -198,7 +198,7 @@ is next to or in front of a castle
 * status of every game-relevant object
 - not every object needs a drawable entity (why?)
 * some objects represented by multiple entities (champions and their ellipses)
-- keep track of armies
+* keep track of armies
 * zone of control, one hex radius points to the army controlling it
     * ZoC is not walkable unless it's a destination hex
     * update all of them any time somebody moves

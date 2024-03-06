@@ -308,10 +308,10 @@ void Anduran::load_objects()
     }
 }
 
-void Anduran::load_object_defenders(std::string_view defenderUnitKey,
+void Anduran::load_object_defenders(std::string_view unitKey,
                                     const std::vector<Hex> &hexes)
 {
-    int defUnit = units_.get_type(defenderUnitKey);
+    int defUnit = units_.get_type(unitKey);
     if (defUnit < 0) {
         return;
     }
