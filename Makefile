@@ -42,6 +42,7 @@ RMAPGEN_SRC = ObjectManager.cpp \
 	RandomRange.cpp \
 	hex_utils.cpp \
 	json_utils.cpp \
+	log_utils_console.cpp \
 	rmapgen.cpp
 RMAPGEN_OBJS = $(RMAPGEN_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-noise.o
 RMAPGEN_DEPS = $(RMAPGEN_OBJS:%.o=%.d)
@@ -64,6 +65,7 @@ MAPVIEW_SRC = MapDisplay.cpp \
 	WindowConfig.cpp \
 	hex_utils.cpp \
 	json_utils.cpp \
+	log_utils_sdl.cpp \
 	mapview.cpp \
 	pixel_utils.cpp \
 	team_color.cpp
@@ -92,6 +94,7 @@ ANDURAN_SRC = AnimQueue.cpp \
 	battle_utils.cpp \
 	hex_utils.cpp \
 	json_utils.cpp \
+	log_utils_sdl.cpp \
 	pixel_utils.cpp \
 	team_color.cpp
 ANDURAN_OBJS = $(ANDURAN_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-noise.o
@@ -105,6 +108,7 @@ UNITTESTS_SRC = GameState.cpp \
 	battle_utils.cpp \
 	hex_utils.cpp \
 	json_utils.cpp \
+	log_utils_console.cpp \
 	$(wildcard $(TEST_DIR)/*.cpp)
 UNITTESTS_OBJS = $(UNITTESTS_SRC:%.cpp=$(BUILD_DIR)/%.o)
 UNITTESTS_DEPS = $(UNITTESTS_OBJS:%.o=%.d)

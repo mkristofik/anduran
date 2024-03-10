@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2023 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -16,9 +16,11 @@
 #include "SdlWindow.h"
 #include "container_utils.h"
 #include "json_utils.h"
+#include "log_utils.h"
 
 #include "SDL.h"
 #include <filesystem>
+#include <format>
 
 UnitManager::UnitManager(const std::string &configFile,
                          SdlWindow &win,
@@ -30,9 +32,7 @@ UnitManager::UnitManager(const std::string &configFile,
     data_()
 {
     if (!std::filesystem::exists(configFile)) {
-        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
-                    "Unit config file not found: %s",
-                    configFile.c_str());
+        log_error("unit config file not found: " + configFile);
         return;
     }
 
@@ -76,15 +76,13 @@ UnitManager::UnitManager(const std::string &configFile,
                         data.attack = attType;
                     }
                     else {
-                        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
-                                    "Unexpected attack-type value [%s]: %s",
-                                    name.c_str(), value.c_str());
+                        log_warn(std::format("Unexpected attack-type value [{}]: {}",
+                                             name, value));
                     }
                 }
                 else {
-                    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
-                                "Unrecognized unit string field [%s] : %s",
-                                name.c_str(), field.c_str());
+                    log_warn(std::format("Unrecognized unit string field [{}] : {}",
+                                         name, field));
                 }
             }
             else if (f->value.IsInt()) {
@@ -96,9 +94,8 @@ UnitManager::UnitManager(const std::string &configFile,
                     data.speed = val;
                 }
                 else {
-                    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
-                                "Unrecognized unit int field [%s] : %s",
-                                name.c_str(), field.c_str());
+                    log_warn(std::format("Unrecognized unit int field [{}] : {}",
+                                         name, field));
                 }
             }
             else if (f->value.IsArray()) {
@@ -108,22 +105,18 @@ UnitManager::UnitManager(const std::string &configFile,
                         data.damage = {ary[0].GetInt(), ary[1].GetInt()};
                     }
                     else {
-                        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
-                                    "Unit damage field [%s] : %s",
-                                    name.c_str(),
-                                    "expected 2 integers");
+                        log_warn(std::format("Unit damage field [{}] : {}",
+                                             name, "expected 2 integers"));
                     }
                 }
                 else {
-                    SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
-                                "Unrecognized unit array field [%s] : %s",
-                                name.c_str(), field.c_str());
+                    log_warn(std::format("Unrecognized unit array field [{}] : {}",
+                                         name, field));
                 }
             }
             else {
-                SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
-                            "Unrecognized unit field [%s] : %s",
-                            name.c_str(), field.c_str());
+                log_warn(std::format("Unrecognized unit field [{}] : {}",
+                                     name, field));
             }
         }
         media_.push_back(media);
@@ -135,8 +128,7 @@ int UnitManager::get_type(std::string_view key) const
 {
     const auto iter = types_.find(key);
     if (iter == end(types_)) {
-        std::string keyStr(key.data(), key.size());
-        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION, "Unit not found: %s", keyStr.c_str());
+        log_error(std::format("unit not found: {}", key));
         return -1;
     }
 

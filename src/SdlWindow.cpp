@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2017 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -11,6 +11,9 @@
     See the COPYING.txt file for more details.
 */
 #include "SdlWindow.h"
+#include "log_utils.h"
+
+#include <format>
 #include <stdexcept>
 
 SdlWindow::SdlWindow(int width, int height, const char *caption)
@@ -20,8 +23,8 @@ SdlWindow::SdlWindow(int width, int height, const char *caption)
     SDL_Window *win = nullptr;
     SDL_Renderer *ren = nullptr;
     if (SDL_CreateWindowAndRenderer(width, height, 0, &win, &ren) < 0) {
-        SDL_LogCritical(SDL_LOG_CATEGORY_VIDEO, "Error creating window: %s",
-                        SDL_GetError());
+        log_critical(std::format("couldn't create window: {}", SDL_GetError()),
+                     LogCategory::video);
         throw std::runtime_error(SDL_GetError());
     }
 
@@ -38,7 +41,8 @@ SdlWindow::SdlWindow(int width, int height, const char *caption)
 void SdlWindow::clear()
 {
     if (SDL_RenderClear(renderer()) < 0) {
-        SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "Error clearing window: %s", SDL_GetError());
+        log_error(std::format("couldn't clear window: {}", SDL_GetError()),
+                  LogCategory::render);
     }
 }
 

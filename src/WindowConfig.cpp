@@ -13,6 +13,7 @@
 #include "WindowConfig.h"
 
 #include "json_utils.h"
+#include "log_utils.h"
 #include <filesystem>
 
 WindowConfig::WindowConfig(const std::string &configFile)
@@ -23,9 +24,8 @@ WindowConfig::WindowConfig(const std::string &configFile)
     minimap_{1076, 24, 192, 192}
 {
     if (!std::filesystem::exists(configFile)) {
-        SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
-                    "Window config file not found: %s, using default sizes",
-                    configFile.c_str());
+        log_error("window config file not found: " + configFile +
+                  ", using default sizes");
         return;
     }
 

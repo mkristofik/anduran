@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2021 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -11,8 +11,10 @@
     See the COPYING.txt file for more details.
 */
 #include "SdlSurface.h"
+#include "log_utils.h"
 
 #include "SDL_image.h"
+#include <format>
 #include <stdexcept>
 
 SdlSurface::SdlSurface(SDL_Surface *surf)
@@ -24,7 +26,8 @@ SdlSurface::SdlSurface(const char *filename)
     : SdlSurface(IMG_Load(filename))
 {
     if (!surf_) {
-        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO, "Error loading image: %s", IMG_GetError());
+        log_error(std::format("couldn't load image: {}", IMG_GetError()),
+                  LogCategory::video);
     }
 }
 
@@ -44,7 +47,8 @@ SdlSurface SdlSurface::clone() const
                                      orig->format->Bmask,
                                      orig->format->Amask);
     if (!dest) {
-        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO, "Error cloning surface: %s", SDL_GetError());
+        log_warn(std::format("couldn't clone surface: {}", SDL_GetError()),
+                 LogCategory::video);
         return {};
     }
 
@@ -81,9 +85,8 @@ SdlEditSurface::SdlEditSurface(const SdlSurface &img)
             isLocked_ = true;
         }
         else {
-            SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
-                        "Warning, couldn't lock surface: %s",
-                        SDL_GetError());
+            log_warn(std::format("couldn't lock surface: {}", SDL_GetError()),
+                     LogCategory::video);
         }
     }
 

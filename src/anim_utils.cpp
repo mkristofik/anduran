@@ -13,6 +13,7 @@
 #include "anim_utils.h"
 
 #include "container_utils.h"
+#include "log_utils.h"
 #include <algorithm>
 
 namespace
@@ -470,7 +471,7 @@ AnimLog::AnimLog(MapDisplay &display, std::string_view message)
 
 void AnimLog::start()
 {
-    SDL_Log(msg_.c_str());
+    log_info(msg_);
 }
 
 

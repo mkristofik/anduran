@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2023 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -14,8 +14,10 @@
 #include "SdlWindow.h"
 #include "container_utils.h"
 #include "json_utils.h"
+#include "log_utils.h"
 
 #include <filesystem>
+#include <format>
 #include <stdexcept>
 
 SdlImageData::SdlImageData()
@@ -36,9 +38,8 @@ SdlImageManager::SdlImageManager(const std::string &pathname)
 {
     const std::filesystem::path dir(pathname);
     if (!std::filesystem::exists(dir) || !std::filesystem::is_directory(dir)) {
-        SDL_LogCritical(SDL_LOG_CATEGORY_VIDEO,
-                        "Image directory not found: %s",
-                        pathname.c_str());
+        log_critical("image directory not found: " + pathname,
+                     LogCategory::video);
         throw std::runtime_error("Couldn't load images");
     }
 
@@ -62,8 +63,7 @@ SdlImageData SdlImageManager::get(std::string_view name) const
 {
     const auto iter = images_.find(name);
     if (iter == end(images_)) {
-        std::string nameStr(name.data(), name.size());
-        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO, "Image not found: %s", nameStr.c_str());
+        log_error(std::format("image not found: {}", name), LogCategory::video);
         return {};
     }
 
@@ -88,9 +88,7 @@ SdlTexture SdlImageManager::make_texture(std::string_view name, SdlWindow &win) 
 void SdlImageManager::load_config(const std::string &filename)
 {
     if (!std::filesystem::exists(filename)) {
-        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
-                    "Image config file not found: %s",
-                    filename.c_str());
+        log_error("image config file not found: " + filename, LogCategory::video);
         return;
     }
 
@@ -124,10 +122,9 @@ void SdlImageManager::load_config(const std::string &filename)
             images_.emplace(name, data);
         }
         else {
-            SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
-                        "Image config [%s] : %s",
-                        name.c_str(),
-                        "Timing does not match number of frames");
+            log_warn(std::format("image config [{}] : {}",
+                                 name,
+                                 "Timing does not match number of frames"));
         }
     }
 }

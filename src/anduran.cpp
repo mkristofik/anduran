@@ -17,6 +17,7 @@
 #include "SdlTexture.h"
 #include "anim_utils.h"
 #include "container_utils.h"
+#include "log_utils.h"
 
 #include "SDL.h"
 #include <algorithm>
@@ -418,8 +419,7 @@ bool Anduran::battle_action(int playerId, int enemyId)
     auto enemy = game_.get_object(enemyId);
     auto defender = game_.get_army(enemyId);
 
-    std::string introLog = army_log(attacker) + "\n    vs.\n" + army_log(defender);
-    SDL_Log(introLog.c_str());
+    log_info(army_log(attacker) + "\n    vs.\n" + army_log(defender));
 
     const auto result = do_battle(make_army_state(attacker, BattleSide::attacker),
                                   make_army_state(defender, BattleSide::defender));

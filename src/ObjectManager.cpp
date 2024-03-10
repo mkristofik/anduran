@@ -13,10 +13,12 @@
 #include "ObjectManager.h"
 
 #include "json_utils.h"
+#include "log_utils.h"
 #include "x_macros.h"
 
 #include <algorithm>
 #include <filesystem>
+#include <format>
 #include <iostream>
 #include <string_view>
 
@@ -31,11 +33,10 @@ namespace
                          std::string_view objName,
                          std::string_view fieldName)
     {
-        std::cerr << "WARNING: unrecognized object " <<
-            dataType << " field [" <<
-            objName << "] : " <<
-            fieldName <<
-            '\n';
+        log_warn(std::format("unrecognized object {} field [{}] : {}",
+                             dataType,
+                             objName,
+                             fieldName));
     }
 }
 
@@ -60,8 +61,7 @@ ObjectManager::ObjectManager(const std::string &configFile)
     : objs_()
 {
     if (!std::filesystem::exists(configFile)) {
-        // Not using SDL errors to avoid adding dependency.
-        std::cerr << "WARNING: object config file not found: " << configFile << '\n';
+        log_error("object config file not found: " + configFile);
         return;
     }
 

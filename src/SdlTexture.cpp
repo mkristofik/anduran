@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2021 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -14,9 +14,11 @@
 
 #include "SdlWindow.h"
 #include "container_utils.h"
+#include "log_utils.h"
 #include "pixel_utils.h"
 
 #include "SDL.h"
+#include <format>
 
 namespace
 {
@@ -24,9 +26,8 @@ namespace
     {
         auto img = SDL_CreateTextureFromSurface(renderer, surf);
         if (!img) {
-            SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
-                        "Error creating texture: %s",
-                        SDL_GetError());
+            log_error(std::format("couldn't create texture: {}", SDL_GetError()),
+                      LogCategory::video);
             return {};
         }
 
@@ -44,9 +45,9 @@ namespace
                                      w,
                                      h);
         if (!img) {
-            SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
-                        "Error creating editable texture: %s",
-                        SDL_GetError());
+            log_error(std::format("couldn't create editable texture: {}",
+                                  SDL_GetError()),
+                      LogCategory::video);
             return {};
         }
 
@@ -225,8 +226,8 @@ void SdlTexture::draw(const SDL_Point &p, const Frame &frame)
     const auto src = get_frame_rect(frame);
     const auto dest = get_dest_rect(p);
     if (SDL_RenderCopy(pimpl_->renderer, get(), &src, &dest) < 0) {
-        SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "Error rendering texture: %s",
-                    SDL_GetError());
+        log_warn(std::format("couldn't render texture: {}", SDL_GetError()),
+                 LogCategory::render);
     }
 }
 
@@ -250,8 +251,9 @@ void SdlTexture::draw_mirrored(const SDL_Point &p, const Frame &frame)
                          nullptr,
                          SDL_FLIP_HORIZONTAL) < 0)
     {
-        SDL_LogWarn(SDL_LOG_CATEGORY_RENDER, "Error rendering texture flipped horiz: %s",
-                    SDL_GetError());
+        log_warn(std::format("couldn't render texture flipped horizontal: {}",
+                             SDL_GetError()),
+                 LogCategory::render);
     }
 }
 
@@ -273,7 +275,8 @@ SdlEditTexture::SdlEditTexture(SdlTexture &img)
 {
     SDL_assert(texture_ && img.editable());
     if (SDL_LockTextureToSurface(texture_, nullptr, &surf_) < 0) {
-        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO, "Error locking texture: %s", SDL_GetError());
+        log_warn(std::format("couldn't lock texture: {}", SDL_GetError()),
+                 LogCategory::video);
         return;
     }
     isLocked_ = true;
@@ -303,9 +306,9 @@ SdlSurface SdlEditTexture::make_surface(int width, int height) const
                                                 surf_->format->BitsPerPixel,
                                                 surf_->format->format);
     if (!surf) {
-        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
-                    "Warning, couldn't create new surface from texture: %s",
-                    SDL_GetError());
+        log_error(std::format("couldn't create new surface from texture: {}",
+                              SDL_GetError()),
+                  LogCategory::video);
         return {};
     }
 
@@ -320,8 +323,8 @@ void SdlEditTexture::fill_rect(const SDL_Rect &rect, const SDL_Color &color)
 
     auto colorVal = SDL_MapRGBA(surf_->format, color.r, color.g, color.b, color.a);
     if (SDL_FillRect(surf_, &rect, colorVal) < 0) {
-        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO, "Error drawing to texture: %s",
-                    SDL_GetError());
+        log_warn(std::format("couldn't draw to texture: {}", SDL_GetError()),
+                 LogCategory::video);
     }
 }
 
@@ -332,8 +335,7 @@ void SdlEditTexture::update(const SdlSurface &from)
     }
 
     if (SDL_BlitScaled(from.get(), nullptr, surf_, nullptr) < 0) {
-        SDL_LogWarn(SDL_LOG_CATEGORY_VIDEO,
-                    "Warning, couldn't update texture: %s",
-                    SDL_GetError());
+        log_warn(std::format("couldn't update texture: {}", SDL_GetError()),
+                 LogCategory::video);
     }
 }

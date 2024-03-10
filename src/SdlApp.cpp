@@ -11,8 +11,10 @@
     See the COPYING.txt file for more details.
 */
 #include "SdlApp.h"
+#include "log_utils.h"
 
 #include "SDL_image.h"
+#include <format>
 #include <stdexcept>
 
 namespace
@@ -26,14 +28,14 @@ SdlApp::SdlApp()
     mouseInWindow_(true)
 {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
-        SDL_LogCritical(SDL_LOG_CATEGORY_SYSTEM, "Error initializing SDL: %s",
-                        SDL_GetError());
+        log_critical(std::format("couldn't initialize SDL: {}", SDL_GetError()),
+                     LogCategory::system);
         throw std::runtime_error("SDL init error");
     }
 
     if (IMG_Init(IMG_INIT_PNG) < 0) {
-        SDL_LogCritical(SDL_LOG_CATEGORY_SYSTEM, "Error initializing SDL_image: %s",
-                        IMG_GetError());
+        log_critical(std::format("couldn't initialize SDL_image: {}", IMG_GetError()),
+                     LogCategory::system);
         SDL_Quit();
         throw std::runtime_error("SDL_image init error");
     }
@@ -52,7 +54,7 @@ int SdlApp::run()
         do_game_loop();
     }
     catch (const std::exception &e) {
-        SDL_LogCritical(SDL_LOG_CATEGORY_APPLICATION, "Exit reason: %s", e.what());
+        log_critical(std::format("exception thrown: {}", e.what()));
         return EXIT_FAILURE;
     }
 
