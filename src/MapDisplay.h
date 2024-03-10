@@ -37,17 +37,17 @@ struct TileEdge
 
 struct TileDisplay
 {
-    Hex hex;
-    SDL_Point basePixel;
-    SDL_Point curPixel;
-    int terrain;
-    int terrainFrame;
-    int obstacle;
-    Neighbors<TileEdge> edges;
-    int region;
-    bool visible;
+    static constexpr int HEX_SIZE = 72;
 
-    TileDisplay();
+    Hex hex;
+    SDL_Point basePixel = {-HEX_SIZE, -HEX_SIZE};
+    SDL_Point curPixel = {-HEX_SIZE, -HEX_SIZE};
+    int terrain = 0;
+    int terrainFrame = 0;
+    int obstacle = -1;
+    Neighbors<TileEdge> edges;
+    int region = -1;
+    bool visible = false;
 };
 
 
@@ -70,12 +70,11 @@ struct MapEntity
     PartialPixel offset;
     Hex hex;
     Frame frame;
-    int id;
-    ZOrder z;
-    bool visible;
-    bool mirrored;  // draw image flipped horizontally
-
-    MapEntity();
+    int id = -1;
+    ZOrder z = ZOrder::object;
+    Uint8 alpha = SDL_ALPHA_OPAQUE;
+    bool visible = true;
+    bool mirrored = false;  // draw image flipped horizontally
 
     // All unit sprites are drawn looking to the right. A unit walking to the left
     // should face left so it always walks forward.

@@ -37,7 +37,7 @@ namespace
        |   |
        tiling width (end of second hex's bottom edge)
     */
-    const int HEX_SIZE = 72;
+    const int HEX_SIZE = TileDisplay::HEX_SIZE;
     const int HEX_TILING_WIDTH = HEX_SIZE * 3 / 2;
     const int HEX_TILING_HEIGHT = HEX_SIZE;
 
@@ -81,30 +81,6 @@ namespace
     };
 }
 
-
-TileDisplay::TileDisplay()
-    : hex(),
-    basePixel{-HEX_SIZE, -HEX_SIZE},
-    curPixel{-HEX_SIZE, -HEX_SIZE},
-    terrain(0),
-    terrainFrame(0),
-    obstacle(-1),
-    edges(),
-    visible(false)
-{
-}
-
-
-MapEntity::MapEntity()
-    : offset(),
-    hex(),
-    frame(),
-    id(-1),
-    z(ZOrder::object),
-    visible(true),
-    mirrored(false)
-{
-}
 
 void MapEntity::faceHex(const Hex &hDest)
 {
@@ -829,13 +805,19 @@ void MapDisplay::drawEntities()
         if (SDL_HasIntersection(&dest, &displayArea_) == SDL_FALSE) {
             continue;
         }
-        // TODO: SDL_SetTextureAlphaMod to support transparency.  This function
-        // affects the texture itself, have to restore it when done.
+
+        // This function affects the texture itself, have to restore it when done.
+        if (e.alpha < SDL_ALPHA_OPAQUE) {
+            SDL_SetTextureAlphaMod(img.get(), e.alpha);
+        }
         if (e.mirrored) {
             img.draw_mirrored(pixel, e.frame);
         }
         else {
             img.draw(pixel, e.frame);
+        }
+        if (e.alpha < SDL_ALPHA_OPAQUE) {
+            SDL_SetTextureAlphaMod(img.get(), SDL_ALPHA_OPAQUE);
         }
     }
 }
