@@ -1,13 +1,13 @@
 /*
     Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License version 2
     or at your option any later version.
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY.
- 
+
     See the COPYING.txt file for more details.
 */
 #ifndef ANIM_UTILS_H
@@ -159,9 +159,34 @@ public:
     AnimDefend(MapDisplay &display,
                int entityId,
                const SdlTexture &idleImg,
-               const SdlTexture &anim,
+               const SdlTexture &defImg,
                const Hex &hAttacker,
                AttackType attType);
+
+private:
+    void start() override;
+    void update(Uint32 elapsed_ms) override;
+    void stop() override;
+
+    int entity_;
+    MapEntity baseState_;
+    SdlTexture idleImg_;
+    SdlTexture defendImg_;
+    Hex hFacing_;
+    Uint32 startTime_ms_;
+    bool imgDisplayed_;
+};
+
+
+class AnimDie : public AnimBase
+{
+public:
+    AnimDie(MapDisplay &display,
+            int entityId,
+            const SdlTexture &idleImg,
+            const SdlTexture &anim,
+            const Hex &hAttacker,
+            AttackType attType);
 
 private:
     void start() override;
@@ -174,6 +199,7 @@ private:
     SdlTexture anim_;
     Hex hFacing_;
     Uint32 startTime_ms_;
+    Uint32 fadeTime_ms_;
     bool animStarted_;
 };
 

@@ -592,22 +592,8 @@ void Anduran::animate(const GameObject &attacker,
     auto attIdle = units_.get_image(attUnitType, ImageType::img_idle, attTeam);
     auto attType = units_.get_data(attUnitType).attack;
 
-    auto defUnitType = event.defenderType;
-    auto defTeam = defender.team;
-    auto defIdle = units_.get_image(defUnitType, ImageType::img_idle, defTeam);
-    auto defAnim = units_.get_image(defUnitType, ImageType::img_defend, defTeam);
-    if (event.numDefenders == event.losses) {
-        defAnim = units_.get_image(defUnitType, ImageType::anim_die, defTeam);
-    }
-
     AnimSet animSet;
     animSet.insert(AnimLog(rmapView_, battle_event_log(event)));
-    animSet.insert(AnimDefend(rmapView_,
-                              defender.entity,
-                              defIdle,
-                              defAnim,
-                              attacker.hex,
-                              attType));
     animSet.insert(AnimHealth(rmapView_,
                               hpBarIds_[0],
                               hpBarIds_[1],
@@ -636,6 +622,29 @@ void Anduran::animate(const GameObject &attacker,
                                       units_.get_projectile(attUnitType),
                                       attacker.hex,
                                       defender.hex));
+    }
+
+    auto defUnitType = event.defenderType;
+    auto defTeam = defender.team;
+    auto defIdle = units_.get_image(defUnitType, ImageType::img_idle, defTeam);
+
+    if (event.numDefenders == event.losses) {
+        auto defAnim = units_.get_image(defUnitType, ImageType::anim_die, defTeam);
+        animSet.insert(AnimDie(rmapView_,
+                               defender.entity,
+                               defIdle,
+                               defAnim,
+                               attacker.hex,
+                               attType));
+    }
+    else {
+        auto defImg = units_.get_image(defUnitType, ImageType::img_defend, defTeam);
+        animSet.insert(AnimDefend(rmapView_,
+                                  defender.entity,
+                                  defIdle,
+                                  defImg,
+                                  attacker.hex,
+                                  attType));
     }
 
     anims_.push(animSet);

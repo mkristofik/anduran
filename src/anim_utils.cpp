@@ -1,13 +1,13 @@
 /*
     Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License version 2
     or at your option any later version.
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY.
- 
+
     See the COPYING.txt file for more details.
 */
 #include "anim_utils.h"
@@ -24,6 +24,7 @@ namespace
     const Uint32 RANGED_SHOT_MS = 300;
     const Uint32 RANGED_FLIGHT_MS = 150;
     const Uint32 RANGED_HIT_MS = RANGED_SHOT_MS + RANGED_FLIGHT_MS;
+    const Uint32 DIE_MS = 1500;
 
     Uint32 get_hit_ms(AttackType attType)
     {
@@ -353,16 +354,16 @@ void AnimRanged::stop()
 AnimDefend::AnimDefend(MapDisplay &display,
                        int entityId,
                        const SdlTexture &idleImg,
-                       const SdlTexture &anim,
+                       const SdlTexture &defImg,
                        const Hex &hAttacker,
                        AttackType attType)
-    : AnimBase(display, get_hit_ms(attType) + std::max(DEFEND_MS, anim.duration_ms())),
+    : AnimBase(display, get_hit_ms(attType) + DEFEND_MS),
     entity_(entityId),
     idleImg_(idleImg),
-    anim_(anim),
+    defendImg_(defImg),
     hFacing_(hAttacker),
     startTime_ms_(get_hit_ms(attType)),
-    animStarted_(false)
+    imgDisplayed_(false)
 {
 }
 
@@ -385,29 +386,83 @@ void AnimDefend::update(Uint32 elapsed_ms)
         return;
     }
 
-    if (!animStarted_) {
-        get_display().setEntityImage(entity_, anim_);
-        animStarted_ = true;
+    if (!imgDisplayed_) {
+        get_display().setEntityImage(entity_, defendImg_);
+        imgDisplayed_ = true;
     }
-    auto obj = get_entity(entity_);
-    obj.frame = get_anim_frame(anim_.timing_ms(), elapsed_ms - startTime_ms_);
-    update_entity(obj);
 }
 
 void AnimDefend::stop()
 {
     auto obj = get_entity(entity_);
     set_idle(obj, baseState_);
-    // If we're showing a die animation, hide it so the user doesn't see it revert
-    // back to the base image.
-    if (anim_.duration_ms() > 0) {
-        obj.visible = false;
-    }
     update_entity(obj, idleImg_);
 }
-// TODO: dedicated AnimDie where the image fades out
-// either show the defend img and fade out slowly, or the die anim and fade out
-// quicker
+
+
+AnimDie::AnimDie(MapDisplay &display,
+                 int entityId,
+                 const SdlTexture &idleImg,
+                 const SdlTexture &anim,
+                 const Hex &hAttacker,
+                 AttackType attType)
+    : AnimBase(display, DIE_MS),
+    entity_(entityId),
+    idleImg_(idleImg),
+    anim_(anim),
+    hFacing_(hAttacker),
+    startTime_ms_(get_hit_ms(attType)),
+    fadeTime_ms_(startTime_ms_ + std::max(DEFEND_MS, anim.duration_ms())),
+    animStarted_(false)
+{
+}
+
+void AnimDie::start()
+{
+    auto obj = get_entity(entity_);
+    align_image(obj, idleImg_);
+
+    baseState_ = obj;
+    obj.z = ZOrder::animating;
+    obj.visible = true;
+    obj.faceHex(hFacing_);
+
+    update_entity(obj, idleImg_);
+}
+
+void AnimDie::update(Uint32 elapsed_ms)
+{
+    if (elapsed_ms < startTime_ms_) {
+        return;
+    }
+
+    if (!animStarted_) {
+        get_display().setEntityImage(entity_, anim_);
+        animStarted_ = true;
+    }
+
+    auto obj = get_entity(entity_);
+    if (elapsed_ms < fadeTime_ms_) {
+        obj.frame = get_anim_frame(anim_.timing_ms(), elapsed_ms - startTime_ms_);
+    }
+    else {
+        auto fadeFrac = static_cast<double>(elapsed_ms - fadeTime_ms_) /
+            (DIE_MS - fadeTime_ms_);
+        obj.alpha = std::clamp<int>((1 - fadeFrac) * SDL_ALPHA_OPAQUE,
+                                    SDL_ALPHA_TRANSPARENT,
+                                    SDL_ALPHA_OPAQUE);
+    }
+    update_entity(obj);
+}
+
+void AnimDie::stop()
+{
+    auto obj = get_entity(entity_);
+    set_idle(obj, baseState_);
+    // Hide it so the user doesn't see it revert back to the base image.
+    obj.visible = false;
+    update_entity(obj, idleImg_);
+}
 
 
 AnimProjectile::AnimProjectile(MapDisplay &display,

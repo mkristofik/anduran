@@ -1,13 +1,13 @@
 /*
     Copyright (C) 2019-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License version 2
     or at your option any later version.
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY.
- 
+
     See the COPYING.txt file for more details.
 */
 #include "UnitManager.h"
@@ -146,8 +146,14 @@ SdlTexture UnitManager::get_image(int unitType, ImageType imgType, Team team) co
         return textures[team];
     }
 
-    // Use the base image if the requested image type doesn't exist.
-    imgIter = unitImages.find(ImageType::img_idle);
+    // Fallback to another image if the requested image type doesn't exist.
+    if (imgType == ImageType::anim_die) {
+        imgIter = unitImages.find(ImageType::img_defend);
+    }
+    if (imgIter == end(unitImages)) {
+        imgIter = unitImages.find(ImageType::img_idle);
+    }
+
     if (imgIter != end(unitImages)) {
         const auto &textures = imgIter->second;
         return textures[team];

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2022 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2022-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -27,6 +27,7 @@ using AnimType = std::variant<std::monostate,
                               AnimMelee,
                               AnimRanged,
                               AnimDefend,
+                              AnimDie,
                               AnimProjectile,
                               AnimLog,
                               AnimHealth>;
