@@ -38,6 +38,7 @@ struct GameObject
     int secondary = -1;  // embellishment such as a flag or ellipse
     Team team = Team::neutral;
     ObjectType type = ObjectType::invalid;
+    bool visited = false;
 };
 
 

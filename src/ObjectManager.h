@@ -44,6 +44,7 @@ struct MapObject
 {
     std::string name;
     std::string imgName;
+    std::string imgVisited;
     std::string defender;
     EnumSizedBitset<Terrain> terrain;
     int numPerRegion = 0;

@@ -483,15 +483,30 @@ bool Anduran::battle_action(int playerId, int enemyId)
 // Is there anything to do on the current hex?
 void Anduran::local_action(int entity)
 {
+    static const auto &objConfig = rmap_.getObjectConfig();
+
     auto player = game_.get_object(entity);
     auto [action, obj] = game_.hex_action(player, player.hex);
+    auto &objData = objConfig.find(obj.type);
 
-    // If we land on an object with a flag, change the flag color to
-    // match the player's.
-    if (action == ObjectAction::visit && obj.secondary >= 0) {
-        obj.team = player.team;
+    if (action == ObjectAction::visit) {
+        // If we land on an object with a flag, change the flag color to
+        // match the player's.
+        if (objData.flaggable) {
+            obj.team = player.team;
+            anims_.push(AnimDisplay(rmapView_, obj.secondary, flagImages_[obj.team]));
+        }
+        else {
+            auto &visitedImgName = objData.imgVisited;
+            if (!visitedImgName.empty()) {
+                // TODO: cache these so we're not recomputing them each time someone
+                // visits something
+                auto img = images_.make_texture(visitedImgName, win_);
+                anims_.push(AnimDisplay(rmapView_, obj.entity, img));
+            }
+            obj.visited = true;
+        }
         game_.update_object(obj);
-        anims_.push(AnimDisplay(rmapView_, obj.secondary, flagImages_[obj.team]));
     }
     else if (action == ObjectAction::pickup) {
         game_.remove_object(obj.entity);

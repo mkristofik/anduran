@@ -190,7 +190,7 @@ is next to or in front of a castle
 * flaggable? (default false)
 * map display needs to return multiple objects per tile (to allow flags and creatures)
 * objects with an army guarding them
-- one-time visit objects change image after they've been visited, no longer visitable
+* one-time visit objects change image after they've been visited, no longer visitable
 
 
 # Game state
@@ -235,18 +235,29 @@ is next to or in front of a castle
     - luck, morale
     - retaliation
 - additional traits
-    - steadfast, unlimited retaliation
     - double strike
-    - first strike
+    - cursed, defending unit does minimum damage
+        - how long would this state stay in effect?
+        - how to animate its effect?
     - binding, lowers target speed to 0
-    - trample (probably more interesting with Tactics idea)
-    - regeneration
+        - battle_utils has to re-sort unit attack order
     - life drain
+        - battle_utils has to support attacker gaining HP on attack
+        - support resurrecting units
+        - AnimHealth needs to update attacker's HP bar too
+    - regeneration
+        - battle_utils needs an event that isn't an attack
+        - unit heals at start of round
     - zombify
+        - battle_utils has to recompute relative unit sizes
+        - AnimHealth needs a color for beyond 100% HP
 - KISS principle: he who gets there first with the most, wins
     - none of these ideas matter unless we can render them so the player can see
     their effects
     - right now retaliation appears to give certain units two turns in a row
+    - steadfast trait, unlimited retaliation not needed if no retaliation
+    - first strike, ditto
+    - trample probably more interesting with Tactics idea
 
 
 # Image management

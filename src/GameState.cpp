@@ -80,8 +80,15 @@ GameAction GameState::hex_action(const GameObject &player, const Hex &hex) const
     else {
         for (auto &obj : objects_in_hex(hex)) {
             auto action = objConfig_->get_action(obj.type);
-            if (action == ObjectAction::visit && obj.team != player.team) {
-                return {ObjectAction::visit, obj};
+            // TODO: need separate actions for flagging and one-time visiting
+            if (action == ObjectAction::visit) {
+                bool canFlag = objConfig_->find(obj.type).flaggable;
+                if (canFlag && obj.team != player.team) {
+                    return {ObjectAction::visit, obj};
+                }
+                else if (!canFlag && !obj.visited) {
+                    return {ObjectAction::visit, obj};
+                }
             }
             else if (action != ObjectAction::none && action != ObjectAction::visit) {
                 return {action, obj};

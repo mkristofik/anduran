@@ -87,6 +87,9 @@ ObjectManager::ObjectManager(const std::string &configFile)
                 else if (field == "img") {
                     obj.imgName = value;
                 }
+                else if (field == "img-visited") {
+                    obj.imgVisited = value;
+                }
                 else if (field == "defender") {
                     obj.defender = value;
                 }

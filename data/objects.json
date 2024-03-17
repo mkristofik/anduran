@@ -45,6 +45,7 @@
     "shipwreck": {
         "name": "Shipwreck",
         "img": "shipwreck",
+        "img-visited": "shipwreck-visited",
         "terrain": [0],
         "per-coastline": 1,
         "visit": true,
