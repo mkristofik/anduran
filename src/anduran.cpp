@@ -12,7 +12,6 @@
 */
 #include "anduran.h"
 
-#include "ObjectManager.h"
 #include "SdlSurface.h"
 #include "SdlTexture.h"
 #include "anim_utils.h"
@@ -50,6 +49,7 @@ Anduran::Anduran()
     championImages_(),
     ellipseImages_(),
     flagImages_(),
+    objVisitedImages_(),
     stateChanged_(true),
     influence_(rmap_.numRegions())
 {
@@ -275,6 +275,10 @@ void Anduran::load_objects()
 {
     for (auto &obj : rmap_.getObjectConfig()) {
         auto img = images_.make_texture(obj.imgName, win_);
+        if (!obj.imgVisited.empty()) {
+            auto visitImg = images_.make_texture(obj.imgVisited, win_);
+            objVisitedImages_.insert({obj.type, visitImg});
+        }
         auto objHexes = rmap_.getObjectTiles(obj.type);
 
         // Assume any sprite sheet with the same number of frames as there are
@@ -483,11 +487,8 @@ bool Anduran::battle_action(int playerId, int enemyId)
 // Is there anything to do on the current hex?
 void Anduran::local_action(int entity)
 {
-    static const auto &objConfig = rmap_.getObjectConfig();
-
     auto player = game_.get_object(entity);
     auto [action, obj] = game_.hex_action(player, player.hex);
-    auto &objData = objConfig.find(obj.type);
 
     if (action == ObjectAction::flag) {
         // If we land on an object with a flag, change the flag color to
@@ -497,12 +498,9 @@ void Anduran::local_action(int entity)
         game_.update_object(obj);
     }
     else if (action == ObjectAction::visit) {
-        auto &visitedImgName = objData.imgVisited;
-        if (!visitedImgName.empty()) {
-            // TODO: cache these so we're not recomputing them each time someone
-            // visits something
-            auto img = images_.make_texture(visitedImgName, win_);
-            anims_.push(AnimDisplay(rmapView_, obj.entity, img));
+        auto iter = objVisitedImages_.find(obj.type);
+        if (iter != std::end(objVisitedImages_)) {
+            anims_.push(AnimDisplay(rmapView_, obj.entity, iter->second));
         }
         obj.visited = true;
         game_.update_object(obj);

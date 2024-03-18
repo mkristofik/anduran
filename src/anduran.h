@@ -17,6 +17,7 @@
 #include "GameState.h"
 #include "MapDisplay.h"
 #include "Minimap.h"
+#include "ObjectManager.h"
 #include "Pathfinder.h"
 #include "RandomMap.h"
 #include "SdlApp.h"
@@ -29,6 +30,8 @@
 #include "hex_utils.h"
 #include "iterable_enum_class.h"
 #include "team_color.h"
+
+#include "boost/container/flat_map.hpp"
 
 #include <string>
 #include <string_view>
@@ -97,6 +100,7 @@ private:
     std::vector<SdlTexture> championImages_;
     TeamColoredTextures ellipseImages_;
     TeamColoredTextures flagImages_;
+    boost::container::flat_map<ObjectType, SdlTexture> objVisitedImages_;
     bool stateChanged_;
     std::vector<EnumSizedArray<int, Team>> influence_;
 };
