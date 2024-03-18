@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(actions)
 
     MapObject obj;
     obj.type = ObjectType::village;
-    obj.action = ObjectAction::visit;
+    obj.action = ObjectAction::flag;
     objConfig.insert(obj);
     obj.type = ObjectType::chest;
     obj.action = ObjectAction::pickup;
@@ -102,8 +102,14 @@ BOOST_AUTO_TEST_CASE(actions)
     game.add_object(enemy);
 
     auto hexAction = game.hex_action(player, Hex{1, 1});
-    BOOST_TEST(hexAction.action == ObjectAction::visit);
+    BOOST_TEST(hexAction.action == ObjectAction::flag);
     BOOST_TEST(hexAction.obj.entity == village.entity);
+
+    // If object is on the same team, we shouldn't flag it again.
+    village.team = Team::red;
+    game.update_object(village);
+    hexAction = game.hex_action(player, Hex{1, 1});
+    BOOST_TEST(hexAction.action == ObjectAction::none);
 
     hexAction = game.hex_action(player, Hex{2, 2});
     BOOST_TEST(hexAction.action == ObjectAction::pickup);
