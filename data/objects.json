@@ -21,7 +21,6 @@
         "img": "lighthouse",
         "terrain": [1, 2, 3, 4, 5],
         "per-coastline": 1,
-        "visit": true,
         "flag": true,
         "fair-distance": true
     },
@@ -31,8 +30,7 @@
         "terrain": [1],
         "per-region": 1,
         "per-castle": 1,
-        "visit": true,
-        "flag": false
+        "visit": true
     },
     "resource": {
         "name": "Gold",
@@ -49,7 +47,6 @@
         "terrain": [0],
         "per-coastline": 1,
         "visit": true,
-        "flag": false,
         "defender": "skel"
     },
     "village": {
@@ -58,7 +55,6 @@
         "terrain": [1, 2, 3, 4, 5],
         "per-region": 1,
         "per-castle": 0,
-        "visit": true,
         "flag": true
     },
     "windmill": {
@@ -68,7 +64,6 @@
         "per-region": 1,
         "per-castle": 1,
         "probability": 50,
-        "visit": true,
         "flag": true
     }
 }

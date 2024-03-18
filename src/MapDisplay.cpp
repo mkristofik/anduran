@@ -160,6 +160,7 @@ MapDisplay::MapDisplay(SdlWindow &win,
     pathImg_[ObjectAction::battle] = images_->make_texture("new-battle", *window_);
     pathImg_[ObjectAction::visit] = images_->make_texture("visit-object", *window_);
     pathImg_[ObjectAction::pickup] = images_->make_texture("visit-object", *window_);
+    pathImg_[ObjectAction::flag] = images_->make_texture("visit-object", *window_);
 }
 
 PartialPixel MapDisplay::getDisplayFrac() const

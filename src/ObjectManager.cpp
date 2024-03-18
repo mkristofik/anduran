@@ -118,10 +118,14 @@ ObjectManager::ObjectManager(const std::string &configFile)
             else if (f->value.IsBool()) {
                 bool val = f->value.GetBool();
                 if (field == "visit") {
-                    obj.action = val ? ObjectAction::visit : ObjectAction::pickup;
+                    if (val) {
+                        obj.action = ObjectAction::visit;
+                    }
                 }
                 else if (field == "flag") {
-                    obj.flaggable = val;
+                    if (val) {
+                        obj.action = ObjectAction::flag;
+                    }
                 }
                 else if (field == "fair-distance") {
                     obj.fairDistance = val;

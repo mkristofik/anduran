@@ -295,7 +295,7 @@ void Anduran::load_objects()
             gameObj.entity = rmapView_.addEntity(img, entity, HexAlign::middle);
             gameObj.type = obj.type;
 
-            if (obj.flaggable) {
+            if (obj.action == ObjectAction::flag) {
                 gameObj.secondary = rmapView_.addEntity(flagImages_[Team::neutral],
                                                         hex,
                                                         ZOrder::flag);
@@ -489,23 +489,22 @@ void Anduran::local_action(int entity)
     auto [action, obj] = game_.hex_action(player, player.hex);
     auto &objData = objConfig.find(obj.type);
 
-    if (action == ObjectAction::visit) {
+    if (action == ObjectAction::flag) {
         // If we land on an object with a flag, change the flag color to
         // match the player's.
-        if (objData.flaggable) {
-            obj.team = player.team;
-            anims_.push(AnimDisplay(rmapView_, obj.secondary, flagImages_[obj.team]));
+        obj.team = player.team;
+        anims_.push(AnimDisplay(rmapView_, obj.secondary, flagImages_[obj.team]));
+        game_.update_object(obj);
+    }
+    else if (action == ObjectAction::visit) {
+        auto &visitedImgName = objData.imgVisited;
+        if (!visitedImgName.empty()) {
+            // TODO: cache these so we're not recomputing them each time someone
+            // visits something
+            auto img = images_.make_texture(visitedImgName, win_);
+            anims_.push(AnimDisplay(rmapView_, obj.entity, img));
         }
-        else {
-            auto &visitedImgName = objData.imgVisited;
-            if (!visitedImgName.empty()) {
-                // TODO: cache these so we're not recomputing them each time someone
-                // visits something
-                auto img = images_.make_texture(visitedImgName, win_);
-                anims_.push(AnimDisplay(rmapView_, obj.entity, img));
-            }
-            obj.visited = true;
-        }
+        obj.visited = true;
         game_.update_object(obj);
     }
     else if (action == ObjectAction::pickup) {

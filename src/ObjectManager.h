@@ -37,7 +37,7 @@
     enum class ObjectType {OBJ_TYPES invalid};
 #undef X
 
-ITERABLE_ENUM_CLASS(ObjectAction, none, battle, visit, pickup);
+ITERABLE_ENUM_CLASS(ObjectAction, none, battle, visit, pickup, flag);
 
 
 struct MapObject
@@ -52,8 +52,7 @@ struct MapObject
     int numPerCoastline = 0;
     int probability = 100;
     ObjectType type = ObjectType::invalid;
-    ObjectAction action = ObjectAction::none;
-    bool flaggable = false;
+    ObjectAction action = ObjectAction::pickup;
     bool fairDistance = false;  // try to place as far as possible from all castles
 };
 
