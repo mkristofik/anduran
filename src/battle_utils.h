@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2023 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -43,6 +43,9 @@ struct UnitState
     int speed() const;
     int damage(DamageType dType = DamageType::normal) const;
     void take_damage(int dmg);
+
+    // Scaled version of total_hp() that places an emphasis on fully healed units.
+    int ai_score() const;
 };
 
 using ArmyState = std::array<UnitState, ARMY_SIZE>;

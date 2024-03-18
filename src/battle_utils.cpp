@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2023 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -140,6 +140,20 @@ void UnitState::take_damage(int dmg)
     }
 }
 
+int UnitState::ai_score() const
+{
+    if (!alive()) {
+        return 0;
+    }
+
+    if (hpLeft < unit->hp) {
+        return 2 * (num - 1) * unit->hp + hpLeft;
+    }
+    else {
+        return 2 * num * unit->hp;
+    }
+}
+
 
 void Army::update(const ArmyState &state)
 {
@@ -230,7 +244,18 @@ const UnitState * Battle::active_unit() const
 
 int Battle::score() const
 {
-    auto score = attackerTotalHp_ - defenderTotalHp_;
+    int attScore = 0;
+    int defScore = 0;
+    for (auto &unit : units_) {
+        if (unit.attacker) {
+            attScore += unit.ai_score();
+        }
+        else {
+            defScore += unit.ai_score();
+        }
+    }
+
+    int score = attScore - defScore;
     if (done()) {
         score *= 10;  // place an emphasis on winning
     }
