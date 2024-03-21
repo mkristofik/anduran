@@ -156,11 +156,12 @@ MapDisplay::MapDisplay(SdlWindow &win,
     hexShadowId_ = addHiddenEntity(shadowImg, ZOrder::shadow);
     const auto highlightImg = images_->make_texture("hex-yellow", *window_);
     hexHighlightId_ = addHiddenEntity(highlightImg, ZOrder::highlight);
+
     pathImg_[ObjectAction::none] = images_->make_texture("footsteps", *window_);
-    pathImg_[ObjectAction::battle] = images_->make_texture("new-battle", *window_);
-    pathImg_[ObjectAction::visit] = images_->make_texture("visit-object", *window_);
-    pathImg_[ObjectAction::pickup] = images_->make_texture("visit-object", *window_);
-    pathImg_[ObjectAction::flag] = images_->make_texture("visit-object", *window_);
+    pathImg_[ObjectAction::battle] = images_->make_texture("icon-battle", *window_);
+    pathImg_[ObjectAction::visit] = images_->make_texture("icon-visit", *window_);
+    pathImg_[ObjectAction::pickup] = images_->make_texture("icon-pickup", *window_);
+    pathImg_[ObjectAction::flag] = images_->make_texture("icon-visit", *window_);
 }
 
 PartialPixel MapDisplay::getDisplayFrac() const
