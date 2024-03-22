@@ -24,7 +24,6 @@ namespace
     const Uint32 RANGED_SHOT_MS = 300;
     const Uint32 RANGED_FLIGHT_MS = 150;
     const Uint32 RANGED_HIT_MS = RANGED_SHOT_MS + RANGED_FLIGHT_MS;
-    const Uint32 DIE_MS = 1500;
     const Uint32 FADE_MS = 1000;
 
     Uint32 get_hit_ms(AttackType attType)
@@ -56,6 +55,22 @@ namespace
         const auto col = std::min<int>(distance(std::ranges::begin(frameList), iter),
                                        ssize(frameList) - 1);
         return {0, col};
+    }
+
+    Uint8 fade_out(Uint32 elapsed_ms)
+    {
+        auto fadeFrac = static_cast<double>(elapsed_ms) / FADE_MS;
+        return std::clamp<int>((1 - fadeFrac) * SDL_ALPHA_OPAQUE,
+                               SDL_ALPHA_TRANSPARENT,
+                               SDL_ALPHA_OPAQUE);
+    }
+
+    Uint8 fade_in(Uint32 elapsed_ms)
+    {
+        auto fadeFrac = static_cast<double>(elapsed_ms) / FADE_MS;
+        return std::clamp<int>(fadeFrac * SDL_ALPHA_OPAQUE,
+                               SDL_ALPHA_TRANSPARENT,
+                               SDL_ALPHA_OPAQUE);
     }
 }
 
@@ -407,14 +422,13 @@ AnimDie::AnimDie(MapDisplay &display,
                  const SdlTexture &anim,
                  const Hex &hAttacker,
                  AttackType attType)
-    : AnimBase(display, DIE_MS),
+    : AnimBase(display, get_hit_ms(attType) + anim_duration_ms(anim) + FADE_MS),
     entity_(entityId),
     idleImg_(idleImg),
     anim_(anim),
     hFacing_(hAttacker),
     startTime_ms_(get_hit_ms(attType)),
-    // TODO: static fade_start_time_ms()
-    fadeTime_ms_(startTime_ms_ + std::max(DEFEND_MS, anim.duration_ms())),
+    fadeTime_ms_(startTime_ms_ + anim_duration_ms(anim)),
     animStarted_(false)
 {
 }
@@ -448,11 +462,7 @@ void AnimDie::update(Uint32 elapsed_ms)
         obj.frame = get_anim_frame(anim_.timing_ms(), elapsed_ms - startTime_ms_);
     }
     else {
-        auto fadeFrac = static_cast<double>(elapsed_ms - fadeTime_ms_) /
-            (DIE_MS - fadeTime_ms_);
-        obj.alpha = std::clamp<int>((1 - fadeFrac) * SDL_ALPHA_OPAQUE,
-                                    SDL_ALPHA_TRANSPARENT,
-                                    SDL_ALPHA_OPAQUE);
+        obj.alpha = fade_out(elapsed_ms - fadeTime_ms_);
     }
     update_entity(obj);
 }
@@ -464,6 +474,11 @@ void AnimDie::stop()
     // Hide it so the user doesn't see it revert back to the base image.
     obj.visible = false;
     update_entity(obj, idleImg_);
+}
+
+Uint32 AnimDie::anim_duration_ms(const SdlTexture &anim)
+{
+    return std::max(DEFEND_MS, anim.duration_ms());
 }
 
 
@@ -715,11 +730,7 @@ void AnimEmbark::start()
 void AnimEmbark::update(Uint32 elapsed_ms)
 {
     auto obj = get_entity(entity_);
-    auto fadeFrac = static_cast<double>(elapsed_ms) / FADE_MS;
-    // TODO: write helper functions to share this with AnimDie
-    obj.alpha = std::clamp<int>((1 - fadeFrac) * SDL_ALPHA_OPAQUE,
-                                SDL_ALPHA_TRANSPARENT,
-                                SDL_ALPHA_OPAQUE);
+    obj.alpha = fade_out(elapsed_ms);
     update_entity(obj);
 }
 
@@ -773,10 +784,7 @@ void AnimDisembark::start()
 void AnimDisembark::update(Uint32 elapsed_ms)
 {
     auto obj = get_entity(entity_);
-    auto fadeFrac = static_cast<double>(elapsed_ms) / FADE_MS;
-    obj.alpha = std::clamp<int>(fadeFrac * SDL_ALPHA_OPAQUE,
-                                SDL_ALPHA_TRANSPARENT,
-                                SDL_ALPHA_OPAQUE);
+    obj.alpha = fade_in(elapsed_ms);
 
     if (!animStarted_) {
         obj.visible = true;

@@ -60,6 +60,7 @@ private:
 };
 
 
+// Make the given entity invisible.
 class AnimHide : public AnimBase
 {
 public:
@@ -73,6 +74,7 @@ private:
 };
 
 
+// Show a previously hidden entity, possibly at a new hex or with a new image.
 class AnimDisplay : public AnimBase
 {
 public:
@@ -90,6 +92,7 @@ private:
 };
 
 
+// Move the entity along the given path.
 class AnimMove : public AnimBase
 {
 public:
@@ -108,6 +111,7 @@ private:
 };
 
 
+// Move the entity toward its target and then back while running 'anim'.
 class AnimMelee : public AnimBase
 {
 public:
@@ -131,6 +135,7 @@ private:
 };
 
 
+// Run the ranged animation for an entity in place.
 class AnimRanged : public AnimBase
 {
 public:
@@ -153,6 +158,7 @@ private:
 };
 
 
+// Show the defend image for an entity in time with the given attack type.
 class AnimDefend : public AnimBase
 {
 public:
@@ -178,6 +184,7 @@ private:
 };
 
 
+// Run 'anim' in time with the given attack type and then fade out the entity.
 class AnimDie : public AnimBase
 {
 public:
@@ -193,6 +200,9 @@ private:
     void update(Uint32 elapsed_ms) override;
     void stop() override;
 
+    // Need a minimum runtime if this is just a defend image, not an animation.
+    static Uint32 anim_duration_ms(const SdlTexture &anim);
+
     int entity_;
     MapEntity baseState_;
     SdlTexture idleImg_;
@@ -204,6 +214,7 @@ private:
 };
 
 
+// Show a projectile flying between two hexes.
 class AnimProjectile : public AnimBase
 {
 public:
@@ -227,6 +238,8 @@ private:
 };
 
 
+// Output a log message to the console.  We want the message to appear in time
+// with other animations, such as during a battle.
 class AnimLog : public AnimBase
 {
 public:
@@ -273,7 +286,8 @@ private:
 };
 
 
-// TODO: write comments explaining what each anim does
+// Fade out the entity boarding the boat, then replace its image with a
+// team-colored boat.  Hide the neutral boat.
 class AnimEmbark : public AnimBase
 {
 public:
@@ -290,6 +304,8 @@ private:
 };
 
 
+// Hide the entity (on water) and replace it with a neutral boat entity.  Fade in
+// the entity at its new hex (on land) using its original team-colored image.
 class AnimDisembark : public AnimBase
 {
 public:
@@ -310,20 +326,5 @@ private:
     Hex hDest_;
     bool animStarted_;
 };
-// TODO: AnimBoat (should this be two anims?)
-// champion entity, boat entity, new boat/champion image, destination hex and terrain
-// if dest terrain is water (onto boat):
-// - fade out champion (TODO: share this code with AnimDie)
-// - set champion's hex to boat hex
-// - replace champion's image with team-colored boat
-// - set champion facing to match the facing from champion hex to boat hex (do we
-//     need to worry about this, or will it already just work?)
-// - hide boat
-// if dest terrain is land (leaving boat):
-// - hide champion
-// - show neutral boat on champion's hex, match champion facing
-// - replace champion's image with his normal image
-// - set champion hex to destination hex
-// - fade in champion
 
 #endif
