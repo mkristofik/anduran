@@ -756,16 +756,17 @@ AnimDisembark::AnimDisembark(MapDisplay &display,
 void AnimDisembark::start()
 {
     auto obj = get_entity(entity_);
-    obj.hex = hDest_;
-    obj.visible = false;
-    obj.faceHex(hDest_);
-    update_entity(obj);
-
     auto boatObj = get_entity(boat_);
+
     boatObj.hex = obj.hex;
     boatObj.visible = true;
     boatObj.faceHex(hDest_);
     update_entity(boatObj);
+
+    obj.visible = false;
+    obj.faceHex(hDest_);  // face where we're moving to before moving
+    obj.hex = hDest_;
+    update_entity(obj);
 }
 
 // Fade in the champion on the destination hex with its original image.

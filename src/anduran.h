@@ -59,6 +59,8 @@ private:
     // Execute all necessary game actions along the given path.
     void do_actions(int entity, PathView path);
     void move_action(int entity, PathView path);
+    void embark_action(int playerId, int boatId);
+    void disembark_action(int entity, const Hex &hLand);
     bool battle_action(int playerId, int enemyId);
     void local_action(int entity);
 
@@ -101,7 +103,7 @@ private:
     std::vector<SdlTexture> championImages_;
     TeamColoredTextures ellipseImages_;
     TeamColoredTextures flagImages_;
-    TeamColoredTextures boatImages_;
+    TeamColoredTextures boatImages_;  // TODO: configure objects with team colors
     boost::container::flat_map<ObjectType, SdlTexture> objVisitedImages_;
     bool stateChanged_;
     std::vector<EnumSizedArray<int, Team>> influence_;

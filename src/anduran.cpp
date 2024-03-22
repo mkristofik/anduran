@@ -176,16 +176,6 @@ void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
     curPath_ = pathfind_.find_path(player, hCurPathEnd_);
     if (!curPath_.empty()) {
         auto [action, _] = game_.hex_action(player, hCurPathEnd_);
-
-        /* TODO: need to special case hex_action() for getting off a boat.
-        if (action == ObjectAction::none &&
-            rmap_.getTerrain(player.hex) == Terrain::water &&
-            rmap_.getTerrain(hCurPathEnd_) != Terrain::water)
-        {
-            action = ObjectAction::disembark;
-        }
-        */
-
         rmapView_.showPath(curPath_, action);
     }
 }
@@ -420,18 +410,19 @@ void Anduran::do_actions(int entity, PathView path)
             playerSurvives = battle_action(entity, obj.entity);
         }
     }
-    else if (action == ObjectAction::embark) {
-        // Move to the hex adjacent to the boat, then animate boarding it.
+    else if (action == ObjectAction::embark || action == ObjectAction::disembark) {
+        // Move to the hex on the coastline.
         if (pathSize > 2) {
             auto pathToCoast = path.first(pathSize - 1);
             move_action(entity, pathToCoast);
         }
-        // TODO: separate function for boarding a boat.
-        auto player = game_.get_object(entity);
-        anims_.push(AnimEmbark(rmapView_, entity, obj.entity, boatImages_[player.team]));
-        player.hex = hLast;;
-        game_.update_object(player);
-        game_.remove_object(obj.entity);
+
+        if (action == ObjectAction::embark) {
+            embark_action(entity, obj.entity);
+        }
+        else {
+            disembark_action(entity, hLast);
+        }
     }
     else {
         move_action(entity, path);
@@ -452,6 +443,57 @@ void Anduran::move_action(int entity, PathView path)
     auto player = game_.get_object(entity);
     anims_.push(AnimMove(rmapView_, player.entity, path));
     player.hex = path.back();
+    game_.update_object(player);
+}
+
+void Anduran::embark_action(int playerId, int boatId)
+{
+    auto player = game_.get_object(playerId);
+    auto boat = game_.get_object(boatId);
+
+    anims_.push(AnimEmbark(rmapView_, playerId, boatId, boatImages_[player.team]));
+    player.hex = boat.hex;
+    game_.update_object(player);
+
+    // Hide the neutral boat now that it's been replaced by the player.
+    game_.remove_object(boatId);
+}
+
+void Anduran::disembark_action(int entity, const Hex &hLand)
+{
+    auto player = game_.get_object(entity);
+
+    // Are there any unused boats we can reuse?  We need to leave behind a
+    // neutral boat as the champion steps onto land.
+    GameObject boat;
+    for (auto &obj : game_.objects_by_type(ObjectType::boat)) {
+        if (obj.hex == Hex::invalid()) {
+            boat = obj;
+            break;
+        }
+    }
+
+    // If not, create one.
+    if (boat.type == ObjectType::invalid) {
+        boat.hex = player.hex;
+        boat.entity = rmapView_.addEntity(boatImages_[Team::neutral],
+                                          boat.hex,
+                                          ZOrder::unit);
+        boat.team = Team::neutral;
+        boat.type = ObjectType::boat;
+        game_.add_object(boat);
+    }
+    else {
+        boat.hex = player.hex;
+        game_.update_object(boat);
+    }
+
+    anims_.push(AnimDisembark(rmapView_,
+                              entity,
+                              boat.entity,
+                              championImages_[static_cast<int>(player.team)],
+                              hLand));
+    player.hex = hLand;
     game_.update_object(player);
 }
 
@@ -537,6 +579,8 @@ void Anduran::local_action(int entity)
         game_.update_object(obj);
     }
     else if (action == ObjectAction::visit) {
+        // If the object has a separate image to mark that it's been visited,
+        // replace it.
         auto iter = objVisitedImages_.find(obj.type);
         if (iter != std::end(objVisitedImages_)) {
             anims_.push(AnimDisplay(rmapView_, obj.entity, iter->second));

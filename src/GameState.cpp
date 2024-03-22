@@ -75,6 +75,7 @@ int GameState::hex_controller(const Hex &hex) const
 
 GameAction GameState::hex_action(const GameObject &player, const Hex &hex) const
 {
+    // TODO: zone of control should not extend into water
     int zoc = hex_controller(hex);
     if (zoc >= 0 && zoc != player.entity) {
         return {ObjectAction::battle, get_object(zoc)};
