@@ -177,7 +177,7 @@ bool Pathfinder::is_reachable(int index) const
     // destination hex and it's open.
     if (srcTerrain == Terrain::water &&
         terrain != Terrain::water &&
-        (index != iDest_ || action != ObjectAction::none))
+        (index != iDest_ || action != ObjectAction::disembark))
     {
         return false;
     }

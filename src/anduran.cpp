@@ -431,6 +431,7 @@ void Anduran::do_actions(int entity, PathView path)
         anims_.push(AnimEmbark(rmapView_, entity, obj.entity, boatImages_[player.team]));
         player.hex = hLast;;
         game_.update_object(player);
+        game_.remove_object(obj.entity);
     }
     else {
         move_action(entity, path);

@@ -34,7 +34,7 @@ BOOST_AUTO_TEST_CASE(add_and_remove)
     RandomMap rmap("tests/map.json", dummy);
     GameState game(rmap);
     GameObject obj;
-    obj.hex = Hex{5, 5};
+    obj.hex = {5, 5};
     obj.entity = 42;
     obj.type = ObjectType::army;
     game.add_object(obj);
@@ -87,19 +87,19 @@ BOOST_AUTO_TEST_CASE(actions)
     game.add_object(player);
 
     GameObject village;
-    village.hex = Hex{1, 1};
+    village.hex = {1, 1};
     village.entity = 1;
     village.type = ObjectType::village;
     game.add_object(village);
 
     GameObject treasure;
-    treasure.hex = Hex{2, 2};
+    treasure.hex = {2, 2};
     treasure.entity = 2;
     treasure.type = ObjectType::chest;
     game.add_object(treasure);
 
     GameObject enemy;
-    enemy.hex = Hex{3, 3};
+    enemy.hex = {3, 3};
     enemy.entity = 3;
     enemy.type = ObjectType::army;
     game.add_object(enemy);
@@ -131,19 +131,19 @@ BOOST_AUTO_TEST_CASE(zone_of_control)
     GameState game(rmap);
 
     GameObject army1;
-    army1.hex = Hex{1, 1};
+    army1.hex = {1, 1};
     army1.entity = 1;
     army1.type = ObjectType::army;
     game.add_object(army1);
 
     GameObject army2;
-    army2.hex = Hex{2, 1};
+    army2.hex = {2, 1};
     army2.entity = 2;
     army2.type = ObjectType::army;
     game.add_object(army2);
 
     GameObject hero;
-    hero.hex = Hex{5, 5};
+    hero.hex = {5, 5};
     hero.entity = 3;
     hero.type = ObjectType::champion;
     game.add_object(hero);
@@ -160,4 +160,30 @@ BOOST_AUTO_TEST_CASE(zone_of_control)
         }));
 }
 
-// TODO: test cases for boarding and exiting a boat.
+BOOST_AUTO_TEST_CASE(boarding_boat)
+{
+    ObjectManager dummy;
+    RandomMap rmap("tests/map.json", dummy);
+    GameState game(rmap);
+
+    Hex boatHex = {2, 14};  // edge of a body of water in the test map
+
+    GameObject boat;
+    boat.hex = boatHex;
+    boat.entity = 1;
+    boat.type = ObjectType::boat;
+    game.add_object(boat);
+
+    GameObject hero;
+    hero.hex = {2, 13};
+    hero.entity = 2;
+    hero.type = ObjectType::champion;
+    game.add_object(hero);
+
+    BOOST_TEST(game.hex_action(hero, boatHex).action == ObjectAction::embark);
+
+    // Move the hero onto the boat, test for stepping back onto land.
+    hero.hex = boatHex;
+    game.update_object(hero);
+    BOOST_TEST(game.hex_action(hero, Hex{3, 13}).action == ObjectAction::disembark);
+}

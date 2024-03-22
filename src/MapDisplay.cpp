@@ -667,25 +667,25 @@ void MapDisplay::addBorderTiles()
 
     // Top-left corner
     auto newTile = tiles_[map_->intFromHex(Hex{0, 0})];
-    newTile.hex += Hex{-1, -1};
+    newTile.hex += {-1, -1};
     newTile.basePixel = pixelFromHex(newTile.hex);
     tiles_.push_back(newTile);
 
     // Top-right corner
     newTile = tiles_[map_->intFromHex(Hex{map_->width() - 1, 0})];
-    newTile.hex += Hex{1, -1};
+    newTile.hex += {1, -1};
     newTile.basePixel = pixelFromHex(newTile.hex);
     tiles_.push_back(newTile);
 
     // Bottom-right corner
     newTile = tiles_[map_->intFromHex(Hex{map_->width() - 1, map_->width() - 1})];
-    newTile.hex += Hex{1, 1};
+    newTile.hex += {1, 1};
     newTile.basePixel = pixelFromHex(newTile.hex);
     tiles_.push_back(newTile);
 
     // Bottom-left corner
     newTile = tiles_[map_->intFromHex(Hex{0, map_->width() - 1})];
-    newTile.hex += Hex{-1, 1};
+    newTile.hex += {-1, 1};
     newTile.basePixel = pixelFromHex(newTile.hex);
     tiles_.push_back(newTile);
 }

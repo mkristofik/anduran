@@ -79,21 +79,29 @@ GameAction GameState::hex_action(const GameObject &player, const Hex &hex) const
     if (zoc >= 0 && zoc != player.entity) {
         return {ObjectAction::battle, get_object(zoc)};
     }
-    else {
-        for (auto &obj : objects_in_hex(hex)) {
-            auto action = objConfig_->get_action(obj.type);
-            if (action == ObjectAction::flag && obj.team != player.team) {
-                return {ObjectAction::flag, obj};
-            }
-            else if (action == ObjectAction::visit && !obj.visited) {
-                return {ObjectAction::visit, obj};
-            }
-            else if (action != ObjectAction::none &&
-                     action != ObjectAction::visit &&
-                     action != ObjectAction::flag)
-            {
-                return {action, obj};
-            }
+
+    auto hexObjects = objects_in_hex(hex);
+    if (hexObjects.empty() &&
+        rmap_->getTerrain(player.hex) == Terrain::water &&
+        rmap_->getTerrain(hex) != Terrain::water)
+    {
+        return {ObjectAction::disembark, GameObject()};
+    }
+
+    for (auto &obj : hexObjects) {
+        auto action = objConfig_->get_action(obj.type);
+        if (action == ObjectAction::flag && obj.team != player.team) {
+            return {ObjectAction::flag, obj};
+        }
+        else if (action == ObjectAction::visit && !obj.visited) {
+            return {ObjectAction::visit, obj};
+        }
+        else if (action != ObjectAction::none &&
+                 action != ObjectAction::visit &&
+                 action != ObjectAction::flag)
+        {
+            // This covers boats, resources to pick up, etc.
+            return {action, obj};
         }
     }
 
