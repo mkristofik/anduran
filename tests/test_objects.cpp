@@ -14,6 +14,7 @@
 
 #include "GameState.h"
 #include "ObjectManager.h"
+#include "RandomMap.h"
 BOOST_TEST_DONT_PRINT_LOG_VALUE(ObjectType)
 BOOST_TEST_DONT_PRINT_LOG_VALUE(ObjectAction)
 
@@ -30,7 +31,8 @@ BOOST_AUTO_TEST_CASE(names)
 BOOST_AUTO_TEST_CASE(add_and_remove)
 {
     ObjectManager dummy;
-    GameState game(dummy);
+    RandomMap rmap("tests/map.json", dummy);
+    GameState game(rmap);
     GameObject obj;
     obj.hex = Hex{5, 5};
     obj.entity = 42;
@@ -76,7 +78,8 @@ BOOST_AUTO_TEST_CASE(actions)
     obj.action = ObjectAction::pickup;
     objConfig.insert(obj);
 
-    GameState game(objConfig);
+    RandomMap rmap("tests/map.json", objConfig);
+    GameState game(rmap);
 
     GameObject player;
     player.entity = 0;
@@ -124,7 +127,8 @@ BOOST_AUTO_TEST_CASE(actions)
 BOOST_AUTO_TEST_CASE(zone_of_control)
 {
     ObjectManager dummy;
-    GameState game(dummy);
+    RandomMap rmap("tests/map.json", dummy);
+    GameState game(rmap);
 
     GameObject army1;
     army1.hex = Hex{1, 1};
@@ -155,3 +159,5 @@ BOOST_AUTO_TEST_CASE(zone_of_control)
             return game.hex_controller(hex) == -1;
         }));
 }
+
+// TODO: test cases for boarding and exiting a boat.

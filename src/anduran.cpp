@@ -35,7 +35,7 @@ Anduran::Anduran()
     images_("img/"s),
     rmapView_(win_, config_.map_bounds(), rmap_, images_),
     minimap_(win_, config_.minimap_bounds(), rmap_, rmapView_),
-    game_(objConfig_),
+    game_(rmap_),
     playerEntityIds_(),
     curPlayerId_(0),
     curPlayerNum_(0),

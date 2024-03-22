@@ -28,6 +28,7 @@
 #include <optional>
 #include <vector>
 
+class RandomMap;
 namespace bmi = boost::multi_index;
 
 
@@ -52,7 +53,7 @@ struct GameAction
 class GameState
 {
 public:
-    explicit GameState(const ObjectManager &objMgr);
+    explicit GameState(const RandomMap &rmap);
 
     // Fetch/modify objects by value like we do for map entities. Object id is the
     // same as the map entity id.
@@ -106,6 +107,7 @@ private:
 
     std::vector<Army> armies_;
     boost::container::flat_map<Hex, int> zoc_;
+    const RandomMap *rmap_;
     const ObjectManager *objConfig_;
 };
 

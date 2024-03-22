@@ -103,6 +103,7 @@ ANDURAN_DEPS = $(ANDURAN_OBJS:%.o=%.d)
 UNITTESTS = unittests$(EXE)
 UNITTESTS_SRC = GameState.cpp \
 	ObjectManager.cpp \
+	RandomMap.cpp \
 	RandomRange.cpp \
 	UnitData.cpp \
 	battle_utils.cpp \
@@ -110,7 +111,7 @@ UNITTESTS_SRC = GameState.cpp \
 	json_utils.cpp \
 	log_utils_console.cpp \
 	$(wildcard $(TEST_DIR)/*.cpp)
-UNITTESTS_OBJS = $(UNITTESTS_SRC:%.cpp=$(BUILD_DIR)/%.o)
+UNITTESTS_OBJS = $(UNITTESTS_SRC:%.cpp=$(BUILD_DIR)/%.o) $(BUILD_DIR)/open-simplex-noise.o
 UNITTESTS_DEPS = $(UNITTESTS_OBJS:%.o=%.d)
 
 .PHONY : all clean test

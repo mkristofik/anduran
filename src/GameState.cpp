@@ -11,15 +11,17 @@
     See the COPYING.txt file for more details.
 */
 #include "GameState.h"
+#include "RandomMap.h"
 
 #include <algorithm>
 #include <cassert>
 
-GameState::GameState(const ObjectManager &objMgr)
+GameState::GameState(const RandomMap &rmap)
     : objects_(),
     armies_(),
     zoc_(),
-    objConfig_(&objMgr)
+    rmap_(&rmap),
+    objConfig_(&rmap_->getObjectConfig())
 {
 }
 
