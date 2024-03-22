@@ -38,7 +38,6 @@ namespace
     const int MAX_ALTITUDE = 3;
     const double NOISE_FEATURE_SIZE = 2.0;
     const double OBSTACLE_LEVEL = 0.2;
-    const std::string OBJECT_CONFIG = "data/objects.json";
 
     auto getCastleHexes(const Hex &startHex)
     {
@@ -133,7 +132,7 @@ bool operator==(const Coastline &lhs, const std::pair<int, int> &rhs)
 }
 
 
-RandomMap::RandomMap(int width)
+RandomMap::RandomMap(int width, const ObjectManager &objMgr)
     : width_(width),
     size_(width_ * width_),
     numRegions_(0),
@@ -154,7 +153,7 @@ RandomMap::RandomMap(int width)
     regionCastleDistance_(),
     villageNeighbors_(size_, 0),
     objectTiles_(),
-    objectMgr_(OBJECT_CONFIG)
+    objectMgr_(&objMgr)
 {
     generateRegions();
     buildNeighborGraphs();
@@ -167,7 +166,7 @@ RandomMap::RandomMap(int width)
     placeArmies();
 }
 
-RandomMap::RandomMap(const char *filename)
+RandomMap::RandomMap(const char *filename, const ObjectManager &objMgr)
     : width_(0),
     size_(0),
     numRegions_(0),
@@ -187,7 +186,7 @@ RandomMap::RandomMap(const char *filename)
     castleRegions_(),
     villageNeighbors_(),
     objectTiles_(),
-    objectMgr_(OBJECT_CONFIG)
+    objectMgr_(&objMgr)
 {
     auto doc = jsonReadFile(filename);
 
@@ -308,7 +307,7 @@ std::vector<Hex> RandomMap::getObjectTiles(ObjectType type)
 
 const ObjectManager & RandomMap::getObjectConfig() const
 {
-    return objectMgr_;
+    return *objectMgr_;
 }
 
 FlatMultimap<int, int>::ValueRange RandomMap::getTileRegionNeighbors(int index)
@@ -960,7 +959,7 @@ int RandomMap::numObjectsAllowed(const MapObject &obj, int region) const
 void RandomMap::placeVillages()
 {
     for (int r = 0; r < numRegions_; ++r) {
-        auto &village = objectMgr_.find(ObjectType::village);
+        auto &village = objectMgr_->find(ObjectType::village);
         assert(village.type == ObjectType::village);
 
         int allowed = numObjectsAllowed(village, r);
@@ -983,7 +982,7 @@ void RandomMap::placeVillages()
 void RandomMap::placeObjects()
 {
     for (int r = 0; r < numRegions_; ++r) {
-        for (auto &obj : objectMgr_) {
+        for (auto &obj : *objectMgr_) {
             // Villages handled separately.
             if (obj.type == ObjectType::village) {
                 continue;
@@ -996,7 +995,7 @@ void RandomMap::placeObjects()
         }
     }
 
-    for (auto &obj : objectMgr_) {
+    for (auto &obj : *objectMgr_) {
         if (obj.numPerCoastline > 0) {
             placeCoastalObject(obj);
         }

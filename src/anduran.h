@@ -81,6 +81,7 @@ private:
 
     WindowConfig config_;
     SdlWindow win_;
+    ObjectManager objConfig_;
     RandomMap rmap_;
     SdlImageManager images_;
     MapDisplay rmapView_;

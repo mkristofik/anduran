@@ -12,6 +12,7 @@
 */
 #include "MapDisplay.h"
 #include "Minimap.h"
+#include "ObjectManager.h"
 #include "RandomMap.h"
 #include "SdlApp.h"
 #include "SdlImageManager.h"
@@ -46,6 +47,7 @@ private:
 
     WindowConfig config_;
     SdlWindow win_;
+    ObjectManager objs_;
     RandomMap rmap_;
     SdlImageManager images_;
     MapDisplay rmapView_;
@@ -56,7 +58,8 @@ MapViewApp::MapViewApp()
     : SdlApp(),
     config_("data/window.json"s),
     win_(config_.width(), config_.height(), "Anduran Map Viewer"),
-    rmap_("test2.json"),
+    objs_("data/objects.json"s),
+    rmap_("test2.json", objs_),
     images_("img/"),
     rmapView_(win_, config_.map_bounds(), rmap_, images_),
     minimap_(win_, config_.minimap_bounds(), rmap_, rmapView_)
@@ -134,6 +137,7 @@ void MapViewApp::place_armies()
 
 int main(int, char *[])  // two-argument form required by SDL
 {
+    // TODO: support a filename argument to view a specific map
     MapViewApp app;
     return app.run();
 }

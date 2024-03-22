@@ -37,8 +37,8 @@ struct Coastline
 class RandomMap
 {
 public:
-    explicit RandomMap(int width);
-    explicit RandomMap(const char *filename);
+    RandomMap(int width, const ObjectManager &objMgr);
+    RandomMap(const char *filename, const ObjectManager &objMgr);
 
     void writeFile(const char *filename);
 
@@ -154,7 +154,7 @@ private:
     std::vector<int> regionCastleDistance_;  // how far from nearest castle?
     std::vector<signed char> villageNeighbors_;
     FlatMultimap<std::string, int> objectTiles_;
-    ObjectManager objectMgr_;
+    const ObjectManager *objectMgr_;
 };
 
 

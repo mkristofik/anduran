@@ -30,11 +30,12 @@ Anduran::Anduran()
     : SdlApp(),
     config_("data/window.json"s),
     win_(config_.width(), config_.height(), "Champions of Anduran"),
-    rmap_("test.json"),
+    objConfig_("data/objects.json"s),
+    rmap_("test.json", objConfig_),
     images_("img/"s),
     rmapView_(win_, config_.map_bounds(), rmap_, images_),
     minimap_(win_, config_.minimap_bounds(), rmap_, rmapView_),
-    game_(rmap_.getObjectConfig()),
+    game_(objConfig_),
     playerEntityIds_(),
     curPlayerId_(0),
     curPlayerNum_(0),
@@ -298,7 +299,7 @@ void Anduran::load_players()
 
 void Anduran::load_objects()
 {
-    for (auto &obj : rmap_.getObjectConfig()) {
+    for (auto &obj : objConfig_) {
         auto img = images_.make_texture(obj.imgName, win_);
         if (!obj.imgVisited.empty()) {
             auto visitImg = images_.make_texture(obj.imgVisited, win_);
