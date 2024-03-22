@@ -22,6 +22,7 @@
 
 #define OBJ_TYPES \
     X(army) \
+    X(boat) \
     X(camp) \
     X(castle) \
     X(champion) \
@@ -37,7 +38,7 @@
     enum class ObjectType {OBJ_TYPES invalid};
 #undef X
 
-ITERABLE_ENUM_CLASS(ObjectAction, none, battle, visit, pickup, flag);
+ITERABLE_ENUM_CLASS(ObjectAction, none, battle, visit, pickup, flag, embark, disembark);
 
 
 struct MapObject

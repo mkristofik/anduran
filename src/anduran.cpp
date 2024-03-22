@@ -49,6 +49,7 @@ Anduran::Anduran()
     championImages_(),
     ellipseImages_(),
     flagImages_(),
+    boatImages_(),
     objVisitedImages_(),
     stateChanged_(true),
     influence_(rmap_.numRegions())
@@ -174,6 +175,16 @@ void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
     curPath_ = pathfind_.find_path(player, hCurPathEnd_);
     if (!curPath_.empty()) {
         auto [action, _] = game_.hex_action(player, hCurPathEnd_);
+
+        /* TODO: need to special case hex_action() for getting off a boat.
+        if (action == ObjectAction::none &&
+            rmap_.getTerrain(player.hex) == Terrain::water &&
+            rmap_.getTerrain(hCurPathEnd_) != Terrain::water)
+        {
+            action = ObjectAction::disembark;
+        }
+        */
+
         rmapView_.showPath(curPath_, action);
     }
 }
@@ -197,6 +208,12 @@ void Anduran::load_images()
     auto flagSurfaces = applyTeamColors(flagToRefColor(flag));
     for (auto i = 0u; i < size(flagSurfaces); ++i) {
         flagImages_[i] = SdlTexture::make_image(flagSurfaces[i], win_);
+    }
+
+    auto boat = images_.get_surface("boat");
+    auto boatSurfaces = applyTeamColors(boat);
+    for (auto i = 0u; i < size(boatSurfaces); ++i) {
+        boatImages_[i] = SdlTexture::make_image(boatSurfaces[i], win_);
     }
 }
 
@@ -269,6 +286,14 @@ void Anduran::load_players()
                                                    AnimHealth::height());
         hpBarIds_[i] = rmapView_.addHiddenEntity(img, ZOrder::animating);
     }
+
+    // Place a boat on a water tile for testing purposes.
+    GameObject boat;
+    boat.hex = {2, 14};
+    boat.entity = rmapView_.addEntity(boatImages_[Team::neutral], boat.hex, ZOrder::unit);
+    boat.team = Team::neutral;
+    boat.type = ObjectType::boat;
+    game_.add_object(boat);
 }
 
 void Anduran::load_objects()
@@ -360,6 +385,7 @@ void Anduran::do_actions(int entity, PathView path)
 
     auto player = game_.get_object(entity);
     auto hLast = path.back();
+    auto pathSize = size(path);
     auto [action, obj] = game_.hex_action(player, hLast);
     bool playerSurvives = true;
 
@@ -370,7 +396,6 @@ void Anduran::do_actions(int entity, PathView path)
         if (hLast == obj.hex) {
             // User clicked directly on the army they want to battle, stop moving one
             // hex early to represent battling over control of that hex.
-            auto pathSize = size(path);
             if (pathSize > 2) {
                 auto shortenedPath = path.first(pathSize - 1);
                 move_action(entity, shortenedPath);
@@ -393,6 +418,18 @@ void Anduran::do_actions(int entity, PathView path)
             move_action(entity, path);
             playerSurvives = battle_action(entity, obj.entity);
         }
+    }
+    else if (action == ObjectAction::embark) {
+        // Move to the hex adjacent to the boat, then animate boarding it.
+        if (pathSize > 2) {
+            auto pathToCoast = path.first(pathSize - 1);
+            move_action(entity, pathToCoast);
+        }
+        // TODO: separate function for boarding a boat.
+        auto player = game_.get_object(entity);
+        anims_.push(AnimEmbark(rmapView_, entity, obj.entity, boatImages_[player.team]));
+        player.hex = hLast;;
+        game_.update_object(player);
     }
     else {
         move_action(entity, path);

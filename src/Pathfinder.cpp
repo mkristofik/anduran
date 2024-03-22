@@ -159,15 +159,35 @@ bool Pathfinder::is_reachable(int index) const
         return false;
     }
 
+    auto srcTerrain = rmap_->getTerrain(iSrc_);
+    auto terrain = rmap_->getTerrain(index);
     auto hex = rmap_->hexFromInt(index);
     auto [action, obj] = game_->hex_action(*player_, hex);
+
+    // If you started on land, you can't step onto water unless you're boarding a
+    // boat.
+    if (srcTerrain != Terrain::water &&
+        terrain == Terrain::water &&
+        (index != iDest_ || action != ObjectAction::embark))
+    {
+        return false;
+    }
+
+    // If you started on a boat, you can't step onto land unless it's the
+    // destination hex and it's open.
+    if (srcTerrain == Terrain::water &&
+        terrain != Terrain::water &&
+        (index != iDest_ || action != ObjectAction::none))
+    {
+        return false;
+    }
 
     // ZoC hexes aren't walkable unless they match the ZoC of the destination
     // hex (either within that army's ZoC or empty).  And then, only if we're
     // stopping there, or continuing on to that army's hex.
     if (action == ObjectAction::battle) {
         if (obj.entity == destObject_.entity &&
-            (hex == hDest_ || hDest_ == destObject_.hex))
+            (index == iDest_ || hDest_ == destObject_.hex))
         {
             return true;
         }
@@ -178,16 +198,7 @@ bool Pathfinder::is_reachable(int index) const
 
     // Game objects are only walkable if they're on the destination hex or if
     // they match the player's team color.
-    if (hex != hDest_ && action != ObjectAction::none) {
-        return false;
-    }
-
-    // Water hexes are only walkable if they're the destination hex with a game
-    // object on them.
-    // TODO: add support for boats
-    if (rmap_->getTerrain(index) == Terrain::water &&
-        (hex != hDest_ || action == ObjectAction::none))
-    {
+    if (index != iDest_ && action != ObjectAction::none) {
         return false;
     }
 

@@ -272,4 +272,58 @@ private:
     Hex hDefender_;
 };
 
+
+// TODO: write comments explaining what each anim does
+class AnimEmbark : public AnimBase
+{
+public:
+    AnimEmbark(MapDisplay &display, int entityId, int boatId, const SdlTexture &newImg);
+
+private:
+    void start() override;
+    void update(Uint32 elapsed_ms) override;
+    void stop() override;
+
+    int entity_;
+    int boat_;
+    SdlTexture newImage_;
+};
+
+
+class AnimDisembark : public AnimBase
+{
+public:
+    AnimDisembark(MapDisplay &display,
+                  int entityId,
+                  int boatId,
+                  const SdlTexture &newImg,
+                  const Hex &hDest);
+
+private:
+    void start() override;
+    void update(Uint32 elapsed_ms) override;
+    void stop() override;
+
+    int entity_;
+    int boat_;
+    SdlTexture newImage_;
+    Hex hDest_;
+    bool animStarted_;
+};
+// TODO: AnimBoat (should this be two anims?)
+// champion entity, boat entity, new boat/champion image, destination hex and terrain
+// if dest terrain is water (onto boat):
+// - fade out champion (TODO: share this code with AnimDie)
+// - set champion's hex to boat hex
+// - replace champion's image with team-colored boat
+// - set champion facing to match the facing from champion hex to boat hex (do we
+//     need to worry about this, or will it already just work?)
+// - hide boat
+// if dest terrain is land (leaving boat):
+// - hide champion
+// - show neutral boat on champion's hex, match champion facing
+// - replace champion's image with his normal image
+// - set champion hex to destination hex
+// - fade in champion
+
 #endif

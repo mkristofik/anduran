@@ -30,7 +30,9 @@ using AnimType = std::variant<std::monostate,
                               AnimDie,
                               AnimProjectile,
                               AnimLog,
-                              AnimHealth>;
+                              AnimHealth,
+                              AnimEmbark,
+                              AnimDisembark>;
 
 
 // Set of animations to be run in parallel, such as the parts of a battle.

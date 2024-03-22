@@ -175,6 +175,11 @@ const MapObject & ObjectManager::find(ObjectType type) const
 
 ObjectAction ObjectManager::get_action(ObjectType type) const
 {
+    // TODO: how to configure boats?
+    if (type == ObjectType::boat) {
+        return ObjectAction::embark;
+    }
+
     auto &obj = find(type);
     if (obj.type != type) {
         return ObjectAction::none;

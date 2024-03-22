@@ -116,6 +116,7 @@ destination hex
     - walkability is a game state, not just a property of the tile
         - map tile is walkable if it doesn't contain an obstacle or part of a castle
         - game will have more rules on top of that
+- create a boat version of the footsteps
 
 
 # Polish
@@ -239,6 +240,7 @@ is next to or in front of a castle
     - cursed, defending unit does minimum damage
         - how long would this state stay in effect?
         - how to animate its effect?
+        - C:\Program Files\Wesnoth\images\icons\profiles for effect icons
     - binding, lowers target speed to 0
         - battle_utils has to re-sort unit attack order
     - life drain
@@ -395,3 +397,5 @@ is next to or in front of a castle
 --------------
 * use concepts to eliminate static_asserts
 * ranges instead of begin/end or cbegin/cend on containers
+- will RandomRange support aggregate initialization?  UnitData could set all members
+in the header

@@ -162,6 +162,8 @@ MapDisplay::MapDisplay(SdlWindow &win,
     pathImg_[ObjectAction::visit] = images_->make_texture("icon-visit", *window_);
     pathImg_[ObjectAction::pickup] = images_->make_texture("icon-pickup", *window_);
     pathImg_[ObjectAction::flag] = images_->make_texture("icon-visit", *window_);
+    pathImg_[ObjectAction::embark] = images_->make_texture("icon-embark", *window_);
+    pathImg_[ObjectAction::disembark] = images_->make_texture("icon-disembark", *window_);
 }
 
 PartialPixel MapDisplay::getDisplayFrac() const

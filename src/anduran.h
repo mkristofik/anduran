@@ -100,6 +100,7 @@ private:
     std::vector<SdlTexture> championImages_;
     TeamColoredTextures ellipseImages_;
     TeamColoredTextures flagImages_;
+    TeamColoredTextures boatImages_;
     boost::container::flat_map<ObjectType, SdlTexture> objVisitedImages_;
     bool stateChanged_;
     std::vector<EnumSizedArray<int, Team>> influence_;

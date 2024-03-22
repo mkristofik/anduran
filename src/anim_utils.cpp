@@ -25,6 +25,7 @@ namespace
     const Uint32 RANGED_FLIGHT_MS = 150;
     const Uint32 RANGED_HIT_MS = RANGED_SHOT_MS + RANGED_FLIGHT_MS;
     const Uint32 DIE_MS = 1500;
+    const Uint32 FADE_MS = 1000;
 
     Uint32 get_hit_ms(AttackType attType)
     {
@@ -412,6 +413,7 @@ AnimDie::AnimDie(MapDisplay &display,
     anim_(anim),
     hFacing_(hAttacker),
     startTime_ms_(get_hit_ms(attType)),
+    // TODO: static fade_start_time_ms()
     fadeTime_ms_(startTime_ms_ + std::max(DEFEND_MS, anim.duration_ms())),
     animStarted_(false)
 {
@@ -687,4 +689,107 @@ SDL_Color AnimHealth::bar_color(double hpFrac)
     }
 
     return RED;
+}
+
+
+AnimEmbark::AnimEmbark(MapDisplay &display,
+                       int entityId,
+                       int boatId,
+                       const SdlTexture &newImg)
+    : AnimBase(display, FADE_MS),
+    entity_(entityId),
+    boat_(boatId),
+    newImage_(newImg)
+{
+}
+
+void AnimEmbark::start()
+{
+    auto obj = get_entity(entity_);
+    auto boatObj = get_entity(boat_);
+
+    obj.faceHex(boatObj.hex);
+    update_entity(obj);
+}
+
+void AnimEmbark::update(Uint32 elapsed_ms)
+{
+    auto obj = get_entity(entity_);
+    auto fadeFrac = static_cast<double>(elapsed_ms) / FADE_MS;
+    // TODO: write helper functions to share this with AnimDie
+    obj.alpha = std::clamp<int>((1 - fadeFrac) * SDL_ALPHA_OPAQUE,
+                                SDL_ALPHA_TRANSPARENT,
+                                SDL_ALPHA_OPAQUE);
+    update_entity(obj);
+}
+
+// Hide the neutral boat and replace it with the team-colored boat.
+void AnimEmbark::stop()
+{
+    auto obj = get_entity(entity_);
+    auto boatObj = get_entity(boat_);
+
+    obj.hex = boatObj.hex;
+    obj.alpha = SDL_ALPHA_OPAQUE;
+    update_entity(obj, newImage_);
+
+    boatObj.visible = false;
+    update_entity(boatObj);
+}
+
+
+AnimDisembark::AnimDisembark(MapDisplay &display,
+                             int entityId,
+                             int boatId,
+                             const SdlTexture &newImg,
+                             const Hex &hDest)
+    : AnimBase(display, FADE_MS),
+    entity_(entityId),
+    boat_(boatId),
+    newImage_(newImg),
+    hDest_(hDest),
+    animStarted_(false)
+{
+}
+
+// Hide the champion and show the neutral boat in its place.
+void AnimDisembark::start()
+{
+    auto obj = get_entity(entity_);
+    obj.hex = hDest_;
+    obj.visible = false;
+    obj.faceHex(hDest_);
+    update_entity(obj);
+
+    auto boatObj = get_entity(boat_);
+    boatObj.hex = obj.hex;
+    boatObj.visible = true;
+    boatObj.faceHex(hDest_);
+    update_entity(boatObj);
+}
+
+// Fade in the champion on the destination hex with its original image.
+void AnimDisembark::update(Uint32 elapsed_ms)
+{
+    auto obj = get_entity(entity_);
+    auto fadeFrac = static_cast<double>(elapsed_ms) / FADE_MS;
+    obj.alpha = std::clamp<int>(fadeFrac * SDL_ALPHA_OPAQUE,
+                                SDL_ALPHA_TRANSPARENT,
+                                SDL_ALPHA_OPAQUE);
+
+    if (!animStarted_) {
+        obj.visible = true;
+        update_entity(obj, newImage_);
+        animStarted_ = true;
+    }
+    else {
+        update_entity(obj);
+    }
+}
+
+void AnimDisembark::stop()
+{
+    auto obj = get_entity(entity_);
+    obj.alpha = SDL_ALPHA_OPAQUE;
+    update_entity(obj);
 }
