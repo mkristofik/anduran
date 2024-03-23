@@ -44,6 +44,7 @@ Anduran::Anduran()
     hCurPathEnd_(),
     projectileId_(-1),
     hpBarIds_(),
+    boatFloorIds_(),
     anims_(),
     pathfind_(rmap_, game_),
     units_("data/units.json"s, win_, images_),
@@ -285,6 +286,12 @@ void Anduran::load_players()
     boat.team = Team::neutral;
     boat.type = ObjectType::boat;
     game_.add_object(boat);
+
+    // Create a texture for water battles.
+    auto floor = images_.make_texture("tile-boat", win_);
+    for (auto i = 0u; i < size(boatFloorIds_); ++i) {
+        boatFloorIds_[i] = rmapView_.addHiddenEntity(floor, ZOrder::floor);
+    }
 }
 
 void Anduran::load_objects()
@@ -505,14 +512,13 @@ bool Anduran::battle_action(int playerId, int enemyId)
     auto defender = game_.get_army(enemyId);
 
     log_info(army_log(attacker) + "\n    vs.\n" + army_log(defender));
+    show_boat_floor(player.hex, enemy.hex);
 
     const auto result = do_battle(make_army_state(attacker, BattleSide::attacker),
                                   make_army_state(defender, BattleSide::defender));
     for (const auto &event : result.log) {
         if (event.action == BattleAction::next_round) {
-            AnimSet nextRoundMsg;
-            nextRoundMsg.insert(AnimLog(rmapView_, "Next round begins"));
-            anims_.push(nextRoundMsg);
+            anims_.push(AnimLog(rmapView_, "Next round begins"));
             continue;
         }
 
@@ -535,6 +541,9 @@ bool Anduran::battle_action(int playerId, int enemyId)
     endingAnim.insert(AnimDisplay(rmapView_,
                                   winner->entity,
                                   rmapView_.getEntityImage(winner->entity)));
+
+    // Restore the defender's ellipse here if they win.  The attacker might be
+    // continuing to move to another hex so we skip showing it if they win.
     if (!result.attackerWins && winner->secondary >= 0) {
         endingAnim.insert(AnimDisplay(rmapView_, winner->secondary, winner->hex));
     }
@@ -553,9 +562,9 @@ bool Anduran::battle_action(int playerId, int enemyId)
     }
 
     endingAnim.insert(AnimLog(rmapView_, endLog));
-    endingAnim.insert(AnimHide(rmapView_, hpBarIds_[0]));
-    endingAnim.insert(AnimHide(rmapView_, hpBarIds_[1]));
     anims_.push(endingAnim);
+
+    hide_battle_accents();
 
     attacker.update(result.attacker);
     defender.update(result.defender);
@@ -743,6 +752,37 @@ void Anduran::animate(const GameObject &attacker,
     }
 
     anims_.push(animSet);
+}
+
+void Anduran::show_boat_floor(const Hex &hAttacker, const Hex &hDefender)
+{
+    if (rmap_.getTerrain(hAttacker) != Terrain::water ||
+        rmap_.getTerrain(hDefender) != Terrain::water)
+    {
+        return;
+    }
+
+    AnimSet waterBeginAnim;
+    waterBeginAnim.insert(AnimDisplay(rmapView_, boatFloorIds_[0], hAttacker));
+
+    // If the defender is on top of another object (e.g., a shipwreck), don't
+    // show the floor.
+    if (game_.num_objects_in_hex(hDefender) == 1) {
+        waterBeginAnim.insert(AnimDisplay(rmapView_, boatFloorIds_[1], hDefender));
+    }
+
+    anims_.push(waterBeginAnim);
+}
+
+void Anduran::hide_battle_accents()
+{
+    AnimSet hideAnim;
+    hideAnim.insert(AnimHide(rmapView_, hpBarIds_[0]));
+    hideAnim.insert(AnimHide(rmapView_, hpBarIds_[1]));
+    hideAnim.insert(AnimHide(rmapView_, boatFloorIds_[0]));
+    hideAnim.insert(AnimHide(rmapView_, boatFloorIds_[1]));
+
+    anims_.push(hideAnim);
 }
 
 void Anduran::assign_influence()

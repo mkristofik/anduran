@@ -72,6 +72,11 @@ private:
                  const GameObject &defender,
                  const BattleEvent &event);
 
+    // For battles taking place on boats, show a floor under the units so they
+    // don't appear to be floating over the water.
+    void show_boat_floor(const Hex &hAttacker, const Hex &hDefender);
+    void hide_battle_accents();
+
     // Assign influence for objects owned by each player.
     void assign_influence();
     // Relaxation step, flood fill outward from regions where each player has
@@ -97,6 +102,7 @@ private:
     Hex hCurPathEnd_;
     int projectileId_;
     std::array<int, 2> hpBarIds_;
+    std::array<int, 2> boatFloorIds_;
     AnimQueue anims_;
     Pathfinder pathfind_;
     UnitManager units_;

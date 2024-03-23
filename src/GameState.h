@@ -67,6 +67,8 @@ public:
     auto objects_in_hex(const Hex &hex) const;
     auto objects_by_type(ObjectType type) const;
 
+    int num_objects_in_hex(const Hex &hex) const;
+
     // Armies have a 1-hex zone of control around them.  Return the entity id of
     // the given hex's controller, or -1 if uncontrolled.  No bounds checking is
     // necessary as invalid hexes are by definition uncontrollable.

@@ -97,8 +97,8 @@ destination hex
     * display an attack arrow
 * region boundary stops movement
 * highlight current path
-- visitable objects (shipwrecks) are walkable regardless of terrain
-    - do we want that?  you'd have to spend a whole day's movement just to go one hex
+* visitable objects (shipwrecks) are walkable regardless of terrain
+    * do we want that?  you'd have to spend a whole day's movement just to go one hex
 
 
 # Boats
@@ -108,15 +108,16 @@ destination hex
     * flaggable
     * used to build boats
     * pick random region furthest from castles
-- neutral boats are walkable
-    - embarking changes the champion image to the team-colored boat
-    - what happens to the neutral boat?
-    - disembarking does the opposite, make sure to match the facing
-    - water tiles become walkable if you're in a boat
-    - walkability is a game state, not just a property of the tile
-        - map tile is walkable if it doesn't contain an obstacle or part of a castle
-        - game will have more rules on top of that
+* neutral boats are walkable
+    * embarking changes the champion image to the team-colored boat
+    * what happens to the neutral boat?
+    * disembarking does the opposite, make sure to match the facing
+    * water tiles become walkable if you're in a boat
+    * walkability is a game state, not just a property of the tile
+        * map tile is walkable if it doesn't contain an obstacle or part of a castle
+        * game will have more rules on top of that
 - create a boat version of the footsteps
+- should zone of control extend from land into water or vice versa?
 
 
 # Polish

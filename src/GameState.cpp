@@ -62,6 +62,16 @@ void GameState::remove_object(int id)
     update_zoc();
 }
 
+int GameState::num_objects_in_hex(const Hex &hex) const
+{
+    // Forward boost iterator range doesn't support size.
+    int count = 0;
+    for ([[maybe_unused]] auto &obj : objects_in_hex(hex)) {
+        ++count;
+    }
+    return count;
+}
+
 // This could be private or inlined, but it makes a good unit test.
 int GameState::hex_controller(const Hex &hex) const
 {
@@ -75,7 +85,6 @@ int GameState::hex_controller(const Hex &hex) const
 
 GameAction GameState::hex_action(const GameObject &player, const Hex &hex) const
 {
-    // TODO: zone of control should not extend into water
     int zoc = hex_controller(hex);
     if (zoc >= 0 && zoc != player.entity) {
         return {ObjectAction::battle, get_object(zoc)};
