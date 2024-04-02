@@ -116,7 +116,7 @@ destination hex
     * walkability is a game state, not just a property of the tile
         * map tile is walkable if it doesn't contain an obstacle or part of a castle
         * game will have more rules on top of that
-- create a boat version of the footsteps
+* create a boat version of the footsteps
 - should zone of control extend from land into water or vice versa?
 
 
@@ -136,6 +136,7 @@ destination hex
 - render a full-scale map and scale it down to minimap size
     - team-colored hexes
     - pretty edge transitions between player-owned regions
+    - crop the image in a little bit instead of worrying about jagged edges
 * unified logging interface that supports both SDL logging and std::cerr
 
 

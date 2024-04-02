@@ -54,7 +54,10 @@
     "edges-water": {
         "frames": [1, 6]
     },
-    "footsteps": {
+    "icon-path": {
+        "frames": [1, 6]
+    },
+    "icon-path-water": {
         "frames": [1, 6]
     },
     "missile": {

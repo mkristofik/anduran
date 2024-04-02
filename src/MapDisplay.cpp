@@ -121,6 +121,7 @@ MapDisplay::MapDisplay(SdlWindow &win,
     hexShadowId_(-1),
     hexHighlightId_(-1),
     pathImg_(),
+    waterPathImg_(),
     pathIds_()
 {
     // Set the scroll limit such that the lower right hex is fully visible inside
@@ -152,18 +153,21 @@ MapDisplay::MapDisplay(SdlWindow &win,
     addCastleFloors();
     addCastleWalls();
 
+    // TODO: these get loaded before the app has a chance to set log priority,
+    // meaning that any missing images won't be logged.
     const auto shadowImg = images_->make_texture("hex-shadow", *window_);
     hexShadowId_ = addHiddenEntity(shadowImg, ZOrder::shadow);
     const auto highlightImg = images_->make_texture("hex-yellow", *window_);
     hexHighlightId_ = addHiddenEntity(highlightImg, ZOrder::highlight);
 
-    pathImg_[ObjectAction::none] = images_->make_texture("footsteps", *window_);
+    pathImg_[ObjectAction::none] = images_->make_texture("icon-path", *window_);
     pathImg_[ObjectAction::battle] = images_->make_texture("icon-battle", *window_);
     pathImg_[ObjectAction::visit] = images_->make_texture("icon-visit", *window_);
     pathImg_[ObjectAction::pickup] = images_->make_texture("icon-pickup", *window_);
     pathImg_[ObjectAction::flag] = images_->make_texture("icon-visit", *window_);
     pathImg_[ObjectAction::embark] = images_->make_texture("icon-embark", *window_);
     pathImg_[ObjectAction::disembark] = images_->make_texture("icon-disembark", *window_);
+    waterPathImg_ = images_->make_texture("icon-path-water", *window_);
 }
 
 PartialPixel MapDisplay::getDisplayFrac() const
@@ -418,7 +422,13 @@ void MapDisplay::showPath(const Path &path, ObjectAction lastStep)
         step.hex = path[i];
         step.frame = {0, static_cast<int>(path[i].getNeighborDir(path[i + 1]))};
         step.visible = true;
-        entityImg_[pathIds_[i]] = normalStep;
+
+        if (map_->getTerrain(step.hex) == Terrain::water) {
+            entityImg_[pathIds_[i]] = waterPathImg_;
+        }
+        else {
+            entityImg_[pathIds_[i]] = normalStep;
+        }
     }
 
     // Final step is drawn relative to where it came from instead of the other way
@@ -434,7 +444,12 @@ void MapDisplay::showPath(const Path &path, ObjectAction lastStep)
     }
     else {
         step.frame = {0, static_cast<int>(path[last - 1].getNeighborDir(path[last]))};
-        entityImg_[lastId] = normalStep;
+        if (map_->getTerrain(step.hex) == Terrain::water) {
+            entityImg_[lastId] = waterPathImg_;
+        }
+        else {
+            entityImg_[lastId] = normalStep;
+        }
     }
 }
 

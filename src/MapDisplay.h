@@ -184,6 +184,7 @@ private:
     int hexShadowId_;
     int hexHighlightId_;
     EnumSizedArray<SdlTexture, ObjectAction> pathImg_;
+    SdlTexture waterPathImg_;
     std::vector<int> pathIds_;
 };
 
