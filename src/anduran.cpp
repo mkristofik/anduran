@@ -26,6 +26,21 @@
 using namespace std::string_literals;
 
 
+namespace
+{
+    TeamColoredTextures make_team_colored_images(const SdlSurface &surf, SdlWindow &win)
+    {
+        TeamColoredTextures images;
+        auto surfaces = applyTeamColors(surf);
+        for (auto i = 0u; i < size(surfaces); ++i) {
+            images[i] = SdlTexture::make_image(surfaces[i], win);
+        }
+
+        return images;
+    }
+}
+
+
 Anduran::Anduran()
     : SdlApp(),
     config_("data/window.json"s),
@@ -191,22 +206,13 @@ void Anduran::load_images()
     }
 
     auto ellipse = images_.get_surface("ellipse");
-    auto ellipseSurfaces = applyTeamColors(ellipseToRefColor(ellipse));
-    for (auto i = 0u; i < size(ellipseSurfaces); ++i) {
-        ellipseImages_[i] = SdlTexture::make_image(ellipseSurfaces[i], win_);
-    }
+    ellipseImages_ = make_team_colored_images(ellipseToRefColor(ellipse), win_);
 
     auto flag = images_.get_surface("flag");
-    auto flagSurfaces = applyTeamColors(flagToRefColor(flag));
-    for (auto i = 0u; i < size(flagSurfaces); ++i) {
-        flagImages_[i] = SdlTexture::make_image(flagSurfaces[i], win_);
-    }
+    flagImages_ = make_team_colored_images(flagToRefColor(flag), win_);
 
     auto boat = images_.get_surface("boat");
-    auto boatSurfaces = applyTeamColors(boat);
-    for (auto i = 0u; i < size(boatSurfaces); ++i) {
-        boatImages_[i] = SdlTexture::make_image(boatSurfaces[i], win_);
-    }
+    boatImages_ = make_team_colored_images(boat, win_);
 }
 
 void Anduran::load_players()
