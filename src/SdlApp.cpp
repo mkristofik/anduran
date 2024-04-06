@@ -39,6 +39,8 @@ SdlApp::SdlApp()
         SDL_Quit();
         throw std::runtime_error("SDL_image init error");
     }
+
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_VIDEO, SDL_LOG_PRIORITY_VERBOSE);
 }
 
 SdlApp::~SdlApp()

@@ -153,8 +153,6 @@ MapDisplay::MapDisplay(SdlWindow &win,
     addCastleFloors();
     addCastleWalls();
 
-    // TODO: these get loaded before the app has a chance to set log priority,
-    // meaning that any missing images won't be logged.
     const auto shadowImg = images_->make_texture("hex-shadow", *window_);
     hexShadowId_ = addHiddenEntity(shadowImg, ZOrder::shadow);
     const auto highlightImg = images_->make_texture("hex-yellow", *window_);
