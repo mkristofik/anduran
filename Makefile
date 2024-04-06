@@ -77,6 +77,7 @@ ANDURAN_SRC = AnimQueue.cpp \
 	GameState.cpp \
 	MapDisplay.cpp \
 	Minimap.cpp \
+	ObjectImages.cpp \
 	ObjectManager.cpp \
 	Pathfinder.cpp \
 	RandomMap.cpp \

@@ -17,6 +17,7 @@
 #include "GameState.h"
 #include "MapDisplay.h"
 #include "Minimap.h"
+#include "ObjectImages.h"
 #include "ObjectManager.h"
 #include "Pathfinder.h"
 #include "RandomMap.h"
@@ -30,8 +31,6 @@
 #include "hex_utils.h"
 #include "iterable_enum_class.h"
 #include "team_color.h"
-
-#include "boost/container/flat_map.hpp"
 
 #include <string>
 #include <string_view>
@@ -48,9 +47,6 @@ public:
     void handle_mouse_pos(Uint32 elapsed_ms) override;
 
 private:
-    // Load images that aren't tied to units.
-    void load_images();
-
     // Load objects and draw them on the map.
     void load_players();
     void load_objects();
@@ -91,6 +87,7 @@ private:
     ObjectManager objConfig_;
     RandomMap rmap_;
     SdlImageManager images_;
+    ObjectImages objImg_;
     MapDisplay rmapView_;
     Minimap minimap_;
     GameState game_;
@@ -106,11 +103,6 @@ private:
     AnimQueue anims_;
     Pathfinder pathfind_;
     UnitManager units_;
-    std::vector<SdlTexture> championImages_;
-    TeamColoredTextures ellipseImages_;
-    TeamColoredTextures flagImages_;
-    TeamColoredTextures boatImages_;  // TODO: configure objects with team colors
-    boost::container::flat_map<ObjectType, SdlTexture> objVisitedImages_;
     bool stateChanged_;
     std::vector<EnumSizedArray<int, Team>> influence_;
 };

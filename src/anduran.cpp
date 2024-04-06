@@ -26,21 +26,6 @@
 using namespace std::string_literals;
 
 
-namespace
-{
-    TeamColoredTextures make_team_colored_images(const SdlSurface &surf, SdlWindow &win)
-    {
-        TeamColoredTextures images;
-        auto surfaces = applyTeamColors(surf);
-        for (auto i = 0u; i < size(surfaces); ++i) {
-            images[i] = SdlTexture::make_image(surfaces[i], win);
-        }
-
-        return images;
-    }
-}
-
-
 Anduran::Anduran()
     : SdlApp(),
     config_("data/window.json"s),
@@ -48,6 +33,7 @@ Anduran::Anduran()
     objConfig_("data/objects.json"s),
     rmap_("test.json", objConfig_),
     images_("img/"s),
+    objImg_(images_, objConfig_, win_),
     rmapView_(win_, config_.map_bounds(), rmap_, images_),
     minimap_(win_, config_.minimap_bounds(), rmap_, rmapView_),
     game_(rmap_),
@@ -63,17 +49,11 @@ Anduran::Anduran()
     anims_(),
     pathfind_(rmap_, game_),
     units_("data/units.json"s, win_, images_),
-    championImages_(),
-    ellipseImages_(),
-    flagImages_(),
-    boatImages_(),
-    objVisitedImages_(),
     stateChanged_(true),
     influence_(rmap_.numRegions())
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
-    load_images();
     load_players();
     load_objects();
 }
@@ -196,31 +176,11 @@ void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
     }
 }
 
-void Anduran::load_images()
-{
-    std::string filenames[] = {"champion1"s, "champion2"s, "champion3"s, "champion4"s};
-    for (auto i = 0u; i < size(filenames); ++i) {
-        auto championSurface = applyTeamColor(images_.get_surface(filenames[i]),
-                                              static_cast<Team>(i));
-        championImages_.push_back(SdlTexture::make_image(championSurface, win_));
-    }
-
-    auto ellipse = images_.get_surface("ellipse");
-    ellipseImages_ = make_team_colored_images(ellipseToRefColor(ellipse), win_);
-
-    auto flag = images_.get_surface("flag");
-    flagImages_ = make_team_colored_images(flagToRefColor(flag), win_);
-
-    auto boat = images_.get_surface("boat");
-    boatImages_ = make_team_colored_images(boat, win_);
-}
-
 void Anduran::load_players()
 {
     // Randomize the starting locations for each player.
     auto castles = rmap_.getCastleTiles();
     SDL_assert(ssize(castles) <= enum_size<Team>());
-    SDL_assert(ssize(castles) == ssize(championImages_));
     randomize(castles);
 
     // MapDisplay handles building the castle artwork, but we need something so
@@ -238,10 +198,10 @@ void Anduran::load_players()
         // Draw a champion in the hex due south of each castle.
         GameObject champion;
         champion.hex = castles[i].getNeighbor(HexDir::s);
-        champion.entity = rmapView_.addEntity(championImages_[i],
+        champion.entity = rmapView_.addEntity(objImg_.get_champion(castle.team),
                                               champion.hex,
                                               ZOrder::unit);
-        champion.secondary = rmapView_.addEntity(ellipseImages_[i],
+        champion.secondary = rmapView_.addEntity(objImg_.get_ellipse(castle.team),
                                                  champion.hex,
                                                  ZOrder::ellipse);
         champion.team = castle.team;
@@ -288,7 +248,7 @@ void Anduran::load_players()
     // Place a boat on a water tile for testing purposes.
     GameObject boat;
     boat.hex = {2, 14};
-    boat.entity = rmapView_.addEntity(boatImages_[Team::neutral], boat.hex, ZOrder::unit);
+    boat.entity = rmapView_.addEntity(objImg_.get_boat(Team::neutral), boat.hex, ZOrder::unit);
     boat.team = Team::neutral;
     boat.type = ObjectType::boat;
     game_.add_object(boat);
@@ -303,11 +263,7 @@ void Anduran::load_players()
 void Anduran::load_objects()
 {
     for (auto &obj : objConfig_) {
-        auto img = images_.make_texture(obj.imgName, win_);
-        if (!obj.imgVisited.empty()) {
-            auto visitImg = images_.make_texture(obj.imgVisited, win_);
-            objVisitedImages_.insert({obj.type, visitImg});
-        }
+        auto img = objImg_.get(obj.type);
         auto objHexes = rmap_.getObjectTiles(obj.type);
 
         // Assume any sprite sheet with the same number of frames as there are
@@ -329,7 +285,7 @@ void Anduran::load_objects()
             gameObj.type = obj.type;
 
             if (obj.action == ObjectAction::flag) {
-                gameObj.secondary = rmapView_.addEntity(flagImages_[Team::neutral],
+                gameObj.secondary = rmapView_.addEntity(objImg_.get_flag(Team::neutral),
                                                         hex,
                                                         ZOrder::flag);
             }
@@ -369,7 +325,7 @@ void Anduran::load_object_defenders(std::string_view unitKey,
         defender.entity = rmapView_.addEntity(defImg,
                                               defEntity,
                                               HexAlign::middle);
-        defender.secondary = rmapView_.addEntity(ellipseImages_[Team::neutral],
+        defender.secondary = rmapView_.addEntity(objImg_.get_ellipse(Team::neutral),
                                                  defEllipse,
                                                  HexAlign::middle);
         defender.type = ObjectType::champion;  // only ZoC is this hex
@@ -464,7 +420,7 @@ void Anduran::embark_action(int playerId, int boatId)
     auto player = game_.get_object(playerId);
     auto boat = game_.get_object(boatId);
 
-    anims_.push(AnimEmbark(rmapView_, playerId, boatId, boatImages_[player.team]));
+    anims_.push(AnimEmbark(rmapView_, playerId, boatId, objImg_.get_boat(player.team)));
     player.hex = boat.hex;
     game_.update_object(player);
 
@@ -489,7 +445,7 @@ void Anduran::disembark_action(int entity, const Hex &hLand)
     // If not, create one.
     if (boat.type == ObjectType::invalid) {
         boat.hex = player.hex;
-        boat.entity = rmapView_.addEntity(boatImages_[Team::neutral],
+        boat.entity = rmapView_.addEntity(objImg_.get_boat(Team::neutral),
                                           boat.hex,
                                           ZOrder::unit);
         boat.team = Team::neutral;
@@ -504,7 +460,7 @@ void Anduran::disembark_action(int entity, const Hex &hLand)
     anims_.push(AnimDisembark(rmapView_,
                               entity,
                               boat.entity,
-                              championImages_[static_cast<int>(player.team)],
+                              objImg_.get_champion(player.team),
                               hLand));
     player.hex = hLand;
     game_.update_object(player);
@@ -590,15 +546,15 @@ void Anduran::local_action(int entity)
         // If we land on an object with a flag, change the flag color to
         // match the player's.
         obj.team = player.team;
-        anims_.push(AnimDisplay(rmapView_, obj.secondary, flagImages_[obj.team]));
+        anims_.push(AnimDisplay(rmapView_, obj.secondary, objImg_.get_flag(obj.team)));
         game_.update_object(obj);
     }
     else if (action == ObjectAction::visit) {
         // If the object has a separate image to mark that it's been visited,
         // replace it.
-        auto iter = objVisitedImages_.find(obj.type);
-        if (iter != std::end(objVisitedImages_)) {
-            anims_.push(AnimDisplay(rmapView_, obj.entity, iter->second));
+        auto visitImg = objImg_.get_visited(obj.type);
+        if (visitImg) {
+            anims_.push(AnimDisplay(rmapView_, obj.entity, visitImg));
         }
         obj.visited = true;
         game_.update_object(obj);
