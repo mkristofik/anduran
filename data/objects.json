@@ -2,7 +2,8 @@
     "boat": {
         "name": "Boat",
         "img": "boat",
-        "terrain": [0]
+        "terrain": [0],
+        "team-colored": true
     },
     "camp": {
         "name": "Abandoned camp",

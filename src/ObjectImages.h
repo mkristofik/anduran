@@ -41,8 +41,6 @@ public:
     // doesn't have one.
     SdlTexture get_visited(ObjectType obj) const;
 
-    // TODO: boats should be regular objects but team-colored
-    SdlTexture get_boat(Team team) const;
     SdlTexture get_champion(Team team) const;
     SdlTexture get_ellipse(Team team) const;
     SdlTexture get_flag(Team team) const;
@@ -51,7 +49,6 @@ private:
     boost::container::flat_map<ObjectType, SdlTexture> objs_;
     boost::container::flat_map<ObjectType, SdlTexture> visited_;
     boost::container::flat_map<ObjectType, TeamColoredTextures> teamColored_;
-    TeamColoredTextures boats_;
     TeamColoredTextures champions_;
     TeamColoredTextures ellipses_;
     TeamColoredTextures flags_;

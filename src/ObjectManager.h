@@ -55,6 +55,7 @@ struct MapObject
     ObjectType type = ObjectType::invalid;
     ObjectAction action = ObjectAction::pickup;
     bool fairDistance = false;  // try to place as far as possible from all castles
+    bool teamColored = false;  // image uses the team color palette
 };
 
 // Compare by object type.

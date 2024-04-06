@@ -42,23 +42,25 @@ ObjectImages::ObjectImages(const SdlImageManager &imgMgr,
     : objs_(),
     visited_(),
     teamColored_(),
-    boats_(),
     champions_(),
     ellipses_(),
     flags_()
 {
     for (auto &o : objMgr) {
-        auto img = imgMgr.make_texture(o.imgName, win);
-        objs_.emplace(o.type, img);
+        if (o.teamColored) {
+            auto surf = imgMgr.get_surface(o.imgName);
+            teamColored_.emplace(o.type, make_team_colored_images(surf, win));
+        }
+        else {
+            auto img = imgMgr.make_texture(o.imgName, win);
+            objs_.emplace(o.type, img);
+        }
 
         if (!o.imgVisited.empty()) {
             auto visitImg = imgMgr.make_texture(o.imgVisited, win);
             visited_.emplace(o.type, visitImg);
         }
     }
-
-    auto boat = imgMgr.get_surface("boat");
-    boats_ = make_team_colored_images(boat, win);
 
     std::string filenames[] = {"champion1"s, "champion2"s, "champion3"s, "champion4"s};
     for (auto i = 0u; i < size(filenames); ++i) {
@@ -97,11 +99,6 @@ SdlTexture ObjectImages::get_visited(ObjectType obj) const
     }
 
     return {};
-}
-
-SdlTexture ObjectImages::get_boat(Team team) const
-{
-    return boats_[team];
 }
 
 SdlTexture ObjectImages::get_champion(Team team) const

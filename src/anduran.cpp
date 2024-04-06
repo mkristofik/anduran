@@ -248,7 +248,9 @@ void Anduran::load_players()
     // Place a boat on a water tile for testing purposes.
     GameObject boat;
     boat.hex = {2, 14};
-    boat.entity = rmapView_.addEntity(objImg_.get_boat(Team::neutral), boat.hex, ZOrder::unit);
+    boat.entity = rmapView_.addEntity(objImg_.get(ObjectType::boat),
+                                      boat.hex,
+                                      ZOrder::unit);
     boat.team = Team::neutral;
     boat.type = ObjectType::boat;
     game_.add_object(boat);
@@ -420,7 +422,10 @@ void Anduran::embark_action(int playerId, int boatId)
     auto player = game_.get_object(playerId);
     auto boat = game_.get_object(boatId);
 
-    anims_.push(AnimEmbark(rmapView_, playerId, boatId, objImg_.get_boat(player.team)));
+    anims_.push(AnimEmbark(rmapView_,
+                           playerId,
+                           boatId,
+                           objImg_.get(ObjectType::boat, player.team)));
     player.hex = boat.hex;
     game_.update_object(player);
 
@@ -445,7 +450,7 @@ void Anduran::disembark_action(int entity, const Hex &hLand)
     // If not, create one.
     if (boat.type == ObjectType::invalid) {
         boat.hex = player.hex;
-        boat.entity = rmapView_.addEntity(objImg_.get_boat(Team::neutral),
+        boat.entity = rmapView_.addEntity(objImg_.get(ObjectType::boat),
                                           boat.hex,
                                           ZOrder::unit);
         boat.team = Team::neutral;

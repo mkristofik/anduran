@@ -135,6 +135,9 @@ ObjectManager::ObjectManager(const std::string &configFile)
                 else if (field == "fair-distance") {
                     obj.fairDistance = val;
                 }
+                else if (field == "team-colored") {
+                    obj.teamColored = val;
+                }
                 else {
                     warn_unexpected("boolean", name, field);
                 }

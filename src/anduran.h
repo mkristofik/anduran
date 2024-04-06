@@ -107,18 +107,4 @@ private:
     std::vector<EnumSizedArray<int, Team>> influence_;
 };
 
-// TODO: configuring objects with team colors?
-// - flat_map of obj type -> texture for normal images
-//     - or just do a EnumSizedArray
-//     - but some objects like army and castle aren't configured
-// - flat_map of obj type -> team colored textures for team colored ones
-//     - an object will be in one or the other, not both
-// - ObjectManager needs to identify objects that are team colored
-// - get_obj_image(type, team) returns either team colored or normal texture
-//     - ignores team when only one image, maybe default to neutral?
-// - another flat_map for object visited images
-//     - need an accessor for whether an object has a separate visited image
-// - accessors for flags, champions, and ellipses
-// - having this as a separate class means ObjectManager doesn't have to depend on
-// SDL
 #endif
