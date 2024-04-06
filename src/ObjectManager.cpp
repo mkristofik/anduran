@@ -72,11 +72,16 @@ ObjectManager::ObjectManager(const std::string &configFile)
         std::string name = m->name.GetString();
         auto objType = obj_type_from_name(name);
         if (objType == ObjectType::invalid) {
+            log_warn("unrecognized object " + name);
             continue;
         }
 
         MapObject obj;
         obj.type = objType;
+        if (obj.type == ObjectType::boat) {
+            obj.action = ObjectAction::embark;
+        }
+
         for (auto f = m->value.MemberBegin(); f != m->value.MemberEnd(); ++f) {
             std::string field = f->name.GetString();
             if (f->value.IsString()) {
@@ -175,11 +180,6 @@ const MapObject & ObjectManager::find(ObjectType type) const
 
 ObjectAction ObjectManager::get_action(ObjectType type) const
 {
-    // TODO: how to configure boats?
-    if (type == ObjectType::boat) {
-        return ObjectAction::embark;
-    }
-
     auto &obj = find(type);
     if (obj.type != type) {
         return ObjectAction::none;

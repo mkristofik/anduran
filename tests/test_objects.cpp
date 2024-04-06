@@ -157,8 +157,13 @@ BOOST_AUTO_TEST_CASE(zone_of_control)
 
 BOOST_AUTO_TEST_CASE(boarding_boat)
 {
-    ObjectManager dummy;
-    RandomMap rmap("tests/map.json", dummy);
+    ObjectManager objConfig;
+    MapObject obj;
+    obj.type = ObjectType::boat;
+    obj.action = ObjectAction::embark;
+    objConfig.insert(obj);
+
+    RandomMap rmap("tests/map.json", objConfig);
     GameState game(rmap);
 
     Hex boatHex = {2, 14};  // edge of a body of water in the test map

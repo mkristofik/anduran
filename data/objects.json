@@ -1,4 +1,9 @@
 {
+    "boat": {
+        "name": "Boat",
+        "img": "boat",
+        "terrain": [0]
+    },
     "camp": {
         "name": "Abandoned camp",
         "img": "camps",
