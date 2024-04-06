@@ -31,13 +31,11 @@ AttackType att_type_from_name(const std::string &name);
 struct UnitData
 {
     std::string name;
-    RandomRange damage;
-    int type;
-    int speed;
-    int hp;
-    AttackType attack;
-
-    UnitData();
+    RandomRange damage = {0, 0};
+    int type = -1;
+    int speed = 0;
+    int hp = 0;
+    AttackType attack = AttackType::melee;
 };
 
 #endif

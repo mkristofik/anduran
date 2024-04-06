@@ -33,14 +33,3 @@ AttackType att_type_from_name(const std::string &name)
 {
     return xtype_from_xname<AttackType>(attNames, name);
 }
-
-
-UnitData::UnitData()
-    : name(),
-    damage(0, 0),
-    type(-1),
-    speed(0),
-    hp(0),
-    attack(AttackType::melee)
-{
-}

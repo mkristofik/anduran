@@ -20,13 +20,6 @@
 #include <format>
 #include <stdexcept>
 
-SdlImageData::SdlImageData()
-    : surface(),
-    frames{1, 1},
-    timing_ms()
-{
-}
-
 SdlImageData::operator bool() const
 {
     return static_cast<bool>(surface);

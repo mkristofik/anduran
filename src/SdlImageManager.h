@@ -27,10 +27,9 @@ class SdlWindow;
 struct SdlImageData
 {
     SdlSurface surface;
-    Frame frames;
+    Frame frames = {1, 1};
     std::vector<Uint32> timing_ms;
 
-    SdlImageData();
     explicit operator bool() const;
 };
 

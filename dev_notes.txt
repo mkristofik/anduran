@@ -399,5 +399,5 @@ is next to or in front of a castle
 --------------
 * use concepts to eliminate static_asserts
 * ranges instead of begin/end or cbegin/cend on containers
-- will RandomRange support aggregate initialization?  UnitData could set all members
+* will RandomRange support aggregate initialization?  UnitData could set all members
 in the header
