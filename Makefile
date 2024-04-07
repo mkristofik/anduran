@@ -54,6 +54,7 @@ RMAPGEN_DEPS = $(RMAPGEN_OBJS:%.o=%.d)
 MAPVIEW = mapview$(EXE)
 MAPVIEW_SRC = MapDisplay.cpp \
 	Minimap.cpp \
+	ObjectImages.cpp \
 	ObjectManager.cpp \
 	RandomMap.cpp \
 	RandomRange.cpp \

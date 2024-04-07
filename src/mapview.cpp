@@ -12,6 +12,7 @@
 */
 #include "MapDisplay.h"
 #include "Minimap.h"
+#include "ObjectImages.h"
 #include "ObjectManager.h"
 #include "RandomMap.h"
 #include "SdlApp.h"
@@ -31,7 +32,7 @@ using namespace std::string_literals;
 class MapViewApp : public SdlApp
 {
 public:
-    MapViewApp();
+    explicit MapViewApp(const char *filename);
 
     void update_frame(Uint32) override;
     void handle_mouse_pos(Uint32 elapsed_ms) override;
@@ -50,17 +51,19 @@ private:
     ObjectManager objs_;
     RandomMap rmap_;
     SdlImageManager images_;
+    ObjectImages objImg_;
     MapDisplay rmapView_;
     Minimap minimap_;
 };
 
-MapViewApp::MapViewApp()
+MapViewApp::MapViewApp(const char *filename)
     : SdlApp(),
     config_("data/window.json"s),
     win_(config_.width(), config_.height(), "Anduran Map Viewer"),
     objs_("data/objects.json"s),
-    rmap_("test2.json", objs_),
+    rmap_(filename, objs_),
     images_("img/"),
+    objImg_(images_, objs_, win_),
     rmapView_(win_, config_.map_bounds(), rmap_, images_),
     minimap_(win_, config_.minimap_bounds(), rmap_, rmapView_)
 {
@@ -97,7 +100,7 @@ void MapViewApp::handle_lmouse_up()
 void MapViewApp::place_objects()
 {
     for (auto &obj : rmap_.getObjectConfig()) {
-        auto img = images_.make_texture(obj.imgName, win_);
+        auto img = objImg_.get(obj.type);
 
         for (auto &hex : rmap_.getObjectTiles(obj.type)) {
             MapEntity entity;
@@ -135,9 +138,14 @@ void MapViewApp::place_armies()
 }
 
 
-int main(int, char *[])  // two-argument form required by SDL
+int main(int argc, char *argv[])
 {
-    // TODO: support a filename argument to view a specific map
-    MapViewApp app;
+    // Default to the same filename used by rmapgen.
+    const char *filename = "test2.json";
+    if (argc >= 2) {
+        filename = argv[1];
+    }
+
+    MapViewApp app(filename);
     return app.run();
 }

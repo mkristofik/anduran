@@ -11,13 +11,16 @@
     See the COPYING.txt file for more details.
 */
 #include "json_utils.h"
+#include "log_utils.h"
 
 #include "rapidjson/filereadstream.h"
 #include "rapidjson/filewritestream.h"
 #include "rapidjson/prettywriter.h"
 
 #include <cstdio>
+#include <format>
 #include <memory>
+#include <stdexcept>
 
 namespace
 {
@@ -31,6 +34,12 @@ rapidjson::Document jsonReadFile(const char *filename)
 
     char buf[JSON_BUFFER_SIZE];
     std::shared_ptr<FILE> jsonFile(fopen(filename, "rb"), fclose);
+    if (!jsonFile) {
+        auto msg = std::format("json file not found: {}", filename);
+        log_error(msg);
+        throw std::runtime_error(msg);
+    }
+
     rapidjson::FileReadStream istr(jsonFile.get(), buf, sizeof(buf));
     doc.ParseStream(istr);
 

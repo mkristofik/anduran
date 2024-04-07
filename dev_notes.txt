@@ -138,6 +138,8 @@ destination hex
     - pretty edge transitions between player-owned regions
     - crop the image in a little bit instead of worrying about jagged edges
 * unified logging interface that supports both SDL logging and std::cerr
+- log failures to start the app to a file
+    - SDL takes over the console, can't log errors that happen before SDL starts
 
 
 # Improving edge transitions
