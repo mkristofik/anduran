@@ -93,6 +93,9 @@ public:
                RandomMap &rmap,
                SdlImageManager &imgMgr);
 
+    // Total size of the map, in pixels.
+    SDL_Point mapSize() const;
+
     // Fraction of the map inside the visible area, range (0.0, 1.0].
     PartialPixel getDisplayFrac() const;
 
@@ -130,7 +133,8 @@ public:
     void showPath(const Path &path, ObjectAction lastStep);
     void clearPath();
 
-    SDL_Point pixelFromHex(const Hex &hex) const;
+    SDL_Point pixelFromHex(const Hex &hex) const;  // relative to window
+    SDL_Point mapPixelFromHex(const Hex &hex) const;  // relative to hex (0, 0)
     SDL_Point pixelDelta(const Hex &hSrc, const Hex &hDest) const;
 
 private:

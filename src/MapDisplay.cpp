@@ -126,9 +126,9 @@ MapDisplay::MapDisplay(SdlWindow &win,
 {
     // Set the scroll limit such that the lower right hex is fully visible inside
     // the window.
-    auto lowerRight = pixelFromHex(Hex{map_->width() - 1, map_->width() - 1});
-    maxOffset_.x = lowerRight.x - displayArea_.w - displayArea_.x + HEX_SIZE;
-    maxOffset_.y = lowerRight.y - displayArea_.h - displayArea_.y + HEX_SIZE;
+    auto pSize = mapSize();
+    maxOffset_.x = pSize.x - displayArea_.w;
+    maxOffset_.y = pSize.y - displayArea_.h;
 
     loadTerrainImages();
 
@@ -166,6 +166,12 @@ MapDisplay::MapDisplay(SdlWindow &win,
     pathImg_[ObjectAction::embark] = images_->make_texture("icon-embark", *window_);
     pathImg_[ObjectAction::disembark] = images_->make_texture("icon-disembark", *window_);
     waterPathImg_ = images_->make_texture("icon-path-water", *window_);
+}
+
+SDL_Point MapDisplay::mapSize() const
+{
+    auto lowerRight = mapPixelFromHex({map_->width() - 1, map_->width() - 1});
+    return lowerRight + SDL_Point(HEX_SIZE, HEX_SIZE);
 }
 
 PartialPixel MapDisplay::getDisplayFrac() const
@@ -460,9 +466,14 @@ void MapDisplay::clearPath()
 
 SDL_Point MapDisplay::pixelFromHex(const Hex &hex) const
 {
+    return mapPixelFromHex(hex) + SDL_Point(displayArea_.x, displayArea_.y);
+}
+
+SDL_Point MapDisplay::mapPixelFromHex(const Hex &hex) const
+{
     const int px = hex.x * HEX_SIZE * 0.75;
     const int py = (hex.y + 0.5 * abs(hex.x % 2)) * HEX_SIZE;
-    return {px + displayArea_.x, py + displayArea_.y};
+    return {px, py};
 }
 
 SDL_Point MapDisplay::pixelDelta(const Hex &hSrc, const Hex &hDest) const
