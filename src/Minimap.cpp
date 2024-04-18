@@ -27,6 +27,11 @@ Minimap::Minimap(SdlWindow &win,
     terrain_(),
     obstacles_(),
     influence_(),
+    // TODO: we could build all these tiles, plus the obstacles and terrain, all
+    // in software starting with a single image.
+    regionShade_(applyTeamColors(SdlSurface("img/tile-minimap-region.png"))),
+    regionBorder_(applyTeamColors(SdlSurface("img/tile-minimap-region-border.png"))),
+    ownerTiles_(applyTeamColors(SdlSurface("img/tile-minimap-owner.png"))),
     box_{0, 0, 0, 0},
     tileOwners_(),
     regionOwners_(rmap_->numRegions(), Team::neutral),
@@ -59,7 +64,7 @@ Minimap::Minimap(SdlWindow &win,
 void Minimap::draw()
 {
     if (rmapView_->isScrolling() || isDirty_) {
-        //update_influence();
+        update_influence();
         update_map_view();
 
         // Can't render while locked, this needs its own block.
@@ -67,7 +72,7 @@ void Minimap::draw()
             SdlEditTexture edit(texture_);
             edit.update(terrain_);
             edit.update(obstacles_);
-            //edit.update(influence_);
+            edit.update(influence_);
             draw_map_view(edit);
         }
     }
@@ -163,33 +168,50 @@ void Minimap::make_obstacle_layer()
 
 void Minimap::update_influence()
 {
-    SdlEditSurface edit(influence_);
-
-    for (int i = 0; i < rmap_->size(); ++i) {
-        int region = rmap_->getRegion(i);
-        Team owner = regionOwners_[region];
-        if (owner == Team::neutral) {
+    {
+        // TODO: SdlSurface needs a clear()
+        SdlEditSurface edit(influence_);
+        for (int i = 0; i < edit.size(); ++i) {
             edit.set_pixel(i, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
-            continue;
         }
+    }
 
-        // Shade the region with its owner's color.
-        const auto &color = getTeamColor(owner);
-        Uint8 alpha = 96;
-
-        // Draw a brighter border around the edges of a controlled region.
-        for (auto rNbr : rmap_->getTileRegionNeighbors(i)) {
-            if (owner != regionOwners_[rNbr]) {
-                alpha = SDL_ALPHA_OPAQUE;
-                break;
+    SDL_Rect tileRect = {0, 0, 72, 72};
+    SDL_Rect destRect = {0, 0, 24, 24};
+    for (int x = 0; x < rmap_->width(); ++x) {
+        for (int y = 0; y < rmap_->width(); ++y) {
+            Hex hex = {x, y};
+            int region = rmap_->getRegion(hex);
+            Team owner = regionOwners_[region];
+            if (owner == Team::neutral) {
+                continue;
             }
+
+            // Shade the region with its owner's color.
+            SDL_Surface *shade = regionShade_[owner].get();
+
+            // Draw a brighter border around the edges of a controlled region.
+            int index = rmap_->intFromHex(hex);
+            for (auto rNbr : rmap_->getTileRegionNeighbors(index)) {
+                if (owner != regionOwners_[rNbr]) {
+                    shade = regionBorder_[owner].get();
+                    break;
+                }
+            }
+
+            auto pixel = rmapView_->pixelDelta({0, 0}, hex);
+            destRect.x = pixel.x / 3;
+            destRect.y = pixel.y / 3;
+            SDL_BlitScaled(shade, &tileRect, influence_.get(), &destRect);
         }
-        edit.set_pixel(i, color.r, color.g, color.b, alpha);
     }
 
     for (auto [index, team] : tileOwners_) {
-        auto &color = getTeamColor(team, ColorShade::darker25);
-        edit.set_pixel(index, color);
+        Hex hex = rmap_->hexFromInt(index);
+        auto pixel = rmapView_->pixelDelta({0, 0}, hex);
+        destRect.x = pixel.x / 3;
+        destRect.y = pixel.y / 3;
+        SDL_BlitScaled(ownerTiles_[team].get(), &tileRect, influence_.get(), &destRect);
     }
 }
 

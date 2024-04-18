@@ -61,6 +61,9 @@ private:
     SdlSurface terrain_;
     SdlSurface obstacles_;
     SdlSurface influence_;
+    TeamColoredSurfaces regionShade_;
+    TeamColoredSurfaces regionBorder_;
+    TeamColoredSurfaces ownerTiles_;
     SDL_Rect box_;  // relative to the texture
     boost::container::flat_map<int, Team> tileOwners_;
     std::vector<Team> regionOwners_;
