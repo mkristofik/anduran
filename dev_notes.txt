@@ -135,8 +135,13 @@ destination hex
 * SDL_LogSetAllPriority
 - render a full-scale map and scale it down to minimap size
     - team-colored hexes
-    - pretty edge transitions between player-owned regions
+    - minimap tiles in terrain colors
+    - obstacle tiles in brown with different opacity for each terrain
+    - use the water edge transitions between player-owned regions
+        - ellipseToRefColor will work on any image
+    - going to need SDL_SetSurfaceBlendMode(SDL_BLENDMODE_NONE)
     - crop the image in a little bit instead of worrying about jagged edges
+    * tried 1/4 scale, led to display artifacts
 * unified logging interface that supports both SDL logging and std::cerr
 - log failures to start the app to a file
     - SDL takes over the console, can't log errors that happen before SDL starts

@@ -36,7 +36,12 @@ Minimap::Minimap(SdlWindow &win,
     // The obstacles and other map objects will be blended with the terrain layer
     // to compose the final minimap view.
     SdlEditTexture edit(texture_);
-    terrain_ = edit.make_surface(rmap_->width(), rmap_->width());
+    // TODO: need an absolute hexToPixel function
+    auto lowerRight = rmapView_->pixelDelta({0, 0}, {35, 35}) + SDL_Point{72, 72};
+    // Scaling down the minimap image uses 1/9 the memory without reducing
+    // quality too badly.  Any further and you start to get display artifacts.
+    // TODO: this 3 is a magic number
+    terrain_ = edit.make_surface(lowerRight.x / 3, lowerRight.y / 3);
     obstacles_ = terrain_.clone();
     SDL_SetSurfaceBlendMode(obstacles_.get(), SDL_BLENDMODE_BLEND);
     influence_ = terrain_.clone();
@@ -54,7 +59,7 @@ Minimap::Minimap(SdlWindow &win,
 void Minimap::draw()
 {
     if (rmapView_->isScrolling() || isDirty_) {
-        update_influence();
+        //update_influence();
         update_map_view();
 
         // Can't render while locked, this needs its own block.
@@ -62,7 +67,7 @@ void Minimap::draw()
             SdlEditTexture edit(texture_);
             edit.update(terrain_);
             edit.update(obstacles_);
-            edit.update(influence_);
+            //edit.update(influence_);
             draw_map_view(edit);
         }
     }
@@ -118,42 +123,41 @@ void Minimap::set_region_owner(int region, Team team)
 
 void Minimap::make_terrain_layer()
 {
-    const EnumSizedArray<SDL_Color, Terrain> terrainColors = {
-        SDL_Color{10, 96, 154, SDL_ALPHA_OPAQUE},  // water
-        SDL_Color{224, 204, 149, SDL_ALPHA_OPAQUE},  // desert
-        SDL_Color{65, 67, 48, SDL_ALPHA_OPAQUE},  // swamp
-        SDL_Color{69, 128, 24, SDL_ALPHA_OPAQUE},  // grass
-        SDL_Color{136, 110, 66, SDL_ALPHA_OPAQUE},  // dirt
-        SDL_Color{230, 240, 254, SDL_ALPHA_OPAQUE}  // snow
-    };
-
-    SdlEditSurface edit(terrain_);
-    for (int i = 0; i < edit.size(); ++i) {
-        edit.set_pixel(i, terrainColors[rmap_->getTerrain(i)]);
+    // TODO: get the images from image manager
+    SdlSurface tiles("img/tiles-minimap.png");
+    SDL_Rect tileRect = {0, 0, 72, 72};  // TODO: get this from surface?
+    SDL_Rect destRect = {0, 0, 24, 24};
+    for (int x = 0; x < rmap_->width(); ++x) {
+        for (int y = 0; y < rmap_->width(); ++y) {
+            auto pixel = rmapView_->pixelDelta({0, 0}, {x, y});
+            destRect.x = pixel.x / 3;
+            destRect.y = pixel.y / 3;
+            auto terrain = rmap_->getTerrain({x, y});
+            tileRect.x = static_cast<int>(terrain) * 72;
+            SDL_BlitScaled(tiles.get(), &tileRect, terrain_.get(), &destRect);
+        }
     }
 }
 
 void Minimap::make_obstacle_layer()
 {
-    SdlEditSurface edit(obstacles_);
+    SdlSurface tiles("img/tiles-minimap-obstacles.png");
+    SDL_Rect tileRect = {0, 0, 72, 72};
+    SDL_Rect destRect = {0, 0, 24, 24};
+    for (int x = 0; x < rmap_->width(); ++x) {
+        for (int y = 0; y < rmap_->width(); ++y) {
+            Hex hex = {x, y};
+            if (!rmap_->getObstacle(hex)) {
+                continue;
+            }
 
-    for (int i = 0; i < edit.size(); ++i) {
-        if (!rmap_->getObstacle(i)) {
-            edit.set_pixel(i, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
-            continue;
+            auto pixel = rmapView_->pixelDelta({0, 0}, hex);
+            destRect.x = pixel.x / 3;
+            destRect.y = pixel.y / 3;
+            auto terrain = rmap_->getTerrain(hex);
+            tileRect.x = static_cast<int>(terrain) * 72;
+            SDL_BlitScaled(tiles.get(), &tileRect, obstacles_.get(), &destRect);
         }
-
-        // Increase opacity for certain terrain types so the obstacle markings are
-        // more visible.
-        SDL_Color color = {120, 67, 21, 64};  // brown, 25% opacity
-        auto terrain = rmap_->getTerrain(i);
-        if (terrain == Terrain::dirt) {
-            color.a = 96;
-        }
-        else if (terrain == Terrain::swamp) {
-            color.a = 160;
-        }
-        edit.set_pixel(i, color);
     }
 }
 
