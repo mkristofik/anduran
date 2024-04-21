@@ -12,6 +12,7 @@
 */
 #include "Minimap.h"
 #include "container_utils.h"
+#include "iterable_enum_class.h"
 #include "pixel_utils.h"
 
 
@@ -41,11 +42,11 @@ Minimap::Minimap(SdlWindow &win,
     // The obstacles and other map objects will be blended with the terrain layer
     // to compose the final minimap view.
     SdlEditTexture edit(texture_);
-    auto mapSize = rmapView_->mapSize();
     // Scaling down the minimap image uses 1/9 the memory without reducing
     // quality too badly.  Any further and you start to get display artifacts.
     // TODO: this 3 is a magic number
-    terrain_ = edit.make_surface(mapSize.x / 3, mapSize.y / 3);
+    auto scaledSize = rmapView_->mapSize() / 3;
+    terrain_ = edit.make_surface(scaledSize.x, scaledSize.y);
     obstacles_ = terrain_.clone();
     SDL_SetSurfaceBlendMode(obstacles_.get(), SDL_BLENDMODE_BLEND);
     influence_ = terrain_.clone();
@@ -96,6 +97,7 @@ void Minimap::handle_mouse_pos(Uint32)
     auto yFrac = static_cast<double>(relPos.y) / (displayRect_.h - box_.h);
     rmapView_->setDisplayOffset(std::clamp(xFrac, 0.0, 1.0),
                                 std::clamp(yFrac, 0.0, 1.0));
+    // TODO: we might want an isScrolling_ too, to save on influence map recalcs.
     isDirty_ = true;
 }
 
@@ -131,8 +133,10 @@ void Minimap::make_terrain_layer()
 {
     // TODO: get the images from image manager
     SdlSurface tiles("img/tiles-minimap.png");
-    SDL_Rect tileRect = {0, 0, 72, 72};  // TODO: get this from surface?
-    SDL_Rect destRect = {0, 0, 24, 24};
+    auto tileRect = tiles.rect_size();
+    tileRect.w /= enum_size<Terrain>();  // image has 1 frame per terrain type
+    auto destRect = tileRect / 3;
+
     for (int x = 0; x < rmap_->width(); ++x) {
         for (int y = 0; y < rmap_->width(); ++y) {
             Hex hex = {x, y};
@@ -140,7 +144,7 @@ void Minimap::make_terrain_layer()
             destRect.x = pixel.x / 3;
             destRect.y = pixel.y / 3;
             auto terrain = rmap_->getTerrain(hex);
-            tileRect.x = static_cast<int>(terrain) * 72;
+            tileRect.x = static_cast<int>(terrain) * tileRect.w;
             SDL_BlitScaled(tiles.get(), &tileRect, terrain_.get(), &destRect);
         }
     }
@@ -149,8 +153,10 @@ void Minimap::make_terrain_layer()
 void Minimap::make_obstacle_layer()
 {
     SdlSurface tiles("img/tiles-minimap-obstacles.png");
-    SDL_Rect tileRect = {0, 0, 72, 72};
-    SDL_Rect destRect = {0, 0, 24, 24};
+    auto tileRect = tiles.rect_size();
+    tileRect.w /= enum_size<Terrain>();  // image has 1 frame per terrain type
+    auto destRect = tileRect / 3;
+
     for (int x = 0; x < rmap_->width(); ++x) {
         for (int y = 0; y < rmap_->width(); ++y) {
             Hex hex = {x, y};
@@ -162,7 +168,7 @@ void Minimap::make_obstacle_layer()
             destRect.x = pixel.x / 3;
             destRect.y = pixel.y / 3;
             auto terrain = rmap_->getTerrain(hex);
-            tileRect.x = static_cast<int>(terrain) * 72;
+            tileRect.x = static_cast<int>(terrain) * tileRect.w;
             SDL_BlitScaled(tiles.get(), &tileRect, obstacles_.get(), &destRect);
         }
     }
@@ -178,8 +184,9 @@ void Minimap::update_influence()
         }
     }
 
-    SDL_Rect tileRect = {0, 0, 72, 72};
-    SDL_Rect destRect = {0, 0, 24, 24};
+    auto &tileRect = regionShade_[0].rect_size();
+    auto destRect = tileRect / 3;
+
     for (int x = 0; x < rmap_->width(); ++x) {
         for (int y = 0; y < rmap_->width(); ++y) {
             Hex hex = {x, y};

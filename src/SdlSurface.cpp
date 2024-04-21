@@ -18,8 +18,13 @@
 #include <stdexcept>
 
 SdlSurface::SdlSurface(SDL_Surface *surf)
-    : surf_(surf, SDL_FreeSurface)
+    : surf_(surf, SDL_FreeSurface),
+    rectSize_{0, 0, 0, 0}
 {
+    if (surf_) {
+        rectSize_.w = surf_.get()->w;
+        rectSize_.h = surf_.get()->h;
+    }
 }
 
 SdlSurface::SdlSurface(const char *filename)
@@ -29,6 +34,11 @@ SdlSurface::SdlSurface(const char *filename)
         log_error(std::format("couldn't load image: {}", IMG_GetError()),
                   LogCategory::video);
     }
+}
+
+const SDL_Rect & SdlSurface::rect_size() const
+{
+    return rectSize_;
 }
 
 SdlSurface SdlSurface::clone() const

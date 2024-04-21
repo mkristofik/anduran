@@ -1,13 +1,13 @@
 /*
-    Copyright (C) 2016-2021 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License version 2
     or at your option any later version.
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY.
- 
+
     See the COPYING.txt file for more details.
 */
 #ifndef SDL_SURFACE_H
@@ -30,6 +30,8 @@ public:
     SdlSurface(SDL_Surface *surf = nullptr);
     explicit SdlSurface(const char *filename);
 
+    const SDL_Rect & rect_size() const;
+
     // Make a deep copy.  Normal copies just increment the reference count.
     SdlSurface clone() const;
 
@@ -40,6 +42,7 @@ public:
 
 private:
     std::shared_ptr<SDL_Surface> surf_;
+    SDL_Rect rectSize_;
 };
 
 

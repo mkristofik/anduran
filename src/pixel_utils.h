@@ -36,6 +36,8 @@ constexpr PartialPixel operator/(const SDL_Point &lhs, double rhs);
 constexpr SDL_Point operator+(const SDL_Point &lhs, const SDL_Point &rhs);
 constexpr SDL_Point operator-(const SDL_Point &lhs, const SDL_Point &rhs);
 
+constexpr SDL_Rect operator/(const SDL_Rect &lhs, int rhs);
+
 SDL_Point get_mouse_pos();
 bool mouse_in_rect(const SDL_Rect &rect);
 
@@ -98,6 +100,11 @@ constexpr SDL_Point operator+(const SDL_Point &lhs, const SDL_Point &rhs)
 constexpr SDL_Point operator-(const SDL_Point &lhs, const SDL_Point &rhs)
 {
     return {lhs.x - rhs.x, lhs.y - rhs.y};
+}
+
+constexpr SDL_Rect operator/(const SDL_Rect &lhs, int rhs)
+{
+    return {lhs.x / rhs, lhs.y / rhs, lhs.w / rhs, lhs.h / rhs};
 }
 
 #endif
