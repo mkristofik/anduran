@@ -15,6 +15,13 @@
 #include "iterable_enum_class.h"
 #include "pixel_utils.h"
 
+namespace
+{
+    // Scaling down the minimap image uses less memory without reducing quality
+    // too badly.  Any further than 3 and you start to get display artifacts.
+    const int SCALE_FACTOR = 3;
+}
+
 
 Minimap::Minimap(SdlWindow &win,
                  const SDL_Rect &displayRect,
@@ -40,12 +47,10 @@ Minimap::Minimap(SdlWindow &win,
     isDirty_(true)
 {
     // The obstacles and other map objects will be blended with the terrain layer
-    // to compose the final minimap view.
+    // to compose the final minimap view.  We draw this intermediate state at a
+    // higher resolution than its final size in the window so it looks good.
     SdlEditTexture edit(texture_);
-    // Scaling down the minimap image uses 1/9 the memory without reducing
-    // quality too badly.  Any further and you start to get display artifacts.
-    // TODO: this 3 is a magic number
-    auto scaledSize = rmapView_->mapSize() / 3;
+    auto scaledSize = rmapView_->mapSize() / SCALE_FACTOR;
     terrain_ = edit.make_surface(scaledSize.x, scaledSize.y);
     obstacles_ = terrain_.clone();
     SDL_SetSurfaceBlendMode(obstacles_.get(), SDL_BLENDMODE_BLEND);
@@ -135,14 +140,14 @@ void Minimap::make_terrain_layer()
     SdlSurface tiles("img/tiles-minimap.png");
     auto tileRect = tiles.rect_size();
     tileRect.w /= enum_size<Terrain>();  // image has 1 frame per terrain type
-    auto destRect = tileRect / 3;
+    auto destRect = tileRect / SCALE_FACTOR;
 
     for (int x = 0; x < rmap_->width(); ++x) {
         for (int y = 0; y < rmap_->width(); ++y) {
             Hex hex = {x, y};
             auto pixel = rmapView_->mapPixelFromHex(hex);
-            destRect.x = pixel.x / 3;
-            destRect.y = pixel.y / 3;
+            destRect.x = pixel.x / SCALE_FACTOR;
+            destRect.y = pixel.y / SCALE_FACTOR;
             auto terrain = rmap_->getTerrain(hex);
             tileRect.x = static_cast<int>(terrain) * tileRect.w;
             SDL_BlitScaled(tiles.get(), &tileRect, terrain_.get(), &destRect);
@@ -155,7 +160,7 @@ void Minimap::make_obstacle_layer()
     SdlSurface tiles("img/tiles-minimap-obstacles.png");
     auto tileRect = tiles.rect_size();
     tileRect.w /= enum_size<Terrain>();  // image has 1 frame per terrain type
-    auto destRect = tileRect / 3;
+    auto destRect = tileRect / SCALE_FACTOR;
 
     for (int x = 0; x < rmap_->width(); ++x) {
         for (int y = 0; y < rmap_->width(); ++y) {
@@ -165,8 +170,8 @@ void Minimap::make_obstacle_layer()
             }
 
             auto pixel = rmapView_->mapPixelFromHex(hex);
-            destRect.x = pixel.x / 3;
-            destRect.y = pixel.y / 3;
+            destRect.x = pixel.x / SCALE_FACTOR;
+            destRect.y = pixel.y / SCALE_FACTOR;
             auto terrain = rmap_->getTerrain(hex);
             tileRect.x = static_cast<int>(terrain) * tileRect.w;
             SDL_BlitScaled(tiles.get(), &tileRect, obstacles_.get(), &destRect);
@@ -185,7 +190,7 @@ void Minimap::update_influence()
     }
 
     auto &tileRect = regionShade_[0].rect_size();
-    auto destRect = tileRect / 3;
+    auto destRect = tileRect / SCALE_FACTOR;
 
     for (int x = 0; x < rmap_->width(); ++x) {
         for (int y = 0; y < rmap_->width(); ++y) {
@@ -209,17 +214,17 @@ void Minimap::update_influence()
             }
 
             auto pixel = rmapView_->mapPixelFromHex(hex);
-            destRect.x = pixel.x / 3;
-            destRect.y = pixel.y / 3;
+            destRect.x = pixel.x / SCALE_FACTOR;
+            destRect.y = pixel.y / SCALE_FACTOR;
             SDL_BlitScaled(shade, &tileRect, influence_.get(), &destRect);
         }
     }
 
-    for (auto [index, team] : tileOwners_) {
+    for (auto & [index, team] : tileOwners_) {
         Hex hex = rmap_->hexFromInt(index);
         auto pixel = rmapView_->mapPixelFromHex(hex);
-        destRect.x = pixel.x / 3;
-        destRect.y = pixel.y / 3;
+        destRect.x = pixel.x / SCALE_FACTOR;
+        destRect.y = pixel.y / SCALE_FACTOR;
         SDL_BlitScaled(ownerTiles_[team].get(), &tileRect, influence_.get(), &destRect);
     }
 }
