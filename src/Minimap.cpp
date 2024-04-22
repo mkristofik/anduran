@@ -44,6 +44,7 @@ Minimap::Minimap(SdlWindow &win,
     tileOwners_(),
     regionOwners_(rmap_->numRegions(), Team::neutral),
     isMouseClicked_(false),
+    isScrolling_(false),
     isDirty_(true)
 {
     // The obstacles and other map objects will be blended with the terrain layer
@@ -68,7 +69,7 @@ Minimap::Minimap(SdlWindow &win,
 
 void Minimap::draw()
 {
-    if (rmapView_->isScrolling() || isDirty_) {
+    if (rmapView_->isScrolling() || isScrolling_ || isDirty_) {
         if (isDirty_) {
             update_influence();
         }
@@ -85,6 +86,7 @@ void Minimap::draw()
     }
 
     texture_.draw(displayPos_);
+    isScrolling_ = false;
     isDirty_ = false;
 }
 
@@ -102,8 +104,7 @@ void Minimap::handle_mouse_pos(Uint32)
     auto yFrac = static_cast<double>(relPos.y) / (displayRect_.h - box_.h);
     rmapView_->setDisplayOffset(std::clamp(xFrac, 0.0, 1.0),
                                 std::clamp(yFrac, 0.0, 1.0));
-    // TODO: we might want an isScrolling_ too, to save on influence map recalcs.
-    isDirty_ = true;
+    isScrolling_ = true;
 }
 
 void Minimap::handle_lmouse_down()
@@ -181,13 +182,7 @@ void Minimap::make_obstacle_layer()
 
 void Minimap::update_influence()
 {
-    {
-        // TODO: SdlSurface needs a clear()
-        SdlEditSurface edit(influence_);
-        for (int i = 0; i < edit.size(); ++i) {
-            edit.set_pixel(i, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
-        }
-    }
+    SdlEditSurface::clear(influence_);
 
     auto &tileRect = regionShade_[0].rect_size();
     auto destRect = tileRect / SCALE_FACTOR;

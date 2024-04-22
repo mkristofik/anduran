@@ -132,3 +132,11 @@ void SdlEditSurface::set_pixel(int index, Uint8 r, Uint8 g, Uint8 b, Uint8 a)
 {
     pixels_[index] = SDL_MapRGBA(surf_->format, r, g, b, a);
 }
+
+void SdlEditSurface::clear(SdlSurface &img)
+{
+    SdlEditSurface edit(img);
+    for (int i = 0; i < edit.size(); ++i) {
+        edit.set_pixel(i, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
+    }
+}

@@ -59,6 +59,8 @@ public:
     void set_pixel(int index, const SDL_Color &color);
     void set_pixel(int index, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
 
+    static void clear(SdlSurface &img);
+
 private:
     SDL_Surface *surf_;
     std::span<Uint32> pixels_;
