@@ -32,11 +32,20 @@ Minimap::Minimap(SdlWindow &win,
     displayRect_(displayRect),
     displayPos_{displayRect_.x, displayRect_.y},
     texture_(SdlTexture::make_editable_image(win, displayRect_.w, displayRect_.h)),
+    textureClipRect_(make_clip_rect()),
     terrain_(),
     obstacles_(),
     influence_(),
     // TODO: we could build all these tiles, plus the obstacles and terrain, all
     // in software starting with a single image.
+    // - start with an image in the team reference color at full opacity (region
+    // border I think)
+    //     - fetch the surface from the image manager, pass it in ctor
+    // - region shade is at 96 alpha
+    // - owner shade is darker25
+    // - TeamColoredSurfaces of all three of these
+    // - six terrain colors, EnumSizedArray
+    // - six obstacle colors, EnumSizedArray
     regionShade_(applyTeamColors(SdlSurface("img/tile-minimap-region.png"))),
     regionBorder_(applyTeamColors(SdlSurface("img/tile-minimap-region-border.png"))),
     ownerTiles_(applyTeamColors(SdlSurface("img/tile-minimap-owner.png"))),
@@ -78,9 +87,9 @@ void Minimap::draw()
         // Can't render while locked, this needs its own block.
         {
             SdlEditTexture edit(texture_);
-            edit.update(terrain_);
-            edit.update(obstacles_);
-            edit.update(influence_);
+            edit.update(terrain_, textureClipRect_);
+            edit.update(obstacles_, textureClipRect_);
+            edit.update(influence_, textureClipRect_);
             draw_map_view(edit);
         }
     }
@@ -135,9 +144,21 @@ void Minimap::set_region_owner(int region, Team team)
     isDirty_ = true;
 }
 
+SDL_Rect Minimap::make_clip_rect() const
+{
+    SDL_Point mapSize = rmapView_->mapSize();
+    SDL_Rect clipRect = {
+        TileDisplay::HEX_SIZE / 4,
+        TileDisplay::HEX_SIZE / 2,
+        mapSize.x - TileDisplay::HEX_SIZE / 2,
+        mapSize.y - TileDisplay::HEX_SIZE
+    };
+
+    return clipRect / SCALE_FACTOR;
+}
+
 void Minimap::make_terrain_layer()
 {
-    // TODO: get the images from image manager
     SdlSurface tiles("img/tiles-minimap.png");
     auto tileRect = tiles.rect_size();
     tileRect.w /= enum_size<Terrain>();  // image has 1 frame per terrain type

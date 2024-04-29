@@ -339,3 +339,15 @@ void SdlEditTexture::update(const SdlSurface &from)
                  LogCategory::video);
     }
 }
+
+void SdlEditTexture::update(const SdlSurface &from, const SDL_Rect &srcRect)
+{
+    if (!isLocked_) {
+        return;
+    }
+
+    if (SDL_BlitScaled(from.get(), &srcRect, surf_, nullptr) < 0) {
+        log_warn(std::format("couldn't update texture: {}", SDL_GetError()),
+                 LogCategory::video);
+    }
+}

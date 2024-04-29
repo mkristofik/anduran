@@ -44,6 +44,11 @@ public:
     void set_region_owner(int region, Team team);
 
 private:
+    // Hex tiling leaves jagged edges around the border.  Rather than duplicating
+    // the algorithm MapDisplay uses, just clip the overlay surface so the jagged
+    // edges aren't visible.
+    SDL_Rect make_clip_rect() const;
+
     void make_terrain_layer();
     void make_obstacle_layer();
     void update_influence();
@@ -58,6 +63,7 @@ private:
     SDL_Rect displayRect_;
     SDL_Point displayPos_;
     SdlTexture texture_;
+    SDL_Rect textureClipRect_;
     SdlSurface terrain_;
     SdlSurface obstacles_;
     SdlSurface influence_;

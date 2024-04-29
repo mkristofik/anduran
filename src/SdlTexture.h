@@ -111,9 +111,11 @@ public:
     void fill_rect(const SDL_Rect &rect, const SDL_Color &color);
 
     // Update the entire texture with the contents of the given surface, scaling
-    // as needed.  Default behavior is to overwrite all pixels, call
-    // SDL_SetSurfaceBlendMode on the raw 'from' surface to change that.
+    // as needed.  Use 'srcRect' to only draw part of the 'from' surface.  Default
+    // behavior is to overwrite all pixels, call SDL_SetSurfaceBlendMode on the
+    // raw 'from' surface to change that.
     void update(const SdlSurface &from);
+    void update(const SdlSurface &from, const SDL_Rect &srcRect);
 
 private:
     SDL_Texture *texture_;
