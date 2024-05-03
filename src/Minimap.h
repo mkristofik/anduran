@@ -65,9 +65,9 @@ private:
     void update_map_view();
     void draw_map_view(SdlEditTexture &edit);
 
-    // Draw onto one of the image layers at the given hex position using the
-    // default scale factor.
-    void draw_scaled(const SdlSurface &src, SdlSurface &target, const Hex &hex);
+    // Draw onto one of the image layers at the given tile index using the default
+    // scale factor.
+    void draw_scaled(const SdlSurface &src, SdlSurface &target, int index);
 
     RandomMap *rmap_;
     MapDisplay *rmapView_;

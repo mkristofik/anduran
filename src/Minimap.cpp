@@ -179,11 +179,8 @@ void Minimap::make_terrain_layer()
     tiles[Terrain::dirt].fill(136, 110, 66);
     tiles[Terrain::snow].fill(230, 240, 254);
 
-    for (int x = 0; x < rmap_->width(); ++x) {
-        for (int y = 0; y < rmap_->width(); ++y) {
-            Hex hex = {x, y};
-            draw_scaled(tiles[rmap_->getTerrain(hex)], terrainLayer_, hex);
-        }
+    for (int i = 0; i < rmap_->size(); ++i) {
+        draw_scaled(tiles[rmap_->getTerrain(i)], terrainLayer_, i);
     }
 }
 
@@ -202,14 +199,9 @@ void Minimap::make_obstacle_layer()
     tiles[Terrain::swamp].set_alpha(160);
     tiles[Terrain::dirt].set_alpha(96);
 
-    for (int x = 0; x < rmap_->width(); ++x) {
-        for (int y = 0; y < rmap_->width(); ++y) {
-            Hex hex = {x, y};
-            if (!rmap_->getObstacle(hex)) {
-                continue;
-            }
-
-            draw_scaled(tiles[rmap_->getTerrain(hex)], obstacleLayer_, hex);
+    for (int i = 0; i < rmap_->size(); ++i) {
+        if (rmap_->getObstacle(i)) {
+            draw_scaled(tiles[rmap_->getTerrain(i)], obstacleLayer_, i);
         }
     }
 }
@@ -218,33 +210,29 @@ void Minimap::update_influence()
 {
     influenceLayer_.clear();
 
-    for (int x = 0; x < rmap_->width(); ++x) {
-        for (int y = 0; y < rmap_->width(); ++y) {
-            Hex hex = {x, y};
-            int region = rmap_->getRegion(hex);
-            Team owner = regionOwners_[region];
-            if (owner == Team::neutral) {
-                continue;
-            }
-
-            // Shade the region with its owner's color.
-            SdlSurface *shade = &regionShades_[owner];
-
-            // Draw a brighter border around the edges of a controlled region.
-            int index = rmap_->intFromHex(hex);
-            for (auto rNbr : rmap_->getTileRegionNeighbors(index)) {
-                if (owner != regionOwners_[rNbr]) {
-                    shade = &regionBorders_[owner];
-                    break;
-                }
-            }
-
-            draw_scaled(*shade, influenceLayer_, hex);
+    for (int i = 0; i < rmap_->size(); ++i) {
+        int region = rmap_->getRegion(i);
+        Team owner = regionOwners_[region];
+        if (owner == Team::neutral) {
+            continue;
         }
+
+        // Shade the region with its owner's color.
+        SdlSurface *shade = &regionShades_[owner];
+
+        // Draw a brighter border around the edges of a controlled region.
+        for (auto rNbr : rmap_->getTileRegionNeighbors(i)) {
+            if (owner != regionOwners_[rNbr]) {
+                shade = &regionBorders_[owner];
+                break;
+            }
+        }
+
+        draw_scaled(*shade, influenceLayer_, i);
     }
 
     for (auto & [index, team] : tileOwners_) {
-        draw_scaled(ownerTiles_[team], influenceLayer_, rmap_->hexFromInt(index));
+        draw_scaled(ownerTiles_[team], influenceLayer_, index);
     }
 }
 
@@ -278,9 +266,9 @@ void Minimap::draw_map_view(SdlEditTexture &edit)
     }
 }
 
-void Minimap::draw_scaled(const SdlSurface &src, SdlSurface &target, const Hex &hex)
+void Minimap::draw_scaled(const SdlSurface &src, SdlSurface &target, int index)
 {
-    auto pixel = rmapView_->mapPixelFromHex(hex);
+    auto pixel = rmapView_->mapPixelFromHex(rmap_->hexFromInt(index));
     auto destRect = baseTile_.rect_size() / SCALE_FACTOR;
     destRect.x = pixel.x / SCALE_FACTOR;
     destRect.y = pixel.y / SCALE_FACTOR;
