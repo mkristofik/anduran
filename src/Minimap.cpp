@@ -11,6 +11,8 @@
     See the COPYING.txt file for more details.
 */
 #include "Minimap.h"
+
+#include "SdlImageManager.h"
 #include "container_utils.h"
 #include "iterable_enum_class.h"
 #include "pixel_utils.h"
@@ -26,7 +28,8 @@ namespace
 Minimap::Minimap(SdlWindow &win,
                  const SDL_Rect &displayRect,
                  RandomMap &rmap,
-                 MapDisplay &mapView)
+                 MapDisplay &mapView,
+                 SdlImageManager &imgMgr)
     : rmap_(&rmap),
     rmapView_(&mapView),
     displayRect_(displayRect),
@@ -46,9 +49,10 @@ Minimap::Minimap(SdlWindow &win,
     // - TeamColoredSurfaces of all three of these
     // - six terrain colors, EnumSizedArray
     // - six obstacle colors, EnumSizedArray
-    regionShade_(applyTeamColors(SdlSurface("img/tile-minimap-region.png"))),
-    regionBorder_(applyTeamColors(SdlSurface("img/tile-minimap-region-border.png"))),
-    ownerTiles_(applyTeamColors(SdlSurface("img/tile-minimap-owner.png"))),
+    baseTile_(imgMgr.get_surface("tile-minimap-region-border")),
+    regionShades_(make_region_shades()),
+    regionBorders_(applyTeamColors(baseTile_)),
+    ownerTiles_(make_owner_tiles()),
     box_{0, 0, 0, 0},
     tileOwners_(),
     regionOwners_(rmap_->numRegions(), Team::neutral),
@@ -157,6 +161,32 @@ SDL_Rect Minimap::make_clip_rect() const
     return clipRect / SCALE_FACTOR;
 }
 
+// Shade each region's owner with a partially transparent team color.
+TeamColoredSurfaces Minimap::make_region_shades() const
+{
+    auto src = baseTile_.clone();
+    {
+        SdlEditSurface edit(src);
+        for (int i = 0; i < edit.size(); ++i) {
+            auto color = edit.get_pixel(i);
+            if (color.a > SDL_ALPHA_TRANSPARENT) {
+                color.a = 96;
+                edit.set_pixel(i, color);
+            }
+        }
+    }
+
+    return applyTeamColors(src);
+}
+
+// Use a darker shade for tiles owned by each team.
+TeamColoredSurfaces Minimap::make_owner_tiles() const
+{
+    auto src = baseTile_.clone();
+    src.fill(getRefColor(ColorShade::darker25));
+    return applyTeamColors(src);
+}
+
 void Minimap::make_terrain_layer()
 {
     SdlSurface tiles("img/tiles-minimap.png");
@@ -203,9 +233,9 @@ void Minimap::make_obstacle_layer()
 
 void Minimap::update_influence()
 {
-    SdlEditSurface::clear(influence_);
+    influence_.clear();
 
-    auto &tileRect = regionShade_[0].rect_size();
+    auto &tileRect = baseTile_.rect_size();
     auto destRect = tileRect / SCALE_FACTOR;
 
     for (int x = 0; x < rmap_->width(); ++x) {
@@ -218,17 +248,18 @@ void Minimap::update_influence()
             }
 
             // Shade the region with its owner's color.
-            SDL_Surface *shade = regionShade_[owner].get();
+            SDL_Surface *shade = regionShades_[owner].get();
 
             // Draw a brighter border around the edges of a controlled region.
             int index = rmap_->intFromHex(hex);
             for (auto rNbr : rmap_->getTileRegionNeighbors(index)) {
                 if (owner != regionOwners_[rNbr]) {
-                    shade = regionBorder_[owner].get();
+                    shade = regionBorders_[owner].get();
                     break;
                 }
             }
 
+            // TODO: member function for this
             auto pixel = rmapView_->mapPixelFromHex(hex);
             destRect.x = pixel.x / SCALE_FACTOR;
             destRect.y = pixel.y / SCALE_FACTOR;

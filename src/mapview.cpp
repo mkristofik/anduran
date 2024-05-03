@@ -65,7 +65,7 @@ MapViewApp::MapViewApp(const char *filename)
     images_("img/"),
     objImg_(images_, objs_, win_),
     rmapView_(win_, config_.map_bounds(), rmap_, images_),
-    minimap_(win_, config_.minimap_bounds(), rmap_, rmapView_)
+    minimap_(win_, config_.minimap_bounds(), rmap_, rmapView_, images_)
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 

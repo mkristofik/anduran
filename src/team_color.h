@@ -44,6 +44,7 @@ TeamColoredSurfaces applyTeamColors(const SdlSurface &src);
 
 // Ellipses are red, convert them to the reference color so they can be team
 // colored. Do the same with flags, which are green.
+const SDL_Color & getRefColor(ColorShade shade);
 SdlSurface ellipseToRefColor(const SdlSurface &src);
 SdlSurface flagToRefColor(const SdlSurface &src);
 

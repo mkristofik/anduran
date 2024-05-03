@@ -23,6 +23,7 @@
 #include "SDL.h"
 #include "boost/container/flat_map.hpp"
 
+class SdlImageManager;
 class SdlWindow;
 
 
@@ -32,7 +33,8 @@ public:
     Minimap(SdlWindow &win,
             const SDL_Rect &displayRect,
             RandomMap &rmap,
-            MapDisplay &mapView);
+            MapDisplay &mapView,
+            SdlImageManager &imgMgr);
 
     void draw();
 
@@ -48,6 +50,11 @@ private:
     // the algorithm MapDisplay uses, just clip the overlay surface so the jagged
     // edges aren't visible.
     SDL_Rect make_clip_rect() const;
+
+    // To allow for easier experimenting with colors and shading, build all the
+    // minimap tiles in software.
+    TeamColoredSurfaces make_region_shades() const;
+    TeamColoredSurfaces make_owner_tiles() const;
 
     void make_terrain_layer();
     void make_obstacle_layer();
@@ -67,8 +74,9 @@ private:
     SdlSurface terrain_;
     SdlSurface obstacles_;
     SdlSurface influence_;
-    TeamColoredSurfaces regionShade_;
-    TeamColoredSurfaces regionBorder_;
+    SdlSurface baseTile_;  // used to generate all the team-colored tiles
+    TeamColoredSurfaces regionShades_;
+    TeamColoredSurfaces regionBorders_;
     TeamColoredSurfaces ownerTiles_;
     SDL_Rect box_;  // relative to the texture
     boost::container::flat_map<int, Team> tileOwners_;

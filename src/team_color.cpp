@@ -183,6 +183,11 @@ TeamColoredSurfaces applyTeamColors(const SdlSurface &src)
     return images;
 }
 
+const SDL_Color & getRefColor(ColorShade shade)
+{
+    return refColors[static_cast<int>(shade)];
+}
+
 SdlSurface ellipseToRefColor(const SdlSurface &src)
 {
     auto imgCopy = src.clone();
