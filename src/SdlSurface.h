@@ -40,6 +40,11 @@ public:
 
     explicit operator bool() const;
 
+    void clear();
+
+    // Set all pixels to the same color, preserving alpha channel.
+    void fill(const SDL_Color &color);
+
 private:
     std::shared_ptr<SDL_Surface> surf_;
     SDL_Rect rectSize_;
@@ -58,8 +63,6 @@ public:
     SDL_Color get_pixel(int index) const;
     void set_pixel(int index, const SDL_Color &color);
     void set_pixel(int index, Uint8 r, Uint8 g, Uint8 b, Uint8 a);
-
-    static void clear(SdlSurface &img);
 
 private:
     SDL_Surface *surf_;

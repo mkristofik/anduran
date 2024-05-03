@@ -84,6 +84,23 @@ SdlSurface::operator bool() const
     return static_cast<bool>(surf_);
 }
 
+void SdlSurface::clear()
+{
+    SdlEditSurface edit(*this);
+    for (int i = 0; i < edit.size(); ++i) {
+        edit.set_pixel(i, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
+    }
+}
+
+void SdlSurface::fill(const SDL_Color &color)
+{
+    SdlEditSurface edit(*this);
+    for (int i = 0; i < edit.size(); ++i) {
+        auto orig = edit.get_pixel(i);
+        edit.set_pixel(i, color.r, color.g, color.b, orig.a);
+    }
+}
+
 
 SdlEditSurface::SdlEditSurface(const SdlSurface &img)
     : surf_(img.get()),
@@ -131,12 +148,4 @@ void SdlEditSurface::set_pixel(int index, const SDL_Color &color)
 void SdlEditSurface::set_pixel(int index, Uint8 r, Uint8 g, Uint8 b, Uint8 a)
 {
     pixels_[index] = SDL_MapRGBA(surf_->format, r, g, b, a);
-}
-
-void SdlEditSurface::clear(SdlSurface &img)
-{
-    SdlEditSurface edit(img);
-    for (int i = 0; i < edit.size(); ++i) {
-        edit.set_pixel(i, 0, 0, 0, SDL_ALPHA_TRANSPARENT);
-    }
 }
