@@ -49,7 +49,6 @@ Minimap::Minimap(SdlWindow &win,
     tileOwners_(),
     regionOwners_(rmap_->numRegions(), Team::neutral),
     isMouseClicked_(false),
-    isScrolling_(false),
     isDirty_(true)
 {
     // The obstacles and other map objects will be blended with the terrain layer
@@ -74,7 +73,7 @@ Minimap::Minimap(SdlWindow &win,
 
 void Minimap::draw()
 {
-    if (rmapView_->isScrolling() || isScrolling_ || isDirty_) {
+    if (rmapView_->isScrolling() || isMouseClicked_ || isDirty_) {
         if (isDirty_) {
             update_influence();
         }
@@ -91,7 +90,6 @@ void Minimap::draw()
     }
 
     texture_.draw(displayPos_);
-    isScrolling_ = false;
     isDirty_ = false;
 }
 
@@ -109,7 +107,6 @@ void Minimap::handle_mouse_pos(Uint32)
     auto yFrac = static_cast<double>(relPos.y) / (displayRect_.h - box_.h);
     rmapView_->setDisplayOffset(std::clamp(xFrac, 0.0, 1.0),
                                 std::clamp(yFrac, 0.0, 1.0));
-    isScrolling_ = true;
 }
 
 void Minimap::handle_lmouse_down()
