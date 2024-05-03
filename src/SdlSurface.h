@@ -44,6 +44,10 @@ public:
 
     // Set all pixels to the same color, preserving alpha channel.
     void fill(const SDL_Color &color);
+    void fill(Uint8 r, Uint8 g, Uint8 b);
+
+    // Set the alpha channel for all non-transparent pixels.
+    void set_alpha(Uint8 a);
 
 private:
     std::shared_ptr<SDL_Surface> surf_;

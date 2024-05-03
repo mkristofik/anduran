@@ -94,10 +94,27 @@ void SdlSurface::clear()
 
 void SdlSurface::fill(const SDL_Color &color)
 {
+    fill(color.r, color.g, color.b);
+}
+
+void SdlSurface::fill(Uint8 r, Uint8 g, Uint8 b)
+{
     SdlEditSurface edit(*this);
     for (int i = 0; i < edit.size(); ++i) {
         auto orig = edit.get_pixel(i);
-        edit.set_pixel(i, color.r, color.g, color.b, orig.a);
+        edit.set_pixel(i, r, g, b, orig.a);
+    }
+}
+
+void SdlSurface::set_alpha(Uint8 a)
+{
+    SdlEditSurface edit(*this);
+    for (int i = 0; i < edit.size(); ++i) {
+        auto color = edit.get_pixel(i);
+        if (color.a > SDL_ALPHA_TRANSPARENT) {
+            color.a = a;
+            edit.set_pixel(i, color);
+        }
     }
 }
 

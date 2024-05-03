@@ -17,6 +17,8 @@
 #include "iterable_enum_class.h"
 #include "pixel_utils.h"
 
+#include <algorithm>
+
 namespace
 {
     // Scaling down the minimap image uses less memory without reducing quality
@@ -39,17 +41,7 @@ Minimap::Minimap(SdlWindow &win,
     terrain_(),
     obstacles_(),
     influence_(),
-    // TODO: we could build all these tiles, plus the obstacles and terrain, all
-    // in software starting with a single image.
-    // - start with an image in the team reference color at full opacity (region
-    // border I think)
-    //     - fetch the surface from the image manager, pass it in ctor
-    // - region shade is at 96 alpha
-    // - owner shade is darker25
-    // - TeamColoredSurfaces of all three of these
-    // - six terrain colors, EnumSizedArray
-    // - six obstacle colors, EnumSizedArray
-    baseTile_(imgMgr.get_surface("tile-minimap-region-border")),
+    baseTile_(imgMgr.get_surface("hex-team-color")),
     regionShades_(make_region_shades()),
     regionBorders_(applyTeamColors(baseTile_)),
     ownerTiles_(make_owner_tiles()),
@@ -165,17 +157,7 @@ SDL_Rect Minimap::make_clip_rect() const
 TeamColoredSurfaces Minimap::make_region_shades() const
 {
     auto src = baseTile_.clone();
-    {
-        SdlEditSurface edit(src);
-        for (int i = 0; i < edit.size(); ++i) {
-            auto color = edit.get_pixel(i);
-            if (color.a > SDL_ALPHA_TRANSPARENT) {
-                color.a = 96;
-                edit.set_pixel(i, color);
-            }
-        }
-    }
-
+    src.set_alpha(96);
     return applyTeamColors(src);
 }
 
@@ -189,9 +171,16 @@ TeamColoredSurfaces Minimap::make_owner_tiles() const
 
 void Minimap::make_terrain_layer()
 {
-    SdlSurface tiles("img/tiles-minimap.png");
-    auto tileRect = tiles.rect_size();
-    tileRect.w /= enum_size<Terrain>();  // image has 1 frame per terrain type
+    EnumSizedArray<SdlSurface, Terrain> tiles;
+    std::generate(begin(tiles), end(tiles), [this]() { return baseTile_.clone(); });
+    tiles[Terrain::water].fill(10, 96, 154);
+    tiles[Terrain::desert].fill(224, 204, 149);
+    tiles[Terrain::swamp].fill(65, 67, 48);
+    tiles[Terrain::grass].fill(69, 128, 24);
+    tiles[Terrain::dirt].fill(136, 110, 66);
+    tiles[Terrain::snow].fill(230, 240, 254);
+
+    auto &tileRect = baseTile_.rect_size();
     auto destRect = tileRect / SCALE_FACTOR;
 
     for (int x = 0; x < rmap_->width(); ++x) {
@@ -201,17 +190,27 @@ void Minimap::make_terrain_layer()
             destRect.x = pixel.x / SCALE_FACTOR;
             destRect.y = pixel.y / SCALE_FACTOR;
             auto terrain = rmap_->getTerrain(hex);
-            tileRect.x = static_cast<int>(terrain) * tileRect.w;
-            SDL_BlitScaled(tiles.get(), &tileRect, terrain_.get(), &destRect);
+            SDL_BlitScaled(tiles[terrain].get(), &tileRect, terrain_.get(), &destRect);
         }
     }
 }
 
 void Minimap::make_obstacle_layer()
 {
-    SdlSurface tiles("img/tiles-minimap-obstacles.png");
-    auto tileRect = tiles.rect_size();
-    tileRect.w /= enum_size<Terrain>();  // image has 1 frame per terrain type
+    // Create a brown tile to mark obstacles.
+    SdlSurface obstacleTile = baseTile_.clone();
+    obstacleTile.fill(120, 67, 21);
+    obstacleTile.set_alpha(64);
+
+    // Increase opacity for certain terrain types to make obstacles more visible.
+    EnumSizedArray<SdlSurface, Terrain> tiles;
+    std::generate(begin(tiles), end(tiles), [&obstacleTile]() {
+        return obstacleTile.clone();
+    });
+    tiles[Terrain::swamp].set_alpha(160);
+    tiles[Terrain::dirt].set_alpha(96);
+
+    auto &tileRect = baseTile_.rect_size();
     auto destRect = tileRect / SCALE_FACTOR;
 
     for (int x = 0; x < rmap_->width(); ++x) {
@@ -225,8 +224,7 @@ void Minimap::make_obstacle_layer()
             destRect.x = pixel.x / SCALE_FACTOR;
             destRect.y = pixel.y / SCALE_FACTOR;
             auto terrain = rmap_->getTerrain(hex);
-            tileRect.x = static_cast<int>(terrain) * tileRect.w;
-            SDL_BlitScaled(tiles.get(), &tileRect, obstacles_.get(), &destRect);
+            SDL_BlitScaled(tiles[terrain].get(), &tileRect, obstacles_.get(), &destRect);
         }
     }
 }
