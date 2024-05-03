@@ -65,15 +65,19 @@ private:
     void update_map_view();
     void draw_map_view(SdlEditTexture &edit);
 
+    // Draw onto one of the image layers at the given hex position using the
+    // default scale factor.
+    void draw_scaled(const SdlSurface &src, SdlSurface &target, const Hex &hex);
+
     RandomMap *rmap_;
     MapDisplay *rmapView_;
     SDL_Rect displayRect_;
     SDL_Point displayPos_;
     SdlTexture texture_;
     SDL_Rect textureClipRect_;
-    SdlSurface terrain_;
-    SdlSurface obstacles_;
-    SdlSurface influence_;
+    SdlSurface terrainLayer_;
+    SdlSurface obstacleLayer_;
+    SdlSurface influenceLayer_;
     SdlSurface baseTile_;  // used to generate all the team-colored tiles
     TeamColoredSurfaces regionShades_;
     TeamColoredSurfaces regionBorders_;

@@ -15,9 +15,11 @@
 #include "SdlImageManager.h"
 #include "container_utils.h"
 #include "iterable_enum_class.h"
+#include "log_utils.h"
 #include "pixel_utils.h"
 
 #include <algorithm>
+#include <format>
 
 namespace
 {
@@ -38,9 +40,9 @@ Minimap::Minimap(SdlWindow &win,
     displayPos_{displayRect_.x, displayRect_.y},
     texture_(SdlTexture::make_editable_image(win, displayRect_.w, displayRect_.h)),
     textureClipRect_(make_clip_rect()),
-    terrain_(),
-    obstacles_(),
-    influence_(),
+    terrainLayer_(),
+    obstacleLayer_(),
+    influenceLayer_(),
     baseTile_(imgMgr.get_surface("hex-team-color")),
     regionShades_(make_region_shades()),
     regionBorders_(applyTeamColors(baseTile_)),
@@ -56,11 +58,11 @@ Minimap::Minimap(SdlWindow &win,
     // higher resolution than its final size in the window so it looks good.
     SdlEditTexture edit(texture_);
     auto scaledSize = rmapView_->mapSize() / SCALE_FACTOR;
-    terrain_ = edit.make_surface(scaledSize.x, scaledSize.y);
-    obstacles_ = terrain_.clone();
-    SDL_SetSurfaceBlendMode(obstacles_.get(), SDL_BLENDMODE_BLEND);
-    influence_ = terrain_.clone();
-    SDL_SetSurfaceBlendMode(influence_.get(), SDL_BLENDMODE_BLEND);
+    terrainLayer_ = edit.make_surface(scaledSize.x, scaledSize.y);
+    obstacleLayer_ = terrainLayer_.clone();
+    SDL_SetSurfaceBlendMode(obstacleLayer_.get(), SDL_BLENDMODE_BLEND);
+    influenceLayer_ = terrainLayer_.clone();
+    SDL_SetSurfaceBlendMode(influenceLayer_.get(), SDL_BLENDMODE_BLEND);
 
     make_terrain_layer();
     make_obstacle_layer();
@@ -82,9 +84,9 @@ void Minimap::draw()
         // Can't render while locked, this needs its own block.
         {
             SdlEditTexture edit(texture_);
-            edit.update(terrain_, textureClipRect_);
-            edit.update(obstacles_, textureClipRect_);
-            edit.update(influence_, textureClipRect_);
+            edit.update(terrainLayer_, textureClipRect_);
+            edit.update(obstacleLayer_, textureClipRect_);
+            edit.update(influenceLayer_, textureClipRect_);
             draw_map_view(edit);
         }
     }
@@ -177,17 +179,10 @@ void Minimap::make_terrain_layer()
     tiles[Terrain::dirt].fill(136, 110, 66);
     tiles[Terrain::snow].fill(230, 240, 254);
 
-    auto &tileRect = baseTile_.rect_size();
-    auto destRect = tileRect / SCALE_FACTOR;
-
     for (int x = 0; x < rmap_->width(); ++x) {
         for (int y = 0; y < rmap_->width(); ++y) {
             Hex hex = {x, y};
-            auto pixel = rmapView_->mapPixelFromHex(hex);
-            destRect.x = pixel.x / SCALE_FACTOR;
-            destRect.y = pixel.y / SCALE_FACTOR;
-            auto terrain = rmap_->getTerrain(hex);
-            SDL_BlitScaled(tiles[terrain].get(), &tileRect, terrain_.get(), &destRect);
+            draw_scaled(tiles[rmap_->getTerrain(hex)], terrainLayer_, hex);
         }
     }
 }
@@ -207,9 +202,6 @@ void Minimap::make_obstacle_layer()
     tiles[Terrain::swamp].set_alpha(160);
     tiles[Terrain::dirt].set_alpha(96);
 
-    auto &tileRect = baseTile_.rect_size();
-    auto destRect = tileRect / SCALE_FACTOR;
-
     for (int x = 0; x < rmap_->width(); ++x) {
         for (int y = 0; y < rmap_->width(); ++y) {
             Hex hex = {x, y};
@@ -217,21 +209,14 @@ void Minimap::make_obstacle_layer()
                 continue;
             }
 
-            auto pixel = rmapView_->mapPixelFromHex(hex);
-            destRect.x = pixel.x / SCALE_FACTOR;
-            destRect.y = pixel.y / SCALE_FACTOR;
-            auto terrain = rmap_->getTerrain(hex);
-            SDL_BlitScaled(tiles[terrain].get(), &tileRect, obstacles_.get(), &destRect);
+            draw_scaled(tiles[rmap_->getTerrain(hex)], obstacleLayer_, hex);
         }
     }
 }
 
 void Minimap::update_influence()
 {
-    influence_.clear();
-
-    auto &tileRect = baseTile_.rect_size();
-    auto destRect = tileRect / SCALE_FACTOR;
+    influenceLayer_.clear();
 
     for (int x = 0; x < rmap_->width(); ++x) {
         for (int y = 0; y < rmap_->width(); ++y) {
@@ -243,31 +228,23 @@ void Minimap::update_influence()
             }
 
             // Shade the region with its owner's color.
-            SDL_Surface *shade = regionShades_[owner].get();
+            SdlSurface *shade = &regionShades_[owner];
 
             // Draw a brighter border around the edges of a controlled region.
             int index = rmap_->intFromHex(hex);
             for (auto rNbr : rmap_->getTileRegionNeighbors(index)) {
                 if (owner != regionOwners_[rNbr]) {
-                    shade = regionBorders_[owner].get();
+                    shade = &regionBorders_[owner];
                     break;
                 }
             }
 
-            // TODO: member function for this
-            auto pixel = rmapView_->mapPixelFromHex(hex);
-            destRect.x = pixel.x / SCALE_FACTOR;
-            destRect.y = pixel.y / SCALE_FACTOR;
-            SDL_BlitScaled(shade, &tileRect, influence_.get(), &destRect);
+            draw_scaled(*shade, influenceLayer_, hex);
         }
     }
 
     for (auto & [index, team] : tileOwners_) {
-        Hex hex = rmap_->hexFromInt(index);
-        auto pixel = rmapView_->mapPixelFromHex(hex);
-        destRect.x = pixel.x / SCALE_FACTOR;
-        destRect.y = pixel.y / SCALE_FACTOR;
-        SDL_BlitScaled(ownerTiles_[team].get(), &tileRect, influence_.get(), &destRect);
+        draw_scaled(ownerTiles_[team], influenceLayer_, rmap_->hexFromInt(index));
     }
 }
 
@@ -298,5 +275,18 @@ void Minimap::draw_map_view(SdlEditTexture &edit)
         edit.fill_rect({box_.x, py, 1, dashSize}, color);
         edit.fill_rect({box_.x + box_.w - 1, py, 1, dashSize}, color);
         py += spaceSize + dashSize;
+    }
+}
+
+void Minimap::draw_scaled(const SdlSurface &src, SdlSurface &target, const Hex &hex)
+{
+    auto pixel = rmapView_->mapPixelFromHex(hex);
+    auto destRect = baseTile_.rect_size() / SCALE_FACTOR;
+    destRect.x = pixel.x / SCALE_FACTOR;
+    destRect.y = pixel.y / SCALE_FACTOR;
+
+    if (SDL_BlitScaled(src.get(), nullptr, target.get(), &destRect) < 0) {
+        log_warn(std::format("couldn't draw onto surface scaled: {}", SDL_GetError()),
+                 LogCategory::video);
     }
 }
