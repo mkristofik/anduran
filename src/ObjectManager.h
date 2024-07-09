@@ -29,6 +29,7 @@
     X(chest) \
     X(harbor) \
     X(oasis) \
+    X(obelisk) \
     X(resource) \
     X(shipwreck) \
     X(village) \

@@ -38,6 +38,13 @@
         "per-castle": 1,
         "visit": true
     },
+    "obelisk": {
+        "name": "Obelisk",
+        "img": "obelisk",
+        "terrain": [1, 2, 3, 4, 5],
+        "per-region": 1,
+        "visit": true
+    },
     "resource": {
         "name": "Gold",
         "img": "gold",

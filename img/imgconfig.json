@@ -63,6 +63,9 @@
     "missile": {
         "frames": [1, 6]
     },
+    "obelisk": {
+        "frames": [1, 3]
+    },
     "obstacles-desert": {
         "frames": [1, 4]
     },

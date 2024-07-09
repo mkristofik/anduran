@@ -101,22 +101,27 @@ void MapViewApp::place_objects()
 {
     for (auto &obj : rmap_.getObjectConfig()) {
         auto img = objImg_.get(obj.type);
+        int numFrames = img.cols();
 
-        for (auto &hex : rmap_.getObjectTiles(obj.type)) {
+        auto tiles = rmap_.getObjectTiles(obj.type);
+        for (int i = 0; i < ssize(tiles); ++i) {
             MapEntity entity;
-            entity.hex = hex;
+            entity.hex = tiles[i];
             entity.z = ZOrder::object;
 
             // Assume any sprite sheet with the same number of frames as there
             // are terrains is intended to use a terrain frame.
-            if (img.cols() == enum_size<Terrain>()) {
-                entity.setTerrainFrame(rmap_.getTerrain(hex));
+            if (numFrames == enum_size<Terrain>()) {
+                entity.setTerrainFrame(rmap_.getTerrain(entity.hex));
+            }
+            else {
+                entity.frame = {0, i % numFrames};
             }
 
             rmapView_.addEntity(img, entity, HexAlign::middle);
 
             if (obj.type == ObjectType::village) {
-                minimap_.set_owner(hex, Team::neutral);
+                minimap_.set_owner(entity.hex, Team::neutral);
             }
         }
     }

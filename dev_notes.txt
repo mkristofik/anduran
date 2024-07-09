@@ -1,3 +1,57 @@
+# Obelisks
+----------
+- three sets of obelisks
+    - gives puzzle pieces for the Helmet, Sword, and Breastplate
+    * different image for each set
+        * randomize the order they're assigned
+    * grouped on the map, not scattered randomly
+        * but the regions are numbered randomly so it'll be easier to start with
+        them scattered
+    * in regions with villages only
+- possible simplification
+    - first player to claim a village can get a puzzle piece from a member of the
+    Shadow Guild
+        - forces conflict between champions to get access to puzzle pieces
+        - also a source for rumors?
+        - similar function to H2 Thieves Guild?
+    - but for now it gives us something else to do in each region
+- defeating an enemy champion gives a copy of his puzzle pieces
+- puzzle piece reveals random tile(s) on the map for its corresponding artifact
+- each puzzle map is 8x8
+    - X marks the spot in the center
+    - this means artifacts have to be buried 5 hexes in from the edges of the map
+    - shows terrain, edges, obstacles, and fixed objects without their flags
+        - can we draw it black & white?
+        - requires modifying each pixel
+            - option 1, average RGB values, set them all the same
+            - option 2, set R and B equal to G
+    - when the X has been revealed, show it on the adventure map
+    - require a minimum number of pieces revealed before the center piece could be
+    shown
+    - this would be a problem if more than 64 regions per obelisk type
+- number of pieces = number of regions with that obelisk type
+    - pre-assign each piece to a group of hexes, divided evenly
+    - prefer hexes to be contiguous if possible
+    - but can randomly assign them to start
+- show puzzle map in a popup window
+    - different map background for each artifact
+    - show the known pieces
+    - fade in the newly revealed piece, if any
+    - be able to switch between maps easily
+    - close window easily
+- rendering popup windows
+    - animations have to finish (e.g., a champion moving into a village) before
+    rendering the popup
+    - need to draw the rest of the underlying window first before drawing the popup
+    - main game window doesn't respond to clicks or anything else while popup is
+    shown
+    - interpolate the popup into position?
+        - start from the hex on the map that caused it
+        - draw the popup background only
+        - go fast, 1000 ms at most
+        - simple mouseovers and dialog boxes shouldn't bother with this
+
+
 # Game display
 --------------
 * team color the champions and the ellipse
@@ -194,6 +248,7 @@ is next to or in front of a castle
 * text description
 * list of allowed terrain (default all)
 * has images to match each terrain? (default no)
+- has multiple images, divided evenly among all locations
 * number per region
     * normal (default 1) vs. castle region (default 0)
 * probability to appear (default 100)
