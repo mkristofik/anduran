@@ -66,6 +66,7 @@ int SdlApp::run()
 void SdlApp::do_game_loop()
 {
     while (true) {
+        // TODO: prefer 64-bit SDL_GetTicks64
         const auto curTime_ms = SDL_GetTicks();
         const auto elapsed_ms = curTime_ms - prevFrameTime_ms_;
         prevFrameTime_ms_ = curTime_ms;
@@ -104,6 +105,10 @@ bool SdlApp::poll_events()
                 if (event.button.button == SDL_BUTTON_LEFT) {
                     handle_lmouse_up();
                 }
+                break;
+
+            case SDL_KEYUP:
+                handle_key_up(event.key.keysym);
                 break;
 
             case SDL_WINDOWEVENT:

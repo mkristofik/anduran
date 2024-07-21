@@ -35,6 +35,10 @@ struct TileEdge
 };
 
 
+// TODO: add an accessor for this so the puzzle map can know how to render each
+// tile.  Alternatively, rendering the puzzle map becomes another function of this
+// class.  We decide where to draw it and it renders the whole thing.  Puzzle map
+// is then only responsible for hiding tiles that aren't visible yet.
 struct TileDisplay
 {
     static constexpr int HEX_SIZE = 72;

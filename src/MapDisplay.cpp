@@ -202,6 +202,7 @@ bool MapDisplay::isScrolling() const
     return scrolling_;
 }
 
+// TODO: how much of this can we refactor out to use in rendering the puzzle map?
 void MapDisplay::draw()
 {
     SdlWindowClip guard(*window_, displayArea_);
@@ -617,6 +618,8 @@ void MapDisplay::doMultiEdges(Neighbors<TileEdge> &edges)
     }
 }
 
+// TODO: refactor this into a separate class so the puzzle map can use these
+// images too?
 void MapDisplay::loadTerrainImages()
 {
     for (auto t : Terrain()) {

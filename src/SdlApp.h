@@ -40,6 +40,7 @@ private:
     virtual void handle_mouse_pos(Uint32 /*elapsed_ms*/) {}
     virtual void handle_lmouse_down() {}
     virtual void handle_lmouse_up() {}
+    virtual void handle_key_up(const SDL_Keysym &) {}
 
     void do_game_loop();
     bool poll_events();

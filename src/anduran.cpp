@@ -65,42 +65,55 @@ void Anduran::update_frame(Uint32 elapsed_ms)
 
     // Wait until animations have finished running before updating the minimap.
     if (anims_.empty() && stateChanged_) {
-        // Assign owners to objects on the minimap.
-        for (const auto &castle : game_.objects_by_type(ObjectType::castle)) {
-            const Hex &hex = castle.hex;
-            Team team = castle.team;
-            minimap_.set_owner(hex, team);
-            for (auto d : HexDir()) {
-                minimap_.set_owner(hex.getNeighbor(d), team);
-            }
-        }
-
-        for (const auto &village : game_.objects_by_type(ObjectType::village)) {
-            minimap_.set_owner(village.hex, village.team);
-        }
-
-        // Identify the owners of each region and which regions are disputed.
-        assign_influence();
-        relax_influence();
-        for (int r = 0; r < rmap_.numRegions(); ++r) {
-            minimap_.set_region_owner(r, most_influence(r));
-        }
-
+        update_minimap();
         stateChanged_ = false;
     }
 
     rmapView_.draw();
     minimap_.draw();
+    // TODO: if visible, draw the popup window on top of everything, wait until
+    // animations have finished
+    // TODO: create a 400x400 black rectangle in the middle of the window
+    // render a random 8x8 grid from the map terrain in the center of it
+    // adjust the size of the rectangle to fit
     win_.update();
+}
+
+void Anduran::update_minimap()
+{
+    // Assign owners to objects on the minimap.
+    for (const auto &castle : game_.objects_by_type(ObjectType::castle)) {
+        const Hex &hex = castle.hex;
+        Team team = castle.team;
+        minimap_.set_owner(hex, team);
+        for (auto d : HexDir()) {
+            minimap_.set_owner(hex.getNeighbor(d), team);
+        }
+    }
+
+    for (const auto &village : game_.objects_by_type(ObjectType::village)) {
+        minimap_.set_owner(village.hex, village.team);
+    }
+
+    // Identify the owners of each region and which regions are disputed.
+    assign_influence();
+    relax_influence();
+    for (int r = 0; r < rmap_.numRegions(); ++r) {
+        minimap_.set_region_owner(r, most_influence(r));
+    }
 }
 
 void Anduran::handle_lmouse_down()
 {
+    // TODO: if popup window is visible, either skip it or send it to the popup
+    // window
     minimap_.handle_lmouse_down();
 }
 
 void Anduran::handle_lmouse_up()
 {
+    // TODO: if popup window is visible, either skip it or send it to the popup
+    // window
     minimap_.handle_lmouse_up();
 
     if (!anims_.empty()) {
@@ -150,6 +163,8 @@ void Anduran::handle_lmouse_up()
 
 void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
 {
+    // TODO: if popup window is visible, either skip it or send it to the popup
+    // window
     rmapView_.handleMousePos(elapsed_ms);
     minimap_.handle_mouse_pos(elapsed_ms);
 
@@ -173,6 +188,18 @@ void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
     if (!curPath_.empty()) {
         auto [action, _] = game_.hex_action(player, hCurPathEnd_);
         rmapView_.showPath(curPath_, action);
+    }
+}
+
+void Anduran::handle_key_up(const SDL_Keysym &key)
+{
+    if (key.sym == 'p') {
+        // TODO: if puzzle window not visible, create it
+        log_info("P key was pressed");
+    }
+    else if (key.sym == SDLK_ESCAPE) {
+        // TODO: if puzzle window visible, destroy it
+        log_info("Escape key was pressed");
     }
 }
 

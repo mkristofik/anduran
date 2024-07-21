@@ -41,12 +41,15 @@ class Anduran : public SdlApp
 public:
     Anduran();
 
+private:
     void update_frame(Uint32 elapsed_ms) override;
+    void update_minimap();
+
     void handle_lmouse_down() override;
     void handle_lmouse_up() override;
     void handle_mouse_pos(Uint32 elapsed_ms) override;
+    void handle_key_up(const SDL_Keysym &) override;
 
-private:
     // Load objects and draw them on the map.
     void load_players();
     void load_objects();
