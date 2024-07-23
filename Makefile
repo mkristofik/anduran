@@ -85,6 +85,7 @@ ANDURAN_SRC = AnimQueue.cpp \
 	RandomRange.cpp \
 	SdlApp.cpp \
 	SdlImageManager.cpp \
+	SdlRenderTarget.cpp \
 	SdlSurface.cpp \
 	SdlTexture.cpp \
 	SdlWindow.cpp \
