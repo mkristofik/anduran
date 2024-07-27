@@ -23,6 +23,7 @@
 #include "RandomMap.h"
 #include "SdlApp.h"
 #include "SdlImageManager.h"
+#include "SdlTexture.h"
 #include "SdlWindow.h"
 #include "UnitManager.h"
 #include "WindowConfig.h"
@@ -108,6 +109,8 @@ private:
     UnitManager units_;
     bool stateChanged_;
     std::vector<EnumSizedArray<int, Team>> influence_;
+    bool puzzleVisible_;
+    SdlTexture puzzle_;
 };
 
 #endif

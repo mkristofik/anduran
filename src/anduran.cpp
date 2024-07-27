@@ -13,7 +13,6 @@
 #include "anduran.h"
 
 #include "SdlSurface.h"
-#include "SdlTexture.h"
 #include "anim_utils.h"
 #include "container_utils.h"
 #include "log_utils.h"
@@ -50,7 +49,9 @@ Anduran::Anduran()
     pathfind_(rmap_, game_),
     units_("data/units.json"s, win_, images_),
     stateChanged_(true),
-    influence_(rmap_.numRegions())
+    influence_(rmap_.numRegions()),
+    puzzleVisible_(false),
+    puzzle_()
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
@@ -71,11 +72,12 @@ void Anduran::update_frame(Uint32 elapsed_ms)
 
     rmapView_.draw();
     minimap_.draw();
-    // TODO: if visible, draw the popup window on top of everything, wait until
-    // animations have finished
-    // TODO: create a 400x400 black rectangle in the middle of the window
-    // render a random 8x8 grid from the map terrain in the center of it
-    // adjust the size of the rectangle to fit
+
+    if (puzzleVisible_) {
+        SDL_Rect puzzleWin = {340, 60, 600, 600};
+        SDL_RenderFillRect(win_.renderer(), &puzzleWin);
+    }
+
     win_.update();
 }
 
@@ -105,15 +107,19 @@ void Anduran::update_minimap()
 
 void Anduran::handle_lmouse_down()
 {
-    // TODO: if popup window is visible, either skip it or send it to the popup
-    // window
+    if (puzzleVisible_) {
+        return;
+    }
+
     minimap_.handle_lmouse_down();
 }
 
 void Anduran::handle_lmouse_up()
 {
-    // TODO: if popup window is visible, either skip it or send it to the popup
-    // window
+    if (puzzleVisible_) {
+        return;
+    }
+
     minimap_.handle_lmouse_up();
 
     if (!anims_.empty()) {
@@ -163,8 +169,10 @@ void Anduran::handle_lmouse_up()
 
 void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
 {
-    // TODO: if popup window is visible, either skip it or send it to the popup
-    // window
+    if (puzzleVisible_) {
+        return;
+    }
+
     rmapView_.handleMousePos(elapsed_ms);
     minimap_.handle_mouse_pos(elapsed_ms);
 
@@ -193,13 +201,15 @@ void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
 
 void Anduran::handle_key_up(const SDL_Keysym &key)
 {
+    if (!anims_.empty()) {
+        return;
+    }
+
     if (key.sym == 'p') {
-        // TODO: if puzzle window not visible, create it
-        log_info("P key was pressed");
+        puzzleVisible_ = true;
     }
     else if (key.sym == SDLK_ESCAPE) {
-        // TODO: if puzzle window visible, destroy it
-        log_info("Escape key was pressed");
+        puzzleVisible_ = false;
     }
 }
 
