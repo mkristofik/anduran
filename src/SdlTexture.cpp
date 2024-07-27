@@ -40,7 +40,7 @@ namespace
                                                        int h)
     {
         auto img = SDL_CreateTexture(renderer,
-                                     SDL_PIXELFORMAT_RGBA32,
+                                     SDL_PIXELFORMAT_RGBA8888,
                                      SDL_TEXTUREACCESS_STREAMING,
                                      w,
                                      h);
@@ -221,16 +221,11 @@ SDL_Rect SdlTexture::get_dest_rect(const SDL_Point &p) const
 
 void SdlTexture::draw(const SDL_Point &p, const Frame &frame)
 {
-    draw(pimpl_->renderer, p, frame);
-}
-
-void SdlTexture::draw(SDL_Renderer *target, const SDL_Point &p, const Frame &frame)
-{
     SDL_assert(*this);
 
     const auto src = get_frame_rect(frame);
     const auto dest = get_dest_rect(p);
-    if (SDL_RenderCopy(target, get(), &src, &dest) < 0) {
+    if (SDL_RenderCopy(pimpl_->renderer, get(), &src, &dest) < 0) {
         log_warn(std::format("couldn't render texture: {}", SDL_GetError()),
                  LogCategory::render);
     }
@@ -238,31 +233,17 @@ void SdlTexture::draw(SDL_Renderer *target, const SDL_Point &p, const Frame &fra
 
 void SdlTexture::draw_centered(const SDL_Point &p, const Frame &frame)
 {
-    draw_centered(pimpl_->renderer, p, frame);
-}
-
-void SdlTexture::draw_centered(SDL_Renderer *target,
-                               const SDL_Point &p,
-                               const Frame &frame)
-{
-    const auto pDest = p - SDL_Point{frame_width() / 2, frame_height() / 2};
-    draw(target, pDest, frame);
+    const auto pTarget = p - SDL_Point{frame_width() / 2, frame_height() / 2};
+    draw(pTarget, frame);
 }
 
 void SdlTexture::draw_mirrored(const SDL_Point &p, const Frame &frame)
-{
-    draw_mirrored(pimpl_->renderer, p, frame);
-}
-
-void SdlTexture::draw_mirrored(SDL_Renderer *target,
-                               const SDL_Point &p,
-                               const Frame &frame)
 {
     SDL_assert(*this);
 
     const auto src = get_frame_rect(frame);
     const auto dest = get_dest_rect(p);
-    if (SDL_RenderCopyEx(target,
+    if (SDL_RenderCopyEx(pimpl_->renderer,
                          get(),
                          &src,
                          &dest,

@@ -77,23 +77,15 @@ public:
     // corner.
     SDL_Rect get_dest_rect(const SDL_Point &p) const;
 
-    // Draw the selected frame using 'p' as the upper-left corner.  Supply a
-    // render target to these functions to draw somewhere other than the screen.
+    // Draw the selected frame using 'p' as the upper-left corner.
     void draw(const SDL_Point &p, const Frame &frame = Frame());
-    void draw(SDL_Renderer *target, const SDL_Point &p, const Frame &frame = Frame());
 
     // Draw the selected frame using 'p' as the center point.
     void draw_centered(const SDL_Point &p, const Frame &frame = Frame());
-    void draw_centered(SDL_Renderer *target,
-                       const SDL_Point &p,
-                       const Frame &frame = Frame());
 
     // Draw the selected frame mirrored horizontally using 'p' as the upper-left
     // corner.
     void draw_mirrored(const SDL_Point &p, const Frame &frame = Frame());
-    void draw_mirrored(SDL_Renderer *target,
-                       const SDL_Point &p,
-                       const Frame &frame = Frame());
 
 private:
     SDL_Rect get_frame_rect(const Frame &frame) const;
