@@ -44,33 +44,6 @@ namespace
     const int SCROLL_PX_SEC = 500;  // map scroll rate in pixels per second
     const int BORDER_WIDTH = 20;
 
-    const EnumSizedArray<std::string, Terrain> tileFilename = {
-        "tiles-water"s,
-        "tiles-desert"s,
-        "tiles-swamp"s,
-        "tiles-grass"s,
-        "tiles-dirt"s,
-        "tiles-snow"s
-    };
-
-    const EnumSizedArray<std::string, Terrain> obstacleFilename = {
-        "obstacles-water"s,
-        "obstacles-desert"s,
-        "obstacles-swamp"s,
-        "obstacles-grass"s,
-        "obstacles-dirt"s,
-        "obstacles-snow"s
-    };
-
-    const EnumSizedArray<std::string, Terrain> edgeFilename = {
-        "edges-water"s,
-        "edges-desert"s,
-        "edges-swamp"s,
-        "edges-grass"s,
-        "edges-dirt"s,
-        "edges-snow"s
-    };
-
     const EnumSizedArray<std::string, Terrain> castleFilename = {
         "castle-walls-water"s,
         "castle-walls-desert"s,
@@ -221,8 +194,8 @@ void MapDisplay::draw()
             continue;
         }
         for (auto d : HexDir()) {
-            if (t.edges[d].index != -1) {
-                auto edgeIndex = t.edges[d].index;
+            int edgeIndex = t.edges[d].index;
+            if (edgeIndex != -1) {
                 Frame frame(t.edges[d].numSides -  1, static_cast<int>(d));
                 edgeImg_[edgeIndex].draw(t.curPixel, frame);
             }
@@ -484,15 +457,6 @@ SDL_Point MapDisplay::pixelDelta(const Hex &hSrc, const Hex &hDest) const
 
 void MapDisplay::computeTileEdges()
 {
-    // Define how the terrain types overlap.
-    EnumSizedArray<int, Terrain> priority;
-    priority[Terrain::water] = 0;
-    priority[Terrain::swamp] = 1;
-    priority[Terrain::dirt] = 2;
-    priority[Terrain::grass] = 3;
-    priority[Terrain::desert] = 4;
-    priority[Terrain::snow] = 5;
-
     // Map all hexes, including those on the outside border, to their location in
     // the tile list.
     boost::container::flat_map<Hex, int> hexmap;
@@ -517,7 +481,7 @@ void MapDisplay::computeTileEdges()
                 // Special transition between neighboring regions with the same
                 // terrain type.
                 if (tile.region != nbrTile.region) {
-                    tile.edges[d].index = edgeImg_.size() - 1;
+                    tile.edges[d].index = static_cast<int>(EdgeType::same_terrain);
 
                     // Make sure we only draw the transition once per adjacent
                     // pair of hexes.
@@ -528,23 +492,7 @@ void MapDisplay::computeTileEdges()
 
             // Set the edge of the tile to the terrain of the neighboring tile
             // if the neighboring terrain overlaps this one.
-            if (priority[nbrTerrain] > priority[myTerrain]) {
-                // Use special edge transitions to water.
-                if (myTerrain == Terrain::water) {
-                    if (nbrTerrain == Terrain::desert || nbrTerrain == Terrain::swamp) {
-                        // These don't have a special transition, use the
-                        // normal one.
-                        tile.edges[d].index = nbrTile.terrain;
-                    }
-                    else {
-                        // See loadTerrainImages() for why this number.
-                        tile.edges[d].index = nbrTile.terrain + 3;
-                    }
-                }
-                else {
-                    tile.edges[d].index = nbrTile.terrain;
-                }
-            }
+            tile.edges[d].index = edge_type(nbrTerrain, myTerrain);
         }
 
         doMultiEdges(tile.edges);
@@ -618,23 +566,16 @@ void MapDisplay::doMultiEdges(Neighbors<TileEdge> &edges)
     }
 }
 
-// TODO: refactor this into a separate class so the puzzle map can use these
-// images too?
 void MapDisplay::loadTerrainImages()
 {
     for (auto t : Terrain()) {
-        tileImg_[t] = images_->make_texture(tileFilename[t], *window_);
-        obstacleImg_[t] = images_->make_texture(obstacleFilename[t], *window_);
-        edgeImg_.push_back(images_->make_texture(edgeFilename[t], *window_));
+        tileImg_[t] = images_->make_texture(get_tile_filename(t), *window_);
+        obstacleImg_[t] = images_->make_texture(get_obstacle_filename(t), *window_);
     }
 
-    // Special edge transitions to water.
-    edgeImg_.push_back(images_->make_texture("edges-grass-water", *window_));
-    edgeImg_.push_back(images_->make_texture("edges-dirt-water", *window_));
-    edgeImg_.push_back(images_->make_texture("edges-snow-water", *window_));
-
-    // Edge transition between two regions with the same terrain type.
-    edgeImg_.push_back(images_->make_texture("edges-same-terrain", *window_));
+    for (auto e : EdgeType()) {
+        edgeImg_.push_back(images_->make_texture(get_edge_filename(e), *window_));
+    }
 }
 
 void MapDisplay::addBorderTiles()
