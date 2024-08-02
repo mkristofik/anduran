@@ -22,18 +22,6 @@
 #include <iterator>
 #include <tuple>
 
-// Ignore alpha channel when comparing colors.
-bool operator==(const SDL_Color &lhs, const SDL_Color &rhs)
-{
-    return std::tie(lhs.r, lhs.g, lhs.b) == std::tie(rhs.r, rhs.g, rhs.b);
-}
-
-bool operator<(const SDL_Color &lhs, const SDL_Color &rhs)
-{
-    return std::tie(lhs.r, lhs.g, lhs.b) < std::tie(rhs.r, rhs.g, rhs.b);
-}
-
-
 namespace
 {
     // source: Battle for Wesnoth images/tools/magenta_team_color_palette.png
@@ -232,4 +220,14 @@ SdlSurface flagToRefColor(const SdlSurface &src)
     }
 
     return imgCopy;
+}
+
+bool operator==(const SDL_Color &lhs, const SDL_Color &rhs)
+{
+    return std::tie(lhs.r, lhs.g, lhs.b) == std::tie(rhs.r, rhs.g, rhs.b);
+}
+
+bool operator<(const SDL_Color &lhs, const SDL_Color &rhs)
+{
+    return std::tie(lhs.r, lhs.g, lhs.b) < std::tie(rhs.r, rhs.g, rhs.b);
 }

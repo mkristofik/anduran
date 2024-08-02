@@ -196,7 +196,7 @@ void MapDisplay::draw()
         for (auto d : HexDir()) {
             int edgeIndex = t.edges[d].index;
             if (edgeIndex != -1) {
-                Frame frame(t.edges[d].numSides -  1, static_cast<int>(d));
+                Frame frame(t.edges[d].numSides - 1, static_cast<int>(d));
                 edgeImg_[edgeIndex].draw(t.curPixel, frame);
             }
         }

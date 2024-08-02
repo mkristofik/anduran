@@ -12,6 +12,7 @@
 */
 #include "anduran.h"
 
+#include "PuzzleMap.h"
 #include "SdlSurface.h"
 #include "anim_utils.h"
 #include "container_utils.h"
@@ -57,6 +58,9 @@ Anduran::Anduran()
 
     load_players();
     load_objects();
+
+    PuzzleMap pmap(rmap_, rmapView_, SDL_Rect{8, 8, 13, 7}, images_);
+    puzzle_ = SdlTexture::make_image(pmap.get(), win_);
 }
 
 void Anduran::update_frame(Uint32 elapsed_ms)
@@ -74,8 +78,9 @@ void Anduran::update_frame(Uint32 elapsed_ms)
     minimap_.draw();
 
     if (puzzleVisible_) {
-        SDL_Rect puzzleWin = {340, 60, 600, 600};
+        SDL_Rect puzzleWin = {240, 60, 800, 600};
         SDL_RenderFillRect(win_.renderer(), &puzzleWin);
+        puzzle_.draw(SDL_Point{280, 90});
     }
 
     win_.update();

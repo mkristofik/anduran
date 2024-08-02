@@ -48,4 +48,8 @@ const SDL_Color & getRefColor(ColorShade shade);
 SdlSurface ellipseToRefColor(const SdlSurface &src);
 SdlSurface flagToRefColor(const SdlSurface &src);
 
+// Color comparison ignores alpha channel.
+bool operator==(const SDL_Color &lhs, const SDL_Color &rhs);
+bool operator<(const SDL_Color &lhs, const SDL_Color &rhs);
+
 #endif
