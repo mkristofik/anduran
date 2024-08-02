@@ -40,7 +40,7 @@ namespace
                                                        int h)
     {
         auto img = SDL_CreateTexture(renderer,
-                                     SDL_PIXELFORMAT_RGBA8888,
+                                     SDL_PIXELFORMAT_RGBA32,
                                      SDL_TEXTUREACCESS_STREAMING,
                                      w,
                                      h);
