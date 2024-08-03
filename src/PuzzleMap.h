@@ -43,6 +43,9 @@ public:
     const SdlSurface & get() const;
 
 private:
+    const MapDisplay *rmapView_;
+    SDL_Rect hexes_;
+    SDL_Point pOrigin_;  // map coordinates of upper-left hex
     EnumSizedArray<SdlImageData, Terrain> terrainImg_;
     EnumSizedArray<SdlImageData, Terrain> obstacleImg_;
     SdlSurface surf_;

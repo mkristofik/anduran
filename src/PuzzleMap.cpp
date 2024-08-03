@@ -20,30 +20,75 @@
 #include <algorithm>
 #include <vector>
 
+namespace
+{
+    // Identify the right-most and bottom-most hex to draw, determines how big we
+    // need the surface to be.
+    SdlSurface make_surface(const MapDisplay &mapView, const SDL_Rect &hexesToDraw)
+    {
+        SDL_Point origin = mapView.pixelFromHex(Hex{hexesToDraw.x, hexesToDraw.y});
+        Hex topRight = {hexesToDraw.x + hexesToDraw.w - 1, hexesToDraw.y};
+        int width = (mapView.pixelFromHex(topRight) - origin).x + TileDisplay::HEX_SIZE;
+        Hex bottom = {hexesToDraw.x + 1, hexesToDraw.y + hexesToDraw.h - 1};
+        int height = (mapView.pixelFromHex(bottom) - origin).y + TileDisplay::HEX_SIZE;
+
+        return SdlSurface(width, height);
+    }
+
+    // Coordinates of the portion of an image to draw.
+    SDL_Rect get_frame_rect(const SdlImageData &img, int frameNum)
+    {
+        int frameWidth = img.surface->w / img.frames.col;
+        return {frameNum * frameWidth, 0, frameWidth, img.surface->h};
+    }
+
+    // Coordinates for drawing the src image at the given point.
+    [[maybe_unused]]
+    SDL_Rect get_dest_rect(const SDL_Rect &srcRect, const SDL_Point &pDest)
+    {
+        return {pDest.x, pDest.y, srcRect.w, srcRect.h};
+    }
+
+    // Coordinates for drawing the src image centered on the hex drawn at the
+    // given point.
+    SDL_Rect get_hex_centered_rect(const SDL_Rect &srcRect, const SDL_Point &pDest)
+    {
+        auto pixel = pDest +
+            SDL_Point{TileDisplay::HEX_SIZE / 2, TileDisplay::HEX_SIZE / 2} -
+            SDL_Point{srcRect.w / 2, srcRect.h / 2};
+        return {pixel.x, pixel.y, srcRect.w, srcRect.h};
+    }
+}
+
+
 PuzzleMap::PuzzleMap(const RandomMap &rmap,
                      const MapDisplay &mapView,
                      const SDL_Rect &hexesToDraw,
                      const SdlImageManager &imgMgr)
-    : terrainImg_(),
+    : rmapView_(&mapView),
+    hexes_(hexesToDraw),
+    pOrigin_(rmapView_->mapPixelFromHex(Hex{hexes_.x, hexes_.y})),
+    terrainImg_(),
     obstacleImg_(),
-    surf_(720, 540)
+    surf_(make_surface(mapView, hexesToDraw))
 {
-    auto &teamColor = getRefColor(ColorShade::normal);
-    surf_.fill(teamColor);
-
     for (auto t : Terrain()) {
         terrainImg_[t] = imgMgr.get(get_tile_filename(t));
         obstacleImg_[t] = imgMgr.get(get_obstacle_filename(t));
     }
 
+    auto &teamColor = getRefColor(ColorShade::normal);
+    surf_.fill(teamColor);
+
     // Identify which tiles to draw.
     std::vector<PuzzleTile> tiles;
-    SDL_Point origin = mapView.pixelFromHex(Hex{hexesToDraw.x, hexesToDraw.y});
     for (int hx = hexesToDraw.x; hx < hexesToDraw.x + hexesToDraw.w; ++hx) {
         for (int hy = hexesToDraw.y; hy < hexesToDraw.y + hexesToDraw.h; ++hy) {
             Hex hex = {hx, hy};
             PuzzleTile t;
-            t.pixel = mapView.pixelFromHex(hex) - origin;
+            // TODO: accessor function for this
+            // TODO: simplify things by finding the center of each hex instead
+            t.pixel = rmapView_->mapPixelFromHex(hex) - pOrigin_;
             t.terrain = rmap.getTerrain(hex);
             t.obstacle = rmap.getObstacle(hex);
             tiles.push_back(t);
@@ -52,14 +97,14 @@ PuzzleMap::PuzzleMap(const RandomMap &rmap,
 
     // Draw the tiles.
     int terrainFrames = terrainImg_[0].frames.col;
+    // TODO: maybe ignore the randomness here, we won't match the real map anyway
     RandomRange frameToUse(0, terrainFrames - 1); 
     for (auto &t : tiles) {
-        auto &terrainSurf = terrainImg_[t.terrain].surface;
-        int frameWidth = terrainSurf->w / terrainFrames;
-        SDL_Rect srcRect = {frameToUse.get() * frameWidth, 0, frameWidth, terrainSurf->h};
-        SDL_Rect destRect = {t.pixel.x, t.pixel.y, frameWidth, terrainSurf->h};
+        auto &terrainData = terrainImg_[t.terrain];
+        auto srcRect = get_frame_rect(terrainData, frameToUse.get());
+        auto destRect = get_hex_centered_rect(srcRect, t.pixel);
         // TODO: error logging if this returns -1
-        SDL_BlitSurface(terrainSurf.get(), &srcRect, surf_.get(), &destRect);
+        SDL_BlitSurface(terrainData.surface.get(), &srcRect, surf_.get(), &destRect);
     }
 
     // Draw obstacles centered on their hexes.
@@ -69,20 +114,15 @@ PuzzleMap::PuzzleMap(const RandomMap &rmap,
         if (!t.obstacle) {
             continue;
         }
-        auto &obstacleSurf = obstacleImg_[t.terrain].surface;
-        int frameWidth = obstacleSurf->w / obstacleFrames;
-        int frameHeight = obstacleSurf->h;
-        SDL_Rect srcRect = {frameToUse.get() * frameWidth, 0, frameWidth, frameHeight};
-        SDL_Rect destRect = {t.pixel.x + (TileDisplay::HEX_SIZE - frameWidth) / 2,
-                             t.pixel.y + (TileDisplay::HEX_SIZE - frameHeight) / 2,
-                             frameWidth,
-                             frameHeight};
-        SDL_BlitSurface(obstacleSurf.get(), &srcRect, surf_.get(), &destRect);
+        auto &obstacleData = obstacleImg_[t.terrain];
+        auto srcRect = get_frame_rect(obstacleData, frameToUse.get());
+        auto destRect = get_hex_centered_rect(srcRect, t.pixel);
+        SDL_BlitSurface(obstacleData.surface.get(), &srcRect, surf_.get(), &destRect);
     }
 
     // Draw a border around the hexes so that obstacles aren't visible outside
     // them.
-    auto blank = imgMgr.get_surface("hex-team-color");
+    auto border = imgMgr.get("hex-team-color");
     for (int hx = hexesToDraw.x - 1; hx < hexesToDraw.x + hexesToDraw.w + 1; ++hx) {
         for (int hy = hexesToDraw.y - 1; hy < hexesToDraw.y + hexesToDraw.h + 1; ++hy) {
             SDL_Point p = {hx, hy};
@@ -91,32 +131,12 @@ PuzzleMap::PuzzleMap(const RandomMap &rmap,
             }
 
             Hex hex = {hx, hy};
-            auto pixel = mapView.pixelFromHex(hex) - origin;
-            SDL_Rect destRect = {pixel.x, pixel.y, blank->w, blank->h};
-            SDL_BlitSurface(blank.get(), nullptr, surf_.get(), &destRect);
+            auto pixel = rmapView_->mapPixelFromHex(hex) - pOrigin_;
+            auto srcRect = get_frame_rect(border, 0);
+            auto destRect = get_hex_centered_rect(srcRect, pixel);
+            SDL_BlitSurface(border.surface.get(), &srcRect, surf_.get(), &destRect);
         }
     }
-
-    /*
-    auto village = imgMgr.get("villages");
-    int villageWidth = village.surface->w / enum_size<Terrain>();
-    int villageHeight = village.surface->h;
-    for (auto &hex : rmap.getObjectTiles(ObjectType::village)) {
-        SDL_Point p = {hex.x, hex.y};
-        if (!SDL_PointInRect(&p, &hexesToDraw)) {
-            continue;
-        }
-
-        auto pixel = mapView.pixelFromHex(hex) - origin;
-        auto terrain = rmap.getTerrain(hex);
-        SDL_Rect srcRect = {static_cast<int>(terrain) * villageWidth,
-                            0,
-                            villageWidth,
-                            villageHeight};
-        SDL_Rect destRect = {pixel.x, pixel.y, villageWidth, villageHeight};
-        SDL_BlitSurface(village.surface.get(), &srcRect, surf_.get(), &destRect);
-    }
-    */
 
     SdlEditSurface edit(surf_);
     for (int i = 0; i < edit.size(); ++i) {
