@@ -15,18 +15,19 @@
 
 #include "SdlImageManager.h"
 #include "SdlSurface.h"
+#include "hex_utils.h"
 #include "iterable_enum_class.h"
 #include "terrain.h"
 
 #include "SDL.h"
+#include <vector>
 
 class MapDisplay;
 class RandomMap;
 
-// TODO: this might only need to be in the cpp file
 struct PuzzleTile
 {
-    SDL_Point pixel = {0, 0};  // relative to puzzle
+    SDL_Point pCenter = {0, 0};  // relative to puzzle
     Terrain terrain = Terrain::water;
     bool obstacle = false;
 };
@@ -43,12 +44,30 @@ public:
     const SdlSurface & get() const;
 
 private:
+    // Identify the right-most and bottom-most hex to draw, determines how big we
+    // need the surface to be.
+    void init_surface();
+    void init_tiles();
+
+    SDL_Point hex_center(const Hex &hex) const;
+
+    // Draw the given image centered on the given pixel relative to the puzzle surface.
+    void draw_centered(const SdlImageData &img, int frameNum, const SDL_Point &pixel);
+
+    void draw_tiles();
+    void draw_obstacles();
+    void draw_border();
+    void apply_filters();
+
+    const RandomMap *rmap_;
     const MapDisplay *rmapView_;
     SDL_Rect hexes_;
+    const SdlImageManager *images_;
     SDL_Point pOrigin_;  // map coordinates of upper-left hex
     EnumSizedArray<SdlImageData, Terrain> terrainImg_;
     EnumSizedArray<SdlImageData, Terrain> obstacleImg_;
     SdlSurface surf_;
+    std::vector<PuzzleTile> tiles_;
 };
 
 #endif
