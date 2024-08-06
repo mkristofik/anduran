@@ -17,14 +17,14 @@
     - but for now it gives us something else to do in each region
 - defeating an enemy champion gives a copy of his puzzle pieces
 - puzzle piece reveals random tile(s) on the map for its corresponding artifact
-- each puzzle map is 8x8
-    - X marks the spot in the center
-    - this means artifacts have to be buried 5 hexes in from the edges of the map
+- each puzzle map is 13x7
+    * X marks the spot in the center
+    - this means artifacts have to be buried away from the edges of the map
     - shows terrain, edges, obstacles, and fixed objects without their flags
-        - can we draw it black & white?
-        - requires modifying each pixel
-            - option 1, average RGB values, set them all the same
-            - option 2, set R and B equal to G
+        * can we draw it black & white?
+        * requires modifying each pixel
+            * option 1, average RGB values, set them all the same
+            * option 2, set R and B equal to G
     - when the X has been revealed, show it on the adventure map
     - require a minimum number of pieces revealed before the center piece could be
     shown
@@ -40,9 +40,9 @@
     - be able to switch between maps easily
     - close window easily
 - rendering popup windows
-    - animations have to finish (e.g., a champion moving into a village) before
+    * animations have to finish (e.g., a champion moving into a village) before
     rendering the popup
-    - need to draw the rest of the underlying window first before drawing the popup
+    * need to draw the rest of the underlying window first before drawing the popup
     - main game window doesn't respond to clicks or anything else while popup is
     shown
     - interpolate the popup into position?

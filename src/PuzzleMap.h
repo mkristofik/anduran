@@ -30,9 +30,17 @@ struct PuzzleTile
     SDL_Point pCenter = {0, 0};  // relative to puzzle
     Terrain terrain = Terrain::water;
     bool obstacle = false;
+    // TODO: this state means that each player can have their own puzzle maps
+    // TODO: we want a fixed puzzle map for each artifact, but each player has
+    // their own view of them depending on which puzzle pieces have been found
+    // TODO: the fixed puzzle map can assign the pieces to each obelisk associated
+    // with that artifact
+    bool visible = false;
 };
 
 
+// TODO: this class is probably best kept to manage the popup window, keep the
+// state of puzzle map itself separately.  Rename this to PuzzleMapDisplay?
 class PuzzleMap
 {
 public:
@@ -58,12 +66,15 @@ private:
     void draw_obstacles();
     void draw_border();
     void apply_filters();
+    void hide_unrevealed_tiles();
+    void x_marks_the_spot();
 
     const RandomMap *rmap_;
     const MapDisplay *rmapView_;
     SDL_Rect hexes_;
     const SdlImageManager *images_;
     SDL_Point pOrigin_;  // map coordinates of upper-left hex
+    // TODO: can there be one set of these for all puzzle map objects?
     EnumSizedArray<SdlImageData, Terrain> terrainImg_;
     EnumSizedArray<SdlImageData, Terrain> obstacleImg_;
     SdlSurface surf_;

@@ -46,6 +46,8 @@ PuzzleMap::PuzzleMap(const RandomMap &rmap,
     draw_obstacles();
     draw_border();
     apply_filters();
+    hide_unrevealed_tiles();
+    x_marks_the_spot();
 }
 
 const SdlSurface & PuzzleMap::get() const
@@ -75,6 +77,12 @@ void PuzzleMap::init_tiles()
             t.pCenter = hex_center(hex);
             t.terrain = rmap_->getTerrain(hex);
             t.obstacle = rmap_->getObstacle(hex);
+            if (hx <= 10 && hy <= 10) {
+                t.visible = true;
+            }
+            if (hx >= 14 && hx <= 16 && hy >= 10 && hy <= 12) {
+                t.visible = true;
+            }
             tiles_.push_back(t);
         }
     }
@@ -159,4 +167,20 @@ void PuzzleMap::apply_filters()
 
         edit.set_pixel(i, color);
     }
+}
+
+void PuzzleMap::hide_unrevealed_tiles()
+{
+    auto shield = images_->get("puzzle-hidden");
+    for (auto &t : tiles_) {
+        if (!t.visible) {
+            draw_centered(shield, 0, t.pCenter);
+        }
+    }
+}
+
+void PuzzleMap::x_marks_the_spot()
+{
+    auto x = images_->get("puzzle-x");
+    draw_centered(x, 0, hex_center(Hex{14, 10}));
 }
