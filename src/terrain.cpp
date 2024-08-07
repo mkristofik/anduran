@@ -45,7 +45,8 @@ namespace
         "edges-grass-water"s,
         "edges-dirt-water"s,
         "edges-snow-water"s,
-        "edges-same-terrain"s
+        "edges-same-terrain"s,
+        "edges-none"s
     };
 
     // Define how the terrain types overlap.
@@ -64,30 +65,30 @@ namespace
 }
 
 
-int edge_type(Terrain from, Terrain to)
+EdgeType get_edge_type(Terrain from, Terrain to)
 {
     if (from == to) {
-        return static_cast<int>(EdgeType::same_terrain);
+        return EdgeType::same_terrain;
     }
 
     if (priority[from] <= priority[to]) {
-        return -1;
+        return EdgeType::none;
     }
 
     if (to == Terrain::water) {
         if (from == Terrain::grass) {
-            return static_cast<int>(EdgeType::grass_water);
+            return EdgeType::grass_water;
         }
         else if (from == Terrain::dirt) {
-            return static_cast<int>(EdgeType::dirt_water);
+            return EdgeType::dirt_water;
         }
         else if (from == Terrain::snow) {
-            return static_cast<int>(EdgeType::snow_water);
+            return EdgeType::snow_water;
         }
     }
 
     // If a terrain pair doesn't have a special transition, use the normal one.
-    return static_cast<int>(from);
+    return static_cast<EdgeType>(from);
 }
 
 std::string_view get_tile_filename(Terrain t)

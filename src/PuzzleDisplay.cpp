@@ -160,15 +160,12 @@ void PuzzleDisplay::draw_tiles()
                       t.pCenter);
 
         for (auto d : HexDir()) {
-            // TODO: create an edges-none image so we can have a proper enum for it
-            int edgeIndex = tileView.edges[d].index;
-            if (edgeIndex == -1 ||
-                edgeIndex == static_cast<int>(EdgeType::same_terrain))
-            {
+            EdgeType edge = tileView.edges[d].type;
+            if (edge == EdgeType::none || edge == EdgeType::same_terrain) {
                 continue;
             }
 
-            draw_centered(images_->edges[edgeIndex],
+            draw_centered(images_->edges[edge],
                           Frame{tileView.edges[d].numSides - 1, static_cast<int>(d)},
                           t.pCenter);
         }

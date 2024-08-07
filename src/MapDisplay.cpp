@@ -193,10 +193,10 @@ void MapDisplay::draw()
             continue;
         }
         for (auto d : HexDir()) {
-            int edgeIndex = t.edges[d].index;
-            if (edgeIndex != -1) {
+            EdgeType edge = t.edges[d].type;
+            if (edge != EdgeType::none) {
                 Frame frame(t.edges[d].numSides - 1, static_cast<int>(d));
-                edgeImg_[edgeIndex].draw(t.curPixel, frame);
+                edgeImg_[edge].draw(t.curPixel, frame);
             }
         }
     }
@@ -486,18 +486,18 @@ void MapDisplay::computeTileEdges()
                 // Special transition between neighboring regions with the same
                 // terrain type.
                 if (tile.region != nbrTile.region) {
-                    tile.edges[d].index = static_cast<int>(EdgeType::same_terrain);
+                    tile.edges[d].type = EdgeType::same_terrain;
 
                     // Make sure we only draw the transition once per adjacent
                     // pair of hexes.
-                    nbrTile.edges[oppositeHexDir(d)].index = -1;
+                    nbrTile.edges[oppositeHexDir(d)].type = EdgeType::none;
                 }
                 continue;
             }
 
             // Set the edge of the tile to the terrain of the neighboring tile
             // if the neighboring terrain overlaps this one.
-            tile.edges[d].index = edge_type(nbrTerrain, myTerrain);
+            tile.edges[d].type = get_edge_type(nbrTerrain, myTerrain);
         }
 
         doMultiEdges(tile.edges);
@@ -519,8 +519,8 @@ void MapDisplay::doMultiEdges(Neighbors<TileEdge> &edges)
     //
     constexpr int numEdges = enum_size<HexDir>();
     for (int i = 0; i < numEdges; ++i) {
-        auto curEdge = edges[i].index;
-        if (curEdge < 0) {
+        EdgeType curEdge = edges[i].type;
+        if (curEdge == EdgeType::none) {
             continue;
         }
         // Limit to the number of multi-edge transitions we have for this
@@ -528,7 +528,7 @@ void MapDisplay::doMultiEdges(Neighbors<TileEdge> &edges)
         auto maxSides = edgeImg_[curEdge].rows();
         int numSides = 1;
         while (numSides < maxSides &&
-               edges[(i + numSides) % numEdges].index == curEdge)
+               edges[(i + numSides) % numEdges].type == curEdge)
         {
             ++numSides;
         }
@@ -579,7 +579,7 @@ void MapDisplay::loadTerrainImages()
     }
 
     for (auto e : EdgeType()) {
-        edgeImg_.push_back(images_->make_texture(get_edge_filename(e), *window_));
+        edgeImg_[e] = images_->make_texture(get_edge_filename(e), *window_);
     }
 }
 

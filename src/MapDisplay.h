@@ -30,7 +30,7 @@ class SdlWindow;
 
 struct TileEdge
 {
-    int index = -1;  // EdgeType
+    EdgeType type = EdgeType::none;
     int numSides = 0;
 };
 
@@ -180,7 +180,7 @@ private:
     SdlImageManager *images_;
     EnumSizedArray<SdlTexture, Terrain> tileImg_;
     EnumSizedArray<SdlTexture, Terrain> obstacleImg_;
-    std::vector<SdlTexture> edgeImg_;
+    EnumSizedArray<SdlTexture, EdgeType> edgeImg_;
     std::vector<TileDisplay> tiles_;
     SDL_Rect displayArea_;
     PartialPixel displayOffset_;

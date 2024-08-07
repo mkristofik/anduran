@@ -39,6 +39,9 @@
     "edges-grass-water": {
         "frames": [2, 6]
     },
+    "edges-none": {
+        "frames": [1, 6]
+    },
     "edges-same-terrain": {
         "frames": [1, 6]
     },

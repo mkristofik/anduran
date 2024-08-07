@@ -29,12 +29,13 @@ ITERABLE_ENUM_CLASS(EdgeType,
                     grass_water,  // special edge transitions to water
                     dirt_water,
                     snow_water,
-                    same_terrain  // two regions with the same terrain type
+                    same_terrain,  // two regions with the same terrain type
+                    none  // keep this at the end
                     );
 
 // Return the edge type to use if the first terrain overlaps the second one, or -1
 // otherwise.
-int edge_type(Terrain from, Terrain to);
+EdgeType get_edge_type(Terrain from, Terrain to);
 
 // Filenames for terrain-specific images.
 std::string_view get_tile_filename(Terrain t);
