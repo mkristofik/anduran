@@ -175,7 +175,6 @@ bool MapDisplay::isScrolling() const
     return scrolling_;
 }
 
-// TODO: how much of this can we refactor out to use in rendering the puzzle map?
 void MapDisplay::draw()
 {
     SdlWindowClip guard(*window_, displayArea_);
@@ -453,6 +452,12 @@ SDL_Point MapDisplay::mapPixelFromHex(const Hex &hex) const
 SDL_Point MapDisplay::pixelDelta(const Hex &hSrc, const Hex &hDest) const
 {
     return pixelFromHex(hDest) - pixelFromHex(hSrc);
+}
+
+const TileDisplay & MapDisplay::get_tile(const Hex &hex) const
+{
+    SDL_assert(!map_->offGrid(hex));
+    return tiles_[map_->intFromHex(hex)];
 }
 
 void MapDisplay::computeTileEdges()

@@ -30,15 +30,11 @@ class SdlWindow;
 
 struct TileEdge
 {
-    int index = -1;
+    int index = -1;  // EdgeType
     int numSides = 0;
 };
 
 
-// TODO: add an accessor for this so the puzzle map can know how to render each
-// tile.  Alternatively, rendering the puzzle map becomes another function of this
-// class.  We decide where to draw it and it renders the whole thing.  Puzzle map
-// is then only responsible for hiding tiles that aren't visible yet.
 struct TileDisplay
 {
     static constexpr int HEX_SIZE = 72;
@@ -140,6 +136,9 @@ public:
     SDL_Point pixelFromHex(const Hex &hex) const;  // relative to window
     SDL_Point mapPixelFromHex(const Hex &hex) const;  // relative to hex (0, 0)
     SDL_Point pixelDelta(const Hex &hSrc, const Hex &hDest) const;
+
+    // Enable the puzzle map to exactly match the look of the adventure map.
+    const TileDisplay & get_tile(const Hex &hex) const;
 
 private:
     void computeTileEdges();

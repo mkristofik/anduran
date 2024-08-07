@@ -29,9 +29,8 @@ class SdlWindow;
 
 struct PuzzleTile
 {
+    Hex hex;
     SDL_Point pCenter = {0, 0};  // relative to puzzle
-    Terrain terrain = Terrain::water;
-    bool obstacle = false;
     // TODO: this state means that each player can have their own puzzle maps
     // TODO: we want a fixed puzzle map for each artifact, but each player has
     // their own view of them depending on which puzzle pieces have been found
@@ -54,22 +53,24 @@ public:
 
 private:
     // Identify the right-most and bottom-most hex to draw, determines how big we
-    // need the surface to be.
-    void init_surface();
+    // need the map texture to be.
+    void init_texture();
     void init_tiles();
 
     SDL_Point hex_center(const Hex &hex) const;
 
     // Draw the given image centered on the given pixel relative to the puzzle surface.
-    void draw_centered(const SdlImageData &img, int frameNum, const SDL_Point &pixel);
+    void draw_centered(const SdlImageData &img, const SDL_Point &pixel);
+    void draw_centered(const SdlImageData &img,
+                       const Frame &frame,
+                       const SDL_Point &pixel);
 
+    void draw_map();
     void update();
     void draw_tiles();
-    void draw_obstacles();
     void draw_border();
     void apply_filters();
     void hide_unrevealed_tiles();
-    void x_marks_the_spot();
 
     SdlWindow *win_;
     const RandomMap *rmap_;
@@ -79,7 +80,11 @@ private:
     SDL_Point pOrigin_;  // map coordinates of upper-left hex
     // TODO: can there be one set of these for all puzzle map objects?
     EnumSizedArray<SdlImageData, Terrain> terrainImg_;
+    EnumSizedArray<SdlImageData, EdgeType> edgeImg_;
     EnumSizedArray<SdlImageData, Terrain> obstacleImg_;
+    SdlImageData borderImg_;
+    SdlImageData shieldImg_;
+    SdlImageData xImg_;
     SdlSurface surf_;
     SdlTexture texture_;
     std::vector<PuzzleTile> tiles_;

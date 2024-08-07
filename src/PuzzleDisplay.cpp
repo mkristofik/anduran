@@ -34,6 +34,9 @@ PuzzleDisplay::PuzzleDisplay(SdlWindow &win,
     pOrigin_(rmapView_->mapPixelFromHex(Hex{hexes_.x, hexes_.y})),
     terrainImg_(),
     obstacleImg_(),
+    borderImg_(images_->get("hex-team-color")),
+    shieldImg_(images_->get("puzzle-hidden")),
+    xImg_(images_->get("puzzle-x")),
     surf_(),
     texture_(),
     tiles_()
@@ -43,13 +46,16 @@ PuzzleDisplay::PuzzleDisplay(SdlWindow &win,
         obstacleImg_[t] = images_->get(get_obstacle_filename(t));
     }
 
-    init_surface();
+    for (auto e : EdgeType()) {
+        edgeImg_[e] = images_->get(get_edge_filename(e));
+    }
+
+    init_texture();
     init_tiles();
+    draw_map();
 
     // TODO: only need to call this if a new piece is revealed, for now call it
     // just the once
-    // TODO: the map view will change with each call until we can match the tile
-    // and obstacle frames used by MapDisplay
     update();
 }
 
@@ -61,7 +67,7 @@ void PuzzleDisplay::draw()
                                         // popup window
 }
 
-void PuzzleDisplay::init_surface()
+void PuzzleDisplay::init_texture()
 {
     Hex topRight = {hexes_.x + hexes_.w - 1, hexes_.y};
     int width = (rmapView_->mapPixelFromHex(topRight) - pOrigin_).x +
@@ -78,11 +84,9 @@ void PuzzleDisplay::init_tiles()
 {
     for (int hx = hexes_.x; hx < hexes_.x + hexes_.w; ++hx) {
         for (int hy = hexes_.y; hy < hexes_.y + hexes_.h; ++hy) {
-            Hex hex = {hx, hy};
             PuzzleTile t;
-            t.pCenter = hex_center(hex);
-            t.terrain = rmap_->getTerrain(hex);
-            t.obstacle = rmap_->getObstacle(hex);
+            t.hex = {hx, hy};
+            t.pCenter = hex_center(t.hex);
             if (hx <= 10 && hy <= 10) {
                 t.visible = true;
             }
@@ -100,12 +104,21 @@ SDL_Point PuzzleDisplay::hex_center(const Hex &hex) const
         SDL_Point{TileDisplay::HEX_SIZE / 2, TileDisplay::HEX_SIZE / 2};
 }
 
+void PuzzleDisplay::draw_centered(const SdlImageData &img, const SDL_Point &pixel)
+{
+    draw_centered(img, Frame{}, pixel);
+}
+
 void PuzzleDisplay::draw_centered(const SdlImageData &img,
-                                  int frameNum,
+                                  const Frame &frame,
                                   const SDL_Point &pixel)
 {
     int frameWidth = img.surface->w / img.frames.col;
-    SDL_Rect srcRect = {frameNum * frameWidth, 0, frameWidth, img.surface->h};
+    int frameHeight = img.surface->h / img.frames.row;
+    SDL_Rect srcRect = {frame.col * frameWidth,
+                        frame.row * frameHeight,
+                        frameWidth,
+                        frameHeight};
     SDL_Rect destRect = {pixel.x - srcRect.w / 2,
                          pixel.y - srcRect.h / 2,
                          srcRect.w,
@@ -117,14 +130,19 @@ void PuzzleDisplay::draw_centered(const SdlImageData &img,
     }
 }
 
-void PuzzleDisplay::update()
+void PuzzleDisplay::draw_map()
 {
     draw_tiles();
-    draw_obstacles();
     draw_border();
     apply_filters();
+
+    // X marks the spot
+    draw_centered(xImg_, hex_center(Hex{14, 10}));
+}
+
+void PuzzleDisplay::update()
+{
     hide_unrevealed_tiles();
-    x_marks_the_spot();
 
     SdlEditTexture edit(texture_);
     edit.update(surf_);
@@ -134,20 +152,30 @@ void PuzzleDisplay::draw_tiles()
 {
     surf_.fill(getRefColor(ColorShade::normal));
 
-    int terrainFrames = terrainImg_[0].frames.col;
-    RandomRange frameToUse(0, terrainFrames - 1); 
     for (auto &t : tiles_) {
-        draw_centered(terrainImg_[t.terrain], frameToUse.get(), t.pCenter);
-    }
-}
+        auto &tileView = rmapView_->get_tile(t.hex);
+        draw_centered(terrainImg_[tileView.terrain],
+                      Frame{0, tileView.terrainFrame},
+                      t.pCenter);
 
-void PuzzleDisplay::draw_obstacles()
-{
-    int obstacleFrames = obstacleImg_[0].frames.col;
-    RandomRange frameToUse(0, obstacleFrames - 1); 
-    for (auto &t : tiles_) {
-        if (t.obstacle) {
-            draw_centered(obstacleImg_[t.terrain], frameToUse.get(), t.pCenter);
+        for (auto d : HexDir()) {
+            // TODO: create an edges-none image so we can have a proper enum for it
+            int edgeIndex = tileView.edges[d].index;
+            if (edgeIndex == -1 ||
+                edgeIndex == static_cast<int>(EdgeType::same_terrain))
+            {
+                continue;
+            }
+
+            draw_centered(edgeImg_[edgeIndex],
+                          Frame{tileView.edges[d].numSides - 1, static_cast<int>(d)},
+                          t.pCenter);
+        }
+
+        if (tileView.obstacle >= 0) {
+            draw_centered(obstacleImg_[tileView.terrain],
+                          Frame{0, tileView.obstacle},
+                          t.pCenter);
         }
     }
 }
@@ -156,12 +184,11 @@ void PuzzleDisplay::draw_obstacles()
 // have to do this.
 void PuzzleDisplay::draw_border()
 {
-    auto border = images_->get("hex-team-color");
     for (int hx = hexes_.x - 1; hx < hexes_.x + hexes_.w + 1; ++hx) {
         for (int hy = hexes_.y - 1; hy < hexes_.y + hexes_.h + 1; ++hy) {
             SDL_Point p = {hx, hy};
             if (!SDL_PointInRect(&p, &hexes_)) {
-                draw_centered(border, 0, hex_center(Hex{hx, hy}));
+                draw_centered(borderImg_, hex_center(Hex{hx, hy}));
             }
         }
     }
@@ -192,16 +219,9 @@ void PuzzleDisplay::apply_filters()
 
 void PuzzleDisplay::hide_unrevealed_tiles()
 {
-    auto shield = images_->get("puzzle-hidden");
     for (auto &t : tiles_) {
         if (!t.visible) {
-            draw_centered(shield, 0, t.pCenter);
+            draw_centered(shieldImg_, t.pCenter);
         }
     }
-}
-
-void PuzzleDisplay::x_marks_the_spot()
-{
-    auto x = images_->get("puzzle-x");
-    draw_centered(x, 0, hex_center(Hex{14, 10}));
 }
