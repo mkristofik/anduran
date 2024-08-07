@@ -10,21 +10,24 @@
 
     See the COPYING.txt file for more details.
 */
-#include "PuzzleMap.h"
+#include "PuzzleDisplay.h"
 
 #include "MapDisplay.h"
 #include "RandomMap.h"
+#include "SdlWindow.h"
 #include "log_utils.h"
 #include "team_color.h"
 
 #include <algorithm>
 #include <format>
 
-PuzzleMap::PuzzleMap(const RandomMap &rmap,
-                     const MapDisplay &mapView,
-                     const SDL_Rect &hexesToDraw,
-                     const SdlImageManager &imgMgr)
-    : rmap_(&rmap),
+PuzzleDisplay::PuzzleDisplay(SdlWindow &win,
+                             const RandomMap &rmap,
+                             const MapDisplay &mapView,
+                             const SDL_Rect &hexesToDraw,
+                             const SdlImageManager &imgMgr)
+    : win_(&win),
+    rmap_(&rmap),
     rmapView_(&mapView),
     hexes_(hexesToDraw),
     images_(&imgMgr),
@@ -32,6 +35,7 @@ PuzzleMap::PuzzleMap(const RandomMap &rmap,
     terrainImg_(),
     obstacleImg_(),
     surf_(),
+    texture_(),
     tiles_()
 {
     for (auto t : Terrain()) {
@@ -42,20 +46,22 @@ PuzzleMap::PuzzleMap(const RandomMap &rmap,
     init_surface();
     init_tiles();
 
-    draw_tiles();
-    draw_obstacles();
-    draw_border();
-    apply_filters();
-    hide_unrevealed_tiles();
-    x_marks_the_spot();
+    // TODO: only need to call this if a new piece is revealed, for now call it
+    // just the once
+    // TODO: the map view will change with each call until we can match the tile
+    // and obstacle frames used by MapDisplay
+    update();
 }
 
-const SdlSurface & PuzzleMap::get() const
+void PuzzleDisplay::draw()
 {
-    return surf_;
+    SDL_Rect puzzleWin = {240, 60, 800, 600};
+    SDL_RenderFillRect(win_->renderer(), &puzzleWin);
+    texture_.draw(SDL_Point{280, 90});  // drawn to be centered in the puzzle
+                                        // popup window
 }
 
-void PuzzleMap::init_surface()
+void PuzzleDisplay::init_surface()
 {
     Hex topRight = {hexes_.x + hexes_.w - 1, hexes_.y};
     int width = (rmapView_->mapPixelFromHex(topRight) - pOrigin_).x +
@@ -64,11 +70,11 @@ void PuzzleMap::init_surface()
     int height = (rmapView_->mapPixelFromHex(bottom) - pOrigin_).y +
         TileDisplay::HEX_SIZE;
 
-    surf_ = SdlSurface(width, height);
-    surf_.fill(getRefColor(ColorShade::normal));
+    texture_ = SdlTexture::make_editable_image(*win_, width, height);
+    surf_ = SdlEditTexture(texture_).make_surface(width, height);
 }
 
-void PuzzleMap::init_tiles()
+void PuzzleDisplay::init_tiles()
 {
     for (int hx = hexes_.x; hx < hexes_.x + hexes_.w; ++hx) {
         for (int hy = hexes_.y; hy < hexes_.y + hexes_.h; ++hy) {
@@ -88,15 +94,15 @@ void PuzzleMap::init_tiles()
     }
 }
 
-SDL_Point PuzzleMap::hex_center(const Hex &hex) const
+SDL_Point PuzzleDisplay::hex_center(const Hex &hex) const
 {
     return rmapView_->mapPixelFromHex(hex) - pOrigin_ +
         SDL_Point{TileDisplay::HEX_SIZE / 2, TileDisplay::HEX_SIZE / 2};
 }
 
-void PuzzleMap::draw_centered(const SdlImageData &img,
-                              int frameNum,
-                              const SDL_Point &pixel)
+void PuzzleDisplay::draw_centered(const SdlImageData &img,
+                                  int frameNum,
+                                  const SDL_Point &pixel)
 {
     int frameWidth = img.surface->w / img.frames.col;
     SDL_Rect srcRect = {frameNum * frameWidth, 0, frameWidth, img.surface->h};
@@ -111,8 +117,23 @@ void PuzzleMap::draw_centered(const SdlImageData &img,
     }
 }
 
-void PuzzleMap::draw_tiles()
+void PuzzleDisplay::update()
 {
+    draw_tiles();
+    draw_obstacles();
+    draw_border();
+    apply_filters();
+    hide_unrevealed_tiles();
+    x_marks_the_spot();
+
+    SdlEditTexture edit(texture_);
+    edit.update(surf_);
+}
+
+void PuzzleDisplay::draw_tiles()
+{
+    surf_.fill(getRefColor(ColorShade::normal));
+
     int terrainFrames = terrainImg_[0].frames.col;
     RandomRange frameToUse(0, terrainFrames - 1); 
     for (auto &t : tiles_) {
@@ -120,7 +141,7 @@ void PuzzleMap::draw_tiles()
     }
 }
 
-void PuzzleMap::draw_obstacles()
+void PuzzleDisplay::draw_obstacles()
 {
     int obstacleFrames = obstacleImg_[0].frames.col;
     RandomRange frameToUse(0, obstacleFrames - 1); 
@@ -133,7 +154,7 @@ void PuzzleMap::draw_obstacles()
 
 // TODO: use artwork that doesn't extend beyond the size of each hex and we won't
 // have to do this.
-void PuzzleMap::draw_border()
+void PuzzleDisplay::draw_border()
 {
     auto border = images_->get("hex-team-color");
     for (int hx = hexes_.x - 1; hx < hexes_.x + hexes_.w + 1; ++hx) {
@@ -146,7 +167,7 @@ void PuzzleMap::draw_border()
     }
 }
 
-void PuzzleMap::apply_filters()
+void PuzzleDisplay::apply_filters()
 {
     SdlEditSurface edit(surf_);
 
@@ -169,7 +190,7 @@ void PuzzleMap::apply_filters()
     }
 }
 
-void PuzzleMap::hide_unrevealed_tiles()
+void PuzzleDisplay::hide_unrevealed_tiles()
 {
     auto shield = images_->get("puzzle-hidden");
     for (auto &t : tiles_) {
@@ -179,7 +200,7 @@ void PuzzleMap::hide_unrevealed_tiles()
     }
 }
 
-void PuzzleMap::x_marks_the_spot()
+void PuzzleDisplay::x_marks_the_spot()
 {
     auto x = images_->get("puzzle-x");
     draw_centered(x, 0, hex_center(Hex{14, 10}));

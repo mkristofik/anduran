@@ -10,11 +10,12 @@
 
     See the COPYING.txt file for more details.
 */
-#ifndef PUZZLE_MAP_H
-#define PUZZLE_MAP_H
+#ifndef PUZZLE_DISPLAY_H
+#define PUZZLE_DISPLAY_H
 
 #include "SdlImageManager.h"
 #include "SdlSurface.h"
+#include "SdlTexture.h"
 #include "hex_utils.h"
 #include "iterable_enum_class.h"
 #include "terrain.h"
@@ -24,6 +25,7 @@
 
 class MapDisplay;
 class RandomMap;
+class SdlWindow;
 
 struct PuzzleTile
 {
@@ -39,17 +41,16 @@ struct PuzzleTile
 };
 
 
-// TODO: this class is probably best kept to manage the popup window, keep the
-// state of puzzle map itself separately.  Rename this to PuzzleMapDisplay?
-class PuzzleMap
+class PuzzleDisplay
 {
 public:
-    PuzzleMap(const RandomMap &rmap,
-              const MapDisplay &mapView,
-              const SDL_Rect &hexesToDraw,
-              const SdlImageManager &imgMgr);
+    PuzzleDisplay(SdlWindow &win,
+                  const RandomMap &rmap,
+                  const MapDisplay &mapView,
+                  const SDL_Rect &hexesToDraw,
+                  const SdlImageManager &imgMgr);
 
-    const SdlSurface & get() const;
+    void draw();
 
 private:
     // Identify the right-most and bottom-most hex to draw, determines how big we
@@ -62,6 +63,7 @@ private:
     // Draw the given image centered on the given pixel relative to the puzzle surface.
     void draw_centered(const SdlImageData &img, int frameNum, const SDL_Point &pixel);
 
+    void update();
     void draw_tiles();
     void draw_obstacles();
     void draw_border();
@@ -69,6 +71,7 @@ private:
     void hide_unrevealed_tiles();
     void x_marks_the_spot();
 
+    SdlWindow *win_;
     const RandomMap *rmap_;
     const MapDisplay *rmapView_;
     SDL_Rect hexes_;
@@ -78,6 +81,7 @@ private:
     EnumSizedArray<SdlImageData, Terrain> terrainImg_;
     EnumSizedArray<SdlImageData, Terrain> obstacleImg_;
     SdlSurface surf_;
+    SdlTexture texture_;
     std::vector<PuzzleTile> tiles_;
 };
 

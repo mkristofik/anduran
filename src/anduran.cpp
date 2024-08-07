@@ -12,7 +12,6 @@
 */
 #include "anduran.h"
 
-#include "PuzzleMap.h"
 #include "SdlSurface.h"
 #include "anim_utils.h"
 #include "container_utils.h"
@@ -52,22 +51,18 @@ Anduran::Anduran()
     stateChanged_(true),
     influence_(rmap_.numRegions()),
     puzzleVisible_(false),
-    puzzle_()
+    // TODO: puzzle map determines where the artifacts are buried and thus which
+    // hexes are shown in the puzzle.  PuzzleDisplay controls how to show it.
+    // TODO: 13x7 feels like a good size.  91 tiles, divided evenly among however
+    // many obelisks there are for a given artifact.  assign the puzzle pieces
+    // randomly when the map is first created.  need to know which piece contains
+    // the x-marks-the-spot.
+    puzzle_(win_, rmap_, rmapView_, SDL_Rect{8, 7, 13, 7}, images_)
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
     load_players();
     load_objects();
-
-    // TODO: puzzle map determines where the artifacts are buried and thus which
-    // hexes are shown in the puzzle.  PuzzleMapDisplay controls how to show it.
-    // TODO: 13x7 feels like a good size.  91 tiles, divided evenly among however
-    // many obelisks there are for a given artifact.  assign the puzzle pieces
-    // randomly when the map is first created.  need to know which piece contains
-    // the x-marks-the-spot.
-    PuzzleMap pmap(rmap_, rmapView_, SDL_Rect{8, 7, 13, 7}, images_);
-    // TODO: make_editable_image, it'll change as puzzle pieces are revealed
-    puzzle_ = SdlTexture::make_image(pmap.get(), win_);
 }
 
 void Anduran::update_frame(Uint32 elapsed_ms)
@@ -85,12 +80,7 @@ void Anduran::update_frame(Uint32 elapsed_ms)
     minimap_.draw();
 
     if (puzzleVisible_) {
-        // TODO: PuzzleMapDisplay might be a better place to do this.  This size
-        // is tied to the 13x7 map size, and placed to be centered in the window.
-        SDL_Rect puzzleWin = {240, 60, 800, 600};
-        SDL_RenderFillRect(win_.renderer(), &puzzleWin);
-        puzzle_.draw(SDL_Point{280, 90});  // drawn to be centered in the puzzle
-                                           // popup window
+        puzzle_.draw();
     }
 
     win_.update();

@@ -20,6 +20,7 @@
 #include "ObjectImages.h"
 #include "ObjectManager.h"
 #include "Pathfinder.h"
+#include "PuzzleDisplay.h"
 #include "RandomMap.h"
 #include "SdlApp.h"
 #include "SdlImageManager.h"
@@ -110,7 +111,7 @@ private:
     bool stateChanged_;
     std::vector<EnumSizedArray<int, Team>> influence_;
     bool puzzleVisible_;
-    SdlTexture puzzle_;
+    PuzzleDisplay puzzle_;
 };
 
 #endif
