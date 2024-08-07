@@ -1,13 +1,13 @@
 /*
     Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License version 2
     or at your option any later version.
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY.
- 
+
     See the COPYING.txt file for more details.
 */
 #include "SdlWindow.h"
@@ -51,7 +51,7 @@ void SdlWindow::update()
     SDL_RenderPresent(renderer());
 }
 
-SDL_Rect SdlWindow::getBounds() const
+SDL_Rect SdlWindow::get_bounds() const
 {
     int width = 0;
     int height = 0;

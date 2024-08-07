@@ -54,11 +54,7 @@ Anduran::Anduran()
     puzzleArt_(images_),
     // TODO: puzzle map determines where the artifacts are buried and thus which
     // hexes are shown in the puzzle.  PuzzleDisplay controls how to show it.
-    // TODO: 13x7 feels like a good size.  91 tiles, divided evenly among however
-    // many obelisks there are for a given artifact.  assign the puzzle pieces
-    // randomly when the map is first created.  need to know which piece contains
-    // the x-marks-the-spot.
-    puzzle_(win_, rmap_, rmapView_, SDL_Rect{8, 7, 13, 7}, puzzleArt_)
+    puzzle_(win_, rmap_, rmapView_, puzzleArt_, Hex{14, 10})
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 

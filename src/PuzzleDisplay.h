@@ -57,10 +57,10 @@ class PuzzleDisplay
 {
 public:
     PuzzleDisplay(SdlWindow &win,
-                  const RandomMap &rmap,
+                  const RandomMap &rmap,  // TODO: currently unused
                   const MapDisplay &mapView,
-                  const SDL_Rect &hexesToDraw,
-                  const PuzzleImages &artwork);
+                  const PuzzleImages &artwork,
+                  const Hex &target);
 
     void draw();
 
@@ -87,8 +87,10 @@ private:
     SdlWindow *win_;
     const RandomMap *rmap_;
     const MapDisplay *rmapView_;
-    SDL_Rect hexes_;
     const PuzzleImages *images_;
+    SDL_Rect popupArea_;
+    Hex targetHex_;
+    SDL_Rect hexes_;
     SDL_Point pOrigin_;  // map coordinates of upper-left hex
     SdlSurface surf_;
     SdlTexture texture_;

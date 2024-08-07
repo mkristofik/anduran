@@ -21,6 +21,33 @@
 #include <algorithm>
 #include <format>
 
+namespace
+{
+    const int POPUP_WIDTH = 800;
+    const int POPUP_HEIGHT = 600;
+    const int PUZZLE_WIDTH = 13;
+    const int PUZZLE_HEIGHT = 7;
+
+    // Render the popup centered in the main window.
+    SDL_Rect popup_window_rect(const SdlWindow &win)
+    {
+        auto winSize = win.get_bounds();
+        return {(winSize.w - POPUP_WIDTH) / 2,
+                (winSize.h - POPUP_HEIGHT) / 2,
+                POPUP_WIDTH,
+                POPUP_HEIGHT};
+    }
+
+    SDL_Rect hexes_to_draw(const Hex &target)
+    {
+        return {target.x - PUZZLE_WIDTH / 2,
+                target.y - PUZZLE_HEIGHT / 2,
+                PUZZLE_WIDTH,
+                PUZZLE_HEIGHT};
+    }
+}
+
+
 PuzzleImages::PuzzleImages(const SdlImageManager &imgMgr)
     : terrain(),
     edges(),
@@ -43,13 +70,15 @@ PuzzleImages::PuzzleImages(const SdlImageManager &imgMgr)
 PuzzleDisplay::PuzzleDisplay(SdlWindow &win,
                              const RandomMap &rmap,
                              const MapDisplay &mapView,
-                             const SDL_Rect &hexesToDraw,
-                             const PuzzleImages &artwork)
+                             const PuzzleImages &artwork,
+                             const Hex &target)
     : win_(&win),
     rmap_(&rmap),
     rmapView_(&mapView),
-    hexes_(hexesToDraw),
     images_(&artwork),
+    popupArea_(popup_window_rect(win)),
+    targetHex_(target),
+    hexes_(hexes_to_draw(target)),
     pOrigin_(rmapView_->mapPixelFromHex(Hex{hexes_.x, hexes_.y})),
     surf_(),
     texture_(),
@@ -65,10 +94,12 @@ PuzzleDisplay::PuzzleDisplay(SdlWindow &win,
 
 void PuzzleDisplay::draw()
 {
-    SDL_Rect puzzleWin = {240, 60, 800, 600};
-    SDL_RenderFillRect(win_->renderer(), &puzzleWin);
-    texture_.draw(SDL_Point{280, 90});  // drawn to be centered in the puzzle
-                                        // popup window
+    // Center the puzzle map inside the popup window.
+    SDL_Point pixel = {popupArea_.x + (popupArea_.w - surf_->w) / 2,
+                       popupArea_.y + (popupArea_.h - surf_->h) / 2};
+
+    SDL_RenderFillRect(win_->renderer(), &popupArea_);
+    texture_.draw(pixel);
 }
 
 void PuzzleDisplay::init_texture()
@@ -117,12 +148,15 @@ void PuzzleDisplay::draw_centered(const SdlImageData &img,
                                   const Frame &frame,
                                   const SDL_Point &pixel)
 {
+    // Get the portion of the source image denoted by 'frame'.
     int frameWidth = img.surface->w / img.frames.col;
     int frameHeight = img.surface->h / img.frames.row;
     SDL_Rect srcRect = {frame.col * frameWidth,
                         frame.row * frameHeight,
                         frameWidth,
                         frameHeight};
+
+    // Draw it centered on 'pixel'.
     SDL_Rect destRect = {pixel.x - srcRect.w / 2,
                          pixel.y - srcRect.h / 2,
                          srcRect.w,
@@ -141,7 +175,7 @@ void PuzzleDisplay::update()
     apply_filters();
 
     // X marks the spot
-    draw_centered(images_->xs, Frame{}, hex_center(Hex{14, 10}));
+    draw_centered(images_->xs, Frame{}, hex_center(targetHex_));
 
     hide_unrevealed_tiles();
 

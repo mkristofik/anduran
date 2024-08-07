@@ -463,3 +463,4 @@ is next to or in front of a castle
 * ranges instead of begin/end or cbegin/cend on containers
 * will RandomRange support aggregate initialization?  UnitData could set all members
 in the header
+- replace boost flat_ containers with C++23 ones
