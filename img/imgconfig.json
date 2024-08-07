@@ -92,6 +92,9 @@
         "frames": [1, 8],
         "ms_per_frame": 120
     },
+    "puzzle-xs": {
+        "frames": [1, 3]
+    },
     "skeleton-attack-melee": {
         "frames": [1, 10],
         "ms_per_frame": 75

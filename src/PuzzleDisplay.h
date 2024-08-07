@@ -34,8 +34,7 @@ struct PuzzleImages
     EnumSizedArray<SdlImageData, Terrain> obstacles;
     SdlImageData border;
     SdlImageData shield;
-    // TODO: different colors for each artifact
-    SdlImageData x;
+    SdlImageData xs;
 
     PuzzleImages(const SdlImageManager &imgMgr);
 };

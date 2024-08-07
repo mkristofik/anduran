@@ -27,7 +27,7 @@ PuzzleImages::PuzzleImages(const SdlImageManager &imgMgr)
     obstacles(),
     border(imgMgr.get("hex-team-color")),
     shield(imgMgr.get("puzzle-hidden")),
-    x(imgMgr.get("puzzle-x"))
+    xs(imgMgr.get("puzzle-xs"))
 {
     for (auto t : Terrain()) {
         terrain[t] = imgMgr.get(get_tile_filename(t));
@@ -141,7 +141,7 @@ void PuzzleDisplay::update()
     apply_filters();
 
     // X marks the spot
-    draw_centered(images_->x, hex_center(Hex{14, 10}));
+    draw_centered(images_->xs, Frame{}, hex_center(Hex{14, 10}));
 
     hide_unrevealed_tiles();
 
