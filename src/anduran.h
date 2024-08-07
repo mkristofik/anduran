@@ -111,6 +111,7 @@ private:
     bool stateChanged_;
     std::vector<EnumSizedArray<int, Team>> influence_;
     bool puzzleVisible_;
+    PuzzleImages puzzleArt_;
     PuzzleDisplay puzzle_;
 };
 

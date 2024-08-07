@@ -27,6 +27,20 @@ class MapDisplay;
 class RandomMap;
 class SdlWindow;
 
+struct PuzzleImages
+{
+    EnumSizedArray<SdlImageData, Terrain> terrain;
+    EnumSizedArray<SdlImageData, EdgeType> edges;
+    EnumSizedArray<SdlImageData, Terrain> obstacles;
+    SdlImageData border;
+    SdlImageData shield;
+    // TODO: different colors for each artifact
+    SdlImageData x;
+
+    PuzzleImages(const SdlImageManager &imgMgr);
+};
+
+
 struct PuzzleTile
 {
     Hex hex;
@@ -47,7 +61,7 @@ public:
                   const RandomMap &rmap,
                   const MapDisplay &mapView,
                   const SDL_Rect &hexesToDraw,
-                  const SdlImageManager &imgMgr);
+                  const PuzzleImages &artwork);
 
     void draw();
 
@@ -65,7 +79,6 @@ private:
                        const Frame &frame,
                        const SDL_Point &pixel);
 
-    void draw_map();
     void update();
     void draw_tiles();
     void draw_border();
@@ -76,15 +89,8 @@ private:
     const RandomMap *rmap_;
     const MapDisplay *rmapView_;
     SDL_Rect hexes_;
-    const SdlImageManager *images_;
+    const PuzzleImages *images_;
     SDL_Point pOrigin_;  // map coordinates of upper-left hex
-    // TODO: can there be one set of these for all puzzle map objects?
-    EnumSizedArray<SdlImageData, Terrain> terrainImg_;
-    EnumSizedArray<SdlImageData, EdgeType> edgeImg_;
-    EnumSizedArray<SdlImageData, Terrain> obstacleImg_;
-    SdlImageData borderImg_;
-    SdlImageData shieldImg_;
-    SdlImageData xImg_;
     SdlSurface surf_;
     SdlTexture texture_;
     std::vector<PuzzleTile> tiles_;
