@@ -103,10 +103,10 @@ void MapViewApp::place_objects()
         auto img = objImg_.get(obj.type);
         int numFrames = img.cols();
 
-        auto tiles = rmap_.getObjectTiles(obj.type);
-        for (int i = 0; i < ssize(tiles); ++i) {
+        auto hexes = rmap_.getObjectHexes(obj.type);
+        for (int i = 0; i < ssize(hexes); ++i) {
             MapEntity entity;
-            entity.hex = tiles[i];
+            entity.hex = hexes[i];
             entity.z = ZOrder::object;
 
             // Assume any sprite sheet with the same number of frames as there
@@ -137,7 +137,7 @@ void MapViewApp::place_objects()
 void MapViewApp::place_armies()
 {
     auto img = images_.make_texture("random-unit", win_);
-    for (auto &hex : rmap_.getObjectTiles(ObjectType::army)) {
+    for (auto &hex : rmap_.getObjectHexes(ObjectType::army)) {
         rmapView_.addEntity(img, hex, ZOrder::unit);
     }
 }

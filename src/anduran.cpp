@@ -305,7 +305,7 @@ void Anduran::load_objects()
 {
     for (auto &obj : objConfig_) {
         auto img = objImg_.get(obj.type);
-        auto objHexes = rmap_.getObjectTiles(obj.type);
+        auto objHexes = rmap_.getObjectHexes(obj.type);
 
         // Assume any sprite sheet with the same number of frames as there are
         // terrains is intended to use a terrain frame.

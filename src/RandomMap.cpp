@@ -307,11 +307,16 @@ std::vector<Hex> RandomMap::getCastleTiles() const
     return hexesFromInt(castles_);
 }
 
-std::vector<Hex> RandomMap::getObjectTiles(ObjectType type)
+FlatMultimap<std::string, int>::ValueRange RandomMap::getObjectTiles(ObjectType type)
 {
     auto name = obj_name_from_type(type);
     assert(!name.empty());
-    return hexesFromInt(objectTiles_.find(name));
+    return objectTiles_.find(name);
+}
+
+std::vector<Hex> RandomMap::getObjectHexes(ObjectType type)
+{
+    return hexesFromInt(getObjectTiles(type));
 }
 
 const ObjectManager & RandomMap::getObjectConfig() const
@@ -1146,7 +1151,7 @@ void RandomMap::buildPuzzles()
 
     // Round-robin each obelisk tile to each puzzle map.
     int p = 0;
-    for (auto tile : objectTiles_.find(obj_name_from_type(ObjectType::obelisk))) {
+    for (auto tile : getObjectTiles(ObjectType::obelisk)) {
         puzzles_[ordering[p]].push_back(tile);
         p = (p + 1) % ssize(ordering);
     }

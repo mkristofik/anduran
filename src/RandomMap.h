@@ -64,7 +64,8 @@ public:
     std::vector<Hex> getCastleTiles() const;
 
     // Return a list of tiles containing a given object type.
-    std::vector<Hex> getObjectTiles(ObjectType type);
+    FlatMultimap<std::string, int>::ValueRange getObjectTiles(ObjectType type);
+    std::vector<Hex> getObjectHexes(ObjectType type);
     const ObjectManager & getObjectConfig() const;
 
     // Return the region(s) adjacent to the given border tile, or an empty range
