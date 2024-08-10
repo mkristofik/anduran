@@ -87,8 +87,8 @@ public:
         using iterator_category = typename iter_type::iterator_category;
 
         ValueIterator(iter_type i) : iter_(std::move(i)) {}
-        const reference operator*() const { return iter_->value; }
-        const pointer operator->() const { return iter_->value; }
+        const V & operator*() const { return iter_->value; }
+        const V * operator->() const { return iter_->value; }
         ValueIterator & operator++() { ++iter_; return *this; }
         ValueIterator & operator--() { --iter_; return *this; }
         ValueIterator & operator+=(difference_type d) { iter_ += d; return *this; }

@@ -22,7 +22,7 @@ endif
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror -O3
 # TODO: newer gcc than 13.2 needed for C++23 support
-CXXFLAGS = -g -Wall -Wextra -Werror -std=c++20
+CXXFLAGS = -g -Wall -Wextra -Werror -std=c++20 -fconcepts-diagnostics-depth=3
 
 BUILD_DIR = build
 SRC_DIR = src
