@@ -15,6 +15,7 @@
 
 #include <algorithm>
 #include <compare>
+#include <ranges>
 #include <tuple>
 #include <vector>
 
@@ -33,8 +34,11 @@ public:
         auto operator<=>(const KeyValue &rhs) const = default;
     };
 
+    class ValueIterator;
+
     using container_type = std::vector<KeyValue>;
     using const_iterator = typename container_type::const_iterator;
+    using ValueRange = std::ranges::subrange<ValueIterator>;
 
     FlatMultimap();
 
@@ -54,10 +58,9 @@ public:
     // 
     // Example traditional usage:
     //     const auto range = map.find(key);
-    //     for (auto i = range.first; i != range.second; ++i) {
+    //     for (auto i = range.begin(); i != range.end(); ++i) {
     //         ...
     //     }
-    struct ValueRange;
     ValueRange find(const K &key);
 
     void reserve(int capacity);
@@ -84,8 +87,8 @@ public:
         using iterator_category = typename iter_type::iterator_category;
 
         ValueIterator(iter_type i) : iter_(std::move(i)) {}
-        const V & operator*() const { return iter_->value; }
-        const V * operator->() const { return iter_->value; }
+        const reference operator*() const { return iter_->value; }
+        const pointer operator->() const { return iter_->value; }
         ValueIterator & operator++() { ++iter_; return *this; }
         ValueIterator & operator--() { --iter_; return *this; }
         ValueIterator & operator+=(difference_type d) { iter_ += d; return *this; }
@@ -103,19 +106,19 @@ public:
             return lhs.iter_ - rhs.iter_;
         }
 
+        // These two are required to use ValueIterator with the ranges library.
+        // Default constructor required for std::sentinel_for
+        ValueIterator() = default;
+        // Postfix increment required for std::input_or_output_iterator
+        ValueIterator operator++(int)
+        {
+            ValueIterator prev(*this);
+            ++*this;
+            return prev;
+        }
+
     private:
         iter_type iter_;
-    };
-
-    struct ValueRange
-    {
-        ValueIterator first;
-        ValueIterator second;
-
-        auto begin() const { return first; }
-        auto end() const { return second; }
-        int size() const { return std::distance(begin(), end()); }
-        bool empty() const { return size() == 0; }
     };
 
 private:
@@ -170,7 +173,7 @@ typename FlatMultimap<K, V>::ValueRange FlatMultimap<K, V>::find(const K &key)
     sortAndPrune();
 
     const auto range = equal_range(cbegin(data_), cend(data_), key);
-    return {range.first, range.second};
+    return {ValueIterator(range.first), ValueIterator(range.second)};
 }
 
 template <typename K, typename V>

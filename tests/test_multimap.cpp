@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(flat_multimap)
     }
 
     const auto range = fmm.find(1);
-    std::vector values(range.first, range.second);
+    std::vector values(range.begin(), range.end());
     const int actual[] = {1, 2, 3};
     BOOST_TEST(values == actual, boost::test_tools::per_element());
 }
