@@ -21,6 +21,10 @@
 #include <string>
 #include <vector>
 
+
+ITERABLE_ENUM_CLASS(PuzzleType, helmet, breastplate, sword);
+
+
 // A landmass is a contiguous set of regions that are either all land or all
 // water.  Coastlines are the tiles that border each adjacent landmass.  The land
 // side and water side are two separate coastlines.
@@ -67,6 +71,10 @@ public:
     // if tile is not on a border with another region.
     FlatMultimap<int, int>::ValueRange getTileRegionNeighbors(int index);
     FlatMultimap<int, int>::ValueRange getRegionNeighbors(int region);
+
+    // Return a list of obelisk tiles assigned to the given puzzle map.  Tiles are
+    // sorted by ascending region castle distance.
+    const std::vector<int> & getPuzzleTiles(PuzzleType puzzle) const;
 
     // Convert between integer and Hex representations of a tile location.
     Hex hexFromInt(int index) const;
@@ -133,6 +141,7 @@ private:
     int placeObjectInRegion(ObjectType type, int region);
     void placeObject(ObjectType type, int tile);
     void placeArmies();
+    void buildPuzzles();
 
     int width_;
     int size_;
@@ -155,6 +164,7 @@ private:
     std::vector<signed char> villageNeighbors_;
     FlatMultimap<std::string, int> objectTiles_;
     const ObjectManager *objectMgr_;
+    EnumSizedArray<std::vector<int>, PuzzleType> puzzles_;
 };
 
 

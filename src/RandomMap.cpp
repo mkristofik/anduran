@@ -153,7 +153,8 @@ RandomMap::RandomMap(int width, const ObjectManager &objMgr)
     regionCastleDistance_(),
     villageNeighbors_(size_, 0),
     objectTiles_(),
-    objectMgr_(&objMgr)
+    objectMgr_(&objMgr),
+    puzzles_()
 {
     generateRegions();
     buildNeighborGraphs();
@@ -164,6 +165,7 @@ RandomMap::RandomMap(int width, const ObjectManager &objMgr)
     placeObjects();
     assignObstacles();
     placeArmies();
+    buildPuzzles();
 }
 
 RandomMap::RandomMap(const char *filename, const ObjectManager &objMgr)
@@ -186,7 +188,8 @@ RandomMap::RandomMap(const char *filename, const ObjectManager &objMgr)
     castleRegions_(),
     villageNeighbors_(),
     objectTiles_(),
-    objectMgr_(&objMgr)
+    objectMgr_(&objMgr),
+    puzzles_()
 {
     auto doc = jsonReadFile(filename);
 
@@ -197,6 +200,9 @@ RandomMap::RandomMap(const char *filename, const ObjectManager &objMgr)
     jsonGetArray(doc, "tile-walkable", tileWalkable_);
     jsonGetArray(doc, "castles", castles_);
     jsonGetArray(doc, "region-castle-distance", regionCastleDistance_);
+    jsonGetArray(doc, "puzzle-helmet", puzzles_[PuzzleType::helmet]);
+    jsonGetArray(doc, "puzzle-breastplate", puzzles_[PuzzleType::breastplate]);
+    jsonGetArray(doc, "puzzle-sword", puzzles_[PuzzleType::sword]);
     size_ = tileRegions_.size();
     width_ = std::sqrt(size_);
     numRegions_ = regionTerrain_.size();
@@ -225,6 +231,9 @@ void RandomMap::writeFile(const char *filename)
     jsonSetArray<int>(doc, "castles", castles_);
     jsonSetArray<int>(doc, "region-castle-distance", regionCastleDistance_);
     jsonSetMultimap(doc, "objects", objectTiles_);
+    jsonSetArray<int>(doc, "puzzle-helmet", puzzles_[PuzzleType::helmet]);
+    jsonSetArray<int>(doc, "puzzle-breastplate", puzzles_[PuzzleType::breastplate]);
+    jsonSetArray<int>(doc, "puzzle-sword", puzzles_[PuzzleType::sword]);
 
     jsonWriteFile(filename, doc);
 }
@@ -318,6 +327,11 @@ FlatMultimap<int, int>::ValueRange RandomMap::getTileRegionNeighbors(int index)
 FlatMultimap<int, int>::ValueRange RandomMap::getRegionNeighbors(int region)
 {
     return regionNeighbors_.find(region);
+}
+
+const std::vector<int> & RandomMap::getPuzzleTiles(PuzzleType puzzle) const
+{
+    return puzzles_[puzzle];
 }
 
 Hex RandomMap::hexFromInt(int index) const
@@ -1021,6 +1035,9 @@ void RandomMap::placeCoastalObject(const MapObject &obj)
                 if (tileOccupied_[tile] || villageNeighbors_[tile]) {
                     continue;
                 }
+                // TODO: disallow a tile if all adjacent water tiles contain
+                // obstacles or other objects.  We don't want to place a harbor
+                // with nowhere to build a boat.
 
                 int dist = regionCastleDistance_[region];
                 if (!obj.fairDistance) {
@@ -1100,5 +1117,47 @@ void RandomMap::placeArmies()
                 controlled.insert(zoc2);
             }
         }
+    }
+}
+
+// TODO: building the puzzle lists
+// * enum PuzzleType helmet, breastplate, sword
+// * randomize helmet, breastplate, sword
+// * EnumSizedArray<std::vector<int>, PuzzleType>
+// * round-robin the obelisk tiles into the three lists
+// * randomize each list
+// * sort each list by region castle distance
+// last obelisk in each list is the one that gives the x-marks-the-spot
+//   puzzle piece, all others can give a randomly assigned piece
+// PuzzleDisplay can randomly generate the puzzle pieces
+// Does this all make sense?  Why would anyone bother with all the other
+//   obelisks if one of them contains the x-marks-the-spot
+// Because we won't show the X on the main map until all pieces have been
+//   found
+// TODO: this can be done with public functions, Anduran could do this itself
+void RandomMap::buildPuzzles()
+{
+    // We don't want the first tile to always go to the first puzzle.
+    EnumSizedArray<int, PuzzleType> ordering;
+    for (int i = 0; i < ssize(ordering); ++i) {
+        ordering[i] = i;
+    }
+    randomize(ordering);
+
+    // Round-robin each obelisk tile to each puzzle map.
+    int p = 0;
+    for (auto tile : objectTiles_.find(obj_name_from_type(ObjectType::obelisk))) {
+        puzzles_[ordering[p]].push_back(tile);
+        p = (p + 1) % ssize(ordering);
+    }
+
+    // Sort each puzzle by castle distance, we want to know which obelisks are
+    // furthest from all castles.
+    for (auto &puzzle : puzzles_) {
+        std::ranges::sort(puzzle, [this](int lhs, int rhs) {
+            int lhsDist = regionCastleDistance_[tileRegions_[lhs]];
+            int rhsDist = regionCastleDistance_[tileRegions_[rhs]];
+            return lhsDist < rhsDist;
+        });
     }
 }
