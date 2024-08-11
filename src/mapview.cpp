@@ -103,10 +103,10 @@ void MapViewApp::place_objects()
         auto img = objImg_.get(obj.type);
         int numFrames = img.cols();
 
-        auto hexes = rmap_.getObjectHexes(obj.type);
-        for (int i = 0; i < ssize(hexes); ++i) {
+        int count = 0;
+        for (const auto &hex : rmap_.getObjectHexes(obj.type)) {
             MapEntity entity;
-            entity.hex = hexes[i];
+            entity.hex = hex;
             entity.z = ZOrder::object;
 
             // Assume any sprite sheet with the same number of frames as there
@@ -115,7 +115,7 @@ void MapViewApp::place_objects()
                 entity.setTerrainFrame(rmap_.getTerrain(entity.hex));
             }
             else {
-                entity.frame = {0, i % numFrames};
+                entity.frame = {0, count % numFrames};
             }
 
             rmapView_.addEntity(img, entity, HexAlign::middle);
@@ -123,6 +123,8 @@ void MapViewApp::place_objects()
             if (obj.type == ObjectType::village) {
                 minimap_.set_owner(entity.hex, Team::neutral);
             }
+
+            ++count;
         }
     }
 
@@ -137,7 +139,7 @@ void MapViewApp::place_objects()
 void MapViewApp::place_armies()
 {
     auto img = images_.make_texture("random-unit", win_);
-    for (auto &hex : rmap_.getObjectHexes(ObjectType::army)) {
+    for (const auto &hex : rmap_.getObjectHexes(ObjectType::army)) {
         rmapView_.addEntity(img, hex, ZOrder::unit);
     }
 }

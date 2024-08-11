@@ -76,9 +76,9 @@ PuzzleDisplay::PuzzleDisplay(SdlWindow &win,
     rmap_(&rmap),
     rmapView_(&mapView),
     images_(&artwork),
-    popupArea_(popup_window_rect(win)),
+    popupArea_(popup_window_rect(*win_)),
     targetHex_(target),
-    hexes_(hexes_to_draw(target)),
+    hexes_(hexes_to_draw(targetHex_)),
     pOrigin_(rmapView_->mapPixelFromHex(Hex{hexes_.x, hexes_.y})),
     surf_(),
     texture_(),
@@ -229,7 +229,7 @@ void PuzzleDisplay::apply_filters()
 {
     SdlEditSurface edit(surf_);
 
-    auto &teamColor = getRefColor(ColorShade::normal);
+    const auto &teamColor = getRefColor(ColorShade::normal);
     for (int i = 0; i < edit.size(); ++i) {
         auto color = edit.get_pixel(i);
         if (color == teamColor) {

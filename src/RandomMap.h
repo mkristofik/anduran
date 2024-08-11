@@ -65,7 +65,7 @@ public:
 
     // Return a list of tiles containing a given object type.
     FlatMultimap<std::string, int>::ValueRange getObjectTiles(ObjectType type);
-    std::vector<Hex> getObjectHexes(ObjectType type);
+    auto getObjectHexes(ObjectType type);
     const ObjectManager & getObjectConfig() const;
 
     // Return the region(s) adjacent to the given border tile, or an empty range
@@ -81,7 +81,7 @@ public:
     Hex hexFromInt(int index) const;
     int intFromHex(const Hex &hex) const;
     template <typename R>
-    std::vector<Hex> hexesFromInt(const R &range) const;
+    auto hexesFromInt(const R &range) const;
 
     // Return true if the tile location is outside the map boundary.
     bool offGrid(int index) const;
@@ -170,14 +170,15 @@ private:
 
 
 template <typename R>
-std::vector<Hex> RandomMap::hexesFromInt(const R &range) const
+inline auto RandomMap::hexesFromInt(const R &range) const
 {
-    std::vector<Hex> hexes;
-    for (auto tile : range) {
-        hexes.push_back(hexFromInt(tile));
-    }
+    return std::views::transform(range,
+                                 [this] (int i) { return hexFromInt(i); });
+}
 
-    return hexes;
+inline auto RandomMap::getObjectHexes(ObjectType type)
+{
+    return hexesFromInt(getObjectTiles(type));
 }
 
 #endif

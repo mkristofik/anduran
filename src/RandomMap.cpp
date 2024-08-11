@@ -304,7 +304,8 @@ bool RandomMap::getWalkable(const Hex &hex) const
 
 std::vector<Hex> RandomMap::getCastleTiles() const
 {
-    return hexesFromInt(castles_);
+    auto hexes = hexesFromInt(castles_);
+    return {hexes.begin(), hexes.end()};
 }
 
 FlatMultimap<std::string, int>::ValueRange RandomMap::getObjectTiles(ObjectType type)
@@ -312,11 +313,6 @@ FlatMultimap<std::string, int>::ValueRange RandomMap::getObjectTiles(ObjectType 
     auto name = obj_name_from_type(type);
     assert(!name.empty());
     return objectTiles_.find(name);
-}
-
-std::vector<Hex> RandomMap::getObjectHexes(ObjectType type)
-{
-    return hexesFromInt(getObjectTiles(type));
 }
 
 const ObjectManager & RandomMap::getObjectConfig() const
