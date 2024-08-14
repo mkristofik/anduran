@@ -21,6 +21,7 @@
 #include "ObjectManager.h"
 #include "Pathfinder.h"
 #include "PuzzleDisplay.h"
+#include "PuzzleState.h"
 #include "RandomMap.h"
 #include "SdlApp.h"
 #include "SdlImageManager.h"
@@ -112,7 +113,8 @@ private:
     std::vector<EnumSizedArray<int, Team>> influence_;
     bool puzzleVisible_;
     PuzzleImages puzzleArt_;
-    PuzzleDisplay puzzle_;
+    PuzzleState puzzle_;
+    PuzzleDisplay puzzleView_;
 };
 
 #endif

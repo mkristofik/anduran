@@ -27,6 +27,7 @@
 #include <functional>
 #include <iterator>
 #include <memory>
+#include <numeric>
 #include <queue>
 #include <string>
 #include <stdexcept>
@@ -333,6 +334,30 @@ FlatMultimap<int, int>::ValueRange RandomMap::getRegionNeighbors(int region)
 const std::vector<int> & RandomMap::getPuzzleTiles(PuzzleType puzzle) const
 {
     return puzzles_[puzzle];
+}
+
+Hex RandomMap::findArtifactHex() const
+{
+    RandomRange randomTile(0, size() - 1);
+    while (true) {
+        int tile = randomTile.get();
+        if (getTerrain(tile) != Terrain::water &&
+            !tileOccupied_[tile] &&
+            tileWalkable_[tile] &&
+            !contains(castleRegions_, tileRegions_[tile]))
+        {
+            auto hex = hexFromInt(tile);
+            // Avoid being too close to the edge of the map so the puzzle map
+            // doesn't have to render map edges.
+            if (hex.x > puzzleHexWidth / 2 &&
+                hex.x < width() - puzzleHexWidth / 2 - 1 &&
+                hex.y > puzzleHexHeight / 2 &&
+                hex.y < width() - puzzleHexHeight / 2 - 1)
+            {
+                return hex;
+            }
+        }
+    }
 }
 
 Hex RandomMap::hexFromInt(int index) const
@@ -1135,14 +1160,11 @@ void RandomMap::placeArmies()
 //   obelisks if one of them contains the x-marks-the-spot
 // Because we won't show the X on the main map until all pieces have been
 //   found
-// TODO: this can be done with public functions, Anduran could do this itself
 void RandomMap::buildPuzzles()
 {
     // We don't want the first tile to always go to the first puzzle.
     EnumSizedArray<int, PuzzleType> ordering;
-    for (int i = 0; i < ssize(ordering); ++i) {
-        ordering[i] = i;
-    }
+    std::iota(begin(ordering), end(ordering), 0);
     randomize(ordering);
 
     // Round-robin each obelisk tile to each puzzle map.

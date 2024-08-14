@@ -83,6 +83,7 @@ ANDURAN_SRC = AnimQueue.cpp \
 	ObjectManager.cpp \
 	Pathfinder.cpp \
 	PuzzleDisplay.cpp \
+	PuzzleState.cpp \
 	RandomMap.cpp \
 	RandomRange.cpp \
 	SdlApp.cpp \

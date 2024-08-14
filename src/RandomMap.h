@@ -15,14 +15,11 @@
 
 #include "FlatMultimap.h"
 #include "ObjectManager.h"
+#include "PuzzleState.h"
 #include "hex_utils.h"
-#include "iterable_enum_class.h"
 #include "terrain.h"
 #include <string>
 #include <vector>
-
-
-ITERABLE_ENUM_CLASS(PuzzleType, helmet, breastplate, sword);
 
 
 // A landmass is a contiguous set of regions that are either all land or all
@@ -76,6 +73,9 @@ public:
     // Return a list of obelisk tiles assigned to the given puzzle map.  Tiles are
     // sorted by ascending region castle distance.
     const std::vector<int> & getPuzzleTiles(PuzzleType puzzle) const;
+
+    // Find a valid hex to bury one of the artifacts.
+    Hex findArtifactHex() const;
 
     // Convert between integer and Hex representations of a tile location.
     Hex hexFromInt(int index) const;

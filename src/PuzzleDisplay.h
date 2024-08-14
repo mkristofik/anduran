@@ -21,10 +21,10 @@
 #include "terrain.h"
 
 #include "SDL.h"
-#include <vector>
+#include "boost/container/flat_map.hpp"
 
 class MapDisplay;
-class RandomMap;
+class PuzzleState;
 class SdlWindow;
 
 struct PuzzleImages
@@ -42,14 +42,8 @@ struct PuzzleImages
 
 struct PuzzleTile
 {
-    Hex hex;
     SDL_Point pCenter = {0, 0};  // relative to puzzle
-    // TODO: this state means that each player can have their own puzzle maps
-    // TODO: we want a fixed puzzle map for each artifact, but each player has
-    // their own view of them depending on which puzzle pieces have been found
-    // TODO: the fixed puzzle map can assign the pieces to each obelisk associated
-    // with that artifact
-    bool visible = false;
+    int piece = -1;  // puzzle piece number
 };
 
 
@@ -57,10 +51,9 @@ class PuzzleDisplay
 {
 public:
     PuzzleDisplay(SdlWindow &win,
-                  const RandomMap &rmap,  // TODO: currently unused
                   const MapDisplay &mapView,
                   const PuzzleImages &artwork,
-                  const Hex &target);
+                  const PuzzleState &state);
 
     void draw();
 
@@ -69,8 +62,10 @@ private:
     // need the map texture to be.
     void init_texture();
     void init_tiles();
+    void init_pieces();
 
     SDL_Point hex_center(const Hex &hex) const;
+    bool hex_in_bounds(const Hex &hex) const;
 
     // Draw the given image centered on the given pixel relative to the puzzle surface.
     void draw_centered(const SdlImageData &img, const SDL_Point &pixel);
@@ -85,16 +80,15 @@ private:
     void hide_unrevealed_tiles();
 
     SdlWindow *win_;
-    const RandomMap *rmap_;
     const MapDisplay *rmapView_;
     const PuzzleImages *images_;
+    const PuzzleState *state_;
     SDL_Rect popupArea_;
-    Hex targetHex_;
     SDL_Rect hexes_;
-    SDL_Point pOrigin_;  // map coordinates of upper-left hex
+    SDL_Point pOrigin_;
     SdlSurface surf_;
     SdlTexture texture_;
-    std::vector<PuzzleTile> tiles_;
+    boost::container::flat_map<Hex, PuzzleTile> tiles_;
 };
 
 #endif

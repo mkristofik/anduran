@@ -52,14 +52,18 @@ Anduran::Anduran()
     influence_(rmap_.numRegions()),
     puzzleVisible_(false),
     puzzleArt_(images_),
-    // TODO: puzzle map determines where the artifacts are buried and thus which
-    // hexes are shown in the puzzle.  PuzzleDisplay controls how to show it.
-    puzzle_(win_, rmap_, rmapView_, puzzleArt_, Hex{14, 10})
+    puzzle_(rmap_, PuzzleType::helmet, rmap_.findArtifactHex()),
+    puzzleView_(win_, rmapView_, puzzleArt_, puzzle_)
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
     load_players();
     load_objects();
+
+    // TODO: unlock puzzle pieces when visited
+    auto &obelisks = rmap_.getPuzzleTiles(PuzzleType::helmet);
+    puzzle_.visit(obelisks[0]);
+    puzzle_.visit(obelisks[1]);
 }
 
 void Anduran::update_frame(Uint32 elapsed_ms)
@@ -77,7 +81,7 @@ void Anduran::update_frame(Uint32 elapsed_ms)
     minimap_.draw();
 
     if (puzzleVisible_) {
-        puzzle_.draw();
+        puzzleView_.draw();
     }
 
     win_.update();

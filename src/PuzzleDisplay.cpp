@@ -13,20 +13,23 @@
 #include "PuzzleDisplay.h"
 
 #include "MapDisplay.h"
+#include "PuzzleState.h"
 #include "RandomMap.h"
+#include "RandomRange.h"
 #include "SdlWindow.h"
 #include "log_utils.h"
 #include "team_color.h"
 
+#include "boost/container/flat_set.hpp"
 #include <algorithm>
+#include <cmath>
 #include <format>
+#include <vector>
 
 namespace
 {
     const int POPUP_WIDTH = 800;
     const int POPUP_HEIGHT = 600;
-    const int PUZZLE_WIDTH = 13;
-    const int PUZZLE_HEIGHT = 7;
 
     // Render the popup centered in the main window.
     SDL_Rect popup_window_rect(const SdlWindow &win)
@@ -40,10 +43,10 @@ namespace
 
     SDL_Rect hexes_to_draw(const Hex &target)
     {
-        return {target.x - PUZZLE_WIDTH / 2,
-                target.y - PUZZLE_HEIGHT / 2,
-                PUZZLE_WIDTH,
-                PUZZLE_HEIGHT};
+        return {target.x - puzzleHexWidth / 2,
+                target.y - puzzleHexHeight / 2,
+                puzzleHexWidth,
+                puzzleHexHeight};
     }
 }
 
@@ -68,17 +71,15 @@ PuzzleImages::PuzzleImages(const SdlImageManager &imgMgr)
 
 
 PuzzleDisplay::PuzzleDisplay(SdlWindow &win,
-                             const RandomMap &rmap,
                              const MapDisplay &mapView,
                              const PuzzleImages &artwork,
-                             const Hex &target)
+                             const PuzzleState &state)
     : win_(&win),
-    rmap_(&rmap),
     rmapView_(&mapView),
     images_(&artwork),
+    state_(&state),
     popupArea_(popup_window_rect(*win_)),
-    targetHex_(target),
-    hexes_(hexes_to_draw(targetHex_)),
+    hexes_(hexes_to_draw(state_->target())),
     pOrigin_(rmapView_->mapPixelFromHex(Hex{hexes_.x, hexes_.y})),
     surf_(),
     texture_(),
@@ -86,6 +87,7 @@ PuzzleDisplay::PuzzleDisplay(SdlWindow &win,
 {
     init_texture();
     init_tiles();
+    init_pieces();
 
     // TODO: only need to call this if a new piece is revealed, for now call it
     // just the once
@@ -105,11 +107,15 @@ void PuzzleDisplay::draw()
 void PuzzleDisplay::init_texture()
 {
     Hex topRight = {hexes_.x + hexes_.w - 1, hexes_.y};
-    int width = (rmapView_->mapPixelFromHex(topRight) - pOrigin_).x +
-        TileDisplay::HEX_SIZE;
-    Hex bottom = {hexes_.x + 1, hexes_.y + hexes_.h - 1};
-    int height = (rmapView_->mapPixelFromHex(bottom) - pOrigin_).y +
-        TileDisplay::HEX_SIZE;
+    int width = hex_center(topRight).x + TileDisplay::HEX_SIZE / 2;
+
+    // Odd column hexes are tiled a half hex lower, so we need an odd column to
+    // determine the lowermost hex.
+    Hex bottom = {hexes_.x, hexes_.y + hexes_.h - 1};
+    if (bottom.x % 2 == 0) {
+        ++bottom.x;
+    }
+    int height = hex_center(bottom).y + TileDisplay::HEX_SIZE / 2;
 
     texture_ = SdlTexture::make_editable_image(*win_, width, height);
     surf_ = SdlEditTexture(texture_).make_surface(width, height);
@@ -119,24 +125,86 @@ void PuzzleDisplay::init_tiles()
 {
     for (int hx = hexes_.x; hx < hexes_.x + hexes_.w; ++hx) {
         for (int hy = hexes_.y; hy < hexes_.y + hexes_.h; ++hy) {
+            Hex hex = {hx, hy};
             PuzzleTile t;
-            t.hex = {hx, hy};
-            t.pCenter = hex_center(t.hex);
-            if (hx <= 10 && hy <= 10) {
-                t.visible = true;
-            }
-            if (hx >= 14 && hx <= 16 && hy >= 10 && hy <= 12) {
-                t.visible = true;
-            }
-            tiles_.push_back(t);
+            t.pCenter = hex_center(hex);
+            tiles_.emplace(hex, t);
         }
     }
 }
 
+// TODO: assign pieces in reverse order.  center tile is part of the last piece
+// TODO: this doesn't guarnatee all pieces will be contiguous, try just a random
+// assignment instead.
+void PuzzleDisplay::init_pieces()
+{
+    SDL_assert(state_->size() > 0);
+
+    boost::container::flat_set<Hex> visited;
+    std::vector<Hex> bfsQ;
+    std::vector<Hex> currentPiece;
+    int pieceSize = std::ceil(puzzleHexWidth * puzzleHexHeight / state_->size());
+    int pieceNum = 0;
+    int lastPiece = state_->size() - 1;
+
+    auto &targetHex = state_->target();
+    bfsQ.push_back(targetHex);
+    visited.insert(targetHex);
+
+    while (!bfsQ.empty()) {
+        // Select the next tile at random from the available neighbors.
+        RandomRange nextTile(0, bfsQ.size() - 1);
+        std::swap(bfsQ[nextTile.get()], bfsQ.back());
+        Hex next = bfsQ.back();
+        bfsQ.pop_back();
+
+        // Add it to the current piece, committing when it's completed.  Last
+        // piece is allowed to be larger than the others.
+        currentPiece.push_back(next);
+        if (pieceNum < lastPiece && ssize(currentPiece) == pieceSize) {
+            for (auto &hex : currentPiece) {
+                tiles_[hex].piece = pieceNum;
+            }
+            ++pieceNum;
+            currentPiece.clear();
+        }
+
+        // Add all neighbors we haven't seen yet to the queue.
+        for (auto &hex : next.getAllNeighbors()) {
+            if (!visited.contains(hex) && hex_in_bounds(hex)) {
+                bfsQ.push_back(hex);
+                visited.insert(hex);
+            }
+        }
+    }
+
+    // Commit the remaining hexes to final puzzle piece.
+    for (auto &hex : currentPiece) {
+        tiles_[hex].piece = pieceNum;
+    }
+
+    SDL_assert(std::ranges::none_of(tiles_,
+         [](auto &tilePair) { return tilePair.second.piece == -1; }));
+}
+
 SDL_Point PuzzleDisplay::hex_center(const Hex &hex) const
 {
-    return rmapView_->mapPixelFromHex(hex) - pOrigin_ +
+    auto pixel = rmapView_->mapPixelFromHex(hex) - pOrigin_ +
         SDL_Point{TileDisplay::HEX_SIZE / 2, TileDisplay::HEX_SIZE / 2};
+
+    // If the leftmost column is odd, we need to shift everything a half-hex lower
+    // to match the main map rendering.
+    if (hexes_.x % 2 == 1) {
+        pixel.y += TileDisplay::HEX_SIZE / 2;
+    }
+
+    return pixel;
+}
+
+bool PuzzleDisplay::hex_in_bounds(const Hex &hex) const
+{
+    SDL_Point p = {hex.x, hex.y};
+    return SDL_PointInRect(&p, &hexes_);
 }
 
 void PuzzleDisplay::draw_centered(const SdlImageData &img, const SDL_Point &pixel)
@@ -170,12 +238,14 @@ void PuzzleDisplay::draw_centered(const SdlImageData &img,
 
 void PuzzleDisplay::update()
 {
+    // TODO: render the map and X to one layer, and the puzzle tiles to another
+    // layer.  Then we don't have to re-render the map.
     draw_tiles();
     draw_border();
     apply_filters();
 
     // X marks the spot
-    draw_centered(images_->xs, Frame{}, hex_center(targetHex_));
+    draw_centered(images_->xs, Frame{}, hex_center(state_->target()));
 
     hide_unrevealed_tiles();
 
@@ -187,8 +257,8 @@ void PuzzleDisplay::draw_tiles()
 {
     surf_.fill(getRefColor(ColorShade::normal));
 
-    for (auto &t : tiles_) {
-        auto &tileView = rmapView_->get_tile(t.hex);
+    for (auto & [hex, t] : tiles_) {
+        auto &tileView = rmapView_->get_tile(hex);
         draw_centered(images_->terrain[tileView.terrain],
                       Frame{0, tileView.terrainFrame},
                       t.pCenter);
@@ -217,9 +287,9 @@ void PuzzleDisplay::draw_border()
 {
     for (int hx = hexes_.x - 1; hx < hexes_.x + hexes_.w + 1; ++hx) {
         for (int hy = hexes_.y - 1; hy < hexes_.y + hexes_.h + 1; ++hy) {
-            SDL_Point p = {hx, hy};
-            if (!SDL_PointInRect(&p, &hexes_)) {
-                draw_centered(images_->border, hex_center(Hex{hx, hy}));
+            Hex hex = {hx, hy};
+            if (!hex_in_bounds(hex)) {
+                draw_centered(images_->border, hex_center(hex));
             }
         }
     }
@@ -250,8 +320,11 @@ void PuzzleDisplay::apply_filters()
 
 void PuzzleDisplay::hide_unrevealed_tiles()
 {
-    for (auto &t : tiles_) {
-        if (!t.visible) {
+    for (auto & [_, t] : tiles_) {
+        if (t.piece > 1) {
+        // TODO: if (!state_->index_visited(t.piece)) {
+        // this doesn't work yet until we can update the unrevealed tiles
+        // separately from the rest of the puzzle
             draw_centered(images_->shield, t.pCenter);
         }
     }
