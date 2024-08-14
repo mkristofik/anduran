@@ -55,6 +55,10 @@ public:
                   const PuzzleImages &artwork,
                   const PuzzleState &state);
 
+    // Call this whenever a new puzzle piece is revealed.
+    void update();
+
+    // Call each frame whenever the popup is shown.
     void draw();
 
 private:
@@ -68,16 +72,15 @@ private:
     bool hex_in_bounds(const Hex &hex) const;
 
     // Draw the given image centered on the given pixel relative to the puzzle surface.
-    void draw_centered(const SdlImageData &img, const SDL_Point &pixel);
+    void draw_centered(const SdlImageData &img, const SDL_Point &pixel, SdlSurface &dest);
     void draw_centered(const SdlImageData &img,
                        const Frame &frame,
-                       const SDL_Point &pixel);
+                       const SDL_Point &pixel,
+                       SdlSurface &dest);
 
-    void update();
     void draw_tiles();
     void draw_border();
     void apply_filters();
-    void hide_unrevealed_tiles();
 
     SdlWindow *win_;
     const MapDisplay *rmapView_;
@@ -86,6 +89,7 @@ private:
     SDL_Rect popupArea_;
     SDL_Rect hexes_;
     SDL_Point pOrigin_;
+    SdlSurface mapLayer_;
     SdlSurface surf_;
     SdlTexture texture_;
     boost::container::flat_map<Hex, PuzzleTile> tiles_;

@@ -336,6 +336,8 @@ const std::vector<int> & RandomMap::getPuzzleTiles(PuzzleType puzzle) const
     return puzzles_[puzzle];
 }
 
+// TODO: add necessary accessors so that Anduran can do this part.  Want to have
+// puzzleHexWidth and Height be tied to PuzzleDisplay only.
 Hex RandomMap::findArtifactHex() const
 {
     RandomRange randomTile(0, size() - 1);
@@ -1146,20 +1148,6 @@ void RandomMap::placeArmies()
     }
 }
 
-// TODO: building the puzzle lists
-// * enum PuzzleType helmet, breastplate, sword
-// * randomize helmet, breastplate, sword
-// * EnumSizedArray<std::vector<int>, PuzzleType>
-// * round-robin the obelisk tiles into the three lists
-// * randomize each list
-// * sort each list by region castle distance
-// last obelisk in each list is the one that gives the x-marks-the-spot
-//   puzzle piece, all others can give a randomly assigned piece
-// PuzzleDisplay can randomly generate the puzzle pieces
-// Does this all make sense?  Why would anyone bother with all the other
-//   obelisks if one of them contains the x-marks-the-spot
-// Because we won't show the X on the main map until all pieces have been
-//   found
 void RandomMap::buildPuzzles()
 {
     // We don't want the first tile to always go to the first puzzle.

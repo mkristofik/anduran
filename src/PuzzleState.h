@@ -36,6 +36,8 @@ struct Obelisk
 };
 
 
+// TODO: may be useful to manage all three puzzle states in one object.  When an
+// obelisk is visited we won't have to look up which puzzle it's in.
 class PuzzleState
 {
 public:

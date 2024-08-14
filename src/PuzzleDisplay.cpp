@@ -81,6 +81,7 @@ PuzzleDisplay::PuzzleDisplay(SdlWindow &win,
     popupArea_(popup_window_rect(*win_)),
     hexes_(hexes_to_draw(state_->target())),
     pOrigin_(rmapView_->mapPixelFromHex(Hex{hexes_.x, hexes_.y})),
+    mapLayer_(),
     surf_(),
     texture_(),
     tiles_()
@@ -89,9 +90,36 @@ PuzzleDisplay::PuzzleDisplay(SdlWindow &win,
     init_tiles();
     init_pieces();
 
-    // TODO: only need to call this if a new piece is revealed, for now call it
-    // just the once
+    draw_tiles();
+    draw_border();
+    apply_filters();
+
+    // X marks the spot
+    draw_centered(images_->xs,
+                  Frame{0, static_cast<int>(state_->type())},
+                  hex_center(state_->target()),
+                  mapLayer_);
+
     update();
+}
+
+void PuzzleDisplay::update()
+{
+    if (SDL_BlitSurface(mapLayer_.get(), nullptr, surf_.get(), nullptr) < 0) {
+        log_warn(std::format("couldn't update puzzle surface: {}", SDL_GetError()),
+                 LogCategory::video);
+        return;
+    }
+
+    // Cover the tiles for puzzle pieces not revealed yet.
+    for (auto & [_, t] : tiles_) {
+        if (!state_->index_visited(t.piece)) {
+            draw_centered(images_->shield, t.pCenter, surf_);
+        }
+    }
+
+    SdlEditTexture edit(texture_);
+    edit.update(surf_);
 }
 
 void PuzzleDisplay::draw()
@@ -119,6 +147,7 @@ void PuzzleDisplay::init_texture()
 
     texture_ = SdlTexture::make_editable_image(*win_, width, height);
     surf_ = SdlEditTexture(texture_).make_surface(width, height);
+    mapLayer_ = surf_.clone();
 }
 
 void PuzzleDisplay::init_tiles()
@@ -134,7 +163,7 @@ void PuzzleDisplay::init_tiles()
 }
 
 // TODO: assign pieces in reverse order.  center tile is part of the last piece
-// TODO: this doesn't guarnatee all pieces will be contiguous, try just a random
+// TODO: this doesn't guarantee all pieces will be contiguous, try just a random
 // assignment instead.
 void PuzzleDisplay::init_pieces()
 {
@@ -207,14 +236,17 @@ bool PuzzleDisplay::hex_in_bounds(const Hex &hex) const
     return SDL_PointInRect(&p, &hexes_);
 }
 
-void PuzzleDisplay::draw_centered(const SdlImageData &img, const SDL_Point &pixel)
+void PuzzleDisplay::draw_centered(const SdlImageData &img,
+                                  const SDL_Point &pixel,
+                                  SdlSurface &dest)
 {
-    draw_centered(img, Frame{}, pixel);
+    draw_centered(img, Frame{}, pixel, dest);
 }
 
 void PuzzleDisplay::draw_centered(const SdlImageData &img,
                                   const Frame &frame,
-                                  const SDL_Point &pixel)
+                                  const SDL_Point &pixel,
+                                  SdlSurface &dest)
 {
     // Get the portion of the source image denoted by 'frame'.
     int frameWidth = img.surface->w / img.frames.col;
@@ -230,38 +262,22 @@ void PuzzleDisplay::draw_centered(const SdlImageData &img,
                          srcRect.w,
                          srcRect.h};
 
-    if (SDL_BlitSurface(img.surface.get(), &srcRect, surf_.get(), &destRect) < 0) {
+    if (SDL_BlitSurface(img.surface.get(), &srcRect, dest.get(), &destRect) < 0) {
         log_warn(std::format("couldn't draw to puzzle surface: {}", SDL_GetError()),
                  LogCategory::video);
     }
 }
 
-void PuzzleDisplay::update()
-{
-    // TODO: render the map and X to one layer, and the puzzle tiles to another
-    // layer.  Then we don't have to re-render the map.
-    draw_tiles();
-    draw_border();
-    apply_filters();
-
-    // X marks the spot
-    draw_centered(images_->xs, Frame{}, hex_center(state_->target()));
-
-    hide_unrevealed_tiles();
-
-    SdlEditTexture edit(texture_);
-    edit.update(surf_);
-}
-
 void PuzzleDisplay::draw_tiles()
 {
-    surf_.fill(getRefColor(ColorShade::normal));
+    mapLayer_.fill(getRefColor(ColorShade::normal));
 
     for (auto & [hex, t] : tiles_) {
         auto &tileView = rmapView_->get_tile(hex);
         draw_centered(images_->terrain[tileView.terrain],
                       Frame{0, tileView.terrainFrame},
-                      t.pCenter);
+                      t.pCenter,
+                      mapLayer_);
 
         for (auto d : HexDir()) {
             EdgeType edge = tileView.edges[d].type;
@@ -271,13 +287,15 @@ void PuzzleDisplay::draw_tiles()
 
             draw_centered(images_->edges[edge],
                           Frame{tileView.edges[d].numSides - 1, static_cast<int>(d)},
-                          t.pCenter);
+                          t.pCenter,
+                          mapLayer_);
         }
 
         if (tileView.obstacle >= 0) {
             draw_centered(images_->obstacles[tileView.terrain],
                           Frame{0, tileView.obstacle},
-                          t.pCenter);
+                          t.pCenter,
+                          mapLayer_);
         }
     }
 }
@@ -289,7 +307,7 @@ void PuzzleDisplay::draw_border()
         for (int hy = hexes_.y - 1; hy < hexes_.y + hexes_.h + 1; ++hy) {
             Hex hex = {hx, hy};
             if (!hex_in_bounds(hex)) {
-                draw_centered(images_->border, hex_center(hex));
+                draw_centered(images_->border, hex_center(hex), mapLayer_);
             }
         }
     }
@@ -297,7 +315,7 @@ void PuzzleDisplay::draw_border()
 
 void PuzzleDisplay::apply_filters()
 {
-    SdlEditSurface edit(surf_);
+    SdlEditSurface edit(mapLayer_);
 
     const auto &teamColor = getRefColor(ColorShade::normal);
     for (int i = 0; i < edit.size(); ++i) {
@@ -315,17 +333,5 @@ void PuzzleDisplay::apply_filters()
         }
 
         edit.set_pixel(i, color);
-    }
-}
-
-void PuzzleDisplay::hide_unrevealed_tiles()
-{
-    for (auto & [_, t] : tiles_) {
-        if (t.piece > 1) {
-        // TODO: if (!state_->index_visited(t.piece)) {
-        // this doesn't work yet until we can update the unrevealed tiles
-        // separately from the rest of the puzzle
-            draw_centered(images_->shield, t.pCenter);
-        }
     }
 }

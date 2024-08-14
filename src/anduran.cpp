@@ -52,7 +52,7 @@ Anduran::Anduran()
     influence_(rmap_.numRegions()),
     puzzleVisible_(false),
     puzzleArt_(images_),
-    puzzle_(rmap_, PuzzleType::helmet, rmap_.findArtifactHex()),
+    puzzle_(rmap_, PuzzleType::sword, rmap_.findArtifactHex()),
     puzzleView_(win_, rmapView_, puzzleArt_, puzzle_)
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
@@ -60,10 +60,13 @@ Anduran::Anduran()
     load_players();
     load_objects();
 
-    // TODO: unlock puzzle pieces when visited
-    auto &obelisks = rmap_.getPuzzleTiles(PuzzleType::helmet);
+    // TODO: each player needs separate puzzle states, update when an obelisk is
+    // visited
+    // TODO: only human players need PuzzleDisplays
+    auto &obelisks = rmap_.getPuzzleTiles(PuzzleType::sword);
     puzzle_.visit(obelisks[0]);
     puzzle_.visit(obelisks[1]);
+    puzzleView_.update();
 }
 
 void Anduran::update_frame(Uint32 elapsed_ms)
@@ -324,6 +327,7 @@ void Anduran::load_objects()
             if (hasTerrainFrames) {
                 entity.setTerrainFrame(rmap_.getTerrain(hex));
             }
+            // TODO: obelisk images
 
             GameObject gameObj;
             gameObj.hex = hex;
