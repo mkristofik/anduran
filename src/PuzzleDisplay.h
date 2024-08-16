@@ -67,6 +67,7 @@ private:
     void init_texture();
     void init_tiles();
     void init_pieces();
+    void init_pieces_random();
 
     SDL_Point hex_center(const Hex &hex) const;
     bool hex_in_bounds(const Hex &hex) const;

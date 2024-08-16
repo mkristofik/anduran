@@ -64,8 +64,8 @@ Anduran::Anduran()
     // visited
     // TODO: only human players need PuzzleDisplays
     auto &obelisks = rmap_.getPuzzleTiles(PuzzleType::sword);
-    puzzle_.visit(obelisks[0]);
-    puzzle_.visit(obelisks[1]);
+    puzzle_.visit(obelisks.front());
+    puzzle_.visit(obelisks.back());
     puzzleView_.update();
 }
 
