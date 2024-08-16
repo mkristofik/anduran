@@ -24,6 +24,19 @@
 
 using namespace std::string_literals;
 
+namespace
+{
+    PuzzleState init_puzzles(const RandomMap &rmap)
+    {
+        // TODO: each player needs separate copies of the same puzzle state.
+        PuzzleState puzzle(rmap);
+        for (auto type : PuzzleType()) {
+            puzzle.set_target(type, rmap.findArtifactHex());
+        }
+
+        return puzzle;
+    }
+}
 
 Anduran::Anduran()
     : SdlApp(),
@@ -52,20 +65,19 @@ Anduran::Anduran()
     influence_(rmap_.numRegions()),
     puzzleVisible_(false),
     puzzleArt_(images_),
-    puzzle_(rmap_, PuzzleType::sword, rmap_.findArtifactHex()),
-    puzzleView_(win_, rmapView_, puzzleArt_, puzzle_)
+    puzzle_(init_puzzles(rmap_)),
+    puzzleView_(win_, rmapView_, puzzleArt_, puzzle_, PuzzleType::sword)
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
     load_players();
     load_objects();
 
-    // TODO: each player needs separate puzzle states, update when an obelisk is
-    // visited
-    // TODO: only human players need PuzzleDisplays
+    // Reveal some puzzle pieces for debugging purposes.
     auto &obelisks = rmap_.getPuzzleTiles(PuzzleType::sword);
-    puzzle_.visit(obelisks.front());
-    puzzle_.visit(obelisks.back());
+    puzzle_.visit(PuzzleType::sword, obelisks.front());
+    puzzle_.visit(PuzzleType::sword, obelisks.back());
+    // TODO: only human players need PuzzleDisplays
     puzzleView_.update();
 }
 
@@ -602,6 +614,7 @@ void Anduran::local_action(int entity)
         anims_.push(AnimDisplay(rmapView_, obj.secondary, objImg_.get_flag(obj.team)));
         game_.update_object(obj);
     }
+    // TODO: update puzzle when an obelisk is visited.
     else if (action == ObjectAction::visit) {
         // If the object has a separate image to mark that it's been visited,
         // replace it.

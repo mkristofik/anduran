@@ -36,29 +36,29 @@ struct Obelisk
 };
 
 
-// TODO: may be useful to manage all three puzzle states in one object.  When an
-// obelisk is visited we won't have to look up which puzzle it's in.
+// Manage all three puzzle states in one object.  When an obelisk is visited we
+// won't have to look up which puzzle it's in.
 class PuzzleState
 {
 public:
-    PuzzleState(const RandomMap &rmap, PuzzleType type, const Hex &target);
+    explicit PuzzleState(const RandomMap &rmap);
 
-    PuzzleType type() const;
-    int size() const;
-    const Hex & target() const;
+    const Hex & get_target(PuzzleType type) const;
+    void set_target(PuzzleType type, const Hex &hex);
 
-    bool obelisk_visited(int tile) const;
-    bool index_visited(int index) const;
+    int size(PuzzleType type) const;
 
-    void visit(int tile);
+    bool obelisk_visited(PuzzleType type, int tile) const;
+    bool index_visited(PuzzleType type, int index) const;
+
+    void visit(PuzzleType type, int tile);
 
 private:
-    const Obelisk * find(int tile) const;
-    Obelisk * find(int tile);
+    const Obelisk * find(PuzzleType type, int tile) const;
+    Obelisk * find(PuzzleType type, int tile);
 
-    PuzzleType type_;
-    Hex targetHex_;
-    std::vector<Obelisk> visited_;
+    EnumSizedArray<Hex, PuzzleType> targetHexes_;
+    EnumSizedArray<std::vector<Obelisk>, PuzzleType> visited_;
 };
 
 #endif

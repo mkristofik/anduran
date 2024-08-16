@@ -13,6 +13,7 @@
 #ifndef PUZZLE_DISPLAY_H
 #define PUZZLE_DISPLAY_H
 
+#include "PuzzleState.h"
 #include "SdlImageManager.h"
 #include "SdlSurface.h"
 #include "SdlTexture.h"
@@ -24,7 +25,6 @@
 #include "boost/container/flat_map.hpp"
 
 class MapDisplay;
-class PuzzleState;
 class SdlWindow;
 
 struct PuzzleImages
@@ -53,7 +53,8 @@ public:
     PuzzleDisplay(SdlWindow &win,
                   const MapDisplay &mapView,
                   const PuzzleImages &artwork,
-                  const PuzzleState &state);
+                  const PuzzleState &state,
+                  PuzzleType type);
 
     // Call this whenever a new puzzle piece is revealed.
     void update();
@@ -87,6 +88,7 @@ private:
     const MapDisplay *rmapView_;
     const PuzzleImages *images_;
     const PuzzleState *state_;
+    PuzzleType type_;
     SDL_Rect popupArea_;
     SDL_Rect hexes_;
     SDL_Point pOrigin_;

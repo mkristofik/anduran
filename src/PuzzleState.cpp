@@ -17,65 +17,67 @@
 #include <algorithm>
 #include <cassert>
 
-PuzzleState::PuzzleState(const RandomMap &rmap, PuzzleType type, const Hex &target)
-    : type_(type),
-    targetHex_(target),
+PuzzleState::PuzzleState(const RandomMap &rmap)
+    : targetHexes_(),
     visited_()
 {
     // Order matters here, the last obelisk gives the puzzle piece that contains
     // the hex where an artifact is buried.
-    for (int tile : rmap.getPuzzleTiles(type)) {
-        visited_.emplace_back(tile, false);
+    for (auto type : PuzzleType()) {
+        for (int tile : rmap.getPuzzleTiles(type)) {
+            visited_[type].emplace_back(tile, false);
+        }
     }
 }
 
-PuzzleType PuzzleState::type() const
+const Hex & PuzzleState::get_target(PuzzleType type) const
 {
-    return type_;
+    return targetHexes_[type];
 }
 
-int PuzzleState::size() const
+void PuzzleState::set_target(PuzzleType type, const Hex &hex)
 {
-    return ssize(visited_);
+    targetHexes_[type] = hex;
 }
 
-const Hex & PuzzleState::target() const
+int PuzzleState::size(PuzzleType type) const
 {
-    return targetHex_;
+    return ssize(visited_[type]);
 }
 
-bool PuzzleState::obelisk_visited(int tile) const
+bool PuzzleState::obelisk_visited(PuzzleType type, int tile) const
 {
-    auto *obelisk = find(tile);
+    auto *obelisk = find(type, tile);
     assert(obelisk);
     return obelisk->visited;
 }
 
-bool PuzzleState::index_visited(int index) const
+bool PuzzleState::index_visited(PuzzleType type, int index) const
 {
-    assert(in_bounds(visited_, index));
-    return visited_[index].visited;
+    assert(in_bounds(visited_[type], index));
+    return visited_[type][index].visited;
 }
 
-void PuzzleState::visit(int tile)
+void PuzzleState::visit(PuzzleType type, int tile)
 {
-    auto *obelisk = find(tile);
+    auto *obelisk = find(type, tile);
     assert(obelisk);
     obelisk->visited = true;
 }
 
-const Obelisk * PuzzleState::find(int tile) const
+const Obelisk * PuzzleState::find(PuzzleType type, int tile) const
 {
-    auto iter = find_if(begin(visited_), end(visited_),
+    auto endIter = end(visited_[type]);
+    auto iter = find_if(begin(visited_[type]), endIter,
                         [tile] (auto &elem) { return elem.tile == tile; });
-    if (iter == end(visited_)) {
+    if (iter == endIter) {
         return nullptr;
     }
 
     return &*iter;
 }
 
-Obelisk * PuzzleState::find(int tile)
+Obelisk * PuzzleState::find(PuzzleType type, int tile)
 {
-    return const_cast<Obelisk *>(const_cast<const PuzzleState *>(this)->find(tile));
+    return const_cast<Obelisk *>(const_cast<const PuzzleState *>(this)->find(type, tile));
 }

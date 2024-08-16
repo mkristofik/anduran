@@ -13,7 +13,6 @@
 #include "PuzzleDisplay.h"
 
 #include "MapDisplay.h"
-#include "PuzzleState.h"
 #include "RandomMap.h"
 #include "RandomRange.h"
 #include "SdlWindow.h"
@@ -74,13 +73,15 @@ PuzzleImages::PuzzleImages(const SdlImageManager &imgMgr)
 PuzzleDisplay::PuzzleDisplay(SdlWindow &win,
                              const MapDisplay &mapView,
                              const PuzzleImages &artwork,
-                             const PuzzleState &state)
+                             const PuzzleState &state,
+                             PuzzleType type)
     : win_(&win),
     rmapView_(&mapView),
     images_(&artwork),
     state_(&state),
+    type_(type),
     popupArea_(popup_window_rect(*win_)),
-    hexes_(hexes_to_draw(state_->target())),
+    hexes_(hexes_to_draw(state_->get_target(type_))),
     pOrigin_(rmapView_->mapPixelFromHex(Hex{hexes_.x, hexes_.y})),
     mapLayer_(),
     surf_(),
@@ -97,8 +98,8 @@ PuzzleDisplay::PuzzleDisplay(SdlWindow &win,
 
     // X marks the spot
     draw_centered(images_->xs,
-                  Frame{0, static_cast<int>(state_->type())},
-                  hex_center(state_->target()),
+                  Frame{0, static_cast<int>(type_)},
+                  hex_center(state_->get_target(type_)),
                   mapLayer_);
 
     update();
@@ -114,7 +115,7 @@ void PuzzleDisplay::update()
 
     // Cover the tiles for puzzle pieces not revealed yet.
     for (auto & [_, t] : tiles_) {
-        if (!state_->index_visited(t.piece)) {
+        if (!state_->index_visited(type_, t.piece)) {
             draw_centered(images_->shield, t.pCenter, surf_);
         }
     }
@@ -167,18 +168,19 @@ void PuzzleDisplay::init_tiles()
 // Note: this doesn't (yet) guarantee all pieces will be contiguous
 void PuzzleDisplay::init_pieces()
 {
-    SDL_assert(state_->size() > 0);
+    int puzzleSize = state_->size(type_);
+    SDL_assert(puzzleSize > 0);
 
     boost::container::flat_set<Hex> visited;
     std::vector<Hex> bfsQ;
     std::vector<Hex> currentPiece;
-    int pieceSize = std::ceil(puzzleHexWidth * puzzleHexHeight / state_->size());
+    int pieceSize = std::ceil(puzzleHexWidth * puzzleHexHeight / puzzleSize);
 
     // Assign the pieces in reverse order so that the last obelisk in the list
     // (furthest from each castle) is the one that reveals the location where the
     // artifact is buried.
-    int pieceNum = state_->size() - 1;
-    auto &targetHex = state_->target();
+    int pieceNum = puzzleSize - 1;
+    auto &targetHex = state_->get_target(type_);
     bfsQ.push_back(targetHex);
     visited.insert(targetHex);
 
@@ -229,12 +231,13 @@ void PuzzleDisplay::init_pieces_random()
 
     // Ensure the target hex is in the last piece, so the obelisk furthest from
     // all castles is the one that reveals it.
-    auto target = std::ranges::find(allHexes, state_->target());
+    auto target = std::ranges::find(allHexes, state_->get_target(type_));
     std::swap(*target, allHexes.front());
 
     // Assign pieces in reverse order for the above reason.
-    int pieceSize = std::ceil(puzzleHexWidth * puzzleHexHeight / state_->size());
-    int pieceNum = state_->size() - 1;
+    int puzzleSize = state_->size(type_);
+    int pieceSize = std::ceil(puzzleHexWidth * puzzleHexHeight / puzzleSize);
+    int pieceNum = puzzleSize - 1;
     int count = 0;
 
     for (auto &hex : allHexes) {
