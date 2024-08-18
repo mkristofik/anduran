@@ -37,6 +37,7 @@ Anduran::Anduran()
     minimap_(win_, config_.minimap_bounds(), rmap_, rmapView_, images_),
     game_(rmap_),
     players_(),
+    playerOrder_{-1},
     curChampion_(0),
     curPlayer_(0),
     championSelected_(false),
@@ -58,16 +59,6 @@ Anduran::Anduran()
     load_objects();
     load_battle_accents();
     init_puzzles();
-
-    // Reveal some puzzle pieces for debugging purposes.
-    curPuzzleView_.type = PuzzleType::sword;
-    auto &obelisks = rmap_.getPuzzleTiles(curPuzzleView_.type);
-    if (!obelisks.empty()) {
-        players_[0].puzzle->visit(obelisks.front());
-        players_[0].puzzleViews[curPuzzleView_.type]->update();
-        players_[1].puzzle->visit(obelisks.back());
-        players_[1].puzzleViews[curPuzzleView_.type]->update();
-    }
 }
 
 void Anduran::update_frame(Uint32 elapsed_ms)
@@ -84,7 +75,7 @@ void Anduran::update_frame(Uint32 elapsed_ms)
     rmapView_.draw();
     minimap_.draw();
 
-    if (curPuzzleView_.visible) {
+    if (anims_.empty() && curPuzzleView_.visible) {
         players_[curPlayer_].puzzleViews[curPuzzleView_.type]->draw();
     }
 
@@ -270,6 +261,8 @@ void Anduran::load_players()
         player.team = champion.team;
         player.champion = champion.entity;
         players_.push_back(std::move(player));
+
+        playerOrder_[champion.team] = i;
     }
     curChampion_ = players_[0].champion;
 
@@ -298,22 +291,24 @@ void Anduran::load_objects()
         }
 
         auto img = objImg_.get(obj.type);
+        int numFrames = img.cols();
         auto hexRange = rmap_.getObjectHexes(obj.type);
         std::vector objHexes(hexRange.begin(), hexRange.end());
 
-        // Assume any sprite sheet with the same number of frames as there are
-        // terrains is intended to use a terrain frame.
-        bool hasTerrainFrames = img.cols() == enum_size<Terrain>();
-
+        int count = 0;
         for (auto &hex : objHexes) {
             MapEntity entity;
             entity.hex = hex;
             entity.z = ZOrder::object;
 
-            if (hasTerrainFrames) {
+            // Assume any sprite sheet with the same number of frames as there
+            // are terrains is intended to use a terrain frame.
+            if (numFrames == enum_size<Terrain>()) {
                 entity.setTerrainFrame(rmap_.getTerrain(hex));
             }
-            // TODO: obelisk images
+            else {
+                entity.frame = {0, count % numFrames};
+            }
 
             GameObject gameObj;
             gameObj.hex = hex;
@@ -326,6 +321,8 @@ void Anduran::load_objects()
                                                         ZOrder::flag);
             }
             game_.add_object(gameObj);
+
+            ++count;
         }
 
         if (!obj.defender.empty()) {
@@ -636,16 +633,34 @@ void Anduran::local_action(int entity)
         game_.update_object(targetObj);
     }
     // TODO: create a boat when visiting a harbor
-    // TODO: update puzzle when an obelisk is visited.
     else if (action == ObjectAction::visit) {
         // If the object has a separate image to mark that it's been visited,
-        // replace it.
+        // replace it.  If we ever do this on a visit-per-team object, we'd have
+        // to update the images at the start of each player's turn.
         auto visitImg = objImg_.get_visited(targetObj.type);
         if (visitImg) {
             anims_.push(AnimDisplay(rmapView_, targetObj.entity, visitImg));
         }
+        // TODO: some objects are one visit only (shipwreck), others are
+        // per-team (obelisk, oasis)
+        // TODO: maybe have an action string in objects.json instead of the
+        // bools?  or maybe explicitly list a pickup?
         targetObj.visited = true;
         game_.update_object(targetObj);
+
+        if (targetObj.type == ObjectType::obelisk) {
+            if (thisObj.team != Team::neutral) {
+                auto &player = players_[playerOrder_[thisObj.team]];
+                int index = rmap_.intFromHex(targetObj.hex);
+                auto puzzleType = player.puzzle->obelisk_type(index);
+                // TODO: show the X on the map when the puzzle is complete, but
+                // only on that player's turn
+                player.puzzle->visit(index);
+                player.puzzleViews[puzzleType]->update();
+                curPuzzleView_.type = puzzleType;
+                curPuzzleView_.visible = true;
+            }
+        }
     }
     else if (action == ObjectAction::pickup) {
         game_.remove_object(targetObj.entity);

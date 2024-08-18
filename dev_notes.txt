@@ -1,7 +1,7 @@
 # Obelisks
 ----------
-- three sets of obelisks
-    - gives puzzle pieces for the Helmet, Sword, and Breastplate
+* three sets of obelisks
+    * gives puzzle pieces for the Helmet, Sword, and Breastplate
     * different image for each set
         * randomize the order they're assigned
     * grouped on the map, not scattered randomly
@@ -16,10 +16,10 @@
         - similar function to H2 Thieves Guild?
     - but for now it gives us something else to do in each region
 - defeating an enemy champion gives a copy of his puzzle pieces
-- puzzle piece reveals random tile(s) on the map for its corresponding artifact
+* puzzle piece reveals random tile(s) on the map for its corresponding artifact
 - each puzzle map is 13x7
     * X marks the spot in the center
-    - this means artifacts have to be buried away from the edges of the map
+    * this means artifacts have to be buried away from the edges of the map
     - shows terrain, edges, obstacles, and fixed objects without their flags
         * can we draw it black & white?
         * requires modifying each pixel
@@ -28,22 +28,22 @@
     - when the X has been revealed, show it on the adventure map
     - require a minimum number of pieces revealed before the center piece could be
     shown
-    - this would be a problem if more than 64 regions per obelisk type
-- number of pieces = number of regions with that obelisk type
-    - pre-assign each piece to a group of hexes, divided evenly
-    - prefer hexes to be contiguous if possible
-    - but can randomly assign them to start
+    - this would be a problem if more than 91 regions per obelisk type
+* number of pieces = number of regions with that obelisk type
+    * pre-assign each piece to a group of hexes, divided evenly
+    * prefer hexes to be contiguous if possible
+    * but can randomly assign them to start
 - show puzzle map in a popup window
-    - different map background for each artifact
-    - show the known pieces
+    * different map background for each artifact
+    * show the known pieces
     - fade in the newly revealed piece, if any
     - be able to switch between maps easily
-    - close window easily
+    * close window easily
 - rendering popup windows
     * animations have to finish (e.g., a champion moving into a village) before
     rendering the popup
     * need to draw the rest of the underlying window first before drawing the popup
-    - main game window doesn't respond to clicks or anything else while popup is
+    * main game window doesn't respond to clicks or anything else while popup is
     shown
     - interpolate the popup into position?
         - start from the hex on the map that caused it

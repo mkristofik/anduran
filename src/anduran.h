@@ -118,6 +118,7 @@ private:
     Minimap minimap_;
     GameState game_;
     std::vector<PlayerState> players_;
+    EnumSizedArray<int, Team> playerOrder_;
     int curChampion_;
     int curPlayer_;
     bool championSelected_;
