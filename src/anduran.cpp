@@ -49,9 +49,9 @@ Anduran::Anduran()
     rmapView_(win_, config_.map_bounds(), rmap_, images_),
     minimap_(win_, config_.minimap_bounds(), rmap_, rmapView_, images_),
     game_(rmap_),
-    playerEntityIds_(),
-    curPlayerId_(0),
-    curPlayerNum_(0),
+    players_(),
+    curChampion_(0),
+    curPlayer_(Team::blue),
     championSelected_(false),
     curPath_(),
     hCurPathEnd_(),
@@ -63,21 +63,23 @@ Anduran::Anduran()
     units_("data/units.json"s, win_, images_),
     stateChanged_(true),
     influence_(rmap_.numRegions()),
-    puzzleVisible_(false),
     puzzleArt_(images_),
     puzzle_(init_puzzles(rmap_)),
-    puzzleView_(win_, rmapView_, puzzleArt_, puzzle_, PuzzleType::sword)
+    puzzleView_(win_, rmapView_, puzzleArt_, puzzle_, PuzzleType::sword),
+    curPuzzleView_()
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
     load_players();
     load_objects();
+    load_battle_accents();
 
     // Reveal some puzzle pieces for debugging purposes.
     auto &obelisks = rmap_.getPuzzleTiles(PuzzleType::sword);
-    puzzle_.visit(PuzzleType::sword, obelisks.front());
-    puzzle_.visit(PuzzleType::sword, obelisks.back());
+    puzzle_.visit(obelisks.front());
+    puzzle_.visit(obelisks.back());
     // TODO: only human players need PuzzleDisplays
+    curPuzzleView_.type = PuzzleType::sword;
     puzzleView_.update();
 }
 
@@ -95,7 +97,7 @@ void Anduran::update_frame(Uint32 elapsed_ms)
     rmapView_.draw();
     minimap_.draw();
 
-    if (puzzleVisible_) {
+    if (curPuzzleView_.visible) {
         puzzleView_.draw();
     }
 
@@ -128,7 +130,7 @@ void Anduran::update_minimap()
 
 void Anduran::handle_lmouse_down()
 {
-    if (puzzleVisible_) {
+    if (curPuzzleView_.visible) {
         return;
     }
 
@@ -137,7 +139,7 @@ void Anduran::handle_lmouse_down()
 
 void Anduran::handle_lmouse_up()
 {
-    if (puzzleVisible_) {
+    if (curPuzzleView_.visible) {
         return;
     }
 
@@ -157,19 +159,22 @@ void Anduran::handle_lmouse_up()
     // - highlight that hex when selected
     // - user clicks on a walkable hex
     // - champion moves to the new hex, engages in battle if appropriate
-    for (auto i = 0; i < ssize(playerEntityIds_); ++i) {
-        if (auto player = game_.get_object(playerEntityIds_[i]); player.hex == mouseHex) {
-            if (curPlayerNum_ != i) {
-                championSelected_ = false;
-            }
-            curPlayerId_ = playerEntityIds_[i];
-            curPlayerNum_ = i;
-            break;
+    for (auto &player : players_) {
+        auto champion = game_.get_object(player.champion);
+        if (champion.hex != mouseHex) {
+            continue;
         }
+
+        if (curPlayer_ != player.team) {
+            championSelected_ = false;
+        }
+        curPlayer_ = player.team;
+        curChampion_ = champion.entity;
+        break;
     }
 
-    auto player = game_.get_object(curPlayerId_);
-    if (mouseHex == player.hex) {
+    auto champion = game_.get_object(curChampion_);
+    if (mouseHex == champion.hex) {
         if (!championSelected_) {
             rmapView_.highlight(mouseHex);
             championSelected_ = true;
@@ -184,13 +189,13 @@ void Anduran::handle_lmouse_up()
         championSelected_ = false;
         rmapView_.clearHighlight();
         rmapView_.clearPath();
-        do_actions(curPlayerId_, curPath_);
+        do_actions(curChampion_, curPath_);
     }
 }
 
 void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
 {
-    if (puzzleVisible_) {
+    if (curPuzzleView_.visible) {
         return;
     }
 
@@ -212,7 +217,7 @@ void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
     }
 
     rmapView_.clearPath();
-    auto player = game_.get_object(curPlayerId_);
+    auto player = game_.get_object(curChampion_);
     curPath_ = pathfind_.find_path(player, hCurPathEnd_);
     if (!curPath_.empty()) {
         auto [action, _] = game_.hex_action(player, hCurPathEnd_);
@@ -227,10 +232,10 @@ void Anduran::handle_key_up(const SDL_Keysym &key)
     }
 
     if (key.sym == 'p') {
-        puzzleVisible_ = true;
+        curPuzzleView_.visible = true;
     }
     else if (key.sym == SDLK_ESCAPE) {
-        puzzleVisible_ = false;
+        curPuzzleView_.visible = false;
     }
 }
 
@@ -264,7 +269,6 @@ void Anduran::load_players()
                                                  ZOrder::ellipse);
         champion.team = castle.team;
         champion.type = ObjectType::champion;
-        playerEntityIds_.push_back(champion.entity);
         game_.add_object(champion);
 
         // Each player gets the same starting army for now.
@@ -273,8 +277,14 @@ void Anduran::load_players()
         army.units[1] = {units_.get_type("arch"), 4};
         army.entity = champion.entity;
         game_.add_army(army);
+
+        // This contains unique_ptrs so we have to move it into place.
+        PlayerState player;
+        player.team = champion.team;
+        player.champion = champion.entity;
+        players_.push_back(std::move(player));
     }
-    curPlayerId_ = playerEntityIds_[0];
+    curChampion_ = players_[0].champion;
 
     // Add a wandering army to attack.
     const auto orc = units_.get_type("grunt");
@@ -290,39 +300,16 @@ void Anduran::load_players()
     orcArmy.units[0] = {orc, 6};
     orcArmy.entity = enemy.entity;
     game_.add_army(orcArmy);
-
-    // Add a placeholder projectile for ranged units.
-    auto arrow = images_.make_texture("missile", win_);
-    projectileId_ = rmapView_.addHiddenEntity(arrow, ZOrder::projectile);
-
-    // Create streaming textures for the HP bars.
-    for (auto i = 0u; i < size(hpBarIds_); ++i) {
-        auto img = SdlTexture::make_editable_image(win_,
-                                                   AnimHealth::width(),
-                                                   AnimHealth::height());
-        hpBarIds_[i] = rmapView_.addHiddenEntity(img, ZOrder::animating);
-    }
-
-    // Place a boat on a water tile for testing purposes.
-    GameObject boat;
-    boat.hex = {2, 14};
-    boat.entity = rmapView_.addEntity(objImg_.get(ObjectType::boat),
-                                      boat.hex,
-                                      ZOrder::unit);
-    boat.team = Team::neutral;
-    boat.type = ObjectType::boat;
-    game_.add_object(boat);
-
-    // Create a texture for water battles.
-    auto floor = images_.make_texture("tile-boat", win_);
-    for (auto i = 0u; i < size(boatFloorIds_); ++i) {
-        boatFloorIds_[i] = rmapView_.addHiddenEntity(floor, ZOrder::floor);
-    }
 }
 
 void Anduran::load_objects()
 {
     for (auto &obj : objConfig_) {
+        // TODO: assign wandering monster strengths by region castle distance
+        if (obj.type == ObjectType::army) {
+            continue;
+        }
+
         auto img = objImg_.get(obj.type);
         auto hexRange = rmap_.getObjectHexes(obj.type);
         std::vector objHexes(hexRange.begin(), hexRange.end());
@@ -398,6 +385,27 @@ void Anduran::load_object_defenders(std::string_view unitKey,
         defArmy.units[0] = {defUnit, 25};
         defArmy.entity = defender.entity;
         game_.add_army(defArmy);
+    }
+}
+
+void Anduran::load_battle_accents()
+{
+    // Add a placeholder projectile for ranged units.
+    auto arrow = images_.make_texture("missile", win_);
+    projectileId_ = rmapView_.addHiddenEntity(arrow, ZOrder::projectile);
+
+    // Create streaming textures for the HP bars.
+    for (auto i = 0u; i < size(hpBarIds_); ++i) {
+        auto img = SdlTexture::make_editable_image(win_,
+                                                   AnimHealth::width(),
+                                                   AnimHealth::height());
+        hpBarIds_[i] = rmapView_.addHiddenEntity(img, ZOrder::animating);
+    }
+
+    // Create a texture for water battles.
+    auto floor = images_.make_texture("tile-boat", win_);
+    for (auto i = 0u; i < size(boatFloorIds_); ++i) {
+        boatFloorIds_[i] = rmapView_.addHiddenEntity(floor, ZOrder::floor);
     }
 }
 
@@ -614,6 +622,7 @@ void Anduran::local_action(int entity)
         anims_.push(AnimDisplay(rmapView_, obj.secondary, objImg_.get_flag(obj.team)));
         game_.update_object(obj);
     }
+    // TODO: create a boat when visiting a harbor
     // TODO: update puzzle when an obelisk is visited.
     else if (action == ObjectAction::visit) {
         // If the object has a separate image to mark that it's been visited,

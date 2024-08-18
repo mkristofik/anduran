@@ -35,9 +35,31 @@
 #include "iterable_enum_class.h"
 #include "team_color.h"
 
+#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
+
+// TODO: player state
+// - team, use enum sized array?
+// - champion id(s)
+// - puzzle states
+// - associated puzzle views - unique_ptr, delay init, AI players won't need them
+struct PlayerState
+{
+    Team team = Team::neutral;
+    int champion = -1;
+    std::unique_ptr<PuzzleState> puzzle;
+    EnumSizedArray<std::unique_ptr<PuzzleDisplay>, PuzzleType> puzzleViews;
+};
+
+
+struct PuzzleViewState
+{
+    bool visible = false;
+    PuzzleType type = PuzzleType::helmet;
+};
+
 
 class Anduran : public SdlApp
 {
@@ -57,6 +79,7 @@ private:
     void load_players();
     void load_objects();
     void load_object_defenders(std::string_view unitKey, const std::vector<Hex> &hexes);
+    void load_battle_accents();
 
     // Execute all necessary game actions along the given path.
     void do_actions(int entity, PathView path);
@@ -97,9 +120,9 @@ private:
     MapDisplay rmapView_;
     Minimap minimap_;
     GameState game_;
-    std::vector<int> playerEntityIds_;
-    int curPlayerId_;
-    int curPlayerNum_;
+    std::vector<PlayerState> players_;
+    int curChampion_;
+    Team curPlayer_;
     bool championSelected_;
     Path curPath_;
     Hex hCurPathEnd_;
@@ -111,10 +134,10 @@ private:
     UnitManager units_;
     bool stateChanged_;
     std::vector<EnumSizedArray<int, Team>> influence_;
-    bool puzzleVisible_;
     PuzzleImages puzzleArt_;
     PuzzleState puzzle_;
     PuzzleDisplay puzzleView_;
+    PuzzleViewState curPuzzleView_;
 };
 
 #endif

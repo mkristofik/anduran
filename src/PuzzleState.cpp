@@ -19,13 +19,15 @@
 
 PuzzleState::PuzzleState(const RandomMap &rmap)
     : targetHexes_(),
-    visited_()
+    visited_(),
+    tileTypes_()
 {
     // Order matters here, the last obelisk gives the puzzle piece that contains
     // the hex where an artifact is buried.
     for (auto type : PuzzleType()) {
         for (int tile : rmap.getPuzzleTiles(type)) {
             visited_[type].emplace_back(tile, false);
+            tileTypes_.emplace(tile, type);
         }
     }
 }
@@ -45,9 +47,16 @@ int PuzzleState::size(PuzzleType type) const
     return ssize(visited_[type]);
 }
 
-bool PuzzleState::obelisk_visited(PuzzleType type, int tile) const
+PuzzleType PuzzleState::obelisk_type(int tile) const
 {
-    auto *obelisk = find(type, tile);
+    auto iter = tileTypes_.find(tile);
+    assert(iter != end(tileTypes_));
+    return iter->second;
+}
+
+bool PuzzleState::obelisk_visited(int tile) const
+{
+    auto *obelisk = find(obelisk_type(tile), tile);
     assert(obelisk);
     return obelisk->visited;
 }
@@ -58,9 +67,9 @@ bool PuzzleState::index_visited(PuzzleType type, int index) const
     return visited_[type][index].visited;
 }
 
-void PuzzleState::visit(PuzzleType type, int tile)
+void PuzzleState::visit(int tile)
 {
-    auto *obelisk = find(type, tile);
+    auto *obelisk = find(obelisk_type(tile), tile);
     assert(obelisk);
     obelisk->visited = true;
 }

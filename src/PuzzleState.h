@@ -16,7 +16,7 @@
 #include "hex_utils.h"
 #include "iterable_enum_class.h"
 
-#include <utility>
+#include "boost/container/flat_map.hpp"
 #include <vector>
 
 class RandomMap;
@@ -48,10 +48,11 @@ public:
 
     int size(PuzzleType type) const;
 
-    bool obelisk_visited(PuzzleType type, int tile) const;
+    PuzzleType obelisk_type(int tile) const;
+    bool obelisk_visited(int tile) const;
     bool index_visited(PuzzleType type, int index) const;
 
-    void visit(PuzzleType type, int tile);
+    void visit(int tile);
 
 private:
     const Obelisk * find(PuzzleType type, int tile) const;
@@ -59,6 +60,7 @@ private:
 
     EnumSizedArray<Hex, PuzzleType> targetHexes_;
     EnumSizedArray<std::vector<Obelisk>, PuzzleType> visited_;
+    boost::container::flat_map<int, PuzzleType> tileTypes_;
 };
 
 #endif
