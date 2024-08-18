@@ -84,9 +84,9 @@ private:
     // Execute all necessary game actions along the given path.
     void do_actions(int entity, PathView path);
     void move_action(int entity, PathView path);
-    void embark_action(int playerId, int boatId);
+    void embark_action(int entity, int boatId);
     void disembark_action(int entity, const Hex &hLand);
-    bool battle_action(int playerId, int enemyId);
+    bool battle_action(int entity, int enemyId);
     void local_action(int entity);
 
     std::string army_log(const Army &army) const;

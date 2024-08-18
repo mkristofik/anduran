@@ -217,10 +217,10 @@ void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
     }
 
     rmapView_.clearPath();
-    auto player = game_.get_object(curChampion_);
-    curPath_ = pathfind_.find_path(player, hCurPathEnd_);
+    auto champion = game_.get_object(curChampion_);
+    curPath_ = pathfind_.find_path(champion, hCurPathEnd_);
     if (!curPath_.empty()) {
-        auto [action, _] = game_.hex_action(player, hCurPathEnd_);
+        auto [action, _] = game_.hex_action(champion, hCurPathEnd_);
         rmapView_.showPath(curPath_, action);
     }
 }
@@ -413,17 +413,17 @@ void Anduran::do_actions(int entity, PathView path)
 {
     SDL_assert(!path.empty());
 
-    auto player = game_.get_object(entity);
+    auto thisObj = game_.get_object(entity);
     auto hLast = path.back();
     auto pathSize = size(path);
-    auto [action, obj] = game_.hex_action(player, hLast);
-    bool playerSurvives = true;
+    auto [action, targetObj] = game_.hex_action(thisObj, hLast);
+    bool survives = true;
 
-    // Hide the player's ellipse while we do all the animations.
-    anims_.push(AnimHide(rmapView_, player.secondary));
+    // Hide the entity's ellipse while we do all the animations.
+    anims_.push(AnimHide(rmapView_, thisObj.secondary));
 
     if (action == ObjectAction::battle) {
-        if (hLast == obj.hex) {
+        if (hLast == targetObj.hex) {
             // User clicked directly on the army they want to battle, stop moving one
             // hex early to represent battling over control of that hex.
             if (pathSize > 2) {
@@ -432,11 +432,11 @@ void Anduran::do_actions(int entity, PathView path)
                 hLast = shortenedPath.back();
             }
 
-            playerSurvives = battle_action(entity, obj.entity);
-            if (playerSurvives) {
+            survives = battle_action(entity, targetObj.entity);
+            if (survives) {
                 // If taking the clicked-on hex wouldn't trigger another battle,
                 // move there.
-                auto [nextAction, _] = game_.hex_action(player, path.back());
+                auto [nextAction, _] = game_.hex_action(thisObj, path.back());
                 if (nextAction != ObjectAction::battle) {
                     move_action(entity, path.last(2));
                     hLast = path.back();
@@ -446,7 +446,7 @@ void Anduran::do_actions(int entity, PathView path)
         else {
             // User clicked on a hex within an army's zone of control.
             move_action(entity, path);
-            playerSurvives = battle_action(entity, obj.entity);
+            survives = battle_action(entity, targetObj.entity);
         }
     }
     else if (action == ObjectAction::embark || action == ObjectAction::disembark) {
@@ -457,7 +457,7 @@ void Anduran::do_actions(int entity, PathView path)
         }
 
         if (action == ObjectAction::embark) {
-            embark_action(entity, obj.entity);
+            embark_action(entity, targetObj.entity);
         }
         else {
             disembark_action(entity, hLast);
@@ -467,11 +467,11 @@ void Anduran::do_actions(int entity, PathView path)
         move_action(entity, path);
     }
 
-    if (playerSurvives) {
+    if (survives) {
         // Pick up or flag an object we may have landed on.
         local_action(entity);
-        // Restore the player's ellipse at the final location.
-        anims_.push(AnimDisplay(rmapView_, player.secondary, hLast));
+        // Restore the entity's ellipse at the final location.
+        anims_.push(AnimDisplay(rmapView_, thisObj.secondary, hLast));
     }
 
     stateChanged_ = true;
@@ -479,31 +479,31 @@ void Anduran::do_actions(int entity, PathView path)
 
 void Anduran::move_action(int entity, PathView path)
 {
-    auto player = game_.get_object(entity);
-    anims_.push(AnimMove(rmapView_, player.entity, path));
-    player.hex = path.back();
-    game_.update_object(player);
+    auto thisObj = game_.get_object(entity);
+    anims_.push(AnimMove(rmapView_, thisObj.entity, path));
+    thisObj.hex = path.back();
+    game_.update_object(thisObj);
 }
 
-void Anduran::embark_action(int playerId, int boatId)
+void Anduran::embark_action(int entity, int boatId)
 {
-    auto player = game_.get_object(playerId);
+    auto thisObj = game_.get_object(entity);
     auto boat = game_.get_object(boatId);
 
     anims_.push(AnimEmbark(rmapView_,
-                           playerId,
+                           entity,
                            boatId,
-                           objImg_.get(ObjectType::boat, player.team)));
-    player.hex = boat.hex;
-    game_.update_object(player);
+                           objImg_.get(ObjectType::boat, thisObj.team)));
+    thisObj.hex = boat.hex;
+    game_.update_object(thisObj);
 
-    // Hide the neutral boat now that it's been replaced by the player.
+    // Hide the neutral boat now that it's been replaced by the entity.
     game_.remove_object(boatId);
 }
 
 void Anduran::disembark_action(int entity, const Hex &hLand)
 {
-    auto player = game_.get_object(entity);
+    auto thisObj = game_.get_object(entity);
 
     // Are there any unused boats we can reuse?  We need to leave behind a
     // neutral boat as the champion steps onto land.
@@ -517,7 +517,7 @@ void Anduran::disembark_action(int entity, const Hex &hLand)
 
     // If not, create one.
     if (boat.type == ObjectType::invalid) {
-        boat.hex = player.hex;
+        boat.hex = thisObj.hex;
         boat.entity = rmapView_.addEntity(objImg_.get(ObjectType::boat),
                                           boat.hex,
                                           ZOrder::unit);
@@ -526,28 +526,28 @@ void Anduran::disembark_action(int entity, const Hex &hLand)
         game_.add_object(boat);
     }
     else {
-        boat.hex = player.hex;
+        boat.hex = thisObj.hex;
         game_.update_object(boat);
     }
 
     anims_.push(AnimDisembark(rmapView_,
                               entity,
                               boat.entity,
-                              objImg_.get_champion(player.team),
+                              objImg_.get_champion(thisObj.team),
                               hLand));
-    player.hex = hLand;
-    game_.update_object(player);
+    thisObj.hex = hLand;
+    game_.update_object(thisObj);
 }
 
-bool Anduran::battle_action(int playerId, int enemyId)
+bool Anduran::battle_action(int entity, int enemyId)
 {
-    auto player = game_.get_object(playerId);
-    auto attacker = game_.get_army(playerId);
-    auto enemy = game_.get_object(enemyId);
+    auto thisObj = game_.get_object(entity);
+    auto attacker = game_.get_army(entity);
+    auto enemyObj = game_.get_object(enemyId);
     auto defender = game_.get_army(enemyId);
 
     log_info(army_log(attacker) + "\n    vs.\n" + army_log(defender));
-    show_boat_floor(player.hex, enemy.hex);
+    show_boat_floor(thisObj.hex, enemyObj.hex);
 
     const auto result = do_battle(make_army_state(attacker, BattleSide::attacker),
                                   make_army_state(defender, BattleSide::defender));
@@ -558,18 +558,18 @@ bool Anduran::battle_action(int playerId, int enemyId)
         }
 
         if (event.attackingTeam) {
-            animate(player, enemy, event);
+            animate(thisObj, enemyObj, event);
         }
         else {
-            animate(enemy, player, event);
+            animate(enemyObj, thisObj, event);
         }
     }
 
     // Losing team's last unit must be hidden at the end of the battle.  Have to
     // restore the winning team's starting image (and ellipse if needed).
-    const GameObject *winner = &player;
+    const GameObject *winner = &thisObj;
     if (!result.attackerWins) {
-        winner = &enemy;
+        winner = &enemyObj;
     }
 
     AnimSet endingAnim;
@@ -586,14 +586,14 @@ bool Anduran::battle_action(int playerId, int enemyId)
     std::string endLog;
     if (result.attackerWins) {
         endLog = battle_result_log(attacker, result);
-        endingAnim.insert(AnimHide(rmapView_, enemy.entity));
-        game_.remove_object(enemy.entity);
+        endingAnim.insert(AnimHide(rmapView_, enemyObj.entity));
+        game_.remove_object(enemyObj.entity);
     }
     else {
         endLog = battle_result_log(defender, result);
-        // TODO: game can't yet handle a player being defeated
-        endingAnim.insert(AnimHide(rmapView_, player.entity));
-        game_.remove_object(player.entity);
+        // TODO: game can't yet handle a player's champion being defeated
+        endingAnim.insert(AnimHide(rmapView_, thisObj.entity));
+        game_.remove_object(thisObj.entity);
     }
 
     endingAnim.insert(AnimLog(rmapView_, endLog));
@@ -612,31 +612,33 @@ bool Anduran::battle_action(int playerId, int enemyId)
 // Is there anything to do on the current hex?
 void Anduran::local_action(int entity)
 {
-    auto player = game_.get_object(entity);
-    auto [action, obj] = game_.hex_action(player, player.hex);
+    auto thisObj = game_.get_object(entity);
+    auto [action, targetObj] = game_.hex_action(thisObj, thisObj.hex);
 
     if (action == ObjectAction::flag) {
         // If we land on an object with a flag, change the flag color to
         // match the player's.
-        obj.team = player.team;
-        anims_.push(AnimDisplay(rmapView_, obj.secondary, objImg_.get_flag(obj.team)));
-        game_.update_object(obj);
+        targetObj.team = thisObj.team;
+        anims_.push(AnimDisplay(rmapView_,
+                                targetObj.secondary,
+                                objImg_.get_flag(targetObj.team)));
+        game_.update_object(targetObj);
     }
     // TODO: create a boat when visiting a harbor
     // TODO: update puzzle when an obelisk is visited.
     else if (action == ObjectAction::visit) {
         // If the object has a separate image to mark that it's been visited,
         // replace it.
-        auto visitImg = objImg_.get_visited(obj.type);
+        auto visitImg = objImg_.get_visited(targetObj.type);
         if (visitImg) {
-            anims_.push(AnimDisplay(rmapView_, obj.entity, visitImg));
+            anims_.push(AnimDisplay(rmapView_, targetObj.entity, visitImg));
         }
-        obj.visited = true;
-        game_.update_object(obj);
+        targetObj.visited = true;
+        game_.update_object(targetObj);
     }
     else if (action == ObjectAction::pickup) {
-        game_.remove_object(obj.entity);
-        anims_.push(AnimHide(rmapView_, obj.entity));
+        game_.remove_object(targetObj.entity);
+        anims_.push(AnimHide(rmapView_, targetObj.entity));
     }
 }
 
