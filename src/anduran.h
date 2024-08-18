@@ -40,11 +40,6 @@
 #include <string_view>
 #include <vector>
 
-// TODO: player state
-// - team, use enum sized array?
-// - champion id(s)
-// - puzzle states
-// - associated puzzle views - unique_ptr, delay init, AI players won't need them
 struct PlayerState
 {
     Team team = Team::neutral;
@@ -80,6 +75,7 @@ private:
     void load_objects();
     void load_object_defenders(std::string_view unitKey, const std::vector<Hex> &hexes);
     void load_battle_accents();
+    void init_puzzles();
 
     // Execute all necessary game actions along the given path.
     void do_actions(int entity, PathView path);
@@ -117,12 +113,13 @@ private:
     RandomMap rmap_;
     SdlImageManager images_;
     ObjectImages objImg_;
+    PuzzleImages puzzleArt_;
     MapDisplay rmapView_;
     Minimap minimap_;
     GameState game_;
     std::vector<PlayerState> players_;
     int curChampion_;
-    Team curPlayer_;
+    int curPlayer_;
     bool championSelected_;
     Path curPath_;
     Hex hCurPathEnd_;
@@ -134,9 +131,6 @@ private:
     UnitManager units_;
     bool stateChanged_;
     std::vector<EnumSizedArray<int, Team>> influence_;
-    PuzzleImages puzzleArt_;
-    PuzzleState puzzle_;
-    PuzzleDisplay puzzleView_;
     PuzzleViewState curPuzzleView_;
 };
 

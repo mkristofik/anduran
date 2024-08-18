@@ -24,20 +24,6 @@
 
 using namespace std::string_literals;
 
-namespace
-{
-    PuzzleState init_puzzles(const RandomMap &rmap)
-    {
-        // TODO: each player needs separate copies of the same puzzle state.
-        PuzzleState puzzle(rmap);
-        for (auto type : PuzzleType()) {
-            puzzle.set_target(type, rmap.findArtifactHex());
-        }
-
-        return puzzle;
-    }
-}
-
 Anduran::Anduran()
     : SdlApp(),
     config_("data/window.json"s),
@@ -46,12 +32,13 @@ Anduran::Anduran()
     rmap_("test.json", objConfig_),
     images_("img/"s),
     objImg_(images_, objConfig_, win_),
+    puzzleArt_(images_),
     rmapView_(win_, config_.map_bounds(), rmap_, images_),
     minimap_(win_, config_.minimap_bounds(), rmap_, rmapView_, images_),
     game_(rmap_),
     players_(),
     curChampion_(0),
-    curPlayer_(Team::blue),
+    curPlayer_(0),
     championSelected_(false),
     curPath_(),
     hCurPathEnd_(),
@@ -63,9 +50,6 @@ Anduran::Anduran()
     units_("data/units.json"s, win_, images_),
     stateChanged_(true),
     influence_(rmap_.numRegions()),
-    puzzleArt_(images_),
-    puzzle_(init_puzzles(rmap_)),
-    puzzleView_(win_, rmapView_, puzzleArt_, puzzle_, PuzzleType::sword),
     curPuzzleView_()
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
@@ -73,14 +57,17 @@ Anduran::Anduran()
     load_players();
     load_objects();
     load_battle_accents();
+    init_puzzles();
 
     // Reveal some puzzle pieces for debugging purposes.
-    auto &obelisks = rmap_.getPuzzleTiles(PuzzleType::sword);
-    puzzle_.visit(obelisks.front());
-    puzzle_.visit(obelisks.back());
-    // TODO: only human players need PuzzleDisplays
     curPuzzleView_.type = PuzzleType::sword;
-    puzzleView_.update();
+    auto &obelisks = rmap_.getPuzzleTiles(curPuzzleView_.type);
+    if (!obelisks.empty()) {
+        players_[0].puzzle->visit(obelisks.front());
+        players_[0].puzzleViews[curPuzzleView_.type]->update();
+        players_[1].puzzle->visit(obelisks.back());
+        players_[1].puzzleViews[curPuzzleView_.type]->update();
+    }
 }
 
 void Anduran::update_frame(Uint32 elapsed_ms)
@@ -98,7 +85,7 @@ void Anduran::update_frame(Uint32 elapsed_ms)
     minimap_.draw();
 
     if (curPuzzleView_.visible) {
-        puzzleView_.draw();
+        players_[curPlayer_].puzzleViews[curPuzzleView_.type]->draw();
     }
 
     win_.update();
@@ -159,16 +146,16 @@ void Anduran::handle_lmouse_up()
     // - highlight that hex when selected
     // - user clicks on a walkable hex
     // - champion moves to the new hex, engages in battle if appropriate
-    for (auto &player : players_) {
-        auto champion = game_.get_object(player.champion);
+    for (int i = 0; i < ssize(players_); ++i) {
+        auto champion = game_.get_object(players_[i].champion);
         if (champion.hex != mouseHex) {
             continue;
         }
 
-        if (curPlayer_ != player.team) {
+        if (curPlayer_ != i) {
             championSelected_ = false;
         }
-        curPlayer_ = player.team;
+        curPlayer_ = i;
         curChampion_ = champion.entity;
         break;
     }
@@ -406,6 +393,30 @@ void Anduran::load_battle_accents()
     auto floor = images_.make_texture("tile-boat", win_);
     for (auto i = 0u; i < size(boatFloorIds_); ++i) {
         boatFloorIds_[i] = rmapView_.addHiddenEntity(floor, ZOrder::floor);
+    }
+}
+
+// TODO: this makes the game noticeably slower to start
+void Anduran::init_puzzles()
+{
+    EnumSizedArray<Hex, PuzzleType> targetHexes;
+    for (auto type : PuzzleType()) {
+        targetHexes[type] = rmap_.findArtifactHex();
+    }
+
+    for (auto &player : players_) {
+        player.puzzle = std::make_unique<PuzzleState>(rmap_);
+
+        for (auto type : PuzzleType()) {
+            player.puzzle->set_target(type, targetHexes[type]);
+            // Non-human players won't need these
+            player.puzzleViews[type] =
+                std::make_unique<PuzzleDisplay>(win_,
+                                                rmapView_,
+                                                puzzleArt_,
+                                                *player.puzzle,
+                                                type);
+        }
     }
 }
 
