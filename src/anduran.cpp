@@ -398,27 +398,21 @@ void Anduran::load_battle_accents()
 // TODO: this makes the game noticeably slower to start
 void Anduran::init_puzzles()
 {
-    EnumSizedArray<Hex, PuzzleType> targetHexes;
+    // This assigns each obelisk randomly to each puzzle map, important that we
+    // only create one and then copy it to each player.
+    PuzzleState initialState(rmap_);
+
     for (auto type : PuzzleType()) {
-        targetHexes[type] = find_artifact_hex();
-    }
-
-    // TODO: make one initial puzzle state, set the target hexes, copy it to all players
-    for (auto &player : players_) {
-        player.puzzle = std::make_unique<PuzzleState>(rmap_);
-
-        for (auto type : PuzzleType()) {
-            player.puzzle->set_target(type, targetHexes[type]);
-        }
-    }
-
-    // Any player's puzzle will do for the initial state.
-    for (auto type : PuzzleType()) {
+        initialState.set_target(type, find_artifact_hex());
         puzzleViews_[type] = std::make_unique<PuzzleDisplay>(win_,
                                                              rmapView_,
                                                              puzzleArt_,
-                                                             *players_[0].puzzle,
+                                                             initialState,
                                                              type);
+    }
+
+    for (auto &player : players_) {
+        player.puzzle = std::make_unique<PuzzleState>(initialState);
     }
 }
 

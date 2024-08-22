@@ -17,18 +17,33 @@
 #include <algorithm>
 #include <cassert>
 
-PuzzleState::PuzzleState(const RandomMap &rmap)
+PuzzleState::PuzzleState(RandomMap &rmap)
     : targetHexes_(),
     visited_(),
     tileTypes_()
 {
-    // Order matters here, the last obelisk gives the puzzle piece that contains
-    // the hex where an artifact is buried.
-    for (auto type : PuzzleType()) {
-        for (int tile : rmap.getPuzzleTiles(type)) {
-            visited_[type].emplace_back(tile, false);
-            tileTypes_.emplace(tile, type);
-        }
+    // We don't want the first tile to always go to the first puzzle.
+    EnumSizedArray<int, PuzzleType> ordering;
+    std::iota(begin(ordering), end(ordering), 0);
+    randomize(ordering);
+
+    // Round-robin each obelisk tile to each puzzle map.
+    int p = 0;
+    for (auto tile : rmap.getObjectTiles(ObjectType::obelisk)) {
+        auto type = static_cast<PuzzleType>(ordering[p]);
+        visited_[type].emplace_back(tile, false);
+        tileTypes_.emplace(tile, type);
+
+        p = (p + 1) % ssize(ordering);
+    }
+
+    // Sort each list so the obelisk furthest from all castles is the one that
+    // reveals the target hex.
+    for (auto &obeliskVector : visited_) {
+        std::ranges::sort(obeliskVector, [&rmap] (auto &lhs, auto &rhs) {
+            return rmap.tileRegionCastleDistance(lhs.tile) <
+                rmap.tileRegionCastleDistance(rhs.tile);
+        });
     }
 }
 

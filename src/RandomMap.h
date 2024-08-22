@@ -15,7 +15,6 @@
 
 #include "FlatMultimap.h"
 #include "ObjectManager.h"
-#include "PuzzleState.h"
 #include "hex_utils.h"
 #include "terrain.h"
 #include <string>
@@ -63,6 +62,7 @@ public:
 
     // Return a list of tiles at the center of each castle.
     std::vector<Hex> getCastleTiles() const;
+    int tileRegionCastleDistance(int index) const;
 
     // Return a list of tiles containing a given object type.
     FlatMultimap<std::string, int>::ValueRange getObjectTiles(ObjectType type);
@@ -73,13 +73,6 @@ public:
     // if tile is not on a border with another region.
     FlatMultimap<int, int>::ValueRange getTileRegionNeighbors(int index);
     FlatMultimap<int, int>::ValueRange getRegionNeighbors(int region);
-
-    // Return a list of obelisk tiles assigned to the given puzzle map.  Tiles are
-    // sorted by ascending region castle distance.
-    // TODO: add accessors so PuzzleState can do this by itself.  Then each
-    // replay of the same map will go differently.  And then this class doesn't
-    // have to depend on the PuzzleState.
-    const std::vector<int> & getPuzzleTiles(PuzzleType puzzle) const;
 
     // Convert between integer and Hex representations of a tile location.
     Hex hexFromInt(int index) const;
@@ -146,7 +139,6 @@ private:
     int placeObjectInRegion(ObjectType type, int region);
     void placeObject(ObjectType type, int tile);
     void placeArmies();
-    void buildPuzzles();
 
     int width_;
     int size_;
@@ -169,7 +161,6 @@ private:
     std::vector<signed char> villageNeighbors_;
     FlatMultimap<std::string, int> objectTiles_;
     const ObjectManager *objectMgr_;
-    EnumSizedArray<std::vector<int>, PuzzleType> puzzles_;
 };
 
 

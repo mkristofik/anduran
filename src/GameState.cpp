@@ -98,6 +98,8 @@ GameAction GameState::hex_action(const GameObject &player, const Hex &hex) const
         return {ObjectAction::disembark, GameObject()};
     }
 
+    // TODO: rename obj to targetObj, player to obj in accord with anduran.cpp
+    // naming scheme
     for (auto &obj : hexObjects) {
         auto action = objConfig_->get_action(obj.type);
         if (action == ObjectAction::flag && obj.team != player.team) {

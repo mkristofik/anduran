@@ -78,6 +78,8 @@ ObjectManager::ObjectManager(const std::string &configFile)
 
         MapObject obj;
         obj.type = objType;
+        // TODO: this is another reason we should just use a string for the
+        // action
         if (obj.type == ObjectType::boat) {
             obj.action = ObjectAction::embark;
         }

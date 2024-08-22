@@ -37,7 +37,7 @@ struct Obelisk
 class PuzzleState
 {
 public:
-    explicit PuzzleState(const RandomMap &rmap);
+    explicit PuzzleState(RandomMap &rmap);
 
     const Hex & get_target(PuzzleType type) const;
     void set_target(PuzzleType type, const Hex &hex);

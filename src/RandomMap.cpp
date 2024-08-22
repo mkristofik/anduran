@@ -154,8 +154,7 @@ RandomMap::RandomMap(int width, const ObjectManager &objMgr)
     regionCastleDistance_(),
     villageNeighbors_(size_, 0),
     objectTiles_(),
-    objectMgr_(&objMgr),
-    puzzles_()
+    objectMgr_(&objMgr)
 {
     generateRegions();
     buildNeighborGraphs();
@@ -166,7 +165,6 @@ RandomMap::RandomMap(int width, const ObjectManager &objMgr)
     placeObjects();
     assignObstacles();
     placeArmies();
-    buildPuzzles();
 }
 
 RandomMap::RandomMap(const char *filename, const ObjectManager &objMgr)
@@ -189,8 +187,7 @@ RandomMap::RandomMap(const char *filename, const ObjectManager &objMgr)
     castleRegions_(),
     villageNeighbors_(),
     objectTiles_(),
-    objectMgr_(&objMgr),
-    puzzles_()
+    objectMgr_(&objMgr)
 {
     auto doc = jsonReadFile(filename);
 
@@ -201,9 +198,6 @@ RandomMap::RandomMap(const char *filename, const ObjectManager &objMgr)
     jsonGetArray(doc, "tile-walkable", tileWalkable_);
     jsonGetArray(doc, "castles", castles_);
     jsonGetArray(doc, "region-castle-distance", regionCastleDistance_);
-    jsonGetArray(doc, "puzzle-helmet", puzzles_[PuzzleType::helmet]);
-    jsonGetArray(doc, "puzzle-breastplate", puzzles_[PuzzleType::breastplate]);
-    jsonGetArray(doc, "puzzle-sword", puzzles_[PuzzleType::sword]);
     size_ = tileRegions_.size();
     width_ = std::sqrt(size_);
     numRegions_ = regionTerrain_.size();
@@ -232,9 +226,6 @@ void RandomMap::writeFile(const char *filename)
     jsonSetArray<int>(doc, "castles", castles_);
     jsonSetArray<int>(doc, "region-castle-distance", regionCastleDistance_);
     jsonSetMultimap(doc, "objects", objectTiles_);
-    jsonSetArray<int>(doc, "puzzle-helmet", puzzles_[PuzzleType::helmet]);
-    jsonSetArray<int>(doc, "puzzle-breastplate", puzzles_[PuzzleType::breastplate]);
-    jsonSetArray<int>(doc, "puzzle-sword", puzzles_[PuzzleType::sword]);
 
     jsonWriteFile(filename, doc);
 }
@@ -322,6 +313,11 @@ std::vector<Hex> RandomMap::getCastleTiles() const
     return {hexes.begin(), hexes.end()};
 }
 
+int RandomMap::tileRegionCastleDistance(int index) const
+{
+    return regionCastleDistance_[getRegion(index)];
+}
+
 FlatMultimap<std::string, int>::ValueRange RandomMap::getObjectTiles(ObjectType type)
 {
     auto name = obj_name_from_type(type);
@@ -342,11 +338,6 @@ FlatMultimap<int, int>::ValueRange RandomMap::getTileRegionNeighbors(int index)
 FlatMultimap<int, int>::ValueRange RandomMap::getRegionNeighbors(int region)
 {
     return regionNeighbors_.find(region);
-}
-
-const std::vector<int> & RandomMap::getPuzzleTiles(PuzzleType puzzle) const
-{
-    return puzzles_[puzzle];
 }
 
 Hex RandomMap::hexFromInt(int index) const
@@ -1132,30 +1123,5 @@ void RandomMap::placeArmies()
                 controlled.insert(zoc2);
             }
         }
-    }
-}
-
-void RandomMap::buildPuzzles()
-{
-    // We don't want the first tile to always go to the first puzzle.
-    EnumSizedArray<int, PuzzleType> ordering;
-    std::iota(begin(ordering), end(ordering), 0);
-    randomize(ordering);
-
-    // Round-robin each obelisk tile to each puzzle map.
-    int p = 0;
-    for (auto tile : getObjectTiles(ObjectType::obelisk)) {
-        puzzles_[ordering[p]].push_back(tile);
-        p = (p + 1) % ssize(ordering);
-    }
-
-    // Sort each puzzle by castle distance, we want to know which obelisks are
-    // furthest from all castles.
-    for (auto &puzzle : puzzles_) {
-        std::ranges::sort(puzzle, [this](int lhs, int rhs) {
-            int lhsDist = regionCastleDistance_[tileRegions_[lhs]];
-            int rhsDist = regionCastleDistance_[tileRegions_[rhs]];
-            return lhsDist < rhsDist;
-        });
     }
 }
