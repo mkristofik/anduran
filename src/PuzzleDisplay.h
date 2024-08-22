@@ -47,7 +47,6 @@ struct PuzzleTile
 };
 
 
-// TODO: consider managing all three puzzles in the same object
 class PuzzleDisplay
 {
 public:

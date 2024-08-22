@@ -51,6 +51,7 @@ public:
     PuzzleType obelisk_type(int tile) const;
     bool obelisk_visited(int tile) const;
     bool index_visited(PuzzleType type, int index) const;
+    bool all_visited(PuzzleType type) const;
 
     void visit(int tile);
 

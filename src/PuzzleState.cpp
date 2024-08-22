@@ -67,6 +67,11 @@ bool PuzzleState::index_visited(PuzzleType type, int index) const
     return visited_[type][index].visited;
 }
 
+bool PuzzleState::all_visited(PuzzleType type) const
+{
+    return std::ranges::all_of(visited_[type], [](auto &elem) { return elem.visited; });
+}
+
 void PuzzleState::visit(int tile)
 {
     auto *obelisk = find(obelisk_type(tile), tile);

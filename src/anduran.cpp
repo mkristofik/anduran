@@ -408,7 +408,6 @@ void Anduran::init_puzzles()
 
         for (auto type : PuzzleType()) {
             player.puzzle->set_target(type, targetHexes[type]);
-            // Non-human players won't need these
         }
     }
 

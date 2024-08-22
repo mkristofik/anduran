@@ -96,13 +96,6 @@ PuzzleDisplay::PuzzleDisplay(SdlWindow &win,
     draw_tiles();
     draw_border();
     apply_filters();
-
-    // X marks the spot
-    // TODO: move this to the surf_ layer, only show if full map is revealed
-    draw_centered(images_->xs,
-                  Frame{0, static_cast<int>(type_)},
-                  hex_center(initialState.get_target(type_)),
-                  mapLayer_);
 }
 
 void PuzzleDisplay::update(const PuzzleState &state)
@@ -118,6 +111,14 @@ void PuzzleDisplay::update(const PuzzleState &state)
         if (!state.index_visited(type_, t.piece)) {
             draw_centered(images_->shield, t.pCenter, surf_);
         }
+    }
+
+    // X marks the spot
+    if (state.all_visited(type_)) {
+        draw_centered(images_->xs,
+                      Frame{0, static_cast<int>(type_)},
+                      hex_center(state.get_target(type_)),
+                      surf_);
     }
 
     SdlEditTexture edit(texture_);
