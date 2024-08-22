@@ -24,10 +24,6 @@ class RandomMap;
 
 ITERABLE_ENUM_CLASS(PuzzleType, helmet, breastplate, sword);
 
-// Define the size of the puzzle map in a file that doesn't depend on SDL.
-constexpr int puzzleHexWidth = 13;
-constexpr int puzzleHexHeight = 7;
-
 
 struct Obelisk
 {

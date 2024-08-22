@@ -62,6 +62,9 @@ public:
     // Call each frame whenever the popup is shown.
     void draw();
 
+    static constexpr int hexWidth = 13;
+    static constexpr int hexHeight = 7;
+
 private:
     // Identify the right-most and bottom-most hex to draw, determines how big we
     // need the map texture to be.

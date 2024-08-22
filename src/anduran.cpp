@@ -400,9 +400,10 @@ void Anduran::init_puzzles()
 {
     EnumSizedArray<Hex, PuzzleType> targetHexes;
     for (auto type : PuzzleType()) {
-        targetHexes[type] = rmap_.findArtifactHex();
+        targetHexes[type] = find_artifact_hex();
     }
 
+    // TODO: make one initial puzzle state, set the target hexes, copy it to all players
     for (auto &player : players_) {
         player.puzzle = std::make_unique<PuzzleState>(rmap_);
 
@@ -418,6 +419,30 @@ void Anduran::init_puzzles()
                                                              puzzleArt_,
                                                              *players_[0].puzzle,
                                                              type);
+    }
+}
+
+Hex Anduran::find_artifact_hex() const
+{
+    // Avoid choosing a hex too close to the edge of the map so the puzzle
+    // doesn't have to render map edges.
+    RandomRange xRange(PuzzleDisplay::hexWidth / 2 + 1,
+                       rmap_.width() - PuzzleDisplay::hexWidth / 2 - 2);
+    RandomRange yRange(PuzzleDisplay::hexHeight / 2 + 1,
+                       rmap_.width() - PuzzleDisplay::hexHeight / 2 - 2);
+
+    auto castleRegions = std::views::transform(rmap_.getCastleTiles(),
+        [this] (auto &hex) { return rmap_.getRegion(hex); });
+
+    while (true) {
+        Hex hex = {xRange.get(), yRange.get()};
+        if (rmap_.getTerrain(hex) != Terrain::water &&
+            !rmap_.getOccupied(hex) &&
+            rmap_.getWalkable(hex) &&
+            !contains(castleRegions, rmap_.getRegion(hex)))
+        {
+            return hex;
+        }
     }
 }
 

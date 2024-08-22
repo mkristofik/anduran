@@ -57,6 +57,10 @@ public:
     bool getWalkable(int index) const;
     bool getWalkable(const Hex &hex) const;
 
+    // Tiles occupied by an object may or may not be walkable.
+    bool getOccupied(int index) const;
+    bool getOccupied(const Hex &hex) const;
+
     // Return a list of tiles at the center of each castle.
     std::vector<Hex> getCastleTiles() const;
 
@@ -72,10 +76,10 @@ public:
 
     // Return a list of obelisk tiles assigned to the given puzzle map.  Tiles are
     // sorted by ascending region castle distance.
+    // TODO: add accessors so PuzzleState can do this by itself.  Then each
+    // replay of the same map will go differently.  And then this class doesn't
+    // have to depend on the PuzzleState.
     const std::vector<int> & getPuzzleTiles(PuzzleType puzzle) const;
-
-    // Find a valid hex to bury one of the artifacts.
-    Hex findArtifactHex() const;
 
     // Convert between integer and Hex representations of a tile location.
     Hex hexFromInt(int index) const;

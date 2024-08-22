@@ -43,10 +43,10 @@ namespace
 
     SDL_Rect hexes_to_draw(const Hex &target)
     {
-        return {target.x - puzzleHexWidth / 2,
-                target.y - puzzleHexHeight / 2,
-                puzzleHexWidth,
-                puzzleHexHeight};
+        return {target.x - PuzzleDisplay::hexWidth / 2,
+                target.y - PuzzleDisplay::hexHeight / 2,
+                PuzzleDisplay::hexWidth,
+                PuzzleDisplay::hexHeight};
     }
 }
 
@@ -173,7 +173,7 @@ void PuzzleDisplay::init_pieces(const PuzzleState &initialState)
     std::vector<Hex> bfsQ;
     std::vector<Hex> currentPiece;
     int puzzleSize = initialState.size(type_);
-    int pieceSize = std::ceil(puzzleHexWidth * puzzleHexHeight / puzzleSize);
+    int pieceSize = std::ceil(hexWidth * hexHeight / puzzleSize);
 
     // Assign the pieces in reverse order so that the last obelisk in the list
     // (furthest from each castle) is the one that reveals the location where the
@@ -235,7 +235,7 @@ void PuzzleDisplay::init_pieces_random(const PuzzleState &initialState)
 
     // Assign pieces in reverse order for the above reason.
     int puzzleSize = initialState.size(type_);
-    int pieceSize = std::ceil(puzzleHexWidth * puzzleHexHeight / puzzleSize);
+    int pieceSize = std::ceil(hexWidth * hexHeight / puzzleSize);
     int pieceNum = puzzleSize - 1;
     int count = 0;
 

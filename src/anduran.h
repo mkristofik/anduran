@@ -75,6 +75,7 @@ private:
     void load_object_defenders(std::string_view unitKey, const std::vector<Hex> &hexes);
     void load_battle_accents();
     void init_puzzles();
+    Hex find_artifact_hex() const;
 
     // Execute all necessary game actions along the given path.
     void do_actions(int entity, PathView path);

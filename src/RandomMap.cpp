@@ -303,6 +303,19 @@ bool RandomMap::getWalkable(const Hex &hex) const
     return getWalkable(intFromHex(hex));
 }
 
+bool RandomMap::getOccupied(int index) const
+{
+    if (offGrid(index)) {
+        return false;
+    }
+    return tileOccupied_[index] > 0;
+}
+
+bool RandomMap::getOccupied(const Hex &hex) const
+{
+    return getOccupied(intFromHex(hex));
+}
+
 std::vector<Hex> RandomMap::getCastleTiles() const
 {
     auto hexes = hexesFromInt(castles_);
@@ -334,32 +347,6 @@ FlatMultimap<int, int>::ValueRange RandomMap::getRegionNeighbors(int region)
 const std::vector<int> & RandomMap::getPuzzleTiles(PuzzleType puzzle) const
 {
     return puzzles_[puzzle];
-}
-
-// TODO: add necessary accessors so that Anduran can do this part.  Want to have
-// puzzleHexWidth and Height be tied to PuzzleDisplay only.
-Hex RandomMap::findArtifactHex() const
-{
-    RandomRange randomTile(0, size() - 1);
-    while (true) {
-        int tile = randomTile.get();
-        if (getTerrain(tile) != Terrain::water &&
-            !tileOccupied_[tile] &&
-            tileWalkable_[tile] &&
-            !contains(castleRegions_, tileRegions_[tile]))
-        {
-            auto hex = hexFromInt(tile);
-            // Avoid being too close to the edge of the map so the puzzle map
-            // doesn't have to render map edges.
-            if (hex.x > puzzleHexWidth / 2 &&
-                hex.x < width() - puzzleHexWidth / 2 - 1 &&
-                hex.y > puzzleHexHeight / 2 &&
-                hex.y < width() - puzzleHexHeight / 2 - 1)
-            {
-                return hex;
-            }
-        }
-    }
 }
 
 Hex RandomMap::hexFromInt(int index) const
