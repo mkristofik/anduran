@@ -248,7 +248,7 @@ is next to or in front of a castle
 * text description
 * list of allowed terrain (default all)
 * has images to match each terrain? (default no)
-- has multiple images, divided evenly among all locations
+* has multiple images, divided evenly among all locations
 * number per region
     * normal (default 1) vs. castle region (default 0)
 * probability to appear (default 100)

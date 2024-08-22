@@ -74,9 +74,9 @@ public:
     // necessary as invalid hexes are by definition uncontrollable.
     int hex_controller(const Hex &hex) const;
 
-    // Return the action that should happen at a given hex for the player, and
+    // Return the action that should happen at a given hex for the entity, and
     // the object to interact with.
-    GameAction hex_action(const GameObject &player, const Hex &hex) const;
+    GameAction hex_action(const GameObject &obj, const Hex &hex) const;
 
     // Accessors for the army state of each army object.
     void add_army(const Army &army);

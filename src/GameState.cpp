@@ -83,37 +83,35 @@ int GameState::hex_controller(const Hex &hex) const
     return iter->second;
 }
 
-GameAction GameState::hex_action(const GameObject &player, const Hex &hex) const
+GameAction GameState::hex_action(const GameObject &obj, const Hex &hex) const
 {
     int zoc = hex_controller(hex);
-    if (zoc >= 0 && zoc != player.entity) {
+    if (zoc >= 0 && zoc != obj.entity) {
         return {ObjectAction::battle, get_object(zoc)};
     }
 
     auto hexObjects = objects_in_hex(hex);
     if (hexObjects.empty() &&
-        rmap_->getTerrain(player.hex) == Terrain::water &&
+        rmap_->getTerrain(obj.hex) == Terrain::water &&
         rmap_->getTerrain(hex) != Terrain::water)
     {
         return {ObjectAction::disembark, GameObject()};
     }
 
-    // TODO: rename obj to targetObj, player to obj in accord with anduran.cpp
-    // naming scheme
-    for (auto &obj : hexObjects) {
-        auto action = objConfig_->get_action(obj.type);
-        if (action == ObjectAction::flag && obj.team != player.team) {
-            return {ObjectAction::flag, obj};
+    for (auto &targetObj : hexObjects) {
+        auto action = objConfig_->get_action(targetObj.type);
+        if (action == ObjectAction::flag && targetObj.team != obj.team) {
+            return {ObjectAction::flag, targetObj};
         }
-        else if (action == ObjectAction::visit && !obj.visited) {
-            return {ObjectAction::visit, obj};
+        else if (action == ObjectAction::visit && !targetObj.visited) {
+            return {ObjectAction::visit, targetObj};
         }
         else if (action != ObjectAction::none &&
                  action != ObjectAction::visit &&
                  action != ObjectAction::flag)
         {
             // This covers boats, resources to pick up, etc.
-            return {action, obj};
+            return {action, targetObj};
         }
     }
 

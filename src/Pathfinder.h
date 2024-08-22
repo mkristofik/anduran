@@ -37,7 +37,7 @@ class Pathfinder
 public:
     Pathfinder(const RandomMap &rmap, const GameState &state);
 
-    Path find_path(const GameObject &player, const Hex &hDest);
+    Path find_path(const GameObject &mover, const Hex &hDest);
 
 private:
     Neighbors<int> get_neighbors(int index) const;
@@ -48,7 +48,7 @@ private:
     PriorityQueue<EstimatedPathCost> frontier_;
     const RandomMap *rmap_;
     const GameState *game_;
-    const GameObject *player_;
+    const GameObject *mover_;
     int iSrc_;
     int region_;
     int iDest_;

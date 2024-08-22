@@ -30,7 +30,7 @@ Pathfinder::Pathfinder(const RandomMap &rmap, const GameState &state)
     frontier_(),
     rmap_(&rmap),
     game_(&state),
-    player_(nullptr),
+    mover_(nullptr),
     iSrc_(RandomMap::invalidIndex),
     region_(-1),
     iDest_(RandomMap::invalidIndex),
@@ -39,9 +39,9 @@ Pathfinder::Pathfinder(const RandomMap &rmap, const GameState &state)
 {
 }
 
-Path Pathfinder::find_path(const GameObject &player, const Hex &hDest)
+Path Pathfinder::find_path(const GameObject &mover, const Hex &hDest)
 {
-    if (player.hex == hDest) {
+    if (mover.hex == hDest) {
         return {};
     }
 
@@ -49,12 +49,12 @@ Path Pathfinder::find_path(const GameObject &player, const Hex &hDest)
     cameFrom_.clear();
     costSoFar_.clear();
     frontier_.clear();
-    player_ = &player;
+    mover_ = &mover;
     hDest_ = hDest;
     iDest_ = rmap_->intFromHex(hDest_);
-    iSrc_ = rmap_->intFromHex(player_->hex);
+    iSrc_ = rmap_->intFromHex(mover_->hex);
     region_ = rmap_->getRegion(iSrc_);
-    destObject_ = game_->hex_action(*player_, hDest_).obj;
+    destObject_ = game_->hex_action(*mover_, hDest_).obj;
 
     // Optimization: skip everything if the destination hex isn't reachable.
     if (!is_reachable(iDest_)) {
@@ -162,7 +162,7 @@ bool Pathfinder::is_reachable(int index) const
     auto srcTerrain = rmap_->getTerrain(iSrc_);
     auto terrain = rmap_->getTerrain(index);
     auto hex = rmap_->hexFromInt(index);
-    auto [action, obj] = game_->hex_action(*player_, hex);
+    auto [action, obj] = game_->hex_action(*mover_, hex);
 
     // If you started on land, you can't step onto water unless you're boarding a
     // boat.
@@ -197,7 +197,7 @@ bool Pathfinder::is_reachable(int index) const
     }
 
     // Game objects are only walkable if they're on the destination hex or if
-    // they match the player's team color.
+    // they match the moving entity's team color.
     if (index != iDest_ && action != ObjectAction::none) {
         return false;
     }
