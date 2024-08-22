@@ -73,39 +73,39 @@ PuzzleImages::PuzzleImages(const SdlImageManager &imgMgr)
 PuzzleDisplay::PuzzleDisplay(SdlWindow &win,
                              const MapDisplay &mapView,
                              const PuzzleImages &artwork,
-                             const PuzzleState &state,
+                             const PuzzleState &initialState,
                              PuzzleType type)
     : win_(&win),
     rmapView_(&mapView),
     images_(&artwork),
-    state_(&state),
     type_(type),
     popupArea_(popup_window_rect(*win_)),
-    hexes_(hexes_to_draw(state_->get_target(type_))),
+    hexes_(hexes_to_draw(initialState.get_target(type_))),
     pOrigin_(rmapView_->mapPixelFromHex(Hex{hexes_.x, hexes_.y})),
     mapLayer_(),
     surf_(),
     texture_(),
     tiles_()
 {
+    SDL_assert(initialState.size(type_) > 0);
+
     init_texture();
     init_tiles();
-    init_pieces();
+    init_pieces(initialState);
 
     draw_tiles();
     draw_border();
     apply_filters();
 
     // X marks the spot
+    // TODO: move this to the surf_ layer, only show if full map is revealed
     draw_centered(images_->xs,
                   Frame{0, static_cast<int>(type_)},
-                  hex_center(state_->get_target(type_)),
+                  hex_center(initialState.get_target(type_)),
                   mapLayer_);
-
-    update();
 }
 
-void PuzzleDisplay::update()
+void PuzzleDisplay::update(const PuzzleState &state)
 {
     if (SDL_BlitSurface(mapLayer_.get(), nullptr, surf_.get(), nullptr) < 0) {
         log_warn(std::format("couldn't update puzzle surface: {}", SDL_GetError()),
@@ -115,7 +115,7 @@ void PuzzleDisplay::update()
 
     // Cover the tiles for puzzle pieces not revealed yet.
     for (auto & [_, t] : tiles_) {
-        if (!state_->index_visited(type_, t.piece)) {
+        if (!state.index_visited(type_, t.piece)) {
             draw_centered(images_->shield, t.pCenter, surf_);
         }
     }
@@ -166,21 +166,19 @@ void PuzzleDisplay::init_tiles()
 
 // Assign puzzle pieces in random chunks.
 // Note: this doesn't (yet) guarantee all pieces will be contiguous
-void PuzzleDisplay::init_pieces()
+void PuzzleDisplay::init_pieces(const PuzzleState &initialState)
 {
-    int puzzleSize = state_->size(type_);
-    SDL_assert(puzzleSize > 0);
-
     boost::container::flat_set<Hex> visited;
     std::vector<Hex> bfsQ;
     std::vector<Hex> currentPiece;
+    int puzzleSize = initialState.size(type_);
     int pieceSize = std::ceil(puzzleHexWidth * puzzleHexHeight / puzzleSize);
 
     // Assign the pieces in reverse order so that the last obelisk in the list
     // (furthest from each castle) is the one that reveals the location where the
     // artifact is buried.
     int pieceNum = puzzleSize - 1;
-    auto &targetHex = state_->get_target(type_);
+    const auto &targetHex = initialState.get_target(type_);
     bfsQ.push_back(targetHex);
     visited.insert(targetHex);
 
@@ -221,7 +219,7 @@ void PuzzleDisplay::init_pieces()
 }
 
 // Option 2, simpler, just assign pieces randomly.
-void PuzzleDisplay::init_pieces_random()
+void PuzzleDisplay::init_pieces_random(const PuzzleState &initialState)
 {
     std::vector<Hex> allHexes;
     for (auto & [hex, _] : tiles_) {
@@ -231,11 +229,11 @@ void PuzzleDisplay::init_pieces_random()
 
     // Ensure the target hex is in the last piece, so the obelisk furthest from
     // all castles is the one that reveals it.
-    auto target = std::ranges::find(allHexes, state_->get_target(type_));
-    std::swap(*target, allHexes.front());
+    auto targetIter = std::ranges::find(allHexes, initialState.get_target(type_));
+    std::swap(*targetIter, allHexes.front());
 
     // Assign pieces in reverse order for the above reason.
-    int puzzleSize = state_->size(type_);
+    int puzzleSize = initialState.size(type_);
     int pieceSize = std::ceil(puzzleHexWidth * puzzleHexHeight / puzzleSize);
     int pieceNum = puzzleSize - 1;
     int count = 0;

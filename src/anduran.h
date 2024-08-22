@@ -45,7 +45,6 @@ struct PlayerState
     Team team = Team::neutral;
     int champion = -1;
     std::unique_ptr<PuzzleState> puzzle;
-    EnumSizedArray<std::unique_ptr<PuzzleDisplay>, PuzzleType> puzzleViews;
 };
 
 
@@ -133,6 +132,7 @@ private:
     bool stateChanged_;
     std::vector<EnumSizedArray<int, Team>> influence_;
     PuzzleViewState curPuzzleView_;
+    EnumSizedArray<std::unique_ptr<PuzzleDisplay>, PuzzleType> puzzleViews_;
 };
 
 #endif

@@ -47,17 +47,18 @@ struct PuzzleTile
 };
 
 
+// TODO: consider managing all three puzzles in the same object
 class PuzzleDisplay
 {
 public:
     PuzzleDisplay(SdlWindow &win,
                   const MapDisplay &mapView,
                   const PuzzleImages &artwork,
-                  const PuzzleState &state,
+                  const PuzzleState &initialState,
                   PuzzleType type);
 
-    // Call this whenever a new puzzle piece is revealed.
-    void update();
+    // Call this before making the popup newly visible.
+    void update(const PuzzleState &state);
 
     // Call each frame whenever the popup is shown.
     void draw();
@@ -67,8 +68,8 @@ private:
     // need the map texture to be.
     void init_texture();
     void init_tiles();
-    void init_pieces();
-    void init_pieces_random();
+    void init_pieces(const PuzzleState &initialState);
+    void init_pieces_random(const PuzzleState &initialState);
 
     SDL_Point hex_center(const Hex &hex) const;
     bool hex_in_bounds(const Hex &hex) const;
@@ -87,7 +88,6 @@ private:
     SdlWindow *win_;
     const MapDisplay *rmapView_;
     const PuzzleImages *images_;
-    const PuzzleState *state_;
     PuzzleType type_;
     SDL_Rect popupArea_;
     SDL_Rect hexes_;

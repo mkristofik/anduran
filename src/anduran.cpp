@@ -51,7 +51,8 @@ Anduran::Anduran()
     units_("data/units.json"s, win_, images_),
     stateChanged_(true),
     influence_(rmap_.numRegions()),
-    curPuzzleView_()
+    curPuzzleView_(),
+    puzzleViews_()
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
@@ -76,7 +77,7 @@ void Anduran::update_frame(Uint32 elapsed_ms)
     minimap_.draw();
 
     if (anims_.empty() && curPuzzleView_.visible) {
-        players_[curPlayer_].puzzleViews[curPuzzleView_.type]->draw();
+        puzzleViews_[curPuzzleView_.type]->draw();
     }
 
     win_.update();
@@ -211,6 +212,7 @@ void Anduran::handle_key_up(const SDL_Keysym &key)
 
     if (key.sym == 'p') {
         curPuzzleView_.visible = true;
+        puzzleViews_[curPuzzleView_.type]->update(*players_[curPlayer_].puzzle);
     }
     else if (key.sym == SDLK_ESCAPE) {
         curPuzzleView_.visible = false;
@@ -407,13 +409,16 @@ void Anduran::init_puzzles()
         for (auto type : PuzzleType()) {
             player.puzzle->set_target(type, targetHexes[type]);
             // Non-human players won't need these
-            player.puzzleViews[type] =
-                std::make_unique<PuzzleDisplay>(win_,
-                                                rmapView_,
-                                                puzzleArt_,
-                                                *player.puzzle,
-                                                type);
         }
+    }
+
+    // Any player's puzzle will do for the initial state.
+    for (auto type : PuzzleType()) {
+        puzzleViews_[type] = std::make_unique<PuzzleDisplay>(win_,
+                                                             rmapView_,
+                                                             puzzleArt_,
+                                                             *players_[0].puzzle,
+                                                             type);
     }
 }
 
@@ -656,7 +661,7 @@ void Anduran::local_action(int entity)
                 // TODO: show the X on the map when the puzzle is complete, but
                 // only on that player's turn
                 player.puzzle->visit(index);
-                player.puzzleViews[puzzleType]->update();
+                puzzleViews_[puzzleType]->update(*player.puzzle);
                 curPuzzleView_.type = puzzleType;
                 curPuzzleView_.visible = true;
             }
