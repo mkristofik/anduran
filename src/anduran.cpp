@@ -656,7 +656,7 @@ void Anduran::local_action(int entity)
                                 objImg_.get_flag(targetObj.team)));
         game_.update_object(targetObj);
     }
-    else if (action == ObjectAction::visit) {
+    else if (action == ObjectAction::visit_once) {
         // If the object has a separate image to mark that it's been visited,
         // replace it.  If we ever do this on a visit-per-team object, we'd have
         // to update the images at the start of each player's turn.
@@ -664,11 +664,11 @@ void Anduran::local_action(int entity)
         if (visitImg) {
             anims_.push(AnimDisplay(rmapView_, targetObj.entity, visitImg));
         }
-        // TODO: some objects are one visit only (shipwreck), others are
-        // per-team (obelisk, oasis)
-        targetObj.visited = true;
-        game_.update_object(targetObj);
 
+        targetObj.visited.set();
+        game_.update_object(targetObj);
+    }
+    else if (action == ObjectAction::visit) {
         if (targetObj.type == ObjectType::obelisk) {
             if (thisObj.team != Team::neutral) {
                 auto &player = players_[playerOrder_[thisObj.team]];
@@ -682,6 +682,9 @@ void Anduran::local_action(int entity)
                 curPuzzleView_.visible = true;
             }
         }
+
+        targetObj.visited.set(thisObj.team);
+        game_.update_object(targetObj);
     }
     else if (action == ObjectAction::pickup) {
         game_.remove_object(targetObj.entity);

@@ -101,13 +101,17 @@ GameAction GameState::hex_action(const GameObject &obj, const Hex &hex) const
     for (auto &targetObj : hexObjects) {
         auto action = objConfig_->get_action(targetObj.type);
         if (action == ObjectAction::flag && targetObj.team != obj.team) {
-            return {ObjectAction::flag, targetObj};
+            return {action, targetObj};
         }
-        else if (action == ObjectAction::visit && !targetObj.visited) {
-            return {ObjectAction::visit, targetObj};
+        else if (action == ObjectAction::visit && !targetObj.visited[obj.team]) {
+            return {action, targetObj};
+        }
+        else if (action == ObjectAction::visit_once && targetObj.visited.none()) {
+            return {action, targetObj};
         }
         else if (action != ObjectAction::none &&
                  action != ObjectAction::visit &&
+                 action != ObjectAction::visit_once &&
                  action != ObjectAction::flag)
         {
             // This covers boats, resources to pick up, etc.

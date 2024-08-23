@@ -60,7 +60,7 @@
         "img-visited": "shipwreck-visited",
         "terrain": [0],
         "per-coastline": 1,
-        "action": "visit",
+        "action": "visit_once",
         "defender": "skel"
     },
     "village": {

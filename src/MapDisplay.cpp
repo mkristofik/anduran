@@ -134,6 +134,7 @@ MapDisplay::MapDisplay(SdlWindow &win,
     pathImg_[ObjectAction::none] = images_->make_texture("icon-path", *window_);
     pathImg_[ObjectAction::battle] = images_->make_texture("icon-battle", *window_);
     pathImg_[ObjectAction::visit] = images_->make_texture("icon-visit", *window_);
+    pathImg_[ObjectAction::visit_once] = images_->make_texture("icon-visit", *window_);
     pathImg_[ObjectAction::pickup] = images_->make_texture("icon-pickup", *window_);
     pathImg_[ObjectAction::flag] = images_->make_texture("icon-visit", *window_);
     pathImg_[ObjectAction::embark] = images_->make_texture("icon-embark", *window_);

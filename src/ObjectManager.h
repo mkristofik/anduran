@@ -41,7 +41,8 @@
     X(embark) \
     X(flag) \
     X(pickup) \
-    X(visit)
+    X(visit) \
+    X(visit_once)
 
 #define X(str) str,
     enum class ObjectType {OBJ_TYPES none};

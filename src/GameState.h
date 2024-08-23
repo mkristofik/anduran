@@ -16,6 +16,7 @@
 #include "ObjectManager.h"
 #include "battle_utils.h"
 #include "hex_utils.h"
+#include "iterable_enum_class.h"
 #include "team_color.h"
 
 #include "boost/container/flat_map.hpp"
@@ -39,7 +40,7 @@ struct GameObject
     int secondary = -1;  // embellishment such as a flag or ellipse
     Team team = Team::neutral;
     ObjectType type = ObjectType::none;
-    bool visited = false;
+    EnumSizedBitset<Team> visited;
 };
 
 
