@@ -107,6 +107,8 @@ private:
     // Return team with highest influence in a given region, or neutral if tied.
     Team most_influence(int region) const;
 
+    void next_turn(int nextPlayer);
+
     WindowConfig config_;
     SdlWindow win_;
     ObjectManager objConfig_;
@@ -134,6 +136,7 @@ private:
     std::vector<EnumSizedArray<int, Team>> influence_;
     PuzzleViewState curPuzzleView_;
     EnumSizedArray<std::unique_ptr<PuzzleDisplay>, PuzzleType> puzzleViews_;
+    EnumSizedArray<int, PuzzleType> puzzleXsIds_;
 };
 
 #endif

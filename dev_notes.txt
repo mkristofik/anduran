@@ -20,13 +20,13 @@
 - each puzzle map is 13x7
     * X marks the spot in the center
     * this means artifacts have to be buried away from the edges of the map
-    - shows terrain, edges, obstacles, and fixed objects without their flags
+    * shows terrain, edges, obstacles, and fixed objects without their flags
         * can we draw it black & white?
         * requires modifying each pixel
             * option 1, average RGB values, set them all the same
             * option 2, set R and B equal to G
-    - when the X has been revealed, show it on the adventure map
-    - require a minimum number of pieces revealed before the center piece could be
+    * when the X has been revealed, show it on the adventure map
+    * require a minimum number of pieces revealed before the center piece could be
     shown
     - this would be a problem if more than 91 regions per obelisk type
 * number of pieces = number of regions with that obelisk type
@@ -50,6 +50,12 @@
         - draw the popup background only
         - go fast, 1000 ms at most
         - simple mouseovers and dialog boxes shouldn't bother with this
+- digging
+    - press D key
+    - hex must be on land, and empty except for the champion itself
+    - if on the target hex, assign the artifact to the player
+    - show a hole in the ground where dug, on top of the X if visible
+    - if a player has all three artifacts, they win
 
 
 # Game display
@@ -464,3 +470,7 @@ is next to or in front of a castle
 * will RandomRange support aggregate initialization?  UnitData could set all members
 in the header
 - replace boost flat_ containers with C++23 ones
+- use Boost.PreProcessor to automatically register types with x_macros.h
+    - std::type_index(typeid(E)) can be used to store a typename in a map
+    - could eliminate the xtype wrapper functions each type has to provide
+    - require iterable enum for this?  extension of it?

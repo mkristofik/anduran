@@ -52,7 +52,8 @@ Anduran::Anduran()
     stateChanged_(true),
     influence_(rmap_.numRegions()),
     curPuzzleView_(),
-    puzzleViews_()
+    puzzleViews_(),
+    puzzleXsIds_()
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
@@ -146,8 +147,9 @@ void Anduran::handle_lmouse_up()
 
         if (curPlayer_ != i) {
             championSelected_ = false;
+            next_turn(i);
         }
-        curPlayer_ = i;
+
         curChampion_ = champion.entity;
         break;
     }
@@ -401,6 +403,7 @@ void Anduran::init_puzzles()
     // This assigns each obelisk randomly to each puzzle map, important that we
     // only create one and then copy it to each player.
     PuzzleState initialState(rmap_);
+    auto xImg = images_.make_texture("puzzle-xs", win_);
 
     for (auto type : PuzzleType()) {
         initialState.set_target(type, find_artifact_hex());
@@ -409,6 +412,16 @@ void Anduran::init_puzzles()
                                                              puzzleArt_,
                                                              initialState,
                                                              type);
+
+        // Create an entity to mark where each artifact is buried, revealed when
+        // a player completes the puzzle.
+        MapEntity xEntity;
+        xEntity.hex = initialState.get_target(type);
+        xEntity.frame = {0, static_cast<int>(type)};
+        xEntity.z = ZOrder::floor;
+        xEntity.visible = false;
+
+        puzzleXsIds_[type] = rmapView_.addEntity(xImg, xEntity, HexAlign::middle);
     }
 
     for (auto &player : players_) {
@@ -674,9 +687,13 @@ void Anduran::local_action(int entity)
                 auto &player = players_[playerOrder_[thisObj.team]];
                 int index = rmap_.intFromHex(targetObj.hex);
                 auto puzzleType = player.puzzle->obelisk_type(index);
-                // TODO: show the X on the map when the puzzle is complete, but
-                // only on that player's turn
+
+                // Show the X on the map when the puzzle is complete
                 player.puzzle->visit(index);
+                if (player.puzzle->all_visited(puzzleType)) {
+                    anims_.push(AnimDisplay(rmapView_, puzzleXsIds_[puzzleType]));
+                }
+
                 puzzleViews_[puzzleType]->update(*player.puzzle);
                 curPuzzleView_.type = puzzleType;
                 curPuzzleView_.visible = true;
@@ -976,6 +993,25 @@ Team Anduran::most_influence(int region) const
 
     return winner;
 }
+
+void Anduran::next_turn(int nextPlayer)
+{
+    curPlayer_ = nextPlayer;
+
+    // Show or hide the puzzle Xs depending on whether that player has completed
+    // them.
+    AnimSet puzzleAnim;
+    for (auto type : PuzzleType()) {
+        if (players_[curPlayer_].puzzle->all_visited(type)) {
+            puzzleAnim.insert(AnimDisplay(rmapView_, puzzleXsIds_[type]));
+        }
+        else {
+            puzzleAnim.insert(AnimHide(rmapView_, puzzleXsIds_[type]));
+        }
+    }
+    anims_.push(puzzleAnim);
+}
+
 
 int main(int, char *[])  // two-argument form required by SDL
 {

@@ -78,6 +78,7 @@ private:
 class AnimDisplay : public AnimBase
 {
 public:
+    AnimDisplay(MapDisplay &display, int entity);
     AnimDisplay(MapDisplay &display, int entity, const Hex &hex);
     AnimDisplay(MapDisplay &display, int entity, const SdlTexture &img);
     AnimDisplay(MapDisplay &display, int entity, const SdlTexture &img, const Hex &hex);

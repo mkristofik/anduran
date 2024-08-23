@@ -161,6 +161,11 @@ void AnimHide::start()
 }
 
 
+AnimDisplay::AnimDisplay(MapDisplay &display, int entity)
+    : AnimDisplay(display, entity, {}, {})
+{
+}
+
 AnimDisplay::AnimDisplay(MapDisplay &display, int entity, const Hex &hex)
     : AnimDisplay(display, entity, {}, hex)
 {
