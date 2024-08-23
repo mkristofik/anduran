@@ -19,6 +19,7 @@
 
 #include "SDL.h"
 #include <algorithm>
+#include <format>
 #include <queue>
 #include <sstream>
 
@@ -53,7 +54,8 @@ Anduran::Anduran()
     influence_(rmap_.numRegions()),
     curPuzzleView_(),
     puzzleViews_(),
-    puzzleXsIds_()
+    puzzleXsIds_(),
+    artifactsFound_()
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
@@ -61,6 +63,11 @@ Anduran::Anduran()
     load_objects();
     load_battle_accents();
     init_puzzles();
+
+    auto &puzzle = *players_[playerOrder_[Team::red]].puzzle;
+    for (auto tile : rmap_.getObjectTiles(ObjectType::obelisk)) {
+        puzzle.visit(tile);
+    }
 }
 
 void Anduran::update_frame(Uint32 elapsed_ms)
@@ -212,7 +219,10 @@ void Anduran::handle_key_up(const SDL_Keysym &key)
         return;
     }
 
-    if (key.sym == 'p') {
+    if (key.sym == 'd') {
+        dig_action(curChampion_);
+    }
+    else if (key.sym == 'p') {
         curPuzzleView_.visible = true;
         puzzleViews_[curPuzzleView_.type]->update(*players_[curPlayer_].puzzle);
     }
@@ -709,6 +719,56 @@ void Anduran::local_action(int entity)
     }
 }
 
+void Anduran::dig_action(int entity)
+{
+    static const EnumSizedArray<std::string, PuzzleType> artifacts = {
+        "Helmet of Anduran"s,
+        "Breastplate of Anduran"s,
+        "Sword of Anduran"s
+    };
+
+    auto thisObj = game_.get_object(entity);
+
+    // TODO: require a full turn's movement
+    if (rmap_.getTerrain(thisObj.hex) == Terrain::water ||
+        game_.num_objects_in_hex(thisObj.hex) > 1)
+    {
+        anims_.push(AnimLog(rmapView_, "Try searching on clear ground."));
+        return;
+    }
+
+    auto &thisPlayer = players_[playerOrder_[thisObj.team]];
+    for (auto type : PuzzleType()) {
+        if (thisObj.hex != thisPlayer.puzzle->get_target(type)) {
+            continue;
+        }
+        else if (artifactsFound_[type]) {
+            auto msg = std::format("You have located the {}, "
+                                   "but it looks like others have found it first.",
+                                   artifacts[type]);
+            anims_.push(AnimLog(rmapView_, msg));
+            return;
+        }
+
+        // Found it, hide the X and show the artifact found image.
+        AnimSet digAnim;
+        digAnim.insert(AnimHide(rmapView_, puzzleXsIds_[type]));
+        auto msg = std::format("After spending many hours digging here, "
+                               "you have found the {}!",
+                               artifacts[type]);
+        digAnim.insert(AnimLog(rmapView_, msg));
+        anims_.push(digAnim);
+
+        rmapView_.addEntity(images_.make_texture("puzzle-found", win_),
+                            thisObj.hex,
+                            ZOrder::object);
+        artifactsFound_.set(type);
+        return;
+    }
+
+    anims_.push(AnimLog(rmapView_, "Nothing here.  Where could it be?"));
+}
+
 std::string Anduran::army_log(const Army &army) const
 {
     std::ostringstream ostr;
@@ -1002,7 +1062,7 @@ void Anduran::next_turn(int nextPlayer)
     // them.
     AnimSet puzzleAnim;
     for (auto type : PuzzleType()) {
-        if (players_[curPlayer_].puzzle->all_visited(type)) {
+        if (!artifactsFound_[type] && players_[curPlayer_].puzzle->all_visited(type)) {
             puzzleAnim.insert(AnimDisplay(rmapView_, puzzleXsIds_[type]));
         }
         else {

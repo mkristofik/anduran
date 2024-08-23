@@ -84,6 +84,7 @@ private:
     void disembark_action(int entity, const Hex &hLand);
     bool battle_action(int entity, int enemyId);
     void local_action(int entity);
+    void dig_action(int entity);
 
     std::string army_log(const Army &army) const;
     std::string battle_result_log(const Army &before, const BattleResult &result) const;
@@ -137,6 +138,7 @@ private:
     PuzzleViewState curPuzzleView_;
     EnumSizedArray<std::unique_ptr<PuzzleDisplay>, PuzzleType> puzzleViews_;
     EnumSizedArray<int, PuzzleType> puzzleXsIds_;
+    EnumSizedBitset<PuzzleType> artifactsFound_;
 };
 
 #endif

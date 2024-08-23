@@ -51,11 +51,15 @@
         - go fast, 1000 ms at most
         - simple mouseovers and dialog boxes shouldn't bother with this
 - digging
-    - press D key
-    - hex must be on land, and empty except for the champion itself
-    - if on the target hex, assign the artifact to the player
-    - show a hole in the ground where dug, on top of the X if visible
+    * press D key
+    * hex must be on land, and empty except for the champion itself
+    - if on the target hex
+        - assign the artifact to the player
+        * replace X with a trapdoor visible to all players
+    - show a hole in the ground for unsuccessful digs
     - if a player has all three artifacts, they win
+    - "The three artifacts magically combine into one, forming the legendary Battle
+    Garb of Anduran!  Your quest is complete."
 
 
 # Game display
