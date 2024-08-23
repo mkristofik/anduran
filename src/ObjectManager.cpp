@@ -79,11 +79,6 @@ ObjectManager::ObjectManager(const std::string &configFile)
 
         MapObject obj;
         obj.type = objType;
-        // TODO: this is another reason we should just use a string for the
-        // action
-        if (obj.type == ObjectType::boat) {
-            obj.action = ObjectAction::embark;
-        }
 
         for (auto f = m->value.MemberBegin(); f != m->value.MemberEnd(); ++f) {
             std::string field = f->name.GetString();
@@ -100,6 +95,14 @@ ObjectManager::ObjectManager(const std::string &configFile)
                 }
                 else if (field == "defender") {
                     obj.defender = value;
+                }
+                else if (field == "action") {
+                    obj.action = obj_action_from_name(value);
+                    if (obj.action == ObjectAction::none) {
+                        log_warn(std::format("unexpected {} action '{}', using 'none'",
+                                             name,
+                                             value));
+                    }
                 }
                 else {
                     warn_unexpected("string", name, field);
@@ -125,17 +128,7 @@ ObjectManager::ObjectManager(const std::string &configFile)
             }
             else if (f->value.IsBool()) {
                 bool val = f->value.GetBool();
-                if (field == "visit") {
-                    if (val) {
-                        obj.action = ObjectAction::visit;
-                    }
-                }
-                else if (field == "flag") {
-                    if (val) {
-                        obj.action = ObjectAction::flag;
-                    }
-                }
-                else if (field == "fair-distance") {
+                if (field == "fair-distance") {
                     obj.fairDistance = val;
                 }
                 else if (field == "team-colored") {

@@ -646,6 +646,7 @@ void Anduran::local_action(int entity)
     auto thisObj = game_.get_object(entity);
     auto [action, targetObj] = game_.hex_action(thisObj, thisObj.hex);
 
+    // TODO: create a boat when visiting a harbor
     if (action == ObjectAction::flag) {
         // If we land on an object with a flag, change the flag color to
         // match the player's.
@@ -655,7 +656,6 @@ void Anduran::local_action(int entity)
                                 objImg_.get_flag(targetObj.team)));
         game_.update_object(targetObj);
     }
-    // TODO: create a boat when visiting a harbor
     else if (action == ObjectAction::visit) {
         // If the object has a separate image to mark that it's been visited,
         // replace it.  If we ever do this on a visit-per-team object, we'd have
@@ -666,8 +666,6 @@ void Anduran::local_action(int entity)
         }
         // TODO: some objects are one visit only (shipwreck), others are
         // per-team (obelisk, oasis)
-        // TODO: maybe have an action string in objects.json instead of the
-        // bools?  or maybe explicitly list a pickup?
         targetObj.visited = true;
         game_.update_object(targetObj);
 

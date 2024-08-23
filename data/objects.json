@@ -3,7 +3,8 @@
         "name": "Boat",
         "img": "boat",
         "terrain": [0],
-        "team-colored": true
+        "team-colored": true,
+        "action": "embark"
     },
     "camp": {
         "name": "Abandoned camp",
@@ -12,7 +13,7 @@
         "per-region": 1,
         "per-castle": 0,
         "probability": 50,
-        "visit": false
+        "action": "pickup"
     },
     "chest": {
         "name": "Treasure chest",
@@ -20,14 +21,14 @@
         "terrain": [1, 2, 3, 4, 5],
         "per-region": 1,
         "per-castle": 2,
-        "visit": false
+        "action": "pickup"
     },
     "harbor": {
         "name": "Harbor Master",
         "img": "lighthouse",
         "terrain": [1, 2, 3, 4, 5],
         "per-coastline": 1,
-        "flag": true,
+        "action": "flag",
         "fair-distance": true
     },
     "oasis": {
@@ -36,14 +37,14 @@
         "terrain": [1],
         "per-region": 1,
         "per-castle": 1,
-        "visit": true
+        "action": "visit"
     },
     "obelisk": {
         "name": "Obelisk",
         "img": "obelisk",
         "terrain": [1, 2, 3, 4, 5],
         "per-region": 1,
-        "visit": true
+        "action": "visit"
     },
     "resource": {
         "name": "Gold",
@@ -51,7 +52,7 @@
         "terrain": [1, 2, 3, 4, 5],
         "per-region": 1,
         "per-castle": 2,
-        "visit": false
+        "action": "pickup"
     },
     "shipwreck": {
         "name": "Shipwreck",
@@ -59,7 +60,7 @@
         "img-visited": "shipwreck-visited",
         "terrain": [0],
         "per-coastline": 1,
-        "visit": true,
+        "action": "visit",
         "defender": "skel"
     },
     "village": {
@@ -68,7 +69,7 @@
         "terrain": [1, 2, 3, 4, 5],
         "per-region": 1,
         "per-castle": 0,
-        "flag": true
+        "action": "flag"
     },
     "windmill": {
         "name": "Windmill",
@@ -77,6 +78,6 @@
         "per-region": 1,
         "per-castle": 1,
         "probability": 50,
-        "flag": true
+        "action": "flag"
     }
 }
