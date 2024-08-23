@@ -25,15 +25,16 @@ Each identifier is wrapped in X(), which is defined separately for each usage.
     X(quux)
 
 
-This first usage declares an enumeration.
+This first usage declares an enumeration.  The functions in this file require
+enums to have a sentry value called 'none'.
 
 #define X(str) str,
-    enum class Foo {FOO_TYPES invalid};
+    enum class Foo {FOO_TYPES none};
 #undef X
 
 It expands to:
 
-    enum class Foo {bar, baz, quux, invalid};
+    enum class Foo {bar, baz, quux, none};
 
 
 A second usage declares an array of strings.  It uses both the # and ##
@@ -64,7 +65,7 @@ const typename C::value_type & xname_from_xtype(const C &xnames, E enumValue)
     static const auto invalid = typename C::value_type();
 
     switch(enumValue) {
-        case E::invalid:
+        case E::none:
             return invalid;
         default:
             return xnames[static_cast<int>(enumValue)];
@@ -79,7 +80,7 @@ E xtype_from_xname(const C &xnames, const T &name)
 
     auto iter = find(begin(xnames), end(xnames), name);
     if (iter == end(xnames)) {
-        return E::invalid;
+        return E::none;
     }
 
     const auto index = distance(begin(xnames), iter);

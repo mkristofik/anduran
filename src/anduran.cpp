@@ -547,7 +547,7 @@ void Anduran::disembark_action(int entity, const Hex &hLand)
     }
 
     // If not, create one.
-    if (boat.type == ObjectType::invalid) {
+    if (boat.type == ObjectType::none) {
         boat.hex = thisObj.hex;
         boat.entity = rmapView_.addEntity(objImg_.get(ObjectType::boat),
                                           boat.hex,

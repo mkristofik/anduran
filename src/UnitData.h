@@ -21,7 +21,7 @@
     X(ranged)
 
 #define X(str) str,
-    enum class AttackType {ATT_TYPES invalid};
+    enum class AttackType {ATT_TYPES none};
 #undef X
 
 const std::string & att_name_from_type(AttackType type);

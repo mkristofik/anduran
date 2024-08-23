@@ -27,6 +27,7 @@ namespace
 #define X(str) #str ## s,
     using namespace std::string_literals;
     const std::array objNames = {OBJ_TYPES};
+    const std::array objActions = {OBJ_ACTIONS};
 #undef X
 
     void warn_unexpected(std::string_view dataType,
@@ -71,7 +72,7 @@ ObjectManager::ObjectManager(const std::string &configFile)
     for (auto m = doc.MemberBegin(); m != doc.MemberEnd(); ++m) {
         std::string name = m->name.GetString();
         auto objType = obj_type_from_name(name);
-        if (objType == ObjectType::invalid) {
+        if (objType == ObjectType::none) {
             log_warn("unrecognized object " + name);
             continue;
         }
@@ -208,4 +209,14 @@ const std::string & obj_name_from_type(ObjectType type)
 ObjectType obj_type_from_name(const std::string &name)
 {
     return xtype_from_xname<ObjectType>(objNames, name);
+}
+
+const std::string & obj_action_from_type(ObjectAction action)
+{
+    return xname_from_xtype(objActions, action);
+}
+
+ObjectAction obj_action_from_name(const std::string &name)
+{
+    return xtype_from_xname<ObjectAction>(objActions, name);
 }

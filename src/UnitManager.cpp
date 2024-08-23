@@ -72,7 +72,7 @@ UnitManager::UnitManager(const std::string &configFile,
                 }
                 else if (field == "attack-type") {
                     auto attType = att_type_from_name(value);
-                    if (attType != AttackType::invalid) {
+                    if (attType != AttackType::none) {
                         data.attack = attType;
                     }
                     else {

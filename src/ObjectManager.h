@@ -35,11 +35,18 @@
     X(village) \
     X(windmill)
 
-#define X(str) str,
-    enum class ObjectType {OBJ_TYPES invalid};
-#undef X
+#define OBJ_ACTIONS \
+    X(battle) \
+    X(disembark) \
+    X(embark) \
+    X(flag) \
+    X(pickup) \
+    X(visit)
 
-ITERABLE_ENUM_CLASS(ObjectAction, none, battle, visit, pickup, flag, embark, disembark);
+#define X(str) str,
+    enum class ObjectType {OBJ_TYPES none};
+    ITERABLE_ENUM_CLASS(ObjectAction, OBJ_ACTIONS none);
+#undef X
 
 
 struct MapObject
@@ -53,7 +60,7 @@ struct MapObject
     int numPerCastle = 0;
     int numPerCoastline = 0;
     int probability = 100;
-    ObjectType type = ObjectType::invalid;
+    ObjectType type = ObjectType::none;
     ObjectAction action = ObjectAction::pickup;
     bool fairDistance = false;  // try to place as far as possible from all castles
     bool teamColored = false;  // image uses the team color palette
@@ -93,5 +100,8 @@ private:
 
 const std::string & obj_name_from_type(ObjectType type);
 ObjectType obj_type_from_name(const std::string &name);
+
+const std::string & obj_action_from_type(ObjectAction action);
+ObjectAction obj_action_from_name(const std::string &name);
 
 #endif
