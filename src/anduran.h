@@ -45,6 +45,7 @@ struct PlayerState
     Team team = Team::neutral;
     int champion = -1;
     std::unique_ptr<PuzzleState> puzzle;
+    EnumSizedBitset<PuzzleType> artifacts;
 };
 
 
@@ -85,6 +86,7 @@ private:
     bool battle_action(int entity, int enemyId);
     void local_action(int entity);
     void dig_action(int entity);
+    bool artifact_found(PuzzleType type) const;
 
     std::string army_log(const Army &army) const;
     std::string battle_result_log(const Army &before, const BattleResult &result) const;
@@ -109,6 +111,7 @@ private:
     Team most_influence(int region) const;
 
     void next_turn(int nextPlayer);
+    void check_victory_condition();
 
     WindowConfig config_;
     SdlWindow win_;
@@ -138,7 +141,6 @@ private:
     PuzzleViewState curPuzzleView_;
     EnumSizedArray<std::unique_ptr<PuzzleDisplay>, PuzzleType> puzzleViews_;
     EnumSizedArray<int, PuzzleType> puzzleXsIds_;
-    EnumSizedBitset<PuzzleType> artifactsFound_;
 };
 
 #endif

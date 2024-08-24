@@ -35,6 +35,9 @@ public:
 
     int run();
 
+protected:
+    void game_over();
+
 private:
     virtual void update_frame(Uint32 elapsed_ms) = 0;
     virtual void handle_mouse_pos(Uint32 /*elapsed_ms*/) {}
@@ -47,6 +50,7 @@ private:
 
     Uint32 prevFrameTime_ms_;
     bool mouseInWindow_;
+    bool running_;
 };
 
 #endif

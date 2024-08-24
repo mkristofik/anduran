@@ -54,8 +54,7 @@ Anduran::Anduran()
     influence_(rmap_.numRegions()),
     curPuzzleView_(),
     puzzleViews_(),
-    puzzleXsIds_(),
-    artifactsFound_()
+    puzzleXsIds_()
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
@@ -78,6 +77,7 @@ void Anduran::update_frame(Uint32 elapsed_ms)
     // Wait until animations have finished running before updating the minimap.
     if (anims_.empty() && stateChanged_) {
         update_minimap();
+        check_victory_condition();
         stateChanged_ = false;
     }
 
@@ -742,7 +742,7 @@ void Anduran::dig_action(int entity)
         if (thisObj.hex != thisPlayer.puzzle->get_target(type)) {
             continue;
         }
-        else if (artifactsFound_[type]) {
+        else if (artifact_found(type)) {
             auto msg = std::format("You have located the {}, "
                                    "but it looks like others have found it first.",
                                    artifacts[type]);
@@ -762,11 +762,18 @@ void Anduran::dig_action(int entity)
         rmapView_.addEntity(images_.make_texture("puzzle-found", win_),
                             thisObj.hex,
                             ZOrder::object);
-        artifactsFound_.set(type);
+        thisPlayer.artifacts.set(type);
+        stateChanged_ = true;
         return;
     }
 
     anims_.push(AnimLog(rmapView_, "Nothing here.  Where could it be?"));
+}
+
+bool Anduran::artifact_found(PuzzleType type) const
+{
+    return std::ranges::any_of(players_,
+        [type] (auto &player) { return player.artifacts[type]; });
 }
 
 std::string Anduran::army_log(const Army &army) const
@@ -1062,7 +1069,7 @@ void Anduran::next_turn(int nextPlayer)
     // them.
     AnimSet puzzleAnim;
     for (auto type : PuzzleType()) {
-        if (!artifactsFound_[type] && players_[curPlayer_].puzzle->all_visited(type)) {
+        if (!artifact_found(type) && players_[curPlayer_].puzzle->all_visited(type)) {
             puzzleAnim.insert(AnimDisplay(rmapView_, puzzleXsIds_[type]));
         }
         else {
@@ -1070,6 +1077,16 @@ void Anduran::next_turn(int nextPlayer)
         }
     }
     anims_.push(puzzleAnim);
+}
+
+void Anduran::check_victory_condition()
+{
+    if (players_[curPlayer_].artifacts.all()) {
+        log_info("The three artifacts magically combine into one, "
+                 "forming the legendary Battle Garb of Anduran!  "
+                 "Your quest is complete.");
+        game_over();
+    }
 }
 
 

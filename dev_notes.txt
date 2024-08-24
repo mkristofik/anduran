@@ -17,7 +17,7 @@
     - but for now it gives us something else to do in each region
 - defeating an enemy champion gives a copy of his puzzle pieces
 * puzzle piece reveals random tile(s) on the map for its corresponding artifact
-- each puzzle map is 13x7
+* each puzzle map is 13x7
     * X marks the spot in the center
     * this means artifacts have to be buried away from the edges of the map
     * shows terrain, edges, obstacles, and fixed objects without their flags
@@ -28,7 +28,7 @@
     * when the X has been revealed, show it on the adventure map
     * require a minimum number of pieces revealed before the center piece could be
     shown
-    - this would be a problem if more than 91 regions per obelisk type
+    * this would be a problem if more than 91 regions per obelisk type
 * number of pieces = number of regions with that obelisk type
     * pre-assign each piece to a group of hexes, divided evenly
     * prefer hexes to be contiguous if possible
@@ -53,13 +53,11 @@
 - digging
     * press D key
     * hex must be on land, and empty except for the champion itself
-    - if on the target hex
-        - assign the artifact to the player
+    * if on the target hex
+        * assign the artifact to the player
         * replace X with a trapdoor visible to all players
     - show a hole in the ground for unsuccessful digs
-    - if a player has all three artifacts, they win
-    - "The three artifacts magically combine into one, forming the legendary Battle
-    Garb of Anduran!  Your quest is complete."
+    * if a player has all three artifacts, they win
 
 
 # Game display

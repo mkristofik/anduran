@@ -25,7 +25,8 @@ namespace
 
 SdlApp::SdlApp()
     : prevFrameTime_ms_(0),
-    mouseInWindow_(true)
+    mouseInWindow_(true),
+    running_(true)
 {
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
         log_critical(std::format("couldn't initialize SDL: {}", SDL_GetError()),
@@ -63,9 +64,14 @@ int SdlApp::run()
     return EXIT_SUCCESS;
 }
 
+void SdlApp::game_over()
+{
+    running_ = false;
+}
+
 void SdlApp::do_game_loop()
 {
-    while (true) {
+    while (running_) {
         // TODO: prefer 64-bit SDL_GetTicks64
         const auto curTime_ms = SDL_GetTicks();
         const auto elapsed_ms = curTime_ms - prevFrameTime_ms_;
