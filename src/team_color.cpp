@@ -222,13 +222,14 @@ SdlSurface flagToRefColor(const SdlSurface &src)
     return imgCopy;
 }
 
-// TODO: profiling suggests these are slow
 bool operator==(const SDL_Color &lhs, const SDL_Color &rhs)
 {
-    return std::tie(lhs.r, lhs.g, lhs.b) == std::tie(rhs.r, rhs.g, rhs.b);
+    return (lhs.r == rhs.r) && (lhs.g == rhs.g) && (lhs.b == rhs.b);
 }
 
 bool operator<(const SDL_Color &lhs, const SDL_Color &rhs)
 {
-    return std::tie(lhs.r, lhs.g, lhs.b) < std::tie(rhs.r, rhs.g, rhs.b);
+    return (lhs.r < rhs.r) ||
+        (lhs.r == rhs.r && lhs.g < rhs.g) ||
+        (lhs.r == rhs.r && lhs.g == rhs.g && lhs.b < rhs.b);
 }

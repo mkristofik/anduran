@@ -346,8 +346,6 @@ void PuzzleDisplay::draw_border()
     }
 }
 
-// TODO: this makes the game noticeably slower to start
-// current theory is the comparison of color to teamColor is slow
 void PuzzleDisplay::apply_filters()
 {
     SdlEditSurface edit(mapLayer_);
