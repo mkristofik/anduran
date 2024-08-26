@@ -72,7 +72,6 @@ void SdlApp::game_over()
 void SdlApp::do_game_loop()
 {
     while (running_) {
-        // TODO: prefer 64-bit SDL_GetTicks64
         const auto curTime_ms = SDL_GetTicks();
         const auto elapsed_ms = curTime_ms - prevFrameTime_ms_;
         prevFrameTime_ms_ = curTime_ms;

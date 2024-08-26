@@ -39,6 +39,7 @@ namespace
                                                        int w,
                                                        int h)
     {
+        // TODO: use SDL_GetWindowPixelFormat instead
         auto img = SDL_CreateTexture(renderer,
                                      SDL_PIXELFORMAT_RGBA32,
                                      SDL_TEXTUREACCESS_STREAMING,

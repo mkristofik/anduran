@@ -159,6 +159,8 @@ int SdlEditSurface::size() const
     return ssize(pixels_);
 }
 
+// TODO: want accessor for the raw color value, and function to convert an
+// SDL_Color to Uint32 using the surface format.
 SDL_Color SdlEditSurface::get_pixel(int index) const
 {
     SDL_Color color;

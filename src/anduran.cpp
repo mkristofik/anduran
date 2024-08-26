@@ -62,11 +62,6 @@ Anduran::Anduran()
     load_objects();
     load_battle_accents();
     init_puzzles();
-
-    auto &puzzle = *players_[playerOrder_[Team::red]].puzzle;
-    for (auto tile : rmap_.getObjectTiles(ObjectType::obelisk)) {
-        puzzle.visit(tile);
-    }
 }
 
 void Anduran::update_frame(Uint32 elapsed_ms)
@@ -407,7 +402,6 @@ void Anduran::load_battle_accents()
     }
 }
 
-// TODO: this makes the game noticeably slower to start
 void Anduran::init_puzzles()
 {
     // This assigns each obelisk randomly to each puzzle map, important that we
