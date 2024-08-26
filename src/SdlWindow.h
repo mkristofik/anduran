@@ -28,6 +28,7 @@ public:
     void update();
 
     SDL_Rect get_bounds() const;
+    Uint32 get_pixel_format() const;
 
     SDL_Window * get() const;
     SDL_Renderer * renderer() const;
@@ -35,6 +36,7 @@ public:
 private:
     std::shared_ptr<SDL_Window> window_;
     std::shared_ptr<SDL_Renderer> renderer_;
+    Uint32 format_;
 };
 
 

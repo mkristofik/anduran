@@ -29,7 +29,6 @@ class SdlSurface
 public:
     SdlSurface(SDL_Surface *surf = nullptr);
     explicit SdlSurface(const char *filename);
-    SdlSurface(int width, int height);  // TODO: this is unused
 
     const SDL_Rect & rect_size() const;
 

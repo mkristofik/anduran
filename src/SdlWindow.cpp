@@ -18,7 +18,8 @@
 
 SdlWindow::SdlWindow(int width, int height, const char *caption)
     : window_(),
-    renderer_()
+    renderer_(),
+    format_(0)
 {
     SDL_Window *win = nullptr;
     SDL_Renderer *ren = nullptr;
@@ -31,6 +32,14 @@ SdlWindow::SdlWindow(int width, int height, const char *caption)
     SDL_SetWindowTitle(win, caption);
     window_.reset(win, SDL_DestroyWindow);
     renderer_.reset(ren, SDL_DestroyRenderer);
+
+    SDL_RendererInfo info;
+    if (SDL_GetRendererInfo(renderer_.get(), &info) < 0) {
+        log_critical(std::format("couldn't get window pixel format : {}", SDL_GetError()),
+                     LogCategory::video);
+        throw std::runtime_error(SDL_GetError());
+    }
+    format_ = info.texture_formats[0];
 
     // Force a draw event to avoid a blank white window at startup while we're
     // busy loading game objects.
@@ -57,6 +66,11 @@ SDL_Rect SdlWindow::get_bounds() const
     int height = 0;
     SDL_GetRendererOutputSize(renderer(), &width, &height);
     return {0, 0, width, height};
+}
+
+Uint32 SdlWindow::get_pixel_format() const
+{
+    return format_;
 }
 
 SDL_Window * SdlWindow::get() const

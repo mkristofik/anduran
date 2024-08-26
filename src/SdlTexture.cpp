@@ -35,13 +35,10 @@ namespace
         return {img, SDL_DestroyTexture};
     }
 
-    std::shared_ptr<SDL_Texture> make_editable_texture(SDL_Renderer *renderer,
-                                                       int w,
-                                                       int h)
+    std::shared_ptr<SDL_Texture> make_editable_texture(SdlWindow &win, int w, int h)
     {
-        // TODO: use SDL_GetWindowPixelFormat instead
-        auto img = SDL_CreateTexture(renderer,
-                                     SDL_PIXELFORMAT_RGBA32,
+        auto img = SDL_CreateTexture(win.renderer(),
+                                     win.get_pixel_format(),
                                      SDL_TEXTUREACCESS_STREAMING,
                                      w,
                                      h);
@@ -122,7 +119,7 @@ SdlTexture SdlTexture::make_editable_image(SdlWindow &win, int width, int height
     impl.cols = 1;
     impl.frameWidth = width;
     impl.frameHeight = height;
-    impl.texture = make_editable_texture(impl.renderer, width, height);
+    impl.texture = make_editable_texture(win, width, height);
     impl.editable = true;
 
     return self;

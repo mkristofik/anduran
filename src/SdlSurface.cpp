@@ -36,15 +36,6 @@ SdlSurface::SdlSurface(const char *filename)
     }
 }
 
-SdlSurface::SdlSurface(int width, int height)
-    : SdlSurface(SDL_CreateRGBSurfaceWithFormat(0,
-                                                width,
-                                                height,
-                                                32,
-                                                SDL_PIXELFORMAT_RGBA32))
-{
-}
-
 const SDL_Rect & SdlSurface::rect_size() const
 {
     return rectSize_;
