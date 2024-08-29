@@ -97,6 +97,8 @@ MapDisplay::MapDisplay(SdlWindow &win,
     waterPathImg_(),
     pathIds_()
 {
+    window_->log_msg("begin MapDisplay ctor");
+
     // Set the scroll limit such that the lower right hex is fully visible inside
     // the window.
     auto pSize = mapSize();
@@ -140,6 +142,8 @@ MapDisplay::MapDisplay(SdlWindow &win,
     pathImg_[ObjectAction::embark] = images_->make_texture("icon-embark", *window_);
     pathImg_[ObjectAction::disembark] = images_->make_texture("icon-disembark", *window_);
     waterPathImg_ = images_->make_texture("icon-path-water", *window_);
+
+    window_->log_msg("MapDisplay ctor complete");
 }
 
 SDL_Point MapDisplay::mapSize() const

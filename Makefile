@@ -62,6 +62,7 @@ MAPVIEW_SRC = MapDisplay.cpp \
 	SdlImageManager.cpp \
 	SdlSurface.cpp \
 	SdlTexture.cpp \
+	SdlTimer.cpp \
 	SdlWindow.cpp \
 	WindowConfig.cpp \
 	hex_utils.cpp \
@@ -90,6 +91,7 @@ ANDURAN_SRC = AnimQueue.cpp \
 	SdlImageManager.cpp \
 	SdlSurface.cpp \
 	SdlTexture.cpp \
+	SdlTimer.cpp \
 	SdlWindow.cpp \
 	UnitData.cpp \
 	UnitManager.cpp \

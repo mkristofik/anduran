@@ -16,6 +16,11 @@
 #include "log_utils.h"
 #include "SDL.h"
 
+void log_debug(const std::string &msg, LogCategory category)
+{
+    SDL_LogDebug(static_cast<int>(category), msg.c_str());
+}
+
 void log_info(const std::string &msg, LogCategory category)
 {
     SDL_LogInfo(static_cast<int>(category), msg.c_str());

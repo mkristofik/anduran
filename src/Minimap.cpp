@@ -13,6 +13,7 @@
 #include "Minimap.h"
 
 #include "SdlImageManager.h"
+#include "SdlWindow.h"
 #include "container_utils.h"
 #include "iterable_enum_class.h"
 #include "log_utils.h"
@@ -71,6 +72,8 @@ Minimap::Minimap(SdlWindow &win,
     auto viewFrac = rmapView_->getDisplayFrac();
     box_.w = viewFrac.x * displayRect_.w;
     box_.h = viewFrac.y * displayRect_.h;
+
+    win.log_msg("Minimap ctor complete");
 }
 
 void Minimap::draw()

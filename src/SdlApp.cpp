@@ -41,7 +41,10 @@ SdlApp::SdlApp()
         throw std::runtime_error("SDL_image init error");
     }
 
+    // Allow certain log messages prior to app startup.  Suppress an annoying
+    // render log message: https://github.com/libsdl-org/SDL/issues/7959
     SDL_LogSetPriority(SDL_LOG_CATEGORY_VIDEO, SDL_LOG_PRIORITY_VERBOSE);
+    SDL_LogSetPriority(SDL_LOG_CATEGORY_APPLICATION, SDL_LOG_PRIORITY_VERBOSE);
 }
 
 SdlApp::~SdlApp()
