@@ -84,7 +84,7 @@ SDL_Renderer * SdlWindow::renderer() const
     return renderer_.get();
 }
 
-void SdlWindow::log_msg(const std::string &msg) const
+void SdlWindow::log(const std::string &msg) const
 {
     ::log_debug(std::format("[{:0.2f} ms] {}", debugTimer_.get_elapsed_ms(), msg));
 }

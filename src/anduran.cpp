@@ -58,13 +58,13 @@ Anduran::Anduran()
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
-    win_.log_msg("game init start");
+    win_.log("game init start");
     load_players();
     load_objects();
     load_battle_accents();
-    win_.log_msg("game assets loaded");
+    win_.log("game assets loaded");
     init_puzzles();
-    win_.log_msg("puzzle init complete");
+    win_.log("puzzle init complete");
 }
 
 void Anduran::update_frame(Uint32 elapsed_ms)

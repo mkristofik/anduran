@@ -73,7 +73,7 @@ Minimap::Minimap(SdlWindow &win,
     box_.w = viewFrac.x * displayRect_.w;
     box_.h = viewFrac.y * displayRect_.h;
 
-    win.log_msg("Minimap ctor complete");
+    win.log("Minimap ctor complete");
 }
 
 void Minimap::draw()

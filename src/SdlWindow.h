@@ -37,7 +37,7 @@ public:
     SDL_Renderer * renderer() const;
 
     // Log a message with a timestamp from the creation of the window.
-    void log_msg(const std::string &msg) const;
+    void log(const std::string &msg) const;
 
 private:
     std::shared_ptr<SDL_Window> window_;
