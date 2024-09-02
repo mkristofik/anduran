@@ -14,18 +14,11 @@
 #define UNIT_DATA_H
 
 #include "RandomRange.h"
+#include "iterable_enum_class.h"
+
 #include <string>
 
-#define ATT_TYPES \
-    X(melee) \
-    X(ranged)
-
-#define X(str) str,
-    enum class AttackType {ATT_TYPES none};
-#undef X
-
-const std::string & att_name_from_type(AttackType type);
-AttackType att_type_from_name(const std::string &name);
+ITERABLE_ENUM_CLASS(AttackType, melee, ranged);
 
 
 struct UnitData

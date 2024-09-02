@@ -71,9 +71,9 @@ UnitManager::UnitManager(const std::string &configFile,
                     media.projectile = load_image(value);
                 }
                 else if (field == "attack-type") {
-                    auto attType = att_type_from_name(value);
-                    if (attType != AttackType::none) {
-                        data.attack = attType;
+                    auto optType = AttackType_from_str(value);
+                    if (optType) {
+                        data.attack = *optType;
                     }
                     else {
                         log_warn(std::format("Unexpected attack-type value [{}]: {}",

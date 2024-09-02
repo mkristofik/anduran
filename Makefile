@@ -93,7 +93,6 @@ ANDURAN_SRC = AnimQueue.cpp \
 	SdlTexture.cpp \
 	SdlTimer.cpp \
 	SdlWindow.cpp \
-	UnitData.cpp \
 	UnitManager.cpp \
 	WindowConfig.cpp \
 	anduran.cpp \
@@ -113,7 +112,6 @@ UNITTESTS_SRC = GameState.cpp \
 	ObjectManager.cpp \
 	RandomMap.cpp \
 	RandomRange.cpp \
-	UnitData.cpp \
 	battle_utils.cpp \
 	hex_utils.cpp \
 	json_utils.cpp \
