@@ -1,13 +1,13 @@
 /*
-    Copyright (C) 2016-2023 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anudran project.
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License version 2
     or at your option any later version.
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY.
- 
+
     See the COPYING.txt file for more details.
 */
 
@@ -28,14 +28,52 @@
 //     // doSomething(f);
 // }
 
+// This facility also provides functions to convert to and from a string
+// representation of the enumerators.
+//
+// std::optional<Foo> Foo_from_str(std::string_view sv)
+//     - returns the Foo matching 'sv', or empty if not found
+//
+// std::string_view str_from_Foo(Foo f)
+//     - returns the string representation of 'f'
+
 #ifndef ITERABLE_ENUM_CLASS_H
 #define ITERABLE_ENUM_CLASS_H
 
+#include "boost/preprocessor.hpp"
+
+#include <algorithm>
 #include <array>
 #include <bitset>
 #include <concepts>
 #include <cstddef>
+#include <optional>
+#include <string>
+#include <string_view>
 #include <type_traits>
+
+#define DATA_name(T) T ## _secretData
+
+// Convert an enumerator to its string representation followed by a comma, for
+// the initialization of the data array.  The 'z' parameter is used internally
+// by BOOST_PP_REPEAT but is otherwise ignored.
+#define MAKE_array_elem(z, n, tuple) \
+    BOOST_PP_STRINGIZE(BOOST_PP_TUPLE_ELEM(n, tuple)) BOOST_PP_COMMA()
+
+// Create an array to hold the string representation of each enumerator.  We have
+// to create a tuple so all the enumerators appear as a single argument.
+// TODO: C++23 will let us embed this as a static variable inside the string
+// conversion functions.
+#define MAKE_secret_array(T, ...) \
+    constexpr std::array<std::string, BOOST_PP_VARIADIC_SIZE(__VA_ARGS__)> \
+    DATA_name(T) = { \
+        BOOST_PP_REPEAT( \
+            BOOST_PP_VARIADIC_SIZE(__VA_ARGS__), \
+            MAKE_array_elem, \
+            BOOST_PP_VARIADIC_TO_TUPLE(__VA_ARGS__) \
+        ) \
+    }
+
 
 #define ITERABLE_ENUM_CLASS(T, ...) \
     enum class T {__VA_ARGS__, _last, _first = 0}; \
@@ -47,7 +85,23 @@
     constexpr T operator*(T t) { return t; } \
     constexpr T begin(T) { return T::_first; } \
     constexpr T end(T) { return T::_last; } \
-    template <> struct IsIterableEnumClass<T> : std::true_type {};
+    template <> struct IsIterableEnumClass<T> : std::true_type {}; \
+    MAKE_secret_array(T, __VA_ARGS__); \
+    constexpr std::optional<T> T ## _from_str (std::string_view sv) \
+    { \
+        auto iter = find(begin(DATA_name(T)), end(DATA_name(T)), sv); \
+        if (iter == end(DATA_name(T))) { \
+            return {}; \
+        } \
+        auto index = distance(begin(DATA_name(T)), iter); \
+        return static_cast<T>(index); \
+    } \
+    constexpr std::string_view str_from_ ## T (T t) \
+    { \
+        using U = std::underlying_type_t<T>; \
+        return DATA_name(T)[U(t)]; \
+    }
+
 
 // Learned how to make a custom type trait from here:
 // https://akrzemi1.wordpress.com/2017/12/02/your-own-type-predicate/.  The macro
@@ -86,13 +140,13 @@ private:
 template <typename T, IterableEnum E>
 constexpr T & EnumSizedArray<T, E>::operator[](E index)
 {
-    return operator[](static_cast<size_type>(index));
+    return operator[](size_type(index));
 }
 
 template <typename T, IterableEnum E>
 constexpr const T & EnumSizedArray<T, E>::operator[](E index) const
 {
-    return operator[](static_cast<size_type>(index));
+    return operator[](size_type(index));
 }
 
 
@@ -114,13 +168,13 @@ private:
 template <IterableEnum E>
 constexpr bool EnumSizedBitset<E>::operator[](E index) const
 {
-    return operator[](static_cast<size_type>(index));
+    return operator[](size_type(index));
 }
 
 template <IterableEnum E>
 EnumSizedBitset<E> & EnumSizedBitset<E>::set(E index)
 {
-    set(static_cast<size_type>(index));
+    set(size_type(index));
     return *this;
 }
 
