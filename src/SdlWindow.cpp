@@ -19,7 +19,8 @@
 SdlWindow::SdlWindow(int width, int height, const char *caption)
     : window_(),
     renderer_(),
-    format_(0)
+    format_(0),
+    debugTimer_()
 {
     SDL_Window *win = nullptr;
     SDL_Renderer *ren = nullptr;
@@ -81,6 +82,11 @@ SDL_Window * SdlWindow::get() const
 SDL_Renderer * SdlWindow::renderer() const
 {
     return renderer_.get();
+}
+
+void SdlWindow::log(const std::string &msg) const
+{
+    log_debug(std::format("[{:0.2f} ms] {}", debugTimer_.get_elapsed_ms(), msg));
 }
 
 

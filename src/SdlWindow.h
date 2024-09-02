@@ -13,10 +13,13 @@
 #ifndef SDL_WINDOW_H
 #define SDL_WINDOW_H
 
+#include "SdlTimer.h"
+
 #include "SDL.h"
 #include "boost/core/noncopyable.hpp"
 
 #include <memory>
+#include <string>
 
 // Wrapper around SDL_Window and SDL_Renderer.
 class SdlWindow
@@ -33,10 +36,14 @@ public:
     SDL_Window * get() const;
     SDL_Renderer * renderer() const;
 
+    // Log a message with a timestamp from the creation of the window.
+    void log(const std::string &msg) const;
+
 private:
     std::shared_ptr<SDL_Window> window_;
     std::shared_ptr<SDL_Renderer> renderer_;
     Uint32 format_;
+    SdlTimer debugTimer_;
 };
 
 

@@ -27,6 +27,11 @@ namespace
 
 // LogCategory is only relevant for SDL, allows control over whether certain
 // classes of messages print or not.  It does not appear in the output.
+void log_debug(const std::string &msg, LogCategory)
+{
+    log_msg("DEBUG", msg);
+}
+
 void log_info(const std::string &msg, LogCategory)
 {
     log_msg("INFO", msg);

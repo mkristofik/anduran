@@ -1,13 +1,13 @@
 /*
     Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License version 2
     or at your option any later version.
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY.
- 
+
     See the COPYING.txt file for more details.
 */
 #include "MapDisplay.h"
@@ -97,6 +97,8 @@ MapDisplay::MapDisplay(SdlWindow &win,
     waterPathImg_(),
     pathIds_()
 {
+    window_->log("begin MapDisplay ctor");
+
     // Set the scroll limit such that the lower right hex is fully visible inside
     // the window.
     auto pSize = mapSize();
@@ -140,6 +142,8 @@ MapDisplay::MapDisplay(SdlWindow &win,
     pathImg_[ObjectAction::embark] = images_->make_texture("icon-embark", *window_);
     pathImg_[ObjectAction::disembark] = images_->make_texture("icon-disembark", *window_);
     waterPathImg_ = images_->make_texture("icon-path-water", *window_);
+
+    window_->log("MapDisplay ctor complete");
 }
 
 SDL_Point MapDisplay::mapSize() const

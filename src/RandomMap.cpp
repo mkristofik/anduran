@@ -1,13 +1,13 @@
 /*
     Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
- 
+
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License version 2
     or at your option any later version.
     This program is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY.
- 
+
     See the COPYING.txt file for more details.
 */
 #include "RandomMap.h"
@@ -320,9 +320,7 @@ int RandomMap::tileRegionCastleDistance(int index) const
 
 FlatMultimap<std::string, int>::ValueRange RandomMap::getObjectTiles(ObjectType type)
 {
-    auto name = obj_name_from_type(type);
-    assert(!name.empty());
-    return objectTiles_.find(name);
+    return objectTiles_.find(str_from_ObjectType(type));
 }
 
 const ObjectManager & RandomMap::getObjectConfig() const
@@ -1077,9 +1075,8 @@ int RandomMap::placeObjectInRegion(ObjectType type, int region)
 
 void RandomMap::placeObject(ObjectType type, int tile)
 {
-    auto name = obj_name_from_type(type);
-    assert(!name.empty());
-    objectTiles_.insert(name, tile);
+    auto name = str_from_ObjectType(type);
+    objectTiles_.insert(std::string(name), tile);
     tileOccupied_[tile] = 1;  // object tiles are walkable
 }
 

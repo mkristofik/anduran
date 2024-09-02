@@ -32,6 +32,7 @@ enum class LogCategory {
     input
 };
 
+void log_debug(const std::string &msg, LogCategory category = LogCategory::app);
 void log_info(const std::string &msg, LogCategory category = LogCategory::app);
 void log_warn(const std::string &msg, LogCategory category = LogCategory::app);
 void log_error(const std::string &msg, LogCategory category = LogCategory::app);

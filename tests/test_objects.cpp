@@ -23,9 +23,10 @@ BOOST_TEST_DONT_PRINT_LOG_VALUE(ObjectAction)
 
 BOOST_AUTO_TEST_CASE(names)
 {
-    BOOST_TEST(obj_type_from_name(obj_name_from_type(ObjectType::castle)) == ObjectType::castle);
-    BOOST_TEST(obj_name_from_type(ObjectType::none).empty());
-    BOOST_TEST(obj_type_from_name("bogus") == ObjectType::none);
+    BOOST_TEST(*ObjectAction_from_str(str_from_ObjectAction(ObjectAction::visit)) ==
+               ObjectAction::visit);
+    BOOST_TEST(str_from_ObjectAction(ObjectAction::none) == "none");
+    BOOST_TEST(!ObjectAction_from_str("bogus").has_value());
 }
 
 BOOST_AUTO_TEST_CASE(add_and_remove)

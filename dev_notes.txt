@@ -472,7 +472,7 @@ is next to or in front of a castle
 * will RandomRange support aggregate initialization?  UnitData could set all members
 in the header
 - replace boost flat_ containers with C++23 ones
-- use Boost.PreProcessor to automatically register types with x_macros.h
+* use Boost.PreProcessor to automatically register types with x_macros.h
     - std::type_index(typeid(E)) can be used to store a typename in a map
-    - could eliminate the xtype wrapper functions each type has to provide
-    - require iterable enum for this?  extension of it?
+    * could eliminate the xtype wrapper functions each type has to provide
+    * require iterable enum for this?  extension of it?
