@@ -24,12 +24,6 @@
 
 namespace
 {
-#define X(str) #str ## s,
-    using namespace std::string_literals;
-    const std::array objNames = {OBJ_TYPES};
-    const std::array objActions = {OBJ_ACTIONS};
-#undef X
-
     void warn_unexpected(std::string_view dataType,
                          std::string_view objName,
                          std::string_view fieldName)
@@ -71,14 +65,14 @@ ObjectManager::ObjectManager(const std::string &configFile)
 
     for (auto m = doc.MemberBegin(); m != doc.MemberEnd(); ++m) {
         std::string name = m->name.GetString();
-        auto objType = obj_type_from_name(name);
-        if (objType == ObjectType::none) {
+        auto optType = ObjectType_from_str(name);
+        if (!optType) {
             log_warn("unrecognized object " + name);
             continue;
         }
 
         MapObject obj;
-        obj.type = objType;
+        obj.type = *optType;
 
         for (auto f = m->value.MemberBegin(); f != m->value.MemberEnd(); ++f) {
             std::string field = f->name.GetString();
@@ -97,12 +91,13 @@ ObjectManager::ObjectManager(const std::string &configFile)
                     obj.defender = value;
                 }
                 else if (field == "action") {
-                    obj.action = obj_action_from_name(value);
-                    if (obj.action == ObjectAction::none) {
+                    auto optAction = ObjectAction_from_str(value);
+                    if (!optAction) {
                         log_warn(std::format("unexpected {} action '{}', using 'none'",
                                              name,
                                              value));
                     }
+                    obj.action = *optAction;
                 }
                 else {
                     warn_unexpected("string", name, field);
@@ -191,25 +186,4 @@ void ObjectManager::insert(const MapObject &obj)
 {
     objs_.push_back(obj);
     sort(std::begin(objs_), std::end(objs_));
-}
-
-
-const std::string & obj_name_from_type(ObjectType type)
-{
-    return xname_from_xtype(objNames, type);
-}
-
-ObjectType obj_type_from_name(const std::string &name)
-{
-    return xtype_from_xname<ObjectType>(objNames, name);
-}
-
-const std::string & obj_action_from_type(ObjectAction action)
-{
-    return xname_from_xtype(objActions, action);
-}
-
-ObjectAction obj_action_from_name(const std::string &name)
-{
-    return xtype_from_xname<ObjectAction>(objActions, name);
 }

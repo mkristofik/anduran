@@ -89,7 +89,7 @@
     MAKE_secret_array(T, __VA_ARGS__); \
     constexpr std::optional<T> T ## _from_str (std::string_view sv) \
     { \
-        auto iter = find(begin(DATA_name(T)), end(DATA_name(T)), sv); \
+        auto iter = std::ranges::find(DATA_name(T), sv); \
         if (iter == end(DATA_name(T))) { \
             return {}; \
         } \

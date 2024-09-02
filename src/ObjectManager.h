@@ -19,35 +19,31 @@
 #include <string>
 #include <vector>
 
+ITERABLE_ENUM_CLASS(ObjectType,
+    army,
+    boat,
+    camp,
+    castle,
+    champion,
+    chest,
+    harbor,
+    none,
+    oasis,
+    obelisk,
+    resource,
+    shipwreck,
+    village,
+    windmill);
 
-#define OBJ_TYPES \
-    X(army) \
-    X(boat) \
-    X(camp) \
-    X(castle) \
-    X(champion) \
-    X(chest) \
-    X(harbor) \
-    X(oasis) \
-    X(obelisk) \
-    X(resource) \
-    X(shipwreck) \
-    X(village) \
-    X(windmill)
-
-#define OBJ_ACTIONS \
-    X(battle) \
-    X(disembark) \
-    X(embark) \
-    X(flag) \
-    X(pickup) \
-    X(visit) \
-    X(visit_once)
-
-#define X(str) str,
-    enum class ObjectType {OBJ_TYPES none};
-    ITERABLE_ENUM_CLASS(ObjectAction, OBJ_ACTIONS none);
-#undef X
+ITERABLE_ENUM_CLASS(ObjectAction,
+    battle,
+    disembark,
+    embark,
+    flag,
+    none,
+    pickup,
+    visit,
+    visit_once);
 
 
 struct MapObject
@@ -97,12 +93,5 @@ public:
 private:
     std::vector<MapObject> objs_;
 };
-
-
-const std::string & obj_name_from_type(ObjectType type);
-ObjectType obj_type_from_name(const std::string &name);
-
-const std::string & obj_action_from_type(ObjectAction action);
-ObjectAction obj_action_from_name(const std::string &name);
 
 #endif

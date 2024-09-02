@@ -320,9 +320,7 @@ int RandomMap::tileRegionCastleDistance(int index) const
 
 FlatMultimap<std::string, int>::ValueRange RandomMap::getObjectTiles(ObjectType type)
 {
-    auto name = obj_name_from_type(type);
-    assert(!name.empty());
-    return objectTiles_.find(name);
+    return objectTiles_.find(str_from_ObjectType(type));
 }
 
 const ObjectManager & RandomMap::getObjectConfig() const
@@ -1077,9 +1075,8 @@ int RandomMap::placeObjectInRegion(ObjectType type, int region)
 
 void RandomMap::placeObject(ObjectType type, int tile)
 {
-    auto name = obj_name_from_type(type);
-    assert(!name.empty());
-    objectTiles_.insert(name, tile);
+    auto name = str_from_ObjectType(type);
+    objectTiles_.insert(std::string(name), tile);
     tileOccupied_[tile] = 1;  // object tiles are walkable
 }
 
