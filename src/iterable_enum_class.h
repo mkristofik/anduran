@@ -40,7 +40,12 @@
 #ifndef ITERABLE_ENUM_CLASS_H
 #define ITERABLE_ENUM_CLASS_H
 
-#include "boost/preprocessor.hpp"
+#include "boost/preprocessor/punctuation/comma.hpp"
+#include "boost/preprocessor/repetition/repeat.hpp"
+#include "boost/preprocessor/stringize.hpp"
+#include "boost/preprocessor/tuple/elem.hpp"
+#include "boost/preprocessor/variadic/size.hpp"
+#include "boost/preprocessor/variadic/to_tuple.hpp"
 
 #include <algorithm>
 #include <array>
