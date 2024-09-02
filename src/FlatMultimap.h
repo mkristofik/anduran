@@ -166,7 +166,7 @@ int FlatMultimap<K, V>::size()
 template <typename K, typename V>
 void FlatMultimap<K, V>::insert(const K &key, const V &value)
 {
-    data_.push_back(KeyValue{key, value});
+    data_.emplace_back(key, value);
     isDirty_ = true;
 }
 
