@@ -61,7 +61,8 @@ public:
     //     for (auto i = range.begin(); i != range.end(); ++i) {
     //         ...
     //     }
-    ValueRange find(const K &key);
+    template <typename T>
+    ValueRange find(const T &key);
 
     void reserve(int capacity);
     void shrink_to_fit();
@@ -122,12 +123,14 @@ public:
     };
 
 private:
-    friend bool operator<(const KeyValue &lhs, const K &rhs)
+    template <typename T>
+    friend bool operator<(const KeyValue &lhs, const T &rhs)
     {
         return lhs.key < rhs;
     }
 
-    friend bool operator<(const K &lhs, const KeyValue &rhs)
+    template <typename T>
+    friend bool operator<(const T &lhs, const KeyValue &rhs)
     {
         return lhs < rhs.key;
     }
@@ -168,7 +171,8 @@ void FlatMultimap<K, V>::insert(const K &key, const V &value)
 }
 
 template <typename K, typename V>
-typename FlatMultimap<K, V>::ValueRange FlatMultimap<K, V>::find(const K &key)
+template <typename T>
+typename FlatMultimap<K, V>::ValueRange FlatMultimap<K, V>::find(const T &key)
 {
     sortAndPrune();
 
