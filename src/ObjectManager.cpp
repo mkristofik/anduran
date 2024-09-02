@@ -14,7 +14,6 @@
 
 #include "json_utils.h"
 #include "log_utils.h"
-#include "x_macros.h"
 
 #include <algorithm>
 #include <filesystem>
@@ -92,12 +91,14 @@ ObjectManager::ObjectManager(const std::string &configFile)
                 }
                 else if (field == "action") {
                     auto optAction = ObjectAction_from_str(value);
-                    if (!optAction) {
+                    if (optAction) {
+                        obj.action = *optAction;
+                    }
+                    else {
                         log_warn(std::format("unexpected {} action '{}', using 'none'",
                                              name,
                                              value));
                     }
-                    obj.action = *optAction;
                 }
                 else {
                     warn_unexpected("string", name, field);

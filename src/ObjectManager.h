@@ -58,7 +58,7 @@ struct MapObject
     int numPerCoastline = 0;
     int probability = 100;
     ObjectType type = ObjectType::none;
-    ObjectAction action = ObjectAction::pickup;
+    ObjectAction action = ObjectAction::none;
     bool fairDistance = false;  // try to place as far as possible from all castles
     bool teamColored = false;  // image uses the team color palette
 };
