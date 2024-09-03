@@ -675,8 +675,12 @@ void Anduran::local_action(int entity)
                                 targetObj.secondary,
                                 objImg_.get_flag(targetObj.team)));
         game_.update_object(targetObj);
+
+        // Now visit the object as well.
+        action = ObjectAction::visit;
     }
-    else if (action == ObjectAction::visit_once) {
+
+    if (action == ObjectAction::visit_once) {
         // If the object has a separate image to mark that it's been visited,
         // replace it.  If we ever do this on a visit-per-team object, we'd have
         // to update the images at the start of each player's turn.

@@ -1039,9 +1039,10 @@ void RandomMap::placeCoastalObject(const MapObject &obj)
                 if (tileOccupied_[tile] || villageNeighbors_[tile]) {
                     continue;
                 }
-                // TODO: disallow a tile if all adjacent water tiles contain
-                // obstacles or other objects.  We don't want to place a harbor
-                // with nowhere to build a boat.
+                // TODO: don't place a harbor with nowhere to build a boat.
+                // Obstacles aren't placed yet, we have to prevent them from
+                // blocking them in.  Use the same strategy as villageNeighbors_?
+                // Harbors are also getting blocked in by shipwrecks.
 
                 int dist = regionCastleDistance_[region];
                 if (!obj.fairDistance) {

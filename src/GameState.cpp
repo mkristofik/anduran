@@ -100,8 +100,15 @@ GameAction GameState::hex_action(const GameObject &obj, const Hex &hex) const
 
     for (auto &targetObj : hexObjects) {
         auto action = objConfig_->get_action(targetObj.type);
-        if (action == ObjectAction::flag && targetObj.team != obj.team) {
-            return {action, targetObj};
+        if (action == ObjectAction::flag) {
+            // Flag the object if it's not owned by that team, but switch to a
+            // visit if it is.
+            if (targetObj.team != obj.team) {
+                return {action, targetObj};
+            }
+            else {
+                return {ObjectAction::visit, targetObj};
+            }
         }
         else if (action == ObjectAction::visit && !targetObj.visited[obj.team]) {
             return {action, targetObj};
