@@ -72,6 +72,9 @@ public:
     // Return the region(s) adjacent to the given border tile, or an empty range
     // if tile is not on a border with another region.
     FlatMultimap<int, int>::ValueRange getTileRegionNeighbors(int index);
+
+    // Return all adjacent tiles or regions that aren't outside the map grid.
+    FlatMultimap<int, int>::ValueRange getTileNeighbors(int index);
     FlatMultimap<int, int>::ValueRange getRegionNeighbors(int region);
 
     // Convert between integer and Hex representations of a tile location.
@@ -159,6 +162,7 @@ private:
     std::vector<int> castleRegions_;
     std::vector<int> regionCastleDistance_;  // how far from nearest castle?
     std::vector<signed char> villageNeighbors_;
+    std::vector<signed char> coastalObjectNeighbors_;
     FlatMultimap<std::string, int> objectTiles_;
     const ObjectManager *objectMgr_;
 };
