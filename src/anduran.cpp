@@ -666,7 +666,6 @@ void Anduran::local_action(int entity)
     auto thisObj = game_.get_object(entity);
     auto [action, targetObj] = game_.hex_action(thisObj, thisObj.hex);
 
-    // TODO: create a boat when visiting a harbor
     if (action == ObjectAction::flag) {
         // If we land on an object with a flag, change the flag color to
         // match the player's.
@@ -708,6 +707,50 @@ void Anduran::local_action(int entity)
                 puzzleViews_[puzzleType]->update(*player.puzzle);
                 curPuzzleView_.type = puzzleType;
                 curPuzzleView_.visible = true;
+            }
+        }
+        else if (targetObj.type == ObjectType::harbor) {
+            bool boatNearby = false;
+            Hex openWaterHex;
+            for (int iNbr : rmap_.getTileNeighbors(rmap_.intFromHex(thisObj.hex))) {
+                if (rmap_.getTerrain(iNbr) != Terrain::water) {
+                    continue;
+                }
+
+                Hex hNbr = rmap_.hexFromInt(iNbr);
+                auto objRange = game_.objects_in_hex(hNbr);
+                // TODO: operator bool to compare Hex against invalid?
+                if (openWaterHex == Hex::invalid() && objRange.empty()) {
+                    openWaterHex = hNbr;
+                }
+                if (!boatNearby &&
+                    std::ranges::any_of(objRange,
+                        [](auto &o) { return o.type == ObjectType::boat; }))
+                {
+                    boatNearby = true;
+                    break;
+                }
+            }
+
+            // Simulate the ability to buy a boat by creating one on an open water
+            // tile.
+            if (!boatNearby) {
+                if (openWaterHex != Hex::invalid()) {
+                    // Create a new boat but don't show it until the other
+                    // animations are complete.
+                    GameObject boat;
+                    boat.hex = openWaterHex;
+                    boat.entity =
+                        rmapView_.addHiddenEntity(objImg_.get(ObjectType::boat),
+                                                  ZOrder::unit);
+                    boat.type = ObjectType::boat;
+                    game_.add_object(boat);
+
+                    anims_.push(AnimDisplay(rmapView_, boat.entity, boat.hex));
+                }
+                else {
+                    log_warn("No open water hexes adjacent to Harbor Master");
+                }
             }
         }
 
