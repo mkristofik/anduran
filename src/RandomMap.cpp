@@ -348,7 +348,7 @@ FlatMultimap<int, int>::ValueRange RandomMap::getRegionNeighbors(int region)
 Hex RandomMap::hexFromInt(int index) const
 {
     if (offGrid(index)) {
-        return Hex::invalid();
+        return {};
     }
 
     return {index % width_, index / width_};
@@ -525,7 +525,7 @@ std::vector<Hex> RandomMap::voronoi()
 
     // Erase any empty regions.  Repeated runs of the Voronoi algorithm sometimes
     // causes small regions to be absorbed by their neighbors.
-    erase(centers, Hex::invalid());
+    erase(centers, Hex{});
 
     return centers;
 }

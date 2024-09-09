@@ -135,7 +135,7 @@ void Anduran::handle_lmouse_up()
     }
 
     const auto mouseHex = rmapView_.hexFromMousePos();
-    if (mouseHex == Hex::invalid()) {
+    if (!mouseHex) {
         return;
     }
 
@@ -560,7 +560,7 @@ void Anduran::disembark_action(int entity, const Hex &hLand)
     // neutral boat as the champion steps onto land.
     GameObject boat;
     for (auto &obj : game_.objects_by_type(ObjectType::boat)) {
-        if (obj.hex == Hex::invalid()) {
+        if (!obj.hex) {
             boat = obj;
             break;
         }
@@ -765,6 +765,7 @@ bool Anduran::artifact_found(PuzzleType type) const
         [type] (auto &player) { return player.artifacts[type]; });
 }
 
+// Simulate the ability to buy a boat by creating one on an open water tile.
 void Anduran::visit_harbor(const GameObject &visitor)
 {
     Hex openWaterHex;
@@ -775,8 +776,7 @@ void Anduran::visit_harbor(const GameObject &visitor)
 
         Hex hNbr = rmap_.hexFromInt(iNbr);
         auto objRange = game_.objects_in_hex(hNbr);
-        // TODO: operator bool to compare Hex against invalid?
-        if (openWaterHex == Hex::invalid() && objRange.empty()) {
+        if (!openWaterHex && objRange.empty()) {
             openWaterHex = hNbr;
         }
         // If there's already a boat on an adjacent hex, there's nothing to do.
@@ -786,24 +786,22 @@ void Anduran::visit_harbor(const GameObject &visitor)
         }
     }
 
-    // Simulate the ability to buy a boat by creating one on an open water
-    // tile.
-    if (openWaterHex != Hex::invalid()) {
-        // Create a new boat but don't show it until the other
-        // animations are complete.
-        GameObject boat;
-        boat.hex = openWaterHex;
-        boat.entity =
-            rmapView_.addHiddenEntity(objImg_.get(ObjectType::boat),
-                                      ZOrder::unit);
-        boat.type = ObjectType::boat;
-        game_.add_object(boat);
-
-        anims_.push(AnimDisplay(rmapView_, boat.entity, boat.hex));
-    }
-    else {
+    if (!openWaterHex) {
         log_warn("No open water hexes adjacent to Harbor Master");
+        return;
     }
+
+    // Create a new boat but don't show it until the other
+    // animations are complete.
+    GameObject boat;
+    boat.hex = openWaterHex;
+    boat.entity =
+        rmapView_.addHiddenEntity(objImg_.get(ObjectType::boat),
+                                  ZOrder::unit);
+    boat.type = ObjectType::boat;
+    game_.add_object(boat);
+
+    anims_.push(AnimDisplay(rmapView_, boat.entity, boat.hex));
 }
 
 void Anduran::visit_obelisk(const GameObject &visitor)
@@ -1025,7 +1023,7 @@ void Anduran::assign_influence()
 
     for (const auto &champion : game_.objects_by_type(ObjectType::champion)) {
         // Champions that have been defeated don't project influence anymore.
-        if (champion.hex != Hex::invalid()) {
+        if (champion.hex) {
             influence_[rmap_.getRegion(champion.hex)][champion.team] += 3;
         }
     }

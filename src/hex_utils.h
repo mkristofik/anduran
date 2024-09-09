@@ -36,7 +36,8 @@ struct Hex
 
     Hex();  // constructs an invalid hex
     Hex(int xPos, int yPos);
-    static const Hex & invalid();
+
+    explicit operator bool() const;  // return false if invalid
 
     // note: math on invalid hexes works like NaN: once invalid, always invalid
     Hex & operator+=(const Hex &rhs);

@@ -57,7 +57,7 @@ void GameState::remove_object(int id)
 
     // Must replace the object by copy to ensure indexes get updated.
     auto obj = *iter;
-    obj.hex = Hex::invalid();
+    obj.hex = {};
     entityIndex.replace(iter, obj);
     update_zoc();
 }
@@ -154,7 +154,7 @@ void GameState::update_zoc()
     zoc_.clear();
 
     for (auto &army : objects_by_type(ObjectType::army)) {
-        if (army.hex == Hex::invalid()) {
+        if (!army.hex) {
             continue;
         }
 
@@ -168,7 +168,7 @@ void GameState::update_zoc()
 
     // Champions control their hex only.
     for (auto &champion : objects_by_type(ObjectType::champion)) {
-        if (champion.hex != Hex::invalid()) {
+        if (champion.hex) {
             zoc_.insert_or_assign(champion.hex, champion.entity);
         }
     }

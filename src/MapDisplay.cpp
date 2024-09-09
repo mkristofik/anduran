@@ -331,7 +331,7 @@ void MapDisplay::handleMousePos(Uint32 elapsed_ms)
 Hex MapDisplay::hexFromMousePos() const
 {
     if (!mouse_in_rect(displayArea_)) {
-        return Hex::invalid();
+        return {};
     }
 
     auto adjMouse = static_cast<SDL_Point>(get_mouse_pos() + displayOffset_);
