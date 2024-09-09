@@ -87,6 +87,8 @@ private:
     void local_action(int entity);
     void dig_action(int entity);
     bool artifact_found(PuzzleType type) const;
+    void visit_harbor(const GameObject &visitor);
+    void visit_obelisk(const GameObject &visitor);
 
     std::string army_log(const Army &army) const;
     std::string battle_result_log(const Army &before, const BattleResult &result) const;
