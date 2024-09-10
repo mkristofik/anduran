@@ -31,15 +31,15 @@ Hex::Hex(int xPos, int yPos)
 {
 }
 
-const Hex & Hex::invalid()
+Hex::operator bool() const
 {
-    static const Hex h;
-    return h;
+    static const Hex invalid;
+    return *this != invalid;
 }
 
 Hex & Hex::operator+=(const Hex &rhs)
 {
-    if (*this != invalid() && rhs != invalid()) {
+    if (*this && rhs) {
         x += rhs.x;
         y += rhs.y;
     }
@@ -48,7 +48,7 @@ Hex & Hex::operator+=(const Hex &rhs)
 
 Hex & Hex::operator-=(const Hex &rhs)
 {
-    if (*this != invalid() && rhs != invalid()) {
+    if (*this && rhs) {
         x -= rhs.x;
         y -= rhs.y;
     }
@@ -93,7 +93,7 @@ Hex Hex::getNeighbor(HexDir d) const
                 return *this + Hex(-1, 0);
             }
         default:
-            return Hex::invalid();
+            return {};
     }
 }
 
@@ -142,8 +142,8 @@ Hex operator-(Hex lhs, const Hex &rhs)
 
 Hex operator/(const Hex &lhs, int rhs)
 {
-    if (lhs == Hex::invalid() || rhs == 0) {
-        return Hex::invalid();
+    if (!lhs || rhs == 0) {
+        return {};
     }
 
     return {lhs.x / rhs, lhs.y / rhs};
@@ -158,7 +158,7 @@ std::ostream & operator<<(std::ostream &os, const Hex &rhs)
 // source: Battle for Wesnoth, distance_between() in map_location.cpp.
 int hexDistance(const Hex &h1, const Hex &h2)
 {
-    if (h1 == Hex::invalid() || h2 == Hex::invalid()) {
+    if (!h1 || !h2) {
         return std::numeric_limits<int>::max();
     }
 

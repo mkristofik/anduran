@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE(actions)
     village.team = Team::red;
     game.update_object(village);
     hexAction = game.hex_action(player, Hex{1, 1});
-    BOOST_TEST(hexAction.action == ObjectAction::none);
+    BOOST_TEST(hexAction.action == ObjectAction::visit);
 
     hexAction = game.hex_action(player, Hex{2, 2});
     BOOST_TEST(hexAction.action == ObjectAction::pickup);

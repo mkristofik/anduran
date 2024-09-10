@@ -57,7 +57,7 @@ void GameState::remove_object(int id)
 
     // Must replace the object by copy to ensure indexes get updated.
     auto obj = *iter;
-    obj.hex = Hex::invalid();
+    obj.hex = {};
     entityIndex.replace(iter, obj);
     update_zoc();
 }
@@ -100,8 +100,15 @@ GameAction GameState::hex_action(const GameObject &obj, const Hex &hex) const
 
     for (auto &targetObj : hexObjects) {
         auto action = objConfig_->get_action(targetObj.type);
-        if (action == ObjectAction::flag && targetObj.team != obj.team) {
-            return {action, targetObj};
+        if (action == ObjectAction::flag) {
+            // Flag the object if it's not owned by that team, but switch to a
+            // visit if it is.
+            if (targetObj.team != obj.team) {
+                return {action, targetObj};
+            }
+            else {
+                return {ObjectAction::visit, targetObj};
+            }
         }
         else if (action == ObjectAction::visit && !targetObj.visited[obj.team]) {
             return {action, targetObj};
@@ -147,7 +154,7 @@ void GameState::update_zoc()
     zoc_.clear();
 
     for (auto &army : objects_by_type(ObjectType::army)) {
-        if (army.hex == Hex::invalid()) {
+        if (!army.hex) {
             continue;
         }
 
@@ -161,7 +168,7 @@ void GameState::update_zoc()
 
     // Champions control their hex only.
     for (auto &champion : objects_by_type(ObjectType::champion)) {
-        if (champion.hex != Hex::invalid()) {
+        if (champion.hex) {
             zoc_.insert_or_assign(champion.hex, champion.entity);
         }
     }

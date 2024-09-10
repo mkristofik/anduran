@@ -135,7 +135,7 @@ void Anduran::handle_lmouse_up()
     }
 
     const auto mouseHex = rmapView_.hexFromMousePos();
-    if (mouseHex == Hex::invalid()) {
+    if (!mouseHex) {
         return;
     }
 
@@ -560,7 +560,7 @@ void Anduran::disembark_action(int entity, const Hex &hLand)
     // neutral boat as the champion steps onto land.
     GameObject boat;
     for (auto &obj : game_.objects_by_type(ObjectType::boat)) {
-        if (obj.hex == Hex::invalid()) {
+        if (!obj.hex) {
             boat = obj;
             break;
         }
@@ -666,7 +666,6 @@ void Anduran::local_action(int entity)
     auto thisObj = game_.get_object(entity);
     auto [action, targetObj] = game_.hex_action(thisObj, thisObj.hex);
 
-    // TODO: create a boat when visiting a harbor
     if (action == ObjectAction::flag) {
         // If we land on an object with a flag, change the flag color to
         // match the player's.
@@ -675,8 +674,12 @@ void Anduran::local_action(int entity)
                                 targetObj.secondary,
                                 objImg_.get_flag(targetObj.team)));
         game_.update_object(targetObj);
+
+        // Now visit the object as well.
+        action = ObjectAction::visit;
     }
-    else if (action == ObjectAction::visit_once) {
+
+    if (action == ObjectAction::visit_once) {
         // If the object has a separate image to mark that it's been visited,
         // replace it.  If we ever do this on a visit-per-team object, we'd have
         // to update the images at the start of each player's turn.
@@ -689,22 +692,11 @@ void Anduran::local_action(int entity)
         game_.update_object(targetObj);
     }
     else if (action == ObjectAction::visit) {
-        if (targetObj.type == ObjectType::obelisk) {
-            if (thisObj.team != Team::neutral) {
-                auto &player = players_[playerOrder_[thisObj.team]];
-                int index = rmap_.intFromHex(targetObj.hex);
-                auto puzzleType = player.puzzle->obelisk_type(index);
-
-                // Show the X on the map when the puzzle is complete
-                player.puzzle->visit(index);
-                if (player.puzzle->all_visited(puzzleType)) {
-                    anims_.push(AnimDisplay(rmapView_, puzzleXsIds_[puzzleType]));
-                }
-
-                puzzleViews_[puzzleType]->update(*player.puzzle);
-                curPuzzleView_.type = puzzleType;
-                curPuzzleView_.visible = true;
-            }
+        if (targetObj.type == ObjectType::harbor) {
+            visit_harbor(thisObj);
+        }
+        else if (targetObj.type == ObjectType::obelisk) {
+            visit_obelisk(thisObj);
         }
 
         targetObj.visited.set(thisObj.team);
@@ -771,6 +763,66 @@ bool Anduran::artifact_found(PuzzleType type) const
 {
     return std::ranges::any_of(players_,
         [type] (auto &player) { return player.artifacts[type]; });
+}
+
+// Simulate the ability to buy a boat by creating one on an open water tile.
+void Anduran::visit_harbor(const GameObject &visitor)
+{
+    Hex openWaterHex;
+    for (int iNbr : rmap_.getTileNeighbors(rmap_.intFromHex(visitor.hex))) {
+        if (rmap_.getTerrain(iNbr) != Terrain::water) {
+            continue;
+        }
+
+        Hex hNbr = rmap_.hexFromInt(iNbr);
+        auto objRange = game_.objects_in_hex(hNbr);
+        if (!openWaterHex && objRange.empty()) {
+            openWaterHex = hNbr;
+        }
+        // If there's already a boat on an adjacent hex, there's nothing to do.
+        if (std::ranges::any_of(objRange,
+                                [](auto &o) { return o.type == ObjectType::boat; })) {
+            return;
+        }
+    }
+
+    if (!openWaterHex) {
+        log_warn("No open water hexes adjacent to Harbor Master");
+        return;
+    }
+
+    // Create a new boat but don't show it until the other
+    // animations are complete.
+    GameObject boat;
+    boat.hex = openWaterHex;
+    boat.entity =
+        rmapView_.addHiddenEntity(objImg_.get(ObjectType::boat),
+                                  ZOrder::unit);
+    boat.type = ObjectType::boat;
+    game_.add_object(boat);
+
+    anims_.push(AnimDisplay(rmapView_, boat.entity, boat.hex));
+}
+
+void Anduran::visit_obelisk(const GameObject &visitor)
+{
+    if (visitor.team == Team::neutral) {
+        return;
+    }
+
+    auto &player = players_[playerOrder_[visitor.team]];
+    int index = rmap_.intFromHex(visitor.hex);
+    auto puzzleType = player.puzzle->obelisk_type(index);
+
+    // Show the X on the map when the puzzle is complete
+    player.puzzle->visit(index);
+    if (player.puzzle->all_visited(puzzleType)) {
+        anims_.push(AnimDisplay(rmapView_, puzzleXsIds_[puzzleType]));
+    }
+
+    puzzleViews_[puzzleType]->update(*player.puzzle);
+    curPuzzleView_.type = puzzleType;
+    curPuzzleView_.visible = true;
 }
 
 std::string Anduran::army_log(const Army &army) const
@@ -971,7 +1023,7 @@ void Anduran::assign_influence()
 
     for (const auto &champion : game_.objects_by_type(ObjectType::champion)) {
         // Champions that have been defeated don't project influence anymore.
-        if (champion.hex != Hex::invalid()) {
+        if (champion.hex) {
             influence_[rmap_.getRegion(champion.hex)][champion.team] += 3;
         }
     }

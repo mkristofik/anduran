@@ -38,6 +38,9 @@
     * show the known pieces
     - fade in the newly revealed piece, if any
     - be able to switch between maps easily
+        - handle key_up events, left and right arrow
+        - status code to know when to clear it and possibly redraw a different type
+            - close_ok, cancel, left_arrow, right_arrow
     * close window easily
 - rendering popup windows
     * animations have to finish (e.g., a champion moving into a village) before
@@ -180,6 +183,13 @@ destination hex
         * game will have more rules on top of that
 * create a boat version of the footsteps
 - should zone of control extend from land into water or vice versa?
+- should adjacent water regions be collapsed into a single region?
+    - RandomMap would have to assign terrain before building neighbor graphs
+    - is it ok if a region became empty?
+    - water becomes a shortcut between distant land regions, be careful
+        - could change fair castle distance calculation
+        - hesitant to enable anything that behaves like Dimension Door
+- do we want no obstacles in water?
 
 
 # Polish

@@ -192,7 +192,7 @@ void AnimDisplay::start()
     auto obj = get_entity(entity_);
 
     obj.visible = true;
-    if (hex_ != Hex::invalid()) {
+    if (hex_) {
         obj.hex = hex_;
     }
 

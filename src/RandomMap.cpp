@@ -153,6 +153,7 @@ RandomMap::RandomMap(int width, const ObjectManager &objMgr)
     castleRegions_(),
     regionCastleDistance_(),
     villageNeighbors_(size_, 0),
+    coastalObjectNeighbors_(size_, 0),
     objectTiles_(),
     objectMgr_(&objMgr)
 {
@@ -186,6 +187,7 @@ RandomMap::RandomMap(const char *filename, const ObjectManager &objMgr)
     castles_(),
     castleRegions_(),
     villageNeighbors_(),
+    coastalObjectNeighbors_(),
     objectTiles_(),
     objectMgr_(&objMgr)
 {
@@ -333,6 +335,11 @@ FlatMultimap<int, int>::ValueRange RandomMap::getTileRegionNeighbors(int index)
     return tileRegionNeighbors_.find(index);
 }
 
+FlatMultimap<int, int>::ValueRange RandomMap::getTileNeighbors(int index)
+{
+    return tileNeighbors_.find(index);
+}
+
 FlatMultimap<int, int>::ValueRange RandomMap::getRegionNeighbors(int region)
 {
     return regionNeighbors_.find(region);
@@ -341,7 +348,7 @@ FlatMultimap<int, int>::ValueRange RandomMap::getRegionNeighbors(int region)
 Hex RandomMap::hexFromInt(int index) const
 {
     if (offGrid(index)) {
-        return Hex::invalid();
+        return {};
     }
 
     return {index % width_, index / width_};
@@ -412,7 +419,7 @@ void RandomMap::buildNeighborGraphs()
 
             regionNeighbors_.insert(region, nbrRegion);
             // Not concerned about duplicates.
-            borderTiles_.push_back({i, nbrTile});
+            borderTiles_.emplace_back(i, nbrTile);
         }
     }
 
@@ -469,7 +476,10 @@ void RandomMap::assignObstacles()
 
     // Any value above the threshold gets an obstacle.
     for (int i = 0; i < size_; ++i) {
-        if (values[i] > OBSTACLE_LEVEL && !tileOccupied_[i]) {
+        if (values[i] > OBSTACLE_LEVEL &&
+            !tileOccupied_[i] &&
+            !coastalObjectNeighbors_[i])
+        {
             setObstacle(i);
         }
     }
@@ -515,7 +525,7 @@ std::vector<Hex> RandomMap::voronoi()
 
     // Erase any empty regions.  Repeated runs of the Voronoi algorithm sometimes
     // causes small regions to be absorbed by their neighbors.
-    erase(centers, Hex::invalid());
+    erase(centers, Hex{});
 
     return centers;
 }
@@ -944,7 +954,10 @@ int RandomMap::findObjectSpot(int startTile, int region)
             continue;
         }
 
-        if (!tileOccupied_[tile] && !villageNeighbors_[tile]) {
+        if (!tileOccupied_[tile] &&
+            !villageNeighbors_[tile] &&
+            !coastalObjectNeighbors_[tile])
+        {
             return tile;
         }
 
@@ -1036,12 +1049,14 @@ void RandomMap::placeCoastalObject(const MapObject &obj)
                 if (!obj.terrain[regionTerrain_[region]]) {
                     continue;
                 }
-                if (tileOccupied_[tile] || villageNeighbors_[tile]) {
+                // Land objects may need the adjacent water tiles to be open, and
+                // vice versa.
+                if (tileOccupied_[tile] ||
+                    std::ranges::any_of(getTileNeighbors(tile), [this] (int index)
+                                        { return tileOccupied_[index]; }))
+                {
                     continue;
                 }
-                // TODO: disallow a tile if all adjacent water tiles contain
-                // obstacles or other objects.  We don't want to place a harbor
-                // with nowhere to build a boat.
 
                 int dist = regionCastleDistance_[region];
                 if (!obj.fairDistance) {
@@ -1057,6 +1072,13 @@ void RandomMap::placeCoastalObject(const MapObject &obj)
 
             if (!offGrid(bestTile)) {
                 placeObject(obj.type, bestTile);
+
+                // Like with villages, block off a 1-hex radius to keep adjacent
+                // land and water tiles open.
+                coastalObjectNeighbors_[bestTile] = 1;
+                for (int iNbr : getTileNeighbors(bestTile)) {
+                    coastalObjectNeighbors_[iNbr] = 1;
+                }
             }
         }
     }
