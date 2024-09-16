@@ -29,7 +29,7 @@
 namespace
 {
     const int POPUP_WIDTH = 800;
-    const int POPUP_HEIGHT = 600;
+    const int POPUP_HEIGHT = 680;
 
     // Render the popup centered in the main window.
     SDL_Rect popup_window_rect(const SdlWindow &win)
@@ -48,6 +48,17 @@ namespace
                 PuzzleDisplay::hexWidth,
                 PuzzleDisplay::hexHeight};
     }
+
+    // Get the portion of the source image denoted by 'frame'.
+    SDL_Rect get_frame_rect(const SdlImageData &img, const Frame &frame)
+    {
+        int frameWidth = img.surface->w / img.frames.col;
+        int frameHeight = img.surface->h / img.frames.row;
+        return {frame.col * frameWidth,
+                frame.row * frameHeight,
+                frameWidth,
+                frameHeight};
+    }
 }
 
 
@@ -57,7 +68,8 @@ PuzzleImages::PuzzleImages(const SdlImageManager &imgMgr)
     obstacles(),
     border(imgMgr.get("hex-team-color")),
     shield(imgMgr.get("puzzle-hidden")),
-    xs(imgMgr.get("puzzle-xs"))
+    xs(imgMgr.get("puzzle-xs")),
+    labels(imgMgr.get("puzzle-labels"))
 {
     for (auto t : Terrain()) {
         terrain[t] = imgMgr.get(get_tile_filename(t));
@@ -85,6 +97,9 @@ PuzzleDisplay::PuzzleDisplay(SdlWindow &win,
     mapLayer_(),
     surf_(),
     texture_(),
+    title_(SdlTexture::make_sprite_sheet(images_->labels.surface,
+                                         *win_,
+                                         images_->labels.frames)),
     tiles_()
 {
     SDL_assert(initialState.size(type_) > 0);
@@ -127,12 +142,23 @@ void PuzzleDisplay::update(const PuzzleState &state)
 
 void PuzzleDisplay::draw()
 {
-    // Center the puzzle map inside the popup window.
+    // Draw the background and border of the popup window.
+    auto *renderer = win_->renderer();
+    SDL_SetRenderDrawColor(renderer, 15, 20, 35, SDL_ALPHA_OPAQUE);
+    SDL_RenderFillRect(renderer, &popupArea_);
+    SDL_SetRenderDrawColor(renderer, 60, 50, 40, SDL_ALPHA_OPAQUE);
+    SDL_RenderDrawRect(renderer, &popupArea_);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
+
+    // Center the puzzle map inside the popup window, leaving enough room for the
+    // title.
     SDL_Point pixel = {popupArea_.x + (popupArea_.w - surf_->w) / 2,
                        popupArea_.y + (popupArea_.h - surf_->h) / 2};
-
-    SDL_RenderFillRect(win_->renderer(), &popupArea_);
+    pixel.y += title_.frame_height() / 2;
     texture_.draw(pixel);
+
+    SDL_Point titlePixel = {pixel.x, popupArea_.y + 20};
+    title_.draw(titlePixel, Frame{static_cast<int>(type_), 0});
 }
 
 void PuzzleDisplay::init_texture()
@@ -281,13 +307,7 @@ void PuzzleDisplay::draw_centered(const SdlImageData &img,
                                   const SDL_Point &pixel,
                                   SdlSurface &dest)
 {
-    // Get the portion of the source image denoted by 'frame'.
-    int frameWidth = img.surface->w / img.frames.col;
-    int frameHeight = img.surface->h / img.frames.row;
-    SDL_Rect srcRect = {frame.col * frameWidth,
-                        frame.row * frameHeight,
-                        frameWidth,
-                        frameHeight};
+    auto srcRect = get_frame_rect(img, frame);
 
     // Draw it centered on 'pixel'.
     SDL_Rect destRect = {pixel.x - srcRect.w / 2,

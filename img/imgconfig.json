@@ -95,6 +95,9 @@
         "frames": [1, 8],
         "ms_per_frame": 120
     },
+    "puzzle-labels": {
+        "frames": [3, 1]
+    },
     "puzzle-xs": {
         "frames": [1, 3]
     },

@@ -35,6 +35,7 @@ struct PuzzleImages
     SdlImageData border;
     SdlImageData shield;
     SdlImageData xs;
+    SdlImageData labels;
 
     PuzzleImages(const SdlImageManager &imgMgr);
 };
@@ -97,6 +98,7 @@ private:
     SdlSurface mapLayer_;
     SdlSurface surf_;
     SdlTexture texture_;
+    SdlTexture title_;
     boost::container::flat_map<Hex, PuzzleTile> tiles_;
 };
 
