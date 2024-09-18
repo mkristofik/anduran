@@ -64,6 +64,7 @@ public:
 private:
     void update_frame(Uint32 elapsed_ms) override;
     void update_minimap();
+    void update_puzzle();
 
     void handle_lmouse_down() override;
     void handle_lmouse_up() override;

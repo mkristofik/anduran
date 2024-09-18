@@ -83,7 +83,7 @@ void Anduran::update_frame(Uint32 elapsed_ms)
     minimap_.draw();
 
     if (anims_.empty() && curPuzzleView_.visible) {
-        puzzleViews_[curPuzzleView_.type]->draw();
+        update_puzzle();
     }
 
     win_.update();
@@ -110,6 +110,37 @@ void Anduran::update_minimap()
     relax_influence();
     for (int r = 0; r < rmap_.numRegions(); ++r) {
         minimap_.set_region_owner(r, most_influence(r));
+    }
+}
+
+void Anduran::update_puzzle()
+{
+    auto status = puzzleViews_[curPuzzleView_.type]->status();
+    if (status == PopupStatus::running) {
+        puzzleViews_[curPuzzleView_.type]->draw();
+    }
+    else if (status == PopupStatus::ok_close) {
+        curPuzzleView_.visible = false;
+    }
+    else {
+        // TODO: functions for enum_incr/decr
+        int type = static_cast<int>(curPuzzleView_.type);
+        if (status == PopupStatus::left_arrow) {
+            --type;
+            if (type < 0) {
+                type = enum_size<PuzzleType>() - 1;
+            }
+        }
+        else if (status == PopupStatus::right_arrow) {
+            ++type;
+            if (type >= enum_size<PuzzleType>()) {
+                type = 0;
+            }
+        }
+        curPuzzleView_.type = static_cast<PuzzleType>(type);
+
+        puzzleViews_[curPuzzleView_.type]->update(*players_[curPlayer_].puzzle);
+        puzzleViews_[curPuzzleView_.type]->draw();
     }
 }
 
@@ -216,6 +247,10 @@ void Anduran::handle_key_up(const SDL_Keysym &key)
     if (!anims_.empty()) {
         return;
     }
+    if (curPuzzleView_.visible) {
+        puzzleViews_[curPuzzleView_.type]->handle_key_up(key);
+        return;
+    }
 
     if (key.sym == 'd') {
         dig_action(curChampion_);
@@ -223,9 +258,6 @@ void Anduran::handle_key_up(const SDL_Keysym &key)
     else if (key.sym == 'p') {
         curPuzzleView_.visible = true;
         puzzleViews_[curPuzzleView_.type]->update(*players_[curPlayer_].puzzle);
-    }
-    else if (key.sym == SDLK_ESCAPE) {
-        curPuzzleView_.visible = false;
     }
 }
 

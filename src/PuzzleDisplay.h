@@ -27,6 +27,15 @@
 class MapDisplay;
 class SdlWindow;
 
+enum class PopupStatus {
+    running = -1,
+    ok_close,
+    cancel,
+    left_arrow,
+    right_arrow
+};
+
+
 struct PuzzleImages
 {
     EnumSizedArray<SdlImageData, Terrain> terrain;
@@ -63,6 +72,9 @@ public:
     // Call each frame whenever the popup is shown.
     void draw();
 
+    void handle_key_up(const SDL_Keysym &key);
+    PopupStatus status() const;
+
     static constexpr int hexWidth = 13;
     static constexpr int hexHeight = 7;
 
@@ -91,8 +103,9 @@ private:
     SdlWindow *win_;
     const MapDisplay *rmapView_;
     const PuzzleImages *images_;
-    PuzzleType type_;
     SDL_Rect popupArea_;
+    PopupStatus status_;
+    PuzzleType type_;
     SDL_Rect hexes_;
     SDL_Point pOrigin_;
     SdlSurface mapLayer_;

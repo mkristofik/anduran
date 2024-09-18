@@ -90,8 +90,9 @@ PuzzleDisplay::PuzzleDisplay(SdlWindow &win,
     : win_(&win),
     rmapView_(&mapView),
     images_(&artwork),
-    type_(type),
     popupArea_(popup_window_rect(*win_)),
+    status_(PopupStatus::running),
+    type_(type),
     hexes_(hexes_to_draw(initialState.get_target(type_))),
     pOrigin_(rmapView_->mapPixelFromHex(Hex{hexes_.x, hexes_.y})),
     mapLayer_(),
@@ -138,6 +139,7 @@ void PuzzleDisplay::update(const PuzzleState &state)
 
     SdlEditTexture edit(texture_);
     edit.update(surf_);
+    status_ = PopupStatus::running;
 }
 
 void PuzzleDisplay::draw()
@@ -159,6 +161,24 @@ void PuzzleDisplay::draw()
 
     SDL_Point titlePixel = {pixel.x, popupArea_.y + 20};
     title_.draw(titlePixel, Frame{static_cast<int>(type_), 0});
+}
+
+void PuzzleDisplay::handle_key_up(const SDL_Keysym &key)
+{
+    if (key.sym == 'p' || key.sym == SDLK_ESCAPE) {
+        status_ = PopupStatus::ok_close;
+    }
+    else if (key.sym == SDLK_LEFT) {
+        status_ = PopupStatus::left_arrow;
+    }
+    else if (key.sym == SDLK_RIGHT) {
+        status_ = PopupStatus::right_arrow;
+    }
+}
+
+PopupStatus PuzzleDisplay::status() const
+{
+    return status_;
 }
 
 void PuzzleDisplay::init_texture()
