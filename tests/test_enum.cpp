@@ -20,18 +20,14 @@ BOOST_TEST_DONT_PRINT_LOG_VALUE(std::optional<Sample>)
 BOOST_AUTO_TEST_CASE(increment_decrement)
 {
     auto s = Sample::bar;
-    enum_incr(s);
-    BOOST_TEST(s == Sample::baz);
+    BOOST_TEST(enum_incr(s) == Sample::baz);
 
     s = Sample::bar;
-    enum_decr(s);
-    BOOST_TEST(s == Sample::foo);
+    BOOST_TEST(enum_decr(s) == Sample::foo);
 
     s = Sample::quux;
-    enum_incr(s);
-    BOOST_TEST(s == Sample::foo);
-    enum_decr(s);
-    BOOST_TEST(s == Sample::quux);
+    BOOST_TEST(enum_incr(s) == Sample::foo);
+    BOOST_TEST(enum_decr(s) == Sample::quux);
 }
 
 BOOST_AUTO_TEST_CASE(string_conversion)

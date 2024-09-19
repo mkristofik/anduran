@@ -80,7 +80,7 @@
 
 #define ITERABLE_ENUM_CLASS(T, ...) \
     enum class T {__VA_ARGS__, _last, _first = 0}; \
-    constexpr T operator++(T &t) \
+    constexpr T & operator++(T &t) \
     { \
         using U = std::underlying_type_t<T>; \
         return t = static_cast<T>(U(t) + 1); \
@@ -127,16 +127,18 @@ constexpr int enum_size()
 
 // Circular increment and decrement within the enum values.
 template <IterableEnum T>
-constexpr void enum_incr(T &t)
+constexpr T & enum_incr(T &t)
 {
     ++t;
     if (t == T::_last) {
         t = T::_first;
     }
+
+    return t;
 }
 
 template <IterableEnum T>
-constexpr void enum_decr(T &t)
+constexpr T & enum_decr(T &t)
 {
     using U = std::underlying_type_t<T>;
 
@@ -149,6 +151,7 @@ constexpr void enum_decr(T &t)
     }
 
     t = static_cast<T>(value);
+    return t;
 }
 
 
