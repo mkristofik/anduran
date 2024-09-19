@@ -67,8 +67,6 @@
 
 // Create an array to hold the string representation of each enumerator.  We have
 // to create a tuple so all the enumerators appear as a single argument.
-// TODO: C++23 will let us embed this as a static variable inside the string
-// conversion functions.
 #define MAKE_secret_array(T, ...) \
     constexpr std::array<std::string, BOOST_PP_VARIADIC_SIZE(__VA_ARGS__)> \
     DATA_name(T) = { \
@@ -125,6 +123,32 @@ constexpr int enum_size()
 {
     using U = typename std::underlying_type_t<T>;
     return U(T::_last) - U(T::_first);
+}
+
+// Circular increment and decrement within the enum values.
+template <IterableEnum T>
+constexpr void enum_incr(T &t)
+{
+    ++t;
+    if (t == T::_last) {
+        t = T::_first;
+    }
+}
+
+template <IterableEnum T>
+constexpr void enum_decr(T &t)
+{
+    using U = std::underlying_type_t<T>;
+
+    auto value = static_cast<U>(t);
+    if (t == T::_first) {
+        value = U(T::_last) - 1;
+    }
+    else {
+        --value;
+    }
+
+    t = static_cast<T>(value);
 }
 
 

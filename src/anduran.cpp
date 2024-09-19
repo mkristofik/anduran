@@ -123,21 +123,12 @@ void Anduran::update_puzzle()
         curPuzzleView_.visible = false;
     }
     else {
-        // TODO: functions for enum_incr/decr
-        int type = static_cast<int>(curPuzzleView_.type);
         if (status == PopupStatus::left_arrow) {
-            --type;
-            if (type < 0) {
-                type = enum_size<PuzzleType>() - 1;
-            }
+            enum_decr(curPuzzleView_.type);
         }
         else if (status == PopupStatus::right_arrow) {
-            ++type;
-            if (type >= enum_size<PuzzleType>()) {
-                type = 0;
-            }
+            enum_incr(curPuzzleView_.type);
         }
-        curPuzzleView_.type = static_cast<PuzzleType>(type);
 
         puzzleViews_[curPuzzleView_.type]->update(*players_[curPlayer_].puzzle);
         puzzleViews_[curPuzzleView_.type]->draw();
