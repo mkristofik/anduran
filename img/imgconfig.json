@@ -24,6 +24,9 @@
     "castle-walls-water": {
         "frames": [3, 6]
     },
+    "champions": {
+        "frames": [1, 4]
+    },
     "edges-desert": {
         "frames": [4, 6]
     },

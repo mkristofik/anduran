@@ -62,11 +62,12 @@ ObjectImages::ObjectImages(const SdlImageManager &imgMgr,
         }
     }
 
-    std::string filenames[] = {"champion1"s, "champion2"s, "champion3"s, "champion4"s};
-    for (auto i = 0u; i < size(filenames); ++i) {
-        auto championSurface = applyTeamColor(imgMgr.get_surface(filenames[i]),
-                                              static_cast<Team>(i));
-        champions_[i] = SdlTexture::make_image(championSurface, win);
+    for (auto team : Team()) {
+        auto imgData = imgMgr.get("champions");
+        auto championSurface = applyTeamColor(imgData.surface, team);
+        champions_[team] = SdlTexture::make_sprite_sheet(championSurface,
+                                                         win,
+                                                         imgData.frames);
     }
 
     auto ellipse = imgMgr.get_surface("ellipse");
