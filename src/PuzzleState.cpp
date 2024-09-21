@@ -23,9 +23,7 @@ PuzzleState::PuzzleState(RandomMap &rmap)
     tileTypes_()
 {
     // We don't want the first tile to always go to the first puzzle.
-    EnumSizedArray<int, PuzzleType> ordering;
-    std::iota(begin(ordering), end(ordering), 0);
-    randomize(ordering);
+    auto ordering = random_sequence<enum_size<PuzzleType>()>();
 
     // Round-robin each obelisk tile to each puzzle map.
     int p = 0;

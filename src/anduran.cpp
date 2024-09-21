@@ -259,9 +259,8 @@ void Anduran::load_players()
     SDL_assert(ssize(castles) <= enum_size<Team>());
     randomize(castles);
 
-    std::array<int, enum_size<Team>() - 1> championTypes;
-    std::iota(begin(championTypes), end(championTypes), 0);
-    randomize(championTypes);
+    // Assign a random image to each champion.  There is no neutral champion.
+    auto championTypes = random_sequence<enum_size<Team>() - 1>();
 
     // MapDisplay handles building the castle artwork, but we need something so
     // each castle has a unique entity id.

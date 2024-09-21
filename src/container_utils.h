@@ -43,6 +43,17 @@ void randomize(C &cont)
 }
 
 
+// Generate a random array of integers from 0 to N - 1.
+template<int N>
+std::array<int, N> random_sequence()
+{
+    std::array<int, N> ary;
+    std::iota(begin(ary), end(ary), 0);
+    randomize(ary);
+    return ary;
+}
+
+
 // Helper struct for looking up multiple string types in an unordered container
 // (need both the hash and comparison types to support transparent lookup)
 struct StringHash : public std::hash<std::string_view>
