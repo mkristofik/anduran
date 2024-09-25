@@ -254,9 +254,6 @@ void Anduran::load_players()
     SDL_assert(numPlayers <= enum_size<Team>());
     randomize(castles);
 
-    // Assign a random image to each champion.  There is no neutral champion.
-    auto championTypes = random_sequence<enum_size<Team>() - 1>();
-
     // MapDisplay handles building the castle artwork, but we need something so
     // each castle has a unique entity id.
     auto castleImg = images_.make_texture("hex-blank", win_);
@@ -270,16 +267,11 @@ void Anduran::load_players()
         game_.add_object(castle);
 
         // Draw a champion in the hex due south of each castle.
-        MapEntity championEntity;
-        championEntity.hex = castles[i].getNeighbor(HexDir::s);
-        championEntity.frame = {0, championTypes[i]};
-        championEntity.z = ZOrder::unit;
-
         GameObject champion;
-        champion.hex = championEntity.hex;
+        champion.hex = castles[i].getNeighbor(HexDir::s);
         champion.entity = rmapView_.addEntity(objImg_.get_champion(castle.team),
-                                              championEntity,
-                                              HexAlign::middle);
+                                              champion.hex,
+                                              ZOrder::unit);
         champion.secondary = rmapView_.addEntity(objImg_.get_ellipse(castle.team),
                                                  champion.hex,
                                                  ZOrder::ellipse);
