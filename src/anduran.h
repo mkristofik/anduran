@@ -113,7 +113,7 @@ private:
     // Return team with highest influence in a given region, or neutral if tied.
     Team most_influence(int region) const;
 
-    void next_turn(int nextPlayer);
+    void next_turn();
     void check_victory_condition();
 
     WindowConfig config_;

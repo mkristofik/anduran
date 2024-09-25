@@ -39,8 +39,8 @@ Anduran::Anduran()
     game_(rmap_),
     players_(),
     playerOrder_{-1},
-    curChampion_(0),
-    curPlayer_(0),
+    curChampion_(-1),
+    curPlayer_(-1),
     championSelected_(false),
     curPath_(),
     hCurPathEnd_(),
@@ -65,6 +65,8 @@ Anduran::Anduran()
     win_.log("game assets loaded");
     init_puzzles();
     win_.log("puzzle init complete");
+
+    next_turn();
 }
 
 void Anduran::update_frame(Uint32 elapsed_ms)
@@ -166,21 +168,6 @@ void Anduran::handle_lmouse_up()
     // - highlight that hex when selected
     // - user clicks on a walkable hex
     // - champion moves to the new hex, engages in battle if appropriate
-    for (int i = 0; i < ssize(players_); ++i) {
-        auto champion = game_.get_object(players_[i].champion);
-        if (champion.hex != mouseHex) {
-            continue;
-        }
-
-        if (curPlayer_ != i) {
-            championSelected_ = false;
-            next_turn(i);
-        }
-
-        curChampion_ = champion.entity;
-        break;
-    }
-
     auto champion = game_.get_object(curChampion_);
     if (mouseHex == champion.hex) {
         if (!championSelected_) {
@@ -224,6 +211,10 @@ void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
         hCurPathEnd_ = hMouse;
     }
 
+    // TODO: limited movement per turn
+    // TODO: champion display that displays movement remaining
+    // - total length of AnimMove can tell you how long to animate it
+    // - if below one tile's worth, show zero
     rmapView_.clearPath();
     auto champion = game_.get_object(curChampion_);
     curPath_ = pathfind_.find_path(champion, hCurPathEnd_);
@@ -246,6 +237,9 @@ void Anduran::handle_key_up(const SDL_Keysym &key)
     if (key.sym == 'd') {
         dig_action(curChampion_);
     }
+    else if (key.sym == 'e') {
+        next_turn();
+    }
     else if (key.sym == 'p') {
         curPuzzleView_.visible = true;
         puzzleViews_[curPuzzleView_.type]->update(*players_[curPlayer_].puzzle);
@@ -256,7 +250,8 @@ void Anduran::load_players()
 {
     // Randomize the starting locations for each player.
     auto castles = rmap_.getCastleTiles();
-    SDL_assert(ssize(castles) <= enum_size<Team>());
+    int numPlayers = ssize(castles);
+    SDL_assert(numPlayers <= enum_size<Team>());
     randomize(castles);
 
     // Assign a random image to each champion.  There is no neutral champion.
@@ -266,7 +261,7 @@ void Anduran::load_players()
     // each castle has a unique entity id.
     auto castleImg = images_.make_texture("hex-blank", win_);
 
-    for (auto i = 0u; i < size(castles); ++i) {
+    for (int i = 0; i < numPlayers; ++i) {
         GameObject castle;
         castle.hex = castles[i];
         castle.entity = rmapView_.addHiddenEntity(castleImg, ZOrder::floor);
@@ -305,11 +300,12 @@ void Anduran::load_players()
         player.champion = champion.entity;
         players_.push_back(std::move(player));
 
+        // TODO: randomize player order
         playerOrder_[champion.team] = i;
     }
-    curChampion_ = players_[0].champion;
 
     // Add a wandering army to attack.
+    // TODO: this causes an assert on the current map, don't know why
     const auto orc = units_.get_type("grunt");
     auto orcImg = units_.get_image(orc, ImageType::img_idle, Team::neutral);
     GameObject enemy;
@@ -555,6 +551,7 @@ void Anduran::do_actions(int entity, PathView path)
         // Restore the entity's ellipse at the final location.
         anims_.push(AnimDisplay(rmapView_, thisObj.secondary, hLast));
     }
+    // TODO: deselect champion if defeated
 
     stateChanged_ = true;
 }
@@ -687,6 +684,7 @@ bool Anduran::battle_action(int entity, int enemyId)
     defender.update(result.defender);
     game_.update_army(attacker);
     game_.update_army(defender);
+    // TODO: in battles between two champions, copy puzzle pieces to winner
 
     return result.attackerWins;
 }
@@ -1141,9 +1139,14 @@ Team Anduran::most_influence(int region) const
     return winner;
 }
 
-void Anduran::next_turn(int nextPlayer)
+void Anduran::next_turn()
 {
-    curPlayer_ = nextPlayer;
+    curPlayer_ = (curPlayer_ + 1) % size(players_);
+    curChampion_ = players_[curPlayer_].champion;
+    auto champion = game_.get_object(curChampion_);
+    championSelected_ = false;
+    // TODO: center map on him
+    log_info(std::format("It's the {} player's turn.", str_from_Team(champion.team)));
 
     // Show or hide the puzzle Xs depending on whether that player has completed
     // them.
