@@ -41,7 +41,7 @@ public:
     // doesn't have one.
     SdlTexture get_visited(ObjectType obj) const;
 
-    SdlTexture get_champion(Team team) const;
+    SdlTexture get_champion(ChampionType type, Team team) const;
     SdlTexture get_ellipse(Team team) const;
     SdlTexture get_flag(Team team) const;
 
@@ -49,7 +49,7 @@ private:
     boost::container::flat_map<ObjectType, SdlTexture> objs_;
     boost::container::flat_map<ObjectType, SdlTexture> visited_;
     boost::container::flat_map<ObjectType, TeamColoredTextures> teamColored_;
-    TeamColoredTextures champions_;
+    EnumSizedArray<TeamColoredTextures, ChampionType> champions_;
     TeamColoredTextures ellipses_;
     TeamColoredTextures flags_;
 };

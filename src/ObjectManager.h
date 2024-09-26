@@ -33,7 +33,8 @@ ITERABLE_ENUM_CLASS(ObjectType,
     resource,
     shipwreck,
     village,
-    windmill);
+    windmill
+);
 
 ITERABLE_ENUM_CLASS(ObjectAction,
     battle,
@@ -43,7 +44,10 @@ ITERABLE_ENUM_CLASS(ObjectAction,
     none,
     pickup,
     visit,
-    visit_once);
+    visit_once
+);
+
+ITERABLE_ENUM_CLASS(ChampionType, might1, might2, magic1, magic2);
 
 
 struct MapObject

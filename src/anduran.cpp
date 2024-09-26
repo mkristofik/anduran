@@ -269,9 +269,9 @@ void Anduran::load_players()
         // Draw a champion in the hex due south of each castle.
         GameObject champion;
         champion.hex = castles[i].getNeighbor(HexDir::s);
-        champion.entity = rmapView_.addEntity(objImg_.get_champion(castle.team),
-                                              champion.hex,
-                                              ZOrder::unit);
+        // TODO: randomize champion type assigned to each team.
+        auto texture = objImg_.get_champion(static_cast<ChampionType>(i), castle.team);
+        champion.entity = rmapView_.addEntity(texture, champion.hex, ZOrder::unit);
         champion.secondary = rmapView_.addEntity(objImg_.get_ellipse(castle.team),
                                                  champion.hex,
                                                  ZOrder::ellipse);
@@ -601,10 +601,14 @@ void Anduran::disembark_action(int entity, const Hex &hLand)
         game_.update_object(boat);
     }
 
+    // TODO: neutral player should have default champion type assigned
+    SDL_assert(thisObj.team != Team::neutral);
+    int teamNum = static_cast<int>(thisObj.team);
+    auto championType = static_cast<ChampionType>(teamNum);
     anims_.push(AnimDisembark(rmapView_,
                               entity,
                               boat.entity,
-                              objImg_.get_champion(thisObj.team),
+                              objImg_.get_champion(championType, thisObj.team),
                               hLand));
     thisObj.hex = hLand;
     game_.update_object(thisObj);

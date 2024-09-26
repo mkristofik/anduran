@@ -62,11 +62,16 @@ ObjectImages::ObjectImages(const SdlImageManager &imgMgr,
         }
     }
 
-    std::string filenames[] = {"champion1"s, "champion2"s, "champion3"s, "champion4"s};
-    for (auto i = 0u; i < size(filenames); ++i) {
-        auto championSurface = applyTeamColor(imgMgr.get_surface(filenames[i]),
-                                              static_cast<Team>(i));
-        champions_[i] = SdlTexture::make_image(championSurface, win);
+    // Note: battle animations are made easier if they can assume the champion
+    // always uses frame (0,0).
+    EnumSizedArray<std::string, ChampionType> filenames = {
+        "champion1"s, "champion2"s, "champion3"s, "champion4"s
+    };
+    for (auto c : ChampionType()) {
+        for (auto team : Team()) {
+            auto surf = applyTeamColor(imgMgr.get_surface(filenames[c]), team);
+            champions_[c][team] = SdlTexture::make_image(surf, win);
+        }
     }
 
     auto ellipse = imgMgr.get_surface("ellipse");
@@ -101,9 +106,9 @@ SdlTexture ObjectImages::get_visited(ObjectType obj) const
     return {};
 }
 
-SdlTexture ObjectImages::get_champion(Team team) const
+SdlTexture ObjectImages::get_champion(ChampionType type, Team team) const
 {
-    return champions_[team];
+    return champions_[type][team];
 }
 
 SdlTexture ObjectImages::get_ellipse(Team team) const
