@@ -23,12 +23,12 @@ PuzzleState::PuzzleState(RandomMap &rmap)
     tileTypes_()
 {
     // We don't want the first tile to always go to the first puzzle.
-    auto ordering = random_sequence<enum_size<PuzzleType>()>();
+    auto ordering = random_enum_array<PuzzleType>();
 
     // Round-robin each obelisk tile to each puzzle map.
     int p = 0;
     for (auto tile : rmap.getObjectTiles(ObjectType::obelisk)) {
-        auto type = static_cast<PuzzleType>(ordering[p]);
+        auto type = ordering[p];
         visited_[type].emplace_back(tile, false);
         tileTypes_.emplace(tile, type);
 

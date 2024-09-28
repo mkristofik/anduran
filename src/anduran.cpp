@@ -38,9 +38,9 @@ Anduran::Anduran()
     minimap_(win_, config_.minimap_bounds(), rmap_, rmapView_, images_),
     game_(rmap_),
     players_(),
-    playerOrder_{-1},
-    curChampion_(-1),
-    curPlayer_(-1),
+    playerOrder_(),
+    numPlayers_(0),
+    curPlayerIndex_(-1),
     championSelected_(false),
     curPath_(),
     hCurPathEnd_(),
@@ -132,7 +132,7 @@ void Anduran::update_puzzle()
             enum_incr(curPuzzleView_.type);
         }
 
-        puzzleViews_[curPuzzleView_.type]->update(*players_[curPlayer_].puzzle);
+        puzzleViews_[curPuzzleView_.type]->update(*cur_player().puzzle);
         puzzleViews_[curPuzzleView_.type]->draw();
     }
 }
@@ -168,7 +168,7 @@ void Anduran::handle_lmouse_up()
     // - highlight that hex when selected
     // - user clicks on a walkable hex
     // - champion moves to the new hex, engages in battle if appropriate
-    auto champion = game_.get_object(curChampion_);
+    auto champion = game_.get_object(cur_player().champion);
     if (mouseHex == champion.hex) {
         if (!championSelected_) {
             rmapView_.highlight(mouseHex);
@@ -184,7 +184,7 @@ void Anduran::handle_lmouse_up()
         championSelected_ = false;
         rmapView_.clearHighlight();
         rmapView_.clearPath();
-        do_actions(curChampion_, curPath_);
+        do_actions(champion.entity, curPath_);
     }
 }
 
@@ -216,7 +216,7 @@ void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
     // - total length of AnimMove can tell you how long to animate it
     // - if below one tile's worth, show zero
     rmapView_.clearPath();
-    auto champion = game_.get_object(curChampion_);
+    auto champion = game_.get_object(cur_player().champion);
     curPath_ = pathfind_.find_path(champion, hCurPathEnd_);
     if (!curPath_.empty()) {
         auto [action, _] = game_.hex_action(champion, hCurPathEnd_);
@@ -235,14 +235,14 @@ void Anduran::handle_key_up(const SDL_Keysym &key)
     }
 
     if (key.sym == 'd') {
-        dig_action(curChampion_);
+        dig_action(cur_player().champion);
     }
     else if (key.sym == 'e') {
         next_turn();
     }
     else if (key.sym == 'p') {
         curPuzzleView_.visible = true;
-        puzzleViews_[curPuzzleView_.type]->update(*players_[curPlayer_].puzzle);
+        puzzleViews_[curPuzzleView_.type]->update(*cur_player().puzzle);
     }
 }
 
@@ -250,15 +250,18 @@ void Anduran::load_players()
 {
     // Randomize the starting locations for each player.
     auto castles = rmap_.getCastleTiles();
-    int numPlayers = ssize(castles);
-    SDL_assert(numPlayers <= enum_size<Team>());
+    numPlayers_ = ssize(castles);
+    SDL_assert(numPlayers_ <= enum_size<Team>());
+    SDL_assert(numPlayers_ <= enum_size<ChampionType>());
     randomize(castles);
+
+    auto championTypes = random_enum_array<ChampionType>();
 
     // MapDisplay handles building the castle artwork, but we need something so
     // each castle has a unique entity id.
     auto castleImg = images_.make_texture("hex-blank", win_);
 
-    for (int i = 0; i < numPlayers; ++i) {
+    for (int i = 0; i < numPlayers_; ++i) {
         GameObject castle;
         castle.hex = castles[i];
         castle.entity = rmapView_.addHiddenEntity(castleImg, ZOrder::floor);
@@ -269,8 +272,7 @@ void Anduran::load_players()
         // Draw a champion in the hex due south of each castle.
         GameObject champion;
         champion.hex = castles[i].getNeighbor(HexDir::s);
-        // TODO: randomize champion type assigned to each team.
-        auto texture = objImg_.get_champion(static_cast<ChampionType>(i), castle.team);
+        auto texture = objImg_.get_champion(championTypes[i], castle.team);
         champion.entity = rmapView_.addEntity(texture, champion.hex, ZOrder::unit);
         champion.secondary = rmapView_.addEntity(objImg_.get_ellipse(castle.team),
                                                  champion.hex,
@@ -286,18 +288,15 @@ void Anduran::load_players()
         army.entity = champion.entity;
         game_.add_army(army);
 
-        // This contains unique_ptrs so we have to move it into place.
-        PlayerState player;
+        auto &player = players_[champion.team];
         player.team = champion.team;
+        player.type = championTypes[i];
         player.champion = champion.entity;
-        players_.push_back(std::move(player));
-
-        // TODO: randomize player order
-        playerOrder_[champion.team] = i;
+        playerOrder_.push_back(player.team);
     }
+    randomize(playerOrder_);
 
     // Add a wandering army to attack.
-    // TODO: this causes an assert on the current map, don't know why
     const auto orc = units_.get_type("grunt");
     auto orcImg = units_.get_image(orc, ImageType::img_idle, Team::neutral);
     GameObject enemy;
@@ -601,10 +600,7 @@ void Anduran::disembark_action(int entity, const Hex &hLand)
         game_.update_object(boat);
     }
 
-    // TODO: neutral player should have default champion type assigned
-    SDL_assert(thisObj.team != Team::neutral);
-    int teamNum = static_cast<int>(thisObj.team);
-    auto championType = static_cast<ChampionType>(teamNum);
+    auto championType = players_[thisObj.team].type;
     anims_.push(AnimDisembark(rmapView_,
                               entity,
                               boat.entity,
@@ -751,7 +747,7 @@ void Anduran::dig_action(int entity)
         return;
     }
 
-    auto &thisPlayer = players_[playerOrder_[thisObj.team]];
+    auto &thisPlayer = players_[thisObj.team];
     for (auto type : PuzzleType()) {
         if (thisObj.hex != thisPlayer.puzzle->get_target(type)) {
             continue;
@@ -835,7 +831,7 @@ void Anduran::visit_obelisk(const GameObject &visitor)
         return;
     }
 
-    auto &player = players_[playerOrder_[visitor.team]];
+    auto &player = players_[visitor.team];
     int index = rmap_.intFromHex(visitor.hex);
     auto puzzleType = player.puzzle->obelisk_type(index);
 
@@ -1135,11 +1131,15 @@ Team Anduran::most_influence(int region) const
     return winner;
 }
 
+PlayerState & Anduran::cur_player()
+{
+    return players_[playerOrder_[curPlayerIndex_]];
+}
+
 void Anduran::next_turn()
 {
-    curPlayer_ = (curPlayer_ + 1) % size(players_);
-    curChampion_ = players_[curPlayer_].champion;
-    auto champion = game_.get_object(curChampion_);
+    curPlayerIndex_ = (curPlayerIndex_ + 1) % numPlayers_;
+    auto champion = game_.get_object(cur_player().champion);
     championSelected_ = false;
     // TODO: center map on him
     log_info(std::format("It's the {} player's turn.", str_from_Team(champion.team)));
@@ -1148,7 +1148,7 @@ void Anduran::next_turn()
     // them.
     AnimSet puzzleAnim;
     for (auto type : PuzzleType()) {
-        if (!artifact_found(type) && players_[curPlayer_].puzzle->all_visited(type)) {
+        if (!artifact_found(type) && cur_player().puzzle->all_visited(type)) {
             puzzleAnim.insert(AnimDisplay(rmapView_, puzzleXsIds_[type]));
         }
         else {
@@ -1160,7 +1160,7 @@ void Anduran::next_turn()
 
 void Anduran::check_victory_condition()
 {
-    if (players_[curPlayer_].artifacts.all()) {
+    if (cur_player().artifacts.all()) {
         log_info("The three artifacts magically combine into one, "
                  "forming the legendary Battle Garb of Anduran!  "
                  "Your quest is complete.");

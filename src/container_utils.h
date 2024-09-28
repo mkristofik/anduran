@@ -14,6 +14,7 @@
 #define CONTAINER_UTILS_H
 
 #include "RandomRange.h"
+#include "iterable_enum_class.h"
 
 #include <algorithm>
 #include <functional>
@@ -43,12 +44,14 @@ void randomize(C &cont)
 }
 
 
-// Generate a random array of integers from 0 to N - 1.
-template<int N>
-std::array<int, N> random_sequence()
+// Randomize the list of enumerators for a given type.
+template<IterableEnum T>
+EnumSizedArray<T, T> random_enum_array()
 {
-    std::array<int, N> ary;
-    std::iota(begin(ary), end(ary), 0);
+    EnumSizedArray<T, T> ary;
+    for (auto t : T()) {
+        ary[t] = t;
+    }
     randomize(ary);
     return ary;
 }

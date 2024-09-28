@@ -626,6 +626,7 @@ void AnimHealth::stop()
 // source: Battle for Wesnoth src/units/drawer.cpp
 void AnimHealth::draw_hp_bar(int entity, int hp)
 {
+    // TODO: border almost invisible on snow
     static const SDL_Color BORDER_COLOR = {213, 213, 213, 200};
     static const SDL_Color BG_COLOR = {0, 0, 0, 80};
 
