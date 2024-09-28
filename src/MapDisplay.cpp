@@ -115,7 +115,7 @@ MapDisplay::MapDisplay(SdlWindow &win,
         tiles_[i].hex = map_->hexFromInt(i);
         tiles_[i].basePixel = pixelFromHex(tiles_[i].hex);
         tiles_[i].curPixel = tiles_[i].basePixel;
-        tiles_[i].terrain = static_cast<int>(map_->getTerrain(i));
+        tiles_[i].terrain = map_->getTerrain(i);
         tiles_[i].terrainFrame = randTerrain.get();
         if (map_->getObstacle(i)) {
             tiles_[i].obstacle = randObstacle.get();
@@ -475,7 +475,7 @@ void MapDisplay::computeTileEdges()
     }
 
     for (auto &tile : tiles_) {
-        auto myTerrain = static_cast<Terrain>(tile.terrain);
+        auto myTerrain = tile.terrain;
         for (auto d : HexDir()) {
             // We can look up logical neighbors to every tile, even those on the
             // border outside the map grid.
@@ -486,7 +486,7 @@ void MapDisplay::computeTileEdges()
             }
 
             auto &nbrTile = tiles_[nbrIter->second];
-            auto nbrTerrain = static_cast<Terrain>(nbrTile.terrain);
+            auto nbrTerrain = nbrTile.terrain;
             if (myTerrain == nbrTerrain) {
                 // Special transition between neighboring regions with the same
                 // terrain type.

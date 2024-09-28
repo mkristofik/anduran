@@ -42,7 +42,7 @@ struct TileDisplay
     Hex hex;
     SDL_Point basePixel = {-HEX_SIZE, -HEX_SIZE};
     SDL_Point curPixel = {-HEX_SIZE, -HEX_SIZE};
-    int terrain = 0;
+    Terrain terrain = Terrain::water;
     int terrainFrame = 0;
     int obstacle = -1;
     Neighbors<TileEdge> edges;

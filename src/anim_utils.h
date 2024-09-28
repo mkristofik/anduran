@@ -284,6 +284,8 @@ private:
     BattleEvent event_;
     Hex hAttacker_;
     Hex hDefender_;
+    bool attOnSnow_;
+    bool defOnSnow_;
 };
 
 

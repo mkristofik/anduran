@@ -565,7 +565,9 @@ AnimHealth::AnimHealth(MapDisplay &display,
     startTime_ms_(get_hit_ms(attType)),
     event_(event),
     hAttacker_(hAttacker),
-    hDefender_(hDefender)
+    hDefender_(hDefender),
+    attOnSnow_(get_display().get_tile(hAttacker_).terrain == Terrain::snow),
+    defOnSnow_(get_display().get_tile(hDefender_).terrain == Terrain::snow)
 {
 }
 
@@ -626,24 +628,32 @@ void AnimHealth::stop()
 // source: Battle for Wesnoth src/units/drawer.cpp
 void AnimHealth::draw_hp_bar(int entity, int hp)
 {
-    // TODO: border almost invisible on snow
+    // Normal border color is almost invisible on snow terrain.
     static const SDL_Color BORDER_COLOR = {213, 213, 213, 200};
+    static const SDL_Color BORDER_COLOR_DARK = {43, 43, 43, 200};
     static const SDL_Color BG_COLOR = {0, 0, 0, 80};
 
     int hpMax = 0;
     SDL_Rect border;
+    auto *borderColor = &BORDER_COLOR;
     if (entity == attackerId_) {
         hpMax = event_.attackerStartHp;
         border = border_rect(event_.attackerRelSize);
+        if (attOnSnow_) {
+            borderColor = &BORDER_COLOR_DARK;
+        }
     }
     else {
         hpMax = event_.defenderStartHp;
         border = border_rect(event_.defenderRelSize);
+        if (defOnSnow_) {
+            borderColor = &BORDER_COLOR_DARK;
+        }
     }
 
     auto img = get_display().getEntityImage(entity);
     SdlEditTexture edit(img);
-    edit.fill_rect(border, BORDER_COLOR);
+    edit.fill_rect(border, *borderColor);
 
     SDL_Rect background = {border.x + 1, border.y + 1, border.w - 2, border.h - 2};
     edit.fill_rect(background, BG_COLOR);
