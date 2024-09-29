@@ -231,7 +231,7 @@ void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
 
 void Anduran::handle_key_up(const SDL_Keysym &key)
 {
-    if (!anims_.empty()) {
+    if (!anims_.empty() || SDL_GetMouseState(nullptr, nullptr) != 0) {
         return;
     }
     if (curPuzzleView_.visible) {
@@ -1147,7 +1147,8 @@ void Anduran::next_turn()
     curPlayerIndex_ = (curPlayerIndex_ + 1) % numPlayers_;
     auto champion = game_.get_object(cur_player().champion);
     deselect_champion();
-    // TODO: center map on him
+    rmapView_.centerOnHex(champion.hex);
+    stateChanged_ = true;
     log_info(std::format("It's the {} player's turn.", str_from_Team(champion.team)));
 
     // Show or hide the puzzle Xs depending on whether that player has completed

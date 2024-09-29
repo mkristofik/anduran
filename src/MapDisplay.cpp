@@ -180,6 +180,21 @@ bool MapDisplay::isScrolling() const
     return scrolling_;
 }
 
+void MapDisplay::centerOnHex(const Hex &hex)
+{
+    SDL_assert(!map_->offGrid(hex));
+
+    // Find the upper left corner of the display area so that 'hex' is drawn in
+    // the center.
+    auto upperLeft = mapPixelFromHex(hex);
+    upperLeft.x -= (displayArea_.w - HEX_SIZE) / 2;
+    upperLeft.y -= (displayArea_.h - HEX_SIZE) / 2;
+
+    auto xFrac = std::clamp(static_cast<double>(upperLeft.x) / maxOffset_.x, 0.0, 1.0);
+    auto yFrac = std::clamp(static_cast<double>(upperLeft.y) / maxOffset_.y, 0.0, 1.0);
+    setDisplayOffset(xFrac, yFrac);
+}
+
 void MapDisplay::draw()
 {
     SdlWindowClip guard(*window_, displayArea_);

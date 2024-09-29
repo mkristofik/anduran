@@ -103,6 +103,7 @@ public:
     void setDisplayOffset(double xFrac, double yFrac);
     PartialPixel getDisplayOffsetFrac() const;
     bool isScrolling() const;
+    void centerOnHex(const Hex &hex);
 
     void draw();
 
