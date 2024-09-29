@@ -35,7 +35,7 @@
 #include "iterable_enum_class.h"
 #include "team_color.h"
 
-#include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -45,7 +45,7 @@ struct PlayerState
     Team team = Team::neutral;
     ChampionType type = ChampionType::might1;
     int champion = -1;
-    std::unique_ptr<PuzzleState> puzzle;
+    std::optional<PuzzleState> puzzle;
     EnumSizedBitset<PuzzleType> artifacts;
 };
 
@@ -115,6 +115,7 @@ private:
     Team most_influence(int region) const;
 
     PlayerState & cur_player();
+    void deselect_champion();
     void next_turn();
     void check_victory_condition();
 
@@ -132,6 +133,7 @@ private:
     std::vector<Team> playerOrder_;
     int numPlayers_;
     int curPlayerIndex_;
+    bool startNextTurn_;
     bool championSelected_;
     Path curPath_;
     Hex hCurPathEnd_;
@@ -144,7 +146,7 @@ private:
     bool stateChanged_;
     std::vector<EnumSizedArray<int, Team>> influence_;
     PuzzleViewState curPuzzleView_;
-    EnumSizedArray<std::unique_ptr<PuzzleDisplay>, PuzzleType> puzzleViews_;
+    EnumSizedArray<std::optional<PuzzleDisplay>, PuzzleType> puzzleViews_;
     EnumSizedArray<int, PuzzleType> puzzleXsIds_;
 };
 

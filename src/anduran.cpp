@@ -41,6 +41,7 @@ Anduran::Anduran()
     playerOrder_(),
     numPlayers_(0),
     curPlayerIndex_(-1),
+    startNextTurn_(false),
     championSelected_(false),
     curPath_(),
     hCurPathEnd_(),
@@ -74,11 +75,17 @@ void Anduran::update_frame(Uint32 elapsed_ms)
     win_.clear();
     anims_.run(elapsed_ms);
 
-    // Wait until animations have finished running before updating the minimap.
-    if (anims_.empty() && stateChanged_) {
-        update_minimap();
-        check_victory_condition();
-        stateChanged_ = false;
+    // Wait until animations have finished running before updating things.
+    if (anims_.empty()) {
+        if (stateChanged_) {
+            update_minimap();
+            check_victory_condition();
+            stateChanged_ = false;
+        }
+        else if (startNextTurn_) {
+            startNextTurn_ = false;
+            next_turn();
+        }
     }
 
     rmapView_.draw();
@@ -175,14 +182,12 @@ void Anduran::handle_lmouse_up()
             championSelected_ = true;
         }
         else {
-            rmapView_.clearHighlight();
-            championSelected_ = false;
+            deselect_champion();
         }
     }
     // path computed by handle_mouse_pos()
     else if (championSelected_ && !curPath_.empty()) {
-        championSelected_ = false;
-        rmapView_.clearHighlight();
+        deselect_champion();
         rmapView_.clearPath();
         do_actions(champion.entity, curPath_);
     }
@@ -238,7 +243,7 @@ void Anduran::handle_key_up(const SDL_Keysym &key)
         dig_action(cur_player().champion);
     }
     else if (key.sym == 'e') {
-        next_turn();
+        startNextTurn_ = true;
     }
     else if (key.sym == 'p') {
         curPuzzleView_.visible = true;
@@ -432,11 +437,7 @@ void Anduran::init_puzzles()
 
     for (auto type : PuzzleType()) {
         initialState.set_target(type, find_artifact_hex());
-        puzzleViews_[type] = std::make_unique<PuzzleDisplay>(win_,
-                                                             rmapView_,
-                                                             puzzleArt_,
-                                                             initialState,
-                                                             type);
+        puzzleViews_[type].emplace(win_, rmapView_, puzzleArt_, initialState, type);
 
         // Create an entity to mark where each artifact is buried, revealed when
         // a player completes the puzzle.
@@ -450,7 +451,7 @@ void Anduran::init_puzzles()
     }
 
     for (auto &player : players_) {
-        player.puzzle = std::make_unique<PuzzleState>(initialState);
+        player.puzzle.emplace(initialState);
     }
 }
 
@@ -542,7 +543,6 @@ void Anduran::do_actions(int entity, PathView path)
         // Restore the entity's ellipse at the final location.
         anims_.push(AnimDisplay(rmapView_, thisObj.secondary, hLast));
     }
-    // TODO: deselect champion if defeated
 
     stateChanged_ = true;
 }
@@ -1136,11 +1136,17 @@ PlayerState & Anduran::cur_player()
     return players_[playerOrder_[curPlayerIndex_]];
 }
 
+void Anduran::deselect_champion()
+{
+    rmapView_.clearHighlight();
+    championSelected_ = false;
+}
+
 void Anduran::next_turn()
 {
     curPlayerIndex_ = (curPlayerIndex_ + 1) % numPlayers_;
     auto champion = game_.get_object(cur_player().champion);
-    championSelected_ = false;
+    deselect_champion();
     // TODO: center map on him
     log_info(std::format("It's the {} player's turn.", str_from_Team(champion.team)));
 
