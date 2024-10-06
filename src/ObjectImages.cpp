@@ -62,10 +62,10 @@ ObjectImages::ObjectImages(const SdlImageManager &imgMgr,
         }
     }
 
-    // Note: battle animations are made easier if they can assume the champion
+    // Note: battle animations are made easier if we can assume the champion
     // always uses frame (0,0).
     EnumSizedArray<std::string, ChampionType> filenames = {
-        "champion1"s, "champion2"s, "champion3"s, "champion4"s
+        "champion-might1"s, "champion-might2"s, "champion-magic1"s, "champion-magic2"s
     };
     for (auto c : ChampionType()) {
         for (auto team : Team()) {
