@@ -40,11 +40,18 @@
 #include <string_view>
 #include <vector>
 
-struct PlayerState
+struct Champion
+{
+    int entity;
+    std::vector<int> puzzlePieces;
+};
+
+
+struct Player
 {
     Team team = Team::neutral;
     ChampionType type = ChampionType::might1;
-    int champion = -1;
+    std::vector<Champion> champions;
     std::optional<PuzzleState> puzzle;
     EnumSizedBitset<PuzzleType> artifacts;
 };
@@ -114,7 +121,7 @@ private:
     // Return team with highest influence in a given region, or neutral if tied.
     Team most_influence(int region) const;
 
-    PlayerState & cur_player();
+    Player & cur_player();
     void deselect_champion();
     void next_turn();
     void check_victory_condition();
@@ -129,12 +136,12 @@ private:
     MapDisplay rmapView_;
     Minimap minimap_;
     GameState game_;
-    EnumSizedArray<PlayerState, Team> players_;
+    EnumSizedArray<Player, Team> players_;
     std::vector<Team> playerOrder_;
     int numPlayers_;
     int curPlayerIndex_;
     bool startNextTurn_;
-    bool championSelected_;
+    int curChampion_;
     Path curPath_;
     Hex hCurPathEnd_;
     int projectileId_;

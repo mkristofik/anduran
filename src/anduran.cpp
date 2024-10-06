@@ -42,7 +42,7 @@ Anduran::Anduran()
     numPlayers_(0),
     curPlayerIndex_(-1),
     startNextTurn_(false),
-    championSelected_(false),
+    curChampion_(-1),
     curPath_(),
     hCurPathEnd_(),
     projectileId_(-1),
@@ -77,14 +77,14 @@ void Anduran::update_frame(Uint32 elapsed_ms)
 
     // Wait until animations have finished running before updating things.
     if (anims_.empty()) {
+        if (startNextTurn_) {
+            startNextTurn_ = false;
+            next_turn();
+        }
         if (stateChanged_) {
             update_minimap();
             check_victory_condition();
             stateChanged_ = false;
-        }
-        else if (startNextTurn_) {
-            startNextTurn_ = false;
-            next_turn();
         }
     }
 
@@ -175,21 +175,30 @@ void Anduran::handle_lmouse_up()
     // - highlight that hex when selected
     // - user clicks on a walkable hex
     // - champion moves to the new hex, engages in battle if appropriate
-    auto champion = game_.get_object(cur_player().champion);
-    if (mouseHex == champion.hex) {
-        if (!championSelected_) {
+    bool selectionChanged = false;
+    auto &player = cur_player();
+    for (auto &champion : player.champions) {
+        if (mouseHex != game_.get_object(champion.entity).hex) {
+            continue;
+        }
+
+        if (curChampion_ < 0) {
             rmapView_.highlight(mouseHex);
-            championSelected_ = true;
+            curChampion_ = champion.entity;
         }
         else {
             deselect_champion();
         }
+        selectionChanged = true;
+        break;
     }
+
     // path computed by handle_mouse_pos()
-    else if (championSelected_ && !curPath_.empty()) {
-        deselect_champion();
+    if (!selectionChanged && curChampion_ >= 0 && !curPath_.empty()) {
+        rmapView_.clearHighlight();
         rmapView_.clearPath();
-        do_actions(champion.entity, curPath_);
+        do_actions(curChampion_, curPath_);
+        curChampion_ = -1;
     }
 }
 
@@ -202,7 +211,7 @@ void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
     rmapView_.handleMousePos(elapsed_ms);
     minimap_.handle_mouse_pos(elapsed_ms);
 
-    if (!championSelected_) {
+    if (curChampion_ < 0) {
         return;
     }
 
@@ -221,7 +230,7 @@ void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
     // - total length of AnimMove can tell you how long to animate it
     // - if below one tile's worth, show zero
     rmapView_.clearPath();
-    auto champion = game_.get_object(cur_player().champion);
+    auto champion = game_.get_object(curChampion_);
     curPath_ = pathfind_.find_path(champion, hCurPathEnd_);
     if (!curPath_.empty()) {
         auto [action, _] = game_.hex_action(champion, hCurPathEnd_);
@@ -240,7 +249,9 @@ void Anduran::handle_key_up(const SDL_Keysym &key)
     }
 
     if (key.sym == 'd') {
-        dig_action(cur_player().champion);
+        if (curChampion_ >= 0) {
+            dig_action(curChampion_);
+        }
     }
     else if (key.sym == 'e') {
         startNextTurn_ = true;
@@ -275,28 +286,31 @@ void Anduran::load_players()
         game_.add_object(castle);
 
         // Draw a champion in the hex due south of each castle.
-        GameObject champion;
-        champion.hex = castles[i].getNeighbor(HexDir::s);
+        GameObject champObj;
+        champObj.hex = castles[i].getNeighbor(HexDir::s);
         auto texture = objImg_.get_champion(championTypes[i], castle.team);
-        champion.entity = rmapView_.addEntity(texture, champion.hex, ZOrder::unit);
-        champion.secondary = rmapView_.addEntity(objImg_.get_ellipse(castle.team),
-                                                 champion.hex,
+        champObj.entity = rmapView_.addEntity(texture, champObj.hex, ZOrder::unit);
+        champObj.secondary = rmapView_.addEntity(objImg_.get_ellipse(castle.team),
+                                                 champObj.hex,
                                                  ZOrder::ellipse);
-        champion.team = castle.team;
-        champion.type = ObjectType::champion;
-        game_.add_object(champion);
+        champObj.team = castle.team;
+        champObj.type = ObjectType::champion;
+        game_.add_object(champObj);
 
         // Each player gets the same starting army for now.
         Army army;
         army.units[0] = {units_.get_type("sword"), 4};
         army.units[1] = {units_.get_type("arch"), 4};
-        army.entity = champion.entity;
+        army.entity = champObj.entity;
         game_.add_army(army);
 
-        auto &player = players_[champion.team];
-        player.team = champion.team;
+        Champion champion;
+        champion.entity = champObj.entity;
+
+        auto &player = players_[champObj.team];
+        player.team = champObj.team;
         player.type = championTypes[i];
-        player.champion = champion.entity;
+        player.champions.push_back(champion);
         playerOrder_.push_back(player.team);
     }
     randomize(playerOrder_);
@@ -1131,7 +1145,7 @@ Team Anduran::most_influence(int region) const
     return winner;
 }
 
-PlayerState & Anduran::cur_player()
+Player & Anduran::cur_player()
 {
     return players_[playerOrder_[curPlayerIndex_]];
 }
@@ -1139,23 +1153,26 @@ PlayerState & Anduran::cur_player()
 void Anduran::deselect_champion()
 {
     rmapView_.clearHighlight();
-    championSelected_ = false;
+    curChampion_ = -1;
 }
 
 void Anduran::next_turn()
 {
     curPlayerIndex_ = (curPlayerIndex_ + 1) % numPlayers_;
-    auto champion = game_.get_object(cur_player().champion);
+    auto &nextPlayer = cur_player();
+    if (!nextPlayer.champions.empty()) {
+        auto champion = game_.get_object(nextPlayer.champions[0].entity);
+        rmapView_.centerOnHex(champion.hex);
+        stateChanged_ = true;
+    }
     deselect_champion();
-    rmapView_.centerOnHex(champion.hex);
-    stateChanged_ = true;
-    log_info(std::format("It's the {} player's turn.", str_from_Team(champion.team)));
+    log_info(std::format("It's the {} player's turn.", str_from_Team(nextPlayer.team)));
 
     // Show or hide the puzzle Xs depending on whether that player has completed
     // them.
     AnimSet puzzleAnim;
     for (auto type : PuzzleType()) {
-        if (!artifact_found(type) && cur_player().puzzle->all_visited(type)) {
+        if (!artifact_found(type) && nextPlayer.puzzle->all_visited(type)) {
             puzzleAnim.insert(AnimDisplay(rmapView_, puzzleXsIds_[type]));
         }
         else {
