@@ -633,6 +633,9 @@ bool Anduran::battle_action(int entity, int enemyId)
 
     log_info(army_log(attacker) + "\n    vs.\n" + army_log(defender));
     show_boat_floor(thisObj.hex, enemyObj.hex);
+    if (enemyObj.secondary >= 0) {
+        anims_.push(AnimHide(rmapView_, enemyObj.secondary));
+    }
 
     const auto result = do_battle(make_army_state(attacker, BattleSide::attacker),
                                   make_army_state(defender, BattleSide::defender));
@@ -653,14 +656,19 @@ bool Anduran::battle_action(int entity, int enemyId)
     // Losing team's last unit must be hidden at the end of the battle.  Have to
     // restore the winning team's starting image (and ellipse if needed).
     const GameObject *winner = &thisObj;
+    const Army *winningArmy = &attacker;
+    const GameObject *loser = &enemyObj;
     if (!result.attackerWins) {
-        winner = &enemyObj;
+        std::swap(winner, loser);
+        winningArmy = &defender;
     }
 
     AnimSet endingAnim;
     endingAnim.insert(AnimDisplay(rmapView_,
                                   winner->entity,
                                   rmapView_.getEntityImage(winner->entity)));
+    endingAnim.insert(AnimHide(rmapView_, loser->entity));
+    endingAnim.insert(AnimLog(rmapView_, battle_result_log(*winningArmy, result)));
 
     // Restore the defender's ellipse here if they win.  The attacker might be
     // continuing to move to another hex so we skip showing it if they win.
@@ -668,29 +676,20 @@ bool Anduran::battle_action(int entity, int enemyId)
         endingAnim.insert(AnimDisplay(rmapView_, winner->secondary, winner->hex));
     }
 
-    std::string endLog;
-    if (result.attackerWins) {
-        endLog = battle_result_log(attacker, result);
-        endingAnim.insert(AnimHide(rmapView_, enemyObj.entity));
-        game_.remove_object(enemyObj.entity);
-    }
-    else {
-        endLog = battle_result_log(defender, result);
-        // TODO: game can't yet handle a player's champion being defeated
-        endingAnim.insert(AnimHide(rmapView_, thisObj.entity));
-        game_.remove_object(thisObj.entity);
-    }
-
-    endingAnim.insert(AnimLog(rmapView_, endLog));
     anims_.push(endingAnim);
-
     hide_battle_accents();
 
     attacker.update(result.attacker);
     defender.update(result.defender);
     game_.update_army(attacker);
     game_.update_army(defender);
+    game_.remove_object(loser->entity);
+
     // TODO: in battles between two champions, copy puzzle pieces to winner
+    if (loser->type == ObjectType::champion) {
+        erase_if(players_[loser->team].champions,
+             [id = loser->entity] (auto &champion) { return champion.entity == id; });
+    }
 
     return result.attackerWins;
 }
@@ -1165,6 +1164,7 @@ void Anduran::next_turn()
         rmapView_.centerOnHex(champion.hex);
         stateChanged_ = true;
     }
+    // TODO: if player doesn't have a champion, center on castle
     deselect_champion();
     log_info(std::format("It's the {} player's turn.", str_from_Team(nextPlayer.team)));
 
