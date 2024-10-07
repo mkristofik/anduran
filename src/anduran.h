@@ -42,7 +42,7 @@
 
 struct Champion
 {
-    int entity;
+    int entity = -1;
     std::vector<int> puzzlePieces;
 };
 
@@ -51,6 +51,7 @@ struct Player
 {
     Team team = Team::neutral;
     ChampionType type = ChampionType::might1;
+    int castle = -1;
     std::vector<Champion> champions;
     std::optional<PuzzleState> puzzle;
     EnumSizedBitset<PuzzleType> artifacts;

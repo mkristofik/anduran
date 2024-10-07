@@ -310,6 +310,7 @@ void Anduran::load_players()
         auto &player = players_[champObj.team];
         player.team = champObj.team;
         player.type = championTypes[i];
+        player.castle = castle.entity;
         player.champions.push_back(champion);
         playerOrder_.push_back(player.team);
     }
@@ -1164,7 +1165,9 @@ void Anduran::next_turn()
         rmapView_.centerOnHex(champion.hex);
         stateChanged_ = true;
     }
-    // TODO: if player doesn't have a champion, center on castle
+    else if (nextPlayer.castle >= 0) {
+        rmapView_.centerOnHex(game_.get_object(nextPlayer.castle).hex);
+    }
     deselect_champion();
     log_info(std::format("It's the {} player's turn.", str_from_Team(nextPlayer.team)));
 
