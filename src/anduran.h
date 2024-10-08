@@ -35,6 +35,9 @@
 #include "iterable_enum_class.h"
 #include "team_color.h"
 
+#include "boost/container/flat_map.hpp"
+#include "boost/container/flat_set.hpp"
+
 #include <optional>
 #include <string>
 #include <string_view>
@@ -43,7 +46,7 @@
 struct Champion
 {
     int entity = -1;
-    std::vector<int> puzzlePieces;
+    boost::container::flat_set<int> puzzlePieces;
 };
 
 
@@ -52,7 +55,7 @@ struct Player
     Team team = Team::neutral;
     ChampionType type = ChampionType::might1;
     int castle = -1;
-    std::vector<Champion> champions;
+    std::vector<int> champions;
     std::optional<PuzzleState> puzzle;
     EnumSizedBitset<PuzzleType> artifacts;
 };
@@ -73,7 +76,8 @@ public:
 private:
     void update_frame(Uint32 elapsed_ms) override;
     void update_minimap();
-    void update_puzzle();
+    void update_puzzles();
+    void update_puzzle_view();
 
     void handle_lmouse_down() override;
     void handle_lmouse_up() override;
@@ -142,6 +146,7 @@ private:
     int numPlayers_;
     int curPlayerIndex_;
     bool startNextTurn_;
+    boost::container::flat_map<int, Champion> champions_;
     int curChampion_;
     Path curPath_;
     Hex hCurPathEnd_;

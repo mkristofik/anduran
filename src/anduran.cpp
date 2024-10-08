@@ -42,6 +42,7 @@ Anduran::Anduran()
     numPlayers_(0),
     curPlayerIndex_(-1),
     startNextTurn_(false),
+    champions_(),
     curChampion_(-1),
     curPath_(),
     hCurPathEnd_(),
@@ -83,6 +84,7 @@ void Anduran::update_frame(Uint32 elapsed_ms)
         }
         if (stateChanged_) {
             update_minimap();
+            update_puzzles();
             check_victory_condition();
             stateChanged_ = false;
         }
@@ -92,7 +94,7 @@ void Anduran::update_frame(Uint32 elapsed_ms)
     minimap_.draw();
 
     if (anims_.empty() && curPuzzleView_.visible) {
-        update_puzzle();
+        update_puzzle_view();
     }
 
     win_.update();
@@ -122,7 +124,35 @@ void Anduran::update_minimap()
     }
 }
 
-void Anduran::update_puzzle()
+void Anduran::update_puzzles()
+{
+    auto &player = cur_player();
+
+    // Make sure all newly acquired puzzle pieces, either from an obelisk or
+    // defeating an enemy champion, are marked visited.
+    for (int entity : player.champions) {
+        for (int index : champions_[entity].puzzlePieces) {
+            player.puzzle->visit(index);
+        }
+    }
+
+    // Show or hide the puzzle Xs depending on whether that player has completed
+    // them.
+    AnimSet puzzleAnim;
+    for (auto type : PuzzleType()) {
+        puzzleViews_[type]->update(*player.puzzle);
+
+        if (!artifact_found(type) && player.puzzle->all_visited(type)) {
+            puzzleAnim.insert(AnimDisplay(rmapView_, puzzleXsIds_[type]));
+        }
+        else {
+            puzzleAnim.insert(AnimHide(rmapView_, puzzleXsIds_[type]));
+        }
+    }
+    anims_.push(puzzleAnim);
+}
+
+void Anduran::update_puzzle_view()
 {
     auto status = puzzleViews_[curPuzzleView_.type]->status();
     if (status == PopupStatus::running) {
@@ -177,14 +207,14 @@ void Anduran::handle_lmouse_up()
     // - champion moves to the new hex, engages in battle if appropriate
     bool selectionChanged = false;
     auto &player = cur_player();
-    for (auto &champion : player.champions) {
-        if (mouseHex != game_.get_object(champion.entity).hex) {
+    for (int entity : player.champions) {
+        if (mouseHex != game_.get_object(entity).hex) {
             continue;
         }
 
         if (curChampion_ < 0) {
             rmapView_.highlight(mouseHex);
-            curChampion_ = champion.entity;
+            curChampion_ = entity;
         }
         else {
             deselect_champion();
@@ -306,12 +336,13 @@ void Anduran::load_players()
 
         Champion champion;
         champion.entity = champObj.entity;
+        champions_.emplace(champion.entity, champion);
 
         auto &player = players_[champObj.team];
         player.team = champObj.team;
         player.type = championTypes[i];
         player.castle = castle.entity;
-        player.champions.push_back(champion);
+        player.champions.push_back(champion.entity);
         playerOrder_.push_back(player.team);
     }
     randomize(playerOrder_);
@@ -677,6 +708,27 @@ bool Anduran::battle_action(int entity, int enemyId)
         endingAnim.insert(AnimDisplay(rmapView_, winner->secondary, winner->hex));
     }
 
+    // TODO: this could use some refactoring.
+    if (loser->type == ObjectType::champion) {
+        auto loserIter = champions_.find(loser->entity);
+        // In battles between two champions, copy puzzle pieces to winner.
+        if (loserIter != end(champions_) && winner->type == ObjectType::champion) {
+            auto winnerIter = champions_.find(winner->entity);
+            if (winnerIter != end(champions_)) {
+                auto &winnerPuzzle = winnerIter->second.puzzlePieces;
+                int sizeBefore = ssize(winnerPuzzle);
+                winnerPuzzle.merge(loserIter->second.puzzlePieces);
+                int numPieces = ssize(winnerPuzzle) - sizeBefore;
+                if (numPieces > 0) {
+                    auto msg = std::format("{} puzzle pieces plundered", numPieces);
+                    endingAnim.insert(AnimLog(rmapView_, msg));
+                }
+            }
+        }
+
+        erase(players_[loser->team].champions, loser->entity);
+    }
+
     anims_.push(endingAnim);
     hide_battle_accents();
 
@@ -685,12 +737,6 @@ bool Anduran::battle_action(int entity, int enemyId)
     game_.update_army(attacker);
     game_.update_army(defender);
     game_.remove_object(loser->entity);
-
-    // TODO: in battles between two champions, copy puzzle pieces to winner
-    if (loser->type == ObjectType::champion) {
-        erase_if(players_[loser->team].champions,
-             [id = loser->entity] (auto &champion) { return champion.entity == id; });
-    }
 
     return result.attackerWins;
 }
@@ -845,18 +891,16 @@ void Anduran::visit_obelisk(const GameObject &visitor)
         return;
     }
 
-    auto &player = players_[visitor.team];
     int index = rmap_.intFromHex(visitor.hex);
-    auto puzzleType = player.puzzle->obelisk_type(index);
-
-    // Show the X on the map when the puzzle is complete
-    player.puzzle->visit(index);
-    if (player.puzzle->all_visited(puzzleType)) {
-        anims_.push(AnimDisplay(rmapView_, puzzleXsIds_[puzzleType]));
+    if (visitor.type == ObjectType::champion) {
+        auto iter = champions_.find(visitor.entity);
+        if (iter != end(champions_)) {
+            iter->second.puzzlePieces.insert(index);
+        }
     }
 
-    puzzleViews_[puzzleType]->update(*player.puzzle);
-    curPuzzleView_.type = puzzleType;
+    auto &player = players_[visitor.team];
+    curPuzzleView_.type = player.puzzle->obelisk_type(index);
     curPuzzleView_.visible = true;
 }
 
@@ -1161,28 +1205,15 @@ void Anduran::next_turn()
     curPlayerIndex_ = (curPlayerIndex_ + 1) % numPlayers_;
     auto &nextPlayer = cur_player();
     if (!nextPlayer.champions.empty()) {
-        auto champion = game_.get_object(nextPlayer.champions[0].entity);
+        auto champion = game_.get_object(nextPlayer.champions[0]);
         rmapView_.centerOnHex(champion.hex);
-        stateChanged_ = true;
     }
     else if (nextPlayer.castle >= 0) {
         rmapView_.centerOnHex(game_.get_object(nextPlayer.castle).hex);
     }
     deselect_champion();
     log_info(std::format("It's the {} player's turn.", str_from_Team(nextPlayer.team)));
-
-    // Show or hide the puzzle Xs depending on whether that player has completed
-    // them.
-    AnimSet puzzleAnim;
-    for (auto type : PuzzleType()) {
-        if (!artifact_found(type) && nextPlayer.puzzle->all_visited(type)) {
-            puzzleAnim.insert(AnimDisplay(rmapView_, puzzleXsIds_[type]));
-        }
-        else {
-            puzzleAnim.insert(AnimHide(rmapView_, puzzleXsIds_[type]));
-        }
-    }
-    anims_.push(puzzleAnim);
+    stateChanged_ = true;
 }
 
 void Anduran::check_victory_condition()
