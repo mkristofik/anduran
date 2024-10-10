@@ -1221,6 +1221,11 @@ void Anduran::next_turn()
         rmapView_.centerOnHex(game_.get_object(nextPlayer.castle).hex);
     }
     deselect_champion();
+
+    // Always default to the same puzzle type to avoid revealing an obelisk being
+    // visited by another player.
+    curPuzzleView_.type = PuzzleType::helmet;
+
     log_info(std::format("It's the {} player's turn.", str_from_Team(nextPlayer.team)));
     stateChanged_ = true;
 }
