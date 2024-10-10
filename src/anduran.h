@@ -98,6 +98,7 @@ private:
     void embark_action(int entity, int boatId);
     void disembark_action(int entity, const Hex &hLand);
     bool battle_action(int entity, int enemyId);
+    void battle_plunder(GameObject &winner, GameObject &loser);
     void local_action(int entity);
     void dig_action(int entity);
     bool artifact_found(PuzzleType type) const;

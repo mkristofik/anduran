@@ -687,9 +687,9 @@ bool Anduran::battle_action(int entity, int enemyId)
 
     // Losing team's last unit must be hidden at the end of the battle.  Have to
     // restore the winning team's starting image (and ellipse if needed).
-    const GameObject *winner = &thisObj;
+    GameObject *winner = &thisObj;
     const Army *winningArmy = &attacker;
-    const GameObject *loser = &enemyObj;
+    GameObject *loser = &enemyObj;
     if (!result.attackerWins) {
         std::swap(winner, loser);
         winningArmy = &defender;
@@ -708,30 +708,14 @@ bool Anduran::battle_action(int entity, int enemyId)
         endingAnim.insert(AnimDisplay(rmapView_, winner->secondary, winner->hex));
     }
 
-    // TODO: this could use some refactoring.
     if (loser->type == ObjectType::champion) {
-        auto loserIter = champions_.find(loser->entity);
-        // In battles between two champions, copy puzzle pieces to winner.
-        if (loserIter != end(champions_) && winner->type == ObjectType::champion) {
-            auto winnerIter = champions_.find(winner->entity);
-            if (winnerIter != end(champions_)) {
-                auto &winnerPuzzle = winnerIter->second.puzzlePieces;
-                int sizeBefore = ssize(winnerPuzzle);
-                winnerPuzzle.merge(loserIter->second.puzzlePieces);
-                int numPieces = ssize(winnerPuzzle) - sizeBefore;
-                if (numPieces > 0) {
-                    auto msg = std::format("{} puzzle pieces plundered", numPieces);
-                    endingAnim.insert(AnimLog(rmapView_, msg));
-                }
-            }
-        }
-
         erase(players_[loser->team].champions, loser->entity);
     }
 
     anims_.push(endingAnim);
     hide_battle_accents();
 
+    battle_plunder(*winner, *loser);
     attacker.update(result.attacker);
     defender.update(result.defender);
     game_.update_army(attacker);
@@ -739,6 +723,31 @@ bool Anduran::battle_action(int entity, int enemyId)
     game_.remove_object(loser->entity);
 
     return result.attackerWins;
+}
+
+void Anduran::battle_plunder(GameObject &winner, GameObject &loser)
+{
+    if (winner.type != ObjectType::champion || loser.type != ObjectType::champion) {
+        return;
+    }
+
+    // Fetch the Champion objects for each side.  Neutrals aren't tracked as they
+    // shouldn't have anything to plunder.
+    auto winnerIter = champions_.find(winner.entity);
+    auto loserIter = champions_.find(loser.entity);
+    if (winnerIter == end(champions_) || loserIter == end(champions_)) {
+        return;
+    }
+
+    // Copy puzzle pieces to the winning champion.
+    auto &winnerPuzzle = winnerIter->second.puzzlePieces;
+    int sizeBefore = ssize(winnerPuzzle);
+    winnerPuzzle.merge(loserIter->second.puzzlePieces);
+    int numPieces = ssize(winnerPuzzle) - sizeBefore;
+    if (numPieces > 0) {
+        auto msg = std::format("{} puzzle pieces plundered", numPieces);
+        anims_.push(AnimLog(rmapView_, msg));
+    }
 }
 
 // Is there anything to do on the current hex?
