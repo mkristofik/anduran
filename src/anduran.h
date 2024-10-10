@@ -35,17 +35,28 @@
 #include "iterable_enum_class.h"
 #include "team_color.h"
 
-#include <memory>
+#include "boost/container/flat_map.hpp"
+#include "boost/container/flat_set.hpp"
+
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
 
-struct PlayerState
+struct Champion
+{
+    int entity = -1;
+    boost::container::flat_set<int> puzzlePieces;
+};
+
+
+struct Player
 {
     Team team = Team::neutral;
     ChampionType type = ChampionType::might1;
-    int champion = -1;
-    std::unique_ptr<PuzzleState> puzzle;
+    int castle = -1;
+    std::vector<int> champions;
+    std::optional<PuzzleState> puzzle;
     EnumSizedBitset<PuzzleType> artifacts;
 };
 
@@ -65,7 +76,8 @@ public:
 private:
     void update_frame(Uint32 elapsed_ms) override;
     void update_minimap();
-    void update_puzzle();
+    void update_puzzles();
+    void update_puzzle_view();
 
     void handle_lmouse_down() override;
     void handle_lmouse_up() override;
@@ -86,6 +98,7 @@ private:
     void embark_action(int entity, int boatId);
     void disembark_action(int entity, const Hex &hLand);
     bool battle_action(int entity, int enemyId);
+    void battle_plunder(GameObject &winner, GameObject &loser);
     void local_action(int entity);
     void dig_action(int entity);
     bool artifact_found(PuzzleType type) const;
@@ -114,7 +127,8 @@ private:
     // Return team with highest influence in a given region, or neutral if tied.
     Team most_influence(int region) const;
 
-    PlayerState & cur_player();
+    Player & cur_player();
+    void deselect_champion();
     void next_turn();
     void check_victory_condition();
 
@@ -128,11 +142,13 @@ private:
     MapDisplay rmapView_;
     Minimap minimap_;
     GameState game_;
-    EnumSizedArray<PlayerState, Team> players_;
+    EnumSizedArray<Player, Team> players_;
     std::vector<Team> playerOrder_;
     int numPlayers_;
     int curPlayerIndex_;
-    bool championSelected_;
+    bool startNextTurn_;
+    boost::container::flat_map<int, Champion> champions_;
+    int curChampion_;
     Path curPath_;
     Hex hCurPathEnd_;
     int projectileId_;
@@ -144,7 +160,7 @@ private:
     bool stateChanged_;
     std::vector<EnumSizedArray<int, Team>> influence_;
     PuzzleViewState curPuzzleView_;
-    EnumSizedArray<std::unique_ptr<PuzzleDisplay>, PuzzleType> puzzleViews_;
+    EnumSizedArray<std::optional<PuzzleDisplay>, PuzzleType> puzzleViews_;
     EnumSizedArray<int, PuzzleType> puzzleXsIds_;
 };
 
