@@ -26,11 +26,11 @@
    |e|                                                  |n|     minimap     |g|
    |f|                                                  |e|                 |h|
    |t|                                                  |r|_________________|t|
-   | |                                                  | |                 | |
+   | |                                                  | |____mid_border___| |
    |b|                     main map                     |b|                 |b|
    |o|                                                  |o|                 |o|
-   |r|                                                  |r|                 |r|
-   |d|                                                  |d|                 |d|
+   |r|                                                  |r|    unit info    |r|
+   |d|                                                  |d|      block      |d|
    |e|                                                  |e|                 |e|
    |r|                                                  |r|                 |r|
    | |                                                  | |                 | |
@@ -47,12 +47,14 @@ public:
     int height() const;
     const SDL_Rect & map_bounds() const;
     const SDL_Rect & minimap_bounds() const;
+    const SDL_Rect & info_block_bounds() const;
 
 private:
     int width_;
     int height_;
     SDL_Rect map_;
     SDL_Rect minimap_;
+    SDL_Rect infoBlock_;
 };
 
 #endif

@@ -21,7 +21,8 @@ WindowConfig::WindowConfig(const std::string &configFile)
     : width_(1280),
     height_(720),
     map_{12, 24, 1052, 672},
-    minimap_{1076, 24, 192, 192}
+    minimap_{1076, 24, 192, 192},
+    infoBlock_{1076, 223, 192, 473}
 {
     if (!std::filesystem::exists(configFile)) {
         log_error("window config file not found: " + configFile +
@@ -32,6 +33,7 @@ WindowConfig::WindowConfig(const std::string &configFile)
     int topBorder = 0;
     int leftBorder = 0;
     int innerBorder = 0;
+    int middleBorder = 0;
     int rightBorder = 0;
     int bottomBorder = 0;
     int minimapWidth = 0;
@@ -63,6 +65,9 @@ WindowConfig::WindowConfig(const std::string &configFile)
         else if (name == "inner-border-pct") {
             innerBorder = value / 100.0 * width_;
         }
+        else if (name == "middle-border-pct") {
+            middleBorder = value / 100.0 * height_;
+        }
         else if (name == "right-border-pct") {
             rightBorder = value / 100.0 * width_;
         }
@@ -83,6 +88,11 @@ WindowConfig::WindowConfig(const std::string &configFile)
     map_.y = topBorder;
     map_.w = minimap_.x - map_.x - innerBorder;
     map_.h = height_ - topBorder - bottomBorder;
+
+    infoBlock_.x = minimap_.x;
+    infoBlock_.w = minimap_.w;
+    infoBlock_.y = minimap_.y + minimap_.h + middleBorder;
+    infoBlock_.h = map_.h - minimap_.h - middleBorder;
 }
 
 int WindowConfig::width() const
@@ -103,4 +113,9 @@ const SDL_Rect & WindowConfig::map_bounds() const
 const SDL_Rect & WindowConfig::minimap_bounds() const
 {
     return minimap_;
+}
+
+const SDL_Rect & WindowConfig::info_block_bounds() const
+{
+    return infoBlock_;
 }

@@ -164,6 +164,12 @@ destination hex
 * highlight current path
 * visitable objects (shipwrecks) are walkable regardless of terrain
     * do we want that?  you'd have to spend a whole day's movement just to go one hex
+- base movement 150
+    - add 7 for every slowest creature speed above 3, max 200?
+    - grass, dirt, water cost 10 per tile, desert and snow 12, swamp 15
+- native terrain is starting terrain for team
+    - reduces movement cost to 10
+- how do you plan paths over multiple turns?
 
 
 # Boats
