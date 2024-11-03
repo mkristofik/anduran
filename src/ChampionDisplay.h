@@ -34,6 +34,7 @@ private:
     SdlWindow *window_;
     SDL_Rect displayArea_;
     SdlTexture portraits_;
+    SdlTexture movementBar_;
 };
 
 #endif

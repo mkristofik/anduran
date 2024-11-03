@@ -22,45 +22,29 @@ ChampionDisplay::ChampionDisplay(SdlWindow &win,
                                  SdlImageManager &images)
     : window_(&win),
     displayArea_(displayRect),
-    portraits_(images.make_texture("champion-portraits", *window_))
+    portraits_(images.make_texture("champion-portraits", *window_)),
+    movementBar_(SdlTexture::make_editable_image(*window_, 8, 72))
 {
+    SDL_Rect border = {0, 0, movementBar_.width(), movementBar_.height()};
+    SDL_Rect interior = {1, 1, border.w - 2, border.h - 2};
+    // TODO: update whenever a champion moves
+    SDL_Rect bar = {1, 24, border.w - 2, 47};
+
+    SDL_Color borderColor = {213, 213, 213, 200};
+    SDL_Color bgColor = {0, 0, 0, SDL_ALPHA_TRANSPARENT};
+    SDL_Color barColor = {255, 175, 0, SDL_ALPHA_OPAQUE};
+
+    SdlEditTexture edit(movementBar_);
+    edit.fill_rect(border, borderColor);
+    edit.fill_rect(interior, bgColor);
+    edit.fill_rect(bar, barColor);
 }
 
 void ChampionDisplay::draw()
 {
-    static const SDL_Color BORDER_COLOR = {213, 213, 213, 200};
-    static const SDL_Color BAR_COLOR = {255, 175, 0, SDL_ALPHA_OPAQUE};
-
-    // TODO: create a texture for the movement bar
-    // TODO: only update it whenever a champion moves
-    SDL_Color orig;
-    SDL_GetRenderDrawColor(window_->renderer(), &orig.r, &orig.g, &orig.b, &orig.a);
-
-    SDL_Rect border = {displayArea_.x, displayArea_.y, 8, 72};
-    SDL_SetRenderDrawColor(window_->renderer(),
-                           BORDER_COLOR.r,
-                           BORDER_COLOR.g,
-                           BORDER_COLOR.b,
-                           BORDER_COLOR.a);
-    if (SDL_RenderDrawRect(window_->renderer(), &border) < 0) {
-        log_warn(std::format("couldn't render movement border: {}", SDL_GetError()),
-                 LogCategory::video);
-    }
-
-    SDL_Rect bar = {border.x + 1, border.y + 24, 6, 47};
-    SDL_SetRenderDrawColor(window_->renderer(),
-                           BAR_COLOR.r,
-                           BAR_COLOR.g,
-                           BAR_COLOR.b,
-                           BAR_COLOR.a);
-    if (SDL_RenderFillRect(window_->renderer(), &bar) < 0) {
-        log_warn(std::format("couldn't render movement bar: {}", SDL_GetError()),
-                 LogCategory::video);
-    }
-
-    SDL_SetRenderDrawColor(window_->renderer(), orig.r, orig.g, orig.b, orig.a);
-
-    SDL_Point pxChampion = {border.x + border.w, border.y};
+    SDL_Point pxBar = {displayArea_.x, displayArea_.y};
+    SDL_Point pxChampion = {pxBar.x + movementBar_.width(), pxBar.y};
     // TODO: change which portrait is drawn based on the current player
+    movementBar_.draw(pxBar);
     portraits_.draw_scaled(pxChampion, 0.5, Frame{0, 0});
 }
