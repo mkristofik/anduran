@@ -229,6 +229,23 @@ void SdlTexture::draw(const SDL_Point &p, const Frame &frame)
     }
 }
 
+void SdlTexture::draw_scaled(const SDL_Point &p, double scale, const Frame &frame)
+{
+    SDL_assert(*this);
+
+    const auto src = get_frame_rect(frame);
+    auto dest = get_dest_rect(p);
+    dest.w *= scale;
+    dest.h *= scale;
+
+    if (SDL_RenderCopy(pimpl_->renderer, get(), &src, &dest) < 0) {
+        log_warn(std::format("couldn't render texture scaled {}: {}",
+                             scale,
+                             SDL_GetError()),
+                 LogCategory::render);
+    }
+}
+
 void SdlTexture::draw_centered(const SDL_Point &p, const Frame &frame)
 {
     const auto pTarget = p - SDL_Point{frame_width() / 2, frame_height() / 2};

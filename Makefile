@@ -77,6 +77,7 @@ MAPVIEW_DEPS = $(MAPVIEW_OBJS:%.o=%.d)
 
 ANDURAN = anduran$(EXE)
 ANDURAN_SRC = AnimQueue.cpp \
+	ChampionDisplay.cpp \
 	GameState.cpp \
 	MapDisplay.cpp \
 	Minimap.cpp \

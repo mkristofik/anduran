@@ -36,6 +36,7 @@ Anduran::Anduran()
     puzzleArt_(images_),
     rmapView_(win_, config_.map_bounds(), rmap_, images_),
     minimap_(win_, config_.minimap_bounds(), rmap_, rmapView_, images_),
+    championView_(win_, config_.info_block_bounds(), images_),
     game_(rmap_),
     players_(),
     playerOrder_(),
@@ -92,6 +93,7 @@ void Anduran::update_frame(Uint32 elapsed_ms)
 
     rmapView_.draw();
     minimap_.draw();
+    championView_.draw();
 
     if (anims_.empty() && curPuzzleView_.visible) {
         update_puzzle_view();

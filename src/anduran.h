@@ -14,6 +14,7 @@
 #define ANDURAN_H
 
 #include "AnimQueue.h"
+#include "ChampionDisplay.h"
 #include "GameState.h"
 #include "MapDisplay.h"
 #include "Minimap.h"
@@ -141,6 +142,7 @@ private:
     PuzzleImages puzzleArt_;
     MapDisplay rmapView_;
     Minimap minimap_;
+    ChampionDisplay championView_;
     GameState game_;
     EnumSizedArray<Player, Team> players_;
     std::vector<Team> playerOrder_;
