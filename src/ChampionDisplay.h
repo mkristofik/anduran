@@ -13,6 +13,7 @@
 #ifndef CHAMPION_DISPLAY_H
 #define CHAMPION_DISPLAY_H
 
+#include "ObjectManager.h"
 #include "SdlTexture.h"
 
 #include "SDL.h"
@@ -29,12 +30,14 @@ public:
                     SdlImageManager &images);
 
     void draw();
+    void update(ChampionType champion);
 
 private:
     SdlWindow *window_;
     SDL_Rect displayArea_;
     SdlTexture portraits_;
     SdlTexture movementBar_;
+    ChampionType curChampion_;
 };
 
 #endif

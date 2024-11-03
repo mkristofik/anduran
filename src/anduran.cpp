@@ -1218,9 +1218,11 @@ void Anduran::next_turn()
     if (!nextPlayer.champions.empty()) {
         auto champion = game_.get_object(nextPlayer.champions[0]);
         rmapView_.centerOnHex(champion.hex);
+        championView_.update(nextPlayer.type);
     }
     else if (nextPlayer.castle >= 0) {
         rmapView_.centerOnHex(game_.get_object(nextPlayer.castle).hex);
+        // TODO: clear the champion view
     }
     deselect_champion();
 

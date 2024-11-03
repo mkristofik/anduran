@@ -23,7 +23,8 @@ ChampionDisplay::ChampionDisplay(SdlWindow &win,
     : window_(&win),
     displayArea_(displayRect),
     portraits_(images.make_texture("champion-portraits", *window_)),
-    movementBar_(SdlTexture::make_editable_image(*window_, 8, 72))
+    movementBar_(SdlTexture::make_editable_image(*window_, 8, 72)),
+    curChampion_(ChampionType::might1)
 {
     SDL_Rect border = {0, 0, movementBar_.width(), movementBar_.height()};
     SDL_Rect interior = {1, 1, border.w - 2, border.h - 2};
@@ -44,7 +45,11 @@ void ChampionDisplay::draw()
 {
     SDL_Point pxBar = {displayArea_.x, displayArea_.y};
     SDL_Point pxChampion = {pxBar.x + movementBar_.width(), pxBar.y};
-    // TODO: change which portrait is drawn based on the current player
     movementBar_.draw(pxBar);
-    portraits_.draw_scaled(pxChampion, 0.5, Frame{0, 0});
+    portraits_.draw_scaled(pxChampion, 0.5, Frame{0, static_cast<int>(curChampion_)});
+}
+
+void ChampionDisplay::update(ChampionType champion)
+{
+    curChampion_ = champion;
 }
