@@ -23,8 +23,9 @@ ChampionDisplay::ChampionDisplay(SdlWindow &win,
     : window_(&win),
     displayArea_(displayRect),
     portraits_(images.make_texture("champion-portraits", *window_)),
+    // TODO: magic number, portrait is 144px square, drawn at half scale
     movementBar_(SdlTexture::make_editable_image(*window_, 8, 72)),
-    curChampion_(ChampionType::might1)
+    champions_()
 {
     SDL_Rect border = {0, 0, movementBar_.width(), movementBar_.height()};
     SDL_Rect interior = {1, 1, border.w - 2, border.h - 2};
@@ -43,13 +44,38 @@ ChampionDisplay::ChampionDisplay(SdlWindow &win,
 
 void ChampionDisplay::draw()
 {
+    if (champions_.empty()) {
+        return;
+    }
+
+    // TODO: draw all champions when the game supports having more than one
     SDL_Point pxBar = {displayArea_.x, displayArea_.y};
     SDL_Point pxChampion = {pxBar.x + movementBar_.width(), pxBar.y};
     movementBar_.draw(pxBar);
-    portraits_.draw_scaled(pxChampion, 0.5, Frame{0, static_cast<int>(curChampion_)});
+    int type = static_cast<int>(champions_[0].type);
+    portraits_.draw_scaled(pxChampion, 0.5, Frame{0, type});
 }
 
-void ChampionDisplay::update(ChampionType champion)
+void ChampionDisplay::add(int id, ChampionType type, int moves)
 {
-    curChampion_ = champion;
+    champions_.emplace_back(id, type, moves);
+}
+
+void ChampionDisplay::update(int id, int movesLeft)
+{
+    auto iter = std::ranges::find_if(champions_,
+                                     [id] (auto &elem) { return elem.entity == id; });
+    if (iter != end(champions_)) {
+        iter->movesLeft = movesLeft;
+    }
+}
+
+void ChampionDisplay::remove(int id)
+{
+    erase_if(champions_, [id] (auto &elem) { return elem.entity == id; });
+}
+
+void ChampionDisplay::clear()
+{
+    champions_.clear();
 }

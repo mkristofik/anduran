@@ -46,6 +46,7 @@ SdlWindow::SdlWindow(int width, int height, const char *caption)
     // busy loading game objects.
     clear();
     update();
+    log("Window ctor complete");
 }
 
 void SdlWindow::clear()

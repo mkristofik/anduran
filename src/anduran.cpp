@@ -85,6 +85,9 @@ void Anduran::update_frame(Uint32 elapsed_ms)
         }
         if (stateChanged_) {
             update_minimap();
+            // TODO: update champion display:
+            // - remove defeated
+            // - update movement remaining
             update_puzzles();
             check_victory_condition();
             stateChanged_ = false;
@@ -712,6 +715,7 @@ bool Anduran::battle_action(int entity, int enemyId)
 
     if (loser->type == ObjectType::champion) {
         erase(players_[loser->team].champions, loser->entity);
+        // TODO: queue the loser for removal from the champion display
     }
 
     anims_.push(endingAnim);
@@ -1215,14 +1219,17 @@ void Anduran::next_turn()
 {
     curPlayerIndex_ = (curPlayerIndex_ + 1) % numPlayers_;
     auto &nextPlayer = cur_player();
+
+    championView_.clear();
     if (!nextPlayer.champions.empty()) {
-        auto champion = game_.get_object(nextPlayer.champions[0]);
-        rmapView_.centerOnHex(champion.hex);
-        championView_.update(nextPlayer.type);
+        rmapView_.centerOnHex(game_.get_object(nextPlayer.champions[0]).hex);
+        for (int entity : nextPlayer.champions) {
+            // TODO: compute movement based on slowest creature
+            championView_.add(entity, nextPlayer.type, 150);
+        }
     }
     else if (nextPlayer.castle >= 0) {
         rmapView_.centerOnHex(game_.get_object(nextPlayer.castle).hex);
-        // TODO: clear the champion view
     }
     deselect_champion();
 

@@ -17,6 +17,7 @@
 #include "SdlTexture.h"
 
 #include "SDL.h"
+#include <vector>
 
 class SdlImageManager;
 class SdlWindow;
@@ -30,14 +31,25 @@ public:
                     SdlImageManager &images);
 
     void draw();
-    void update(ChampionType champion);
+
+    void add(int id, ChampionType type, int moves);
+    void update(int id, int movesLeft);
+    void remove(int id);
+    void clear();
 
 private:
+    struct Stats
+    {
+        int entity;
+        ChampionType type;
+        int movesLeft;
+    };
+
     SdlWindow *window_;
     SDL_Rect displayArea_;
     SdlTexture portraits_;
     SdlTexture movementBar_;
-    ChampionType curChampion_;
+    std::vector<Stats> champions_;
 };
 
 #endif
