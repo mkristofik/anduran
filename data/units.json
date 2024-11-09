@@ -1,7 +1,7 @@
 {
     "arch": {
         "name": "Archer",
-        "speed": 2,
+        "speed": 4,
         "hp": 10,
         "damage": [2, 3],
         "attack-type": "ranged",
@@ -32,7 +32,7 @@
     },
     "sword": {
         "name": "Swordsman",
-        "speed": 4,
+        "speed": 5,
         "hp": 25,
         "damage": [5, 9],
         "img-idle": "swordsman",

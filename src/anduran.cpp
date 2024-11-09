@@ -20,10 +20,19 @@
 #include "SDL.h"
 #include <algorithm>
 #include <format>
+#include <limits>
 #include <queue>
 #include <sstream>
 
 using namespace std::string_literals;
+
+namespace
+{
+    // TODO: each tile costs 10
+    const int BASE_MOVEMENT = 150;
+    const double FULL_MOVEMENT = 200.0;
+}
+
 
 Anduran::Anduran()
     : SdlApp(),
@@ -1224,9 +1233,9 @@ void Anduran::next_turn()
     if (!nextPlayer.champions.empty()) {
         rmapView_.centerOnHex(game_.get_object(nextPlayer.champions[0]).hex);
         for (int entity : nextPlayer.champions) {
-            // TODO: compute movement based on slowest creature
-            // TODO: fraction relative to some standard "max" movement
-            championView_.add(entity, nextPlayer.type, 0.6);
+            int moves = champion_movement(entity);
+            // TODO: assign this value to the champion
+            championView_.add(entity, nextPlayer.type, moves / FULL_MOVEMENT);
         }
     }
     else if (nextPlayer.castle >= 0) {
@@ -1240,6 +1249,19 @@ void Anduran::next_turn()
 
     log_info(std::format("It's the {} player's turn.", str_from_Team(nextPlayer.team)));
     stateChanged_ = true;
+}
+
+int Anduran::champion_movement(int entity) const
+{
+    int minSpeed = std::numeric_limits<int>::max();
+    for (auto &unit : game_.get_army(entity).units) {
+        if (unit.type >= 0 && unit.num > 0) {
+            minSpeed = std::min(minSpeed, units_.get_data(unit.type).speed);
+        }
+    }
+    SDL_assert(minSpeed != std::numeric_limits<int>::max());
+
+    return BASE_MOVEMENT + 7 * (minSpeed - 3);
 }
 
 void Anduran::check_victory_condition()

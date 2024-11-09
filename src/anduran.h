@@ -131,6 +131,7 @@ private:
     Player & cur_player();
     void deselect_champion();
     void next_turn();
+    int champion_movement(int entity) const;
     void check_victory_condition();
 
     WindowConfig config_;
