@@ -1225,7 +1225,8 @@ void Anduran::next_turn()
         rmapView_.centerOnHex(game_.get_object(nextPlayer.champions[0]).hex);
         for (int entity : nextPlayer.champions) {
             // TODO: compute movement based on slowest creature
-            championView_.add(entity, nextPlayer.type, 150);
+            // TODO: fraction relative to some standard "max" movement
+            championView_.add(entity, nextPlayer.type, 0.6);
         }
     }
     else if (nextPlayer.castle >= 0) {

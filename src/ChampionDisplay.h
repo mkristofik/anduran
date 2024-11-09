@@ -32,22 +32,23 @@ public:
 
     void draw();
 
-    // TODO: use range [0, 1) instead to be compatible with std::lerp
-    // values above 1.0 to use a different color
-    void add(int id, ChampionType type, int moves);
-    void update(int id, int movesLeft);
+    // 'frac' indicates how much of the bar to show, range [0.0, 1.0].  Values
+    // above 1.0 will be drawn in a different color.
+    void add(int id, ChampionType type, double frac);
+    void update(int id, double frac);
     void remove(int id);
     void clear();
 
 private:
+    void update_movement_bar(double frac);
+
     struct Stats
     {
         int entity;
         ChampionType type;
-        int movesLeft;
+        double movesFrac;
     };
 
-    SdlWindow *window_;
     SDL_Rect displayArea_;
     SdlTexture portraits_;
     SdlTexture movementBar_;
