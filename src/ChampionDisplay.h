@@ -32,6 +32,8 @@ public:
 
     void draw();
 
+    // TODO: use range [0, 1) instead to be compatible with std::lerp
+    // values above 1.0 to use a different color
     void add(int id, ChampionType type, int moves);
     void update(int id, int movesLeft);
     void remove(int id);

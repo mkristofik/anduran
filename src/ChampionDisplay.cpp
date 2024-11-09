@@ -14,6 +14,7 @@
 #include "SdlImageManager.h"
 #include "SdlWindow.h"
 #include "log_utils.h"
+#include "pixel_utils.h"
 
 #include <format>
 
@@ -23,23 +24,18 @@ ChampionDisplay::ChampionDisplay(SdlWindow &win,
     : window_(&win),
     displayArea_(displayRect),
     portraits_(images.make_texture("champion-portraits", *window_)),
-    // TODO: magic number, portrait is 144px square, drawn at half scale
-    movementBar_(SdlTexture::make_editable_image(*window_, 8, 72)),
+    movementBar_(SdlTexture::make_editable_image(*window_, 8, portraits_.height() / 2)),
     champions_()
 {
-    SDL_Rect border = {0, 0, movementBar_.width(), movementBar_.height()};
-    SDL_Rect interior = {1, 1, border.w - 2, border.h - 2};
+    static const SDL_Rect BORDER = {0, 0, movementBar_.width(), movementBar_.height()};
+    static const SDL_Rect INTERIOR = {1, 1, BORDER.w - 2, BORDER.h - 2};
     // TODO: update whenever a champion moves
-    SDL_Rect bar = {1, 24, border.w - 2, 47};
-
-    SDL_Color borderColor = {213, 213, 213, 200};
-    SDL_Color bgColor = {0, 0, 0, SDL_ALPHA_TRANSPARENT};
-    SDL_Color barColor = {255, 175, 0, SDL_ALPHA_OPAQUE};
+    SDL_Rect bar = {1, 24, BORDER.w - 2, 47};
 
     SdlEditTexture edit(movementBar_);
-    edit.fill_rect(border, borderColor);
-    edit.fill_rect(interior, bgColor);
-    edit.fill_rect(bar, barColor);
+    edit.fill_rect(BORDER, COLOR_LIGHT_GREY);
+    edit.fill_rect(INTERIOR, COLOR_BLACK);
+    edit.fill_rect(bar, COLOR_GOLD);
 }
 
 void ChampionDisplay::draw()

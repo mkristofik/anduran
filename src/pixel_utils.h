@@ -15,6 +15,16 @@
 
 #include "SDL.h"
 
+// Color names based on what MS Paint calls them.
+constexpr SDL_Color COLOR_BLACK = {0, 0, 0, SDL_ALPHA_OPAQUE};
+constexpr SDL_Color COLOR_DARK_GREEN = {35, 225, 0, SDL_ALPHA_OPAQUE};
+constexpr SDL_Color COLOR_LIME_GREEN = {170, 255, 0, SDL_ALPHA_OPAQUE};
+constexpr SDL_Color COLOR_LIGHT_GREY = {215, 215, 215, SDL_ALPHA_OPAQUE};
+constexpr SDL_Color COLOR_ORANGE = {255, 155, 0, SDL_ALPHA_OPAQUE};
+constexpr SDL_Color COLOR_GOLD = {255, 175, 0, SDL_ALPHA_OPAQUE};
+constexpr SDL_Color COLOR_RED = {255, 0, 0, SDL_ALPHA_OPAQUE};
+
+
 struct PartialPixel
 {
     double x = 0.0;

@@ -14,6 +14,7 @@
 
 #include "container_utils.h"
 #include "log_utils.h"
+#include "pixel_utils.h"
 #include <algorithm>
 
 namespace
@@ -700,26 +701,20 @@ SDL_Rect AnimHealth::border_rect(int relSize)
 // source for colors: Battle for Wesnoth src/units/unit.cpp
 SDL_Color AnimHealth::bar_color(double hpFrac)
 {
-    static const SDL_Color GREEN = {33, 225, 0, SDL_ALPHA_OPAQUE};
-    static const SDL_Color YELLOW_GREEN = {170, 255, 0, SDL_ALPHA_OPAQUE};
-    static const SDL_Color LIGHT_ORANGE = {255, 175, 0, SDL_ALPHA_OPAQUE};
-    static const SDL_Color ORANGE = {255, 155, 0, SDL_ALPHA_OPAQUE};
-    static const SDL_Color RED = {255, 0, 0, SDL_ALPHA_OPAQUE};
-
     if (hpFrac >= 1.0) {
-        return GREEN;
+        return COLOR_DARK_GREEN;
     }
     else if (hpFrac >= 0.75) {
-        return YELLOW_GREEN;
+        return COLOR_LIME_GREEN;
     }
     else if (hpFrac >= 0.5) {
-        return LIGHT_ORANGE;
+        return COLOR_GOLD;
     }
     else if (hpFrac >= 0.25) {
-        return ORANGE;
+        return COLOR_ORANGE;
     }
 
-    return RED;
+    return COLOR_RED;
 }
 
 
