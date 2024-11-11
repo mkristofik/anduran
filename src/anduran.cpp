@@ -30,6 +30,7 @@ namespace
 {
     const int BASE_MOVEMENT = 150;
     const double FULL_MOVEMENT = 200.0;
+    const EnumSizedArray<int, Terrain> terrainCost = {10, 12, 15, 10, 10, 12};
 }
 
 
@@ -592,7 +593,6 @@ void Anduran::do_actions(int entity, PathView path)
             move_action(entity, pathToCoast);
         }
 
-        // TODO: these actions switch regions, leave champion with 0 movement.
         if (action == ObjectAction::embark) {
             embark_action(entity, targetObj.entity);
         }
@@ -619,15 +619,36 @@ void Anduran::move_action(int entity, PathView path)
     auto thisObj = game_.get_object(entity);
     anims_.push(AnimMove(rmapView_, thisObj.entity, path));
     thisObj.hex = path.back();
-    if (thisObj.type == ObjectType::champion) {
-        auto &champion = champions_[thisObj.entity];
-        // TODO: different movement costs per terrain
-        // - changing regions leaves you with 0
-        // - having less movement than cost to reach any neighbor tile, set to 0
-        champion.movesLeft -= 10 * (path.size() - 1);
+    game_.update_object(thisObj);
+
+    if (thisObj.type != ObjectType::champion) {
+        return;
     }
 
-    game_.update_object(thisObj);
+    auto &champion = champions_[thisObj.entity];
+    for (int i = 1; i < ssize(path); ++i) {
+        int fromRegion = rmap_.getRegion(path[i - 1]);
+        int toRegion = rmap_.getRegion(path[i]);
+        if (fromRegion != toRegion) {
+            champion.movesLeft = 0;
+        }
+        else {
+            champion.movesLeft -= terrainCost[rmap_.getTerrain(path[i])];
+        }
+    }
+
+    // If champion doesn't have enough movement left to reach any adjacent tile,
+    // set movement to 0.
+    bool canMove = false;
+    for (int iNbr : rmap_.getTileNeighbors(rmap_.intFromHex(path.back()))) {
+        if (champion.movesLeft >= terrainCost[rmap_.getTerrain(iNbr)]) {
+            canMove = true;
+            break;
+        }
+    }
+    if (!canMove) {
+        champion.movesLeft = 0;
+    }
 }
 
 void Anduran::embark_action(int entity, int boatId)
@@ -644,6 +665,9 @@ void Anduran::embark_action(int entity, int boatId)
 
     // Hide the neutral boat now that it's been replaced by the entity.
     game_.remove_object(boatId);
+
+    SDL_assert(thisObj.type == ObjectType::champion);
+    champions_[thisObj.entity].movesLeft = 0;
 }
 
 void Anduran::disembark_action(int entity, const Hex &hLand)
@@ -683,6 +707,9 @@ void Anduran::disembark_action(int entity, const Hex &hLand)
                               hLand));
     thisObj.hex = hLand;
     game_.update_object(thisObj);
+
+    SDL_assert(thisObj.type == ObjectType::champion);
+    champions_[thisObj.entity].movesLeft = 0;
 }
 
 bool Anduran::battle_action(int entity, int enemyId)
