@@ -47,6 +47,8 @@
 struct Champion
 {
     int entity = -1;
+    int moves = 0;
+    int movesLeft = 0;
     boost::container::flat_set<int> puzzlePieces;
 };
 
@@ -77,6 +79,7 @@ public:
 private:
     void update_frame(Uint32 elapsed_ms) override;
     void update_minimap();
+    void update_champion_view();
     void update_puzzles();
     void update_puzzle_view();
 

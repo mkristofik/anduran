@@ -28,7 +28,6 @@ using namespace std::string_literals;
 
 namespace
 {
-    // TODO: each tile costs 10
     const int BASE_MOVEMENT = 150;
     const double FULL_MOVEMENT = 200.0;
 }
@@ -94,9 +93,7 @@ void Anduran::update_frame(Uint32 elapsed_ms)
         }
         if (stateChanged_) {
             update_minimap();
-            // TODO: update champion display:
-            // - remove defeated
-            // - update movement remaining
+            update_champion_view();
             update_puzzles();
             check_victory_condition();
             stateChanged_ = false;
@@ -135,6 +132,16 @@ void Anduran::update_minimap()
     relax_influence();
     for (int r = 0; r < rmap_.numRegions(); ++r) {
         minimap_.set_region_owner(r, most_influence(r));
+    }
+}
+
+void Anduran::update_champion_view()
+{
+    // TODO: remove defeated
+    auto &player = cur_player();
+
+    for (int entity : player.champions) {
+        championView_.update(entity, champions_[entity].movesLeft / FULL_MOVEMENT);
     }
 }
 
@@ -270,9 +277,7 @@ void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
     }
 
     // TODO: limited movement per turn
-    // TODO: champion display that displays movement remaining
     // - total length of AnimMove can tell you how long to animate it
-    // - if below one tile's worth, show zero
     rmapView_.clearPath();
     auto champion = game_.get_object(curChampion_);
     curPath_ = pathfind_.find_path(champion, hCurPathEnd_);
@@ -562,6 +567,7 @@ void Anduran::do_actions(int entity, PathView path)
                 hLast = shortenedPath.back();
             }
 
+            // TODO: should a battle cost movement points?
             survives = battle_action(entity, targetObj.entity);
             if (survives) {
                 // If taking the clicked-on hex wouldn't trigger another battle,
@@ -586,6 +592,7 @@ void Anduran::do_actions(int entity, PathView path)
             move_action(entity, pathToCoast);
         }
 
+        // TODO: these actions switch regions, leave champion with 0 movement.
         if (action == ObjectAction::embark) {
             embark_action(entity, targetObj.entity);
         }
@@ -612,6 +619,14 @@ void Anduran::move_action(int entity, PathView path)
     auto thisObj = game_.get_object(entity);
     anims_.push(AnimMove(rmapView_, thisObj.entity, path));
     thisObj.hex = path.back();
+    if (thisObj.type == ObjectType::champion) {
+        auto &champion = champions_[thisObj.entity];
+        // TODO: different movement costs per terrain
+        // - changing regions leaves you with 0
+        // - having less movement than cost to reach any neighbor tile, set to 0
+        champion.movesLeft -= 10 * (path.size() - 1);
+    }
+
     game_.update_object(thisObj);
 }
 
@@ -822,8 +837,14 @@ void Anduran::dig_action(int entity)
     };
 
     auto thisObj = game_.get_object(entity);
+    SDL_assert(thisObj.type == ObjectType::champion);
+    auto &champion = champions_[thisObj.entity];
 
-    // TODO: require a full turn's movement
+    if (champion.movesLeft < champion.moves) {
+        anims_.push(AnimLog(rmapView_, "Digging requires a full day's movement."));
+        return;
+    }
+
     if (rmap_.getTerrain(thisObj.hex) == Terrain::water ||
         game_.num_objects_in_hex(thisObj.hex) > 1)
     {
@@ -845,6 +866,7 @@ void Anduran::dig_action(int entity)
         }
 
         // Found it, hide the X and show the artifact found image.
+        // TODO: assign the artifact to the champion who found it.
         AnimSet digAnim;
         digAnim.insert(AnimHide(rmapView_, puzzleXsIds_[type]));
         auto msg = std::format("After spending many hours digging here, "
@@ -1234,7 +1256,9 @@ void Anduran::next_turn()
         rmapView_.centerOnHex(game_.get_object(nextPlayer.champions[0]).hex);
         for (int entity : nextPlayer.champions) {
             int moves = champion_movement(entity);
-            // TODO: assign this value to the champion
+            auto &champion = champions_[entity];
+            champion.moves = moves;
+            champion.movesLeft = moves;
             championView_.add(entity, nextPlayer.type, moves / FULL_MOVEMENT);
         }
     }
