@@ -155,6 +155,7 @@ private:
     bool startNextTurn_;
     boost::container::flat_map<int, Champion> champions_;
     int curChampion_;
+    int pendingDefeat_;  // defeated champion not yet removed from sidebar
     Path curPath_;
     Hex hCurPathEnd_;
     int projectileId_;

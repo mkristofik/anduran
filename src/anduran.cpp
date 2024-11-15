@@ -54,6 +54,7 @@ Anduran::Anduran()
     startNextTurn_(false),
     champions_(),
     curChampion_(-1),
+    pendingDefeat_(-1),
     curPath_(),
     hCurPathEnd_(),
     projectileId_(-1),
@@ -138,12 +139,13 @@ void Anduran::update_minimap()
 
 void Anduran::update_champion_view()
 {
-    // TODO: remove defeated
     auto &player = cur_player();
 
     for (int entity : player.champions) {
         championView_.update(entity, champions_[entity].movesLeft / FULL_MOVEMENT);
     }
+    championView_.remove(pendingDefeat_);
+    pendingDefeat_ = -1;
 }
 
 void Anduran::update_puzzles()
@@ -766,7 +768,7 @@ bool Anduran::battle_action(int entity, int enemyId)
 
     if (loser->type == ObjectType::champion) {
         erase(players_[loser->team].champions, loser->entity);
-        // TODO: queue the loser for removal from the champion display
+        pendingDefeat_ = loser->entity;
     }
 
     anims_.push(endingAnim);
@@ -1278,6 +1280,7 @@ void Anduran::next_turn()
     curPlayerIndex_ = (curPlayerIndex_ + 1) % numPlayers_;
     auto &nextPlayer = cur_player();
 
+    pendingDefeat_ = -1;
     championView_.clear();
     if (!nextPlayer.champions.empty()) {
         rmapView_.centerOnHex(game_.get_object(nextPlayer.champions[0]).hex);
