@@ -209,7 +209,7 @@ void AnimDisplay::start()
 AnimMove::AnimMove(MapDisplay &display,
                    int mover,
                    PathView path)
-    : AnimBase(display, MOVE_STEP_MS * (size(path) - 1)),
+    : AnimBase(display, step_duration_ms() * (size(path) - 1)),
     entity_(mover),
     pathStep_(1),  // first element of the path is the starting hex
     path_(begin(path), end(path)),
@@ -217,6 +217,11 @@ AnimMove::AnimMove(MapDisplay &display,
     distToMove_()
 {
     SDL_assert(ssize(path) >= 2);
+}
+
+Uint32 AnimMove::step_duration_ms()
+{
+    return MOVE_STEP_MS;
 }
 
 void AnimMove::start()
@@ -237,8 +242,8 @@ void AnimMove::start()
 
 void AnimMove::update(Uint32 elapsed_ms)
 {
-    const auto stepElapsed_ms = elapsed_ms - MOVE_STEP_MS * (pathStep_ - 1);
-    const auto stepFrac = static_cast<double>(stepElapsed_ms) / MOVE_STEP_MS;
+    const auto stepElapsed_ms = elapsed_ms - step_duration_ms() * (pathStep_ - 1);
+    const auto stepFrac = static_cast<double>(stepElapsed_ms) / step_duration_ms();
     auto moverObj = get_entity(entity_);
 
     if (stepFrac < 1.0) {

@@ -86,6 +86,7 @@ void Anduran::update_frame(Uint32 elapsed_ms)
 {
     win_.clear();
     anims_.run(elapsed_ms);
+    championView_.animate(elapsed_ms);
 
     // Wait until animations have finished running before updating things.
     if (anims_.empty()) {
@@ -141,6 +142,7 @@ void Anduran::update_champion_view()
 {
     auto &player = cur_player();
 
+    championView_.stop_anim();
     for (int entity : player.champions) {
         championView_.update(entity, champions_[entity].movesLeft / FULL_MOVEMENT);
     }
@@ -651,6 +653,13 @@ void Anduran::move_action(int entity, PathView path)
     if (!canMove) {
         champion.movesLeft = 0;
     }
+
+    // TODO: when you have a few steps and then change regions, this makes each
+    // step look really expensive
+    int numSteps = ssize(path) - 1;
+    championView_.begin_anim(champion.entity,
+                             champion.movesLeft / FULL_MOVEMENT,
+                             numSteps);
 }
 
 void Anduran::embark_action(int entity, int boatId)
@@ -847,6 +856,8 @@ void Anduran::local_action(int entity)
         else if (targetObj.type == ObjectType::obelisk) {
             visit_obelisk(thisObj);
         }
+        // TODO: visiting an oasis sets the champion's movement to 1.25x its max
+        // TODO: this is a per-champion visit, not per-team
 
         targetObj.visited.set(thisObj.team);
         game_.update_object(targetObj);

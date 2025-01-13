@@ -39,20 +39,37 @@ public:
     void remove(int id);
     void clear();
 
-private:
-    void update_movement_bar(double frac);
+    // Animate the bar for an actively moving champion.
+    void begin_anim(int id, double endFrac, int numSteps);
+    void animate(Uint32 frame_ms);
+    void stop_anim();
 
+private:
     struct Stats
     {
-        int entity;
-        ChampionType type;
-        double movesFrac;
+        int entity = -1;
+        ChampionType type = ChampionType::might1;
+        double movesFrac = 0.0;
     };
+
+    struct Animation
+    {
+        int entity = -1;
+        int steps = 0;
+        double startFrac = 0.0;
+        double stepFrac = 0.0;
+        Uint32 elapsed_ms = 0;
+        bool running = false;
+    };
+
+    void update_movement_bar(double frac);
+    Stats * find_champion(int id);
 
     SDL_Rect displayArea_;
     SdlTexture portraits_;
     SdlTexture movementBar_;
     std::vector<Stats> champions_;
+    Animation anim_;
 };
 
 #endif

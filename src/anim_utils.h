@@ -99,6 +99,8 @@ class AnimMove : public AnimBase
 public:
     AnimMove(MapDisplay &display, int mover, PathView path);
 
+    static Uint32 step_duration_ms();
+
 private:
     void start() override;
     void update(Uint32 elapsed_ms) override;

@@ -13,6 +13,7 @@
 #include "ChampionDisplay.h"
 #include "SdlImageManager.h"
 #include "SdlWindow.h"
+#include "anim_utils.h"
 #include "log_utils.h"
 #include "pixel_utils.h"
 
@@ -25,7 +26,8 @@ ChampionDisplay::ChampionDisplay(SdlWindow &win,
     : displayArea_(displayRect),
     portraits_(images.make_texture("champion-portraits", win)),
     movementBar_(SdlTexture::make_editable_image(win, 8, portraits_.height() / 2)),
-    champions_()
+    champions_(),
+    anim_()
 {
 }
 
@@ -51,11 +53,9 @@ void ChampionDisplay::add(int id, ChampionType type, double frac)
 
 void ChampionDisplay::update(int id, double frac)
 {
-    auto iter = std::ranges::find_if(champions_,
-                                     [id] (auto &elem) { return elem.entity == id; });
-    if (iter != end(champions_)) {
-        iter->movesFrac = frac;
-    }
+    auto *champion = find_champion(id);
+    SDL_assert(champion);
+    champion->movesFrac = frac;
 }
 
 void ChampionDisplay::remove(int id)
@@ -66,6 +66,38 @@ void ChampionDisplay::remove(int id)
 void ChampionDisplay::clear()
 {
     champions_.clear();
+}
+
+void ChampionDisplay::begin_anim(int id, double endFrac, int numSteps)
+{
+    auto *champion = find_champion(id);
+    SDL_assert(champion);
+    SDL_assert(champion->movesFrac >= endFrac);
+    SDL_assert(numSteps > 0);
+
+    anim_.entity = id;
+    anim_.steps = numSteps;
+    anim_.startFrac = champion->movesFrac;
+    anim_.stepFrac = (champion->movesFrac - endFrac) / anim_.steps;
+    anim_.elapsed_ms = 0;
+    anim_.running = true;
+}
+
+void ChampionDisplay::animate(Uint32 frame_ms)
+{
+    if (!anim_.running) {
+        return;
+    }
+
+    anim_.elapsed_ms += frame_ms;
+    int step = std::min<int>(anim_.elapsed_ms / AnimMove::step_duration_ms(),
+                             anim_.steps);
+    update(anim_.entity, anim_.startFrac - step * anim_.stepFrac);
+}
+
+void ChampionDisplay::stop_anim()
+{
+    anim_ = {};
 }
 
 void ChampionDisplay::update_movement_bar(double frac)
@@ -89,4 +121,15 @@ void ChampionDisplay::update_movement_bar(double frac)
     edit.fill_rect(BORDER, COLOR_LIGHT_GREY);
     edit.fill_rect(INTERIOR, COLOR_BLACK);
     edit.fill_rect(bar, *color);
+}
+
+ChampionDisplay::Stats * ChampionDisplay::find_champion(int id)
+{
+    auto iter = std::ranges::find_if(champions_,
+                                     [id] (auto &elem) { return elem.entity == id; });
+    if (iter == end(champions_)) {
+        return nullptr;
+    }
+
+    return &*iter;
 }
