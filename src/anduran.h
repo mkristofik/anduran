@@ -135,6 +135,7 @@ private:
     void deselect_champion();
     void next_turn();
     int champion_movement(int entity) const;
+    int movement_cost(PathView path) const;
     void check_victory_condition();
 
     WindowConfig config_;

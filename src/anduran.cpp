@@ -281,14 +281,19 @@ void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
         hCurPathEnd_ = hMouse;
     }
 
-    // TODO: limited movement per turn
-    // - total length of AnimMove can tell you how long to animate it
+    // Draw the path to the highlighted hex, unless the champion doesn't have
+    // enough movement left to reach it.
     rmapView_.clearPath();
     auto champion = game_.get_object(curChampion_);
     curPath_ = pathfind_.find_path(champion, hCurPathEnd_);
     if (!curPath_.empty()) {
-        auto [action, _] = game_.hex_action(champion, hCurPathEnd_);
-        rmapView_.showPath(curPath_, action);
+        if (champions_[curChampion_].movesLeft >= movement_cost(curPath_)) {
+            auto [action, _] = game_.hex_action(champion, hCurPathEnd_);
+            rmapView_.showPath(curPath_, action);
+        }
+        else {
+            curPath_.clear();
+        }
     }
 }
 
@@ -630,15 +635,21 @@ void Anduran::move_action(int entity, PathView path)
     }
 
     auto &champion = champions_[thisObj.entity];
-    for (int i = 1; i < ssize(path); ++i) {
-        int fromRegion = rmap_.getRegion(path[i - 1]);
-        int toRegion = rmap_.getRegion(path[i]);
-        if (fromRegion != toRegion) {
-            champion.movesLeft = 0;
-        }
-        else {
-            champion.movesLeft -= terrainCost[rmap_.getTerrain(path[i])];
-        }
+    champion.movesLeft -= movement_cost(path);
+
+    // Animate based on the true cost of the path, we'll update with any
+    // adjustments (see below) after the animation finishes running.
+    int numSteps = ssize(path) - 1;
+    championView_.begin_anim(champion.entity,
+                             champion.movesLeft / FULL_MOVEMENT,
+                             numSteps);
+
+    // Changing regions costs all remaining movement points.
+    int fromRegion = rmap_.getRegion(path.front());
+    int toRegion = rmap_.getRegion(path.back());
+    if (fromRegion != toRegion) {
+        champion.movesLeft = 0;
+        return;
     }
 
     // If champion doesn't have enough movement left to reach any adjacent tile,
@@ -653,13 +664,6 @@ void Anduran::move_action(int entity, PathView path)
     if (!canMove) {
         champion.movesLeft = 0;
     }
-
-    // TODO: when you have a few steps and then change regions, this makes each
-    // step look really expensive
-    int numSteps = ssize(path) - 1;
-    championView_.begin_anim(champion.entity,
-                             champion.movesLeft / FULL_MOVEMENT,
-                             numSteps);
 }
 
 void Anduran::embark_action(int entity, int boatId)
@@ -1327,6 +1331,16 @@ int Anduran::champion_movement(int entity) const
     SDL_assert(minSpeed != std::numeric_limits<int>::max());
 
     return BASE_MOVEMENT + 7 * (minSpeed - 3);
+}
+
+int Anduran::movement_cost(PathView path) const
+{
+    int cost = 0;
+    for (int i = 1; i < ssize(path); ++i) {
+        cost += terrainCost[rmap_.getTerrain(path[i])];
+    }
+
+    return cost;
 }
 
 void Anduran::check_victory_condition()
