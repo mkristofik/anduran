@@ -577,7 +577,6 @@ void Anduran::do_actions(int entity, PathView path)
                 hLast = shortenedPath.back();
             }
 
-            // TODO: should a battle cost movement points?
             survives = battle_action(entity, targetObj.entity);
             if (survives) {
                 // If taking the clicked-on hex wouldn't trigger another battle,
@@ -860,8 +859,9 @@ void Anduran::local_action(int entity)
         else if (targetObj.type == ObjectType::obelisk) {
             visit_obelisk(thisObj);
         }
-        // TODO: visiting an oasis sets the champion's movement to 1.25x its max
-        // TODO: this is a per-champion visit, not per-team
+        else if (targetObj.type == ObjectType::oasis) {
+            visit_oasis(thisObj);
+        }
 
         targetObj.visited.set(thisObj.team);
         game_.update_object(targetObj);
@@ -992,6 +992,21 @@ void Anduran::visit_obelisk(const GameObject &visitor)
     auto &player = players_[visitor.team];
     curPuzzleView_.type = player.puzzle->obelisk_type(index);
     curPuzzleView_.visible = true;
+}
+
+void Anduran::visit_oasis(const GameObject &visitor)
+{
+    if (visitor.type != ObjectType::champion || visitor.team == Team::neutral) {
+        return;
+    }
+
+    // TODO: this is a per-champion visit, not per-team
+    // TODO: reset after the champion's next battle
+    auto iter = champions_.find(visitor.entity);
+    if (iter != end(champions_)) {
+        auto &champion = iter->second;
+        champion.movesLeft = champion.moves * 1.25;
+    }
 }
 
 std::string Anduran::army_log(const Army &army) const
