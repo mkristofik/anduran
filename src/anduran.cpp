@@ -310,6 +310,7 @@ void Anduran::handle_key_up(const SDL_Keysym &key)
     if (key.sym == 'd') {
         if (curChampion_ >= 0) {
             dig_action(curChampion_);
+            stateChanged_ = true;
         }
     }
     else if (key.sym == 'e') {
@@ -923,11 +924,15 @@ void Anduran::dig_action(int entity)
                             thisObj.hex,
                             ZOrder::object);
         thisPlayer.artifacts.set(type);
-        stateChanged_ = true;
+        champion.movesLeft = 0;
         return;
     }
 
     anims_.push(AnimLog(rmapView_, "Nothing here.  Where could it be?"));
+    rmapView_.addEntity(images_.make_texture("puzzle-not-found", win_),
+                        thisObj.hex,
+                        ZOrder::object);
+    champion.movesLeft = 0;
 }
 
 bool Anduran::artifact_found(PuzzleType type) const

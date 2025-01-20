@@ -4,7 +4,7 @@
     * gives puzzle pieces for the Helmet, Sword, and Breastplate
     * different image for each set
         * randomize the order they're assigned
-    * grouped on the map, not scattered randomly
+    - grouped on the map, not scattered randomly
         * but the regions are numbered randomly so it'll be easier to start with
         them scattered
     * in regions with villages only
@@ -15,7 +15,7 @@
         - also a source for rumors?
         - similar function to H2 Thieves Guild?
     - but for now it gives us something else to do in each region
-- defeating an enemy champion gives a copy of his puzzle pieces
+* defeating an enemy champion gives a copy of his puzzle pieces
 * puzzle piece reveals random tile(s) on the map for its corresponding artifact
 * each puzzle map is 13x7
     * X marks the spot in the center
@@ -53,13 +53,13 @@
         - draw the popup background only
         - go fast, 1000 ms at most
         - simple mouseovers and dialog boxes shouldn't bother with this
-- digging
+* digging
     * press D key
     * hex must be on land, and empty except for the champion itself
     * if on the target hex
         * assign the artifact to the player
         * replace X with a trapdoor visible to all players
-    - show a hole in the ground for unsuccessful digs (Wesnoth crater image?)
+    * show a hole in the ground for unsuccessful digs (Wesnoth crater image?)
     * if a player has all three artifacts, they win
 
 
