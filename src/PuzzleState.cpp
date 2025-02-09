@@ -22,8 +22,9 @@ PuzzleState::PuzzleState(RandomMap &rmap)
     visited_(),
     tileTypes_()
 {
-    // We don't want the first tile to always go to the first puzzle.
-    auto ordering = random_enum_array<PuzzleType>();
+    // Randomizing the types ensures we get different artifacts assigned to each
+    // obelisk on each play of the same map.
+    auto ordering = random_enum_array<PuzzleType, PuzzleType>();
 
     auto hexView = rmap.getObjectHexes(ObjectType::obelisk);
     std::vector<Hex> hexes(hexView.begin(), hexView.end());

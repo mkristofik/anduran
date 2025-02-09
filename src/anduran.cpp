@@ -332,7 +332,7 @@ void Anduran::load_players()
     SDL_assert(numPlayers_ <= enum_size<ChampionType>());
     randomize(castles);
 
-    auto championTypes = random_enum_array<ChampionType>();
+    auto championTypes = random_enum_array<ChampionType, ChampionType>();
 
     // MapDisplay handles building the castle artwork, but we need something so
     // each castle has a unique entity id.
@@ -396,6 +396,9 @@ void Anduran::load_players()
 
 void Anduran::load_objects()
 {
+    // We don't want each obelisk style to always refer to the same puzzle.
+    auto obeliskOrder = random_enum_array<int, PuzzleType>();
+
     for (auto &obj : objConfig_) {
         // TODO: assign wandering monster strengths by region castle distance
         if (obj.type == ObjectType::army) {
@@ -414,10 +417,8 @@ void Anduran::load_objects()
             entity.z = ZOrder::object;
 
             if (obj.type == ObjectType::obelisk) {
-                // TODO: this is where we should randomize which image refers to
-                // which puzzle type
                 int tile = rmap_.intFromHex(hex);
-                int frame = static_cast<int>(initialPuzzleState_.obelisk_type(tile));
+                int frame = obeliskOrder[initialPuzzleState_.obelisk_type(tile)];
                 entity.frame = {0, frame};
             }
             else if (numFrames == enum_size<Terrain>()) {
