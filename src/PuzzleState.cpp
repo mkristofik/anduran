@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2024 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2024-2025 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -25,22 +25,22 @@ PuzzleState::PuzzleState(RandomMap &rmap)
     // We don't want the first tile to always go to the first puzzle.
     auto ordering = random_enum_array<PuzzleType>();
 
-    // Round-robin each obelisk tile to each puzzle map.
-    int p = 0;
-    for (auto tile : rmap.getObjectTiles(ObjectType::obelisk)) {
-        auto type = ordering[p];
+    auto hexView = rmap.getObjectHexes(ObjectType::obelisk);
+    std::vector<Hex> hexes(hexView.begin(), hexView.end());
+    auto obelisks = hexClusters(hexes, enum_size<PuzzleType>());
+
+    for (int i = 0; i < ssize(hexes); ++i) {
+        int tile = rmap.intFromHex(hexes[i]);
+        auto type = ordering[obelisks[i]];
         visited_[type].emplace_back(tile, false);
         tileTypes_.emplace(tile, type);
-
-        p = (p + 1) % ssize(ordering);
     }
 
     // Sort each list so the obelisk furthest from all castles is the one that
     // reveals the target hex.
     for (auto &obeliskVector : visited_) {
-        std::ranges::sort(obeliskVector, [&rmap] (auto &lhs, auto &rhs) {
-            return rmap.tileRegionCastleDistance(lhs.tile) <
-                rmap.tileRegionCastleDistance(rhs.tile);
+        std::ranges::sort(obeliskVector, {}, [&rmap] (auto &obelisk) {
+            return rmap.tileRegionCastleDistance(obelisk.tile);
         });
     }
 }

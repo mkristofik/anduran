@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2024 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2024-2025 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -84,7 +84,6 @@ private:
     void init_texture();
     void init_tiles();
     void init_pieces(const PuzzleState &initialState);
-    void init_pieces_random(const PuzzleState &initialState);
 
     SDL_Point hex_center(const Hex &hex) const;
     bool hex_in_bounds(const Hex &hex) const;

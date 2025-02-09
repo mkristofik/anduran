@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2025 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -80,6 +80,10 @@ std::vector<Hex> hexCircle(const Hex &center, int radius);
 // Return the opposite direction (when viewed from the neighbor hex in that
 // direction).
 HexDir oppositeHexDir(HexDir d);
+
+// Divide a set of hexes into N similarly sized clusters, assigning each hex a
+// cluster number 0 to N-1.
+std::vector<int> hexClusters(const std::vector<Hex> &hexes, int numClusters);
 
 
 // Use Concepts to fake a non-templated parameter pack.

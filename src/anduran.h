@@ -168,6 +168,7 @@ private:
     UnitManager units_;
     bool stateChanged_;
     std::vector<EnumSizedArray<int, Team>> influence_;
+    PuzzleState initialPuzzleState_;
     PuzzleViewState curPuzzleView_;
     EnumSizedArray<std::optional<PuzzleDisplay>, PuzzleType> puzzleViews_;
     EnumSizedArray<int, PuzzleType> puzzleXsIds_;

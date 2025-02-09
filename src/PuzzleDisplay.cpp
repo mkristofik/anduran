@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2024 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2024-2025 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <cmath>
 #include <format>
+#include <ranges>
 #include <vector>
 
 namespace
@@ -58,6 +59,23 @@ namespace
                 frame.row * frameHeight,
                 frameWidth,
                 frameHeight};
+    }
+
+    // Swap all puzzle pieces assigned to 'p1' with 'p2'.
+    void swap_pieces(std::vector<int> &pieceNums, int p1, int p2)
+    {
+        if (p1 == p2) {
+            return;
+        }
+
+        for (int &num : pieceNums) {
+            if (num == p1) {
+                num = p2;
+            }
+            else if (num == p2) {
+                num = p1;
+            }
+        }
     }
 }
 
@@ -212,86 +230,25 @@ void PuzzleDisplay::init_tiles()
 }
 
 // Assign puzzle pieces in random chunks.
-// Note: this doesn't (yet) guarantee all pieces will be contiguous
 void PuzzleDisplay::init_pieces(const PuzzleState &initialState)
 {
-    boost::container::flat_set<Hex> visited;
-    std::vector<Hex> bfsQ;
-    std::vector<Hex> currentPiece;
+    // TODO: can I make this a range so it doesn't have to copy to use
+    // hexClusters?  std::views::transform
+    std::vector<Hex> hexesToUse;
+    for (const auto & [hex, _] : tiles_) {
+        hexesToUse.push_back(hex);
+    }
+
     int puzzleSize = initialState.size(type_);
-    int pieceSize = std::ceil(hexWidth * hexHeight / puzzleSize);
+    auto pieceNums = hexClusters(hexesToUse, puzzleSize);
 
-    // Assign the pieces in reverse order so that the last obelisk in the list
-    // (furthest from each castle) is the one that reveals the location where the
-    // artifact is buried.
-    int pieceNum = puzzleSize - 1;
-    const auto &targetHex = initialState.get_target(type_);
-    bfsQ.push_back(targetHex);
-    visited.insert(targetHex);
+    // Find the target hex and make it the last piece.
+    auto targetIter = std::ranges::find(hexesToUse, initialState.get_target(type_));
+    auto targetIndex = distance(begin(hexesToUse), targetIter);
+    swap_pieces(pieceNums, pieceNums[targetIndex], puzzleSize - 1);
 
-    while (!bfsQ.empty()) {
-        // Select the next tile at random from the available neighbors.
-        RandomRange nextTile(0, bfsQ.size() - 1);
-        std::swap(bfsQ[nextTile.get()], bfsQ.back());
-        Hex next = bfsQ.back();
-        bfsQ.pop_back();
-
-        // Add it to the current piece, committing when it's completed.  Last
-        // piece is allowed to be larger than the others.
-        currentPiece.push_back(next);
-        if (pieceNum > 0 && ssize(currentPiece) == pieceSize) {
-            for (auto &hex : currentPiece) {
-                tiles_[hex].piece = pieceNum;
-            }
-            --pieceNum;
-            currentPiece.clear();
-        }
-
-        // Add all neighbors we haven't seen yet to the queue.
-        for (auto &hex : next.getAllNeighbors()) {
-            if (!visited.contains(hex) && hex_in_bounds(hex)) {
-                bfsQ.push_back(hex);
-                visited.insert(hex);
-            }
-        }
-    }
-
-    // Commit the remaining hexes to final puzzle piece.
-    for (auto &hex : currentPiece) {
-        tiles_[hex].piece = 0;
-    }
-
-    SDL_assert(std::ranges::none_of(tiles_,
-         [](auto &tilePair) { return tilePair.second.piece == -1; }));
-}
-
-// Option 2, simpler, just assign pieces randomly.
-void PuzzleDisplay::init_pieces_random(const PuzzleState &initialState)
-{
-    std::vector<Hex> allHexes;
-    for (auto & [hex, _] : tiles_) {
-        allHexes.push_back(hex);
-    }
-    randomize(allHexes);
-
-    // Ensure the target hex is in the last piece, so the obelisk furthest from
-    // all castles is the one that reveals it.
-    auto targetIter = std::ranges::find(allHexes, initialState.get_target(type_));
-    std::swap(*targetIter, allHexes.front());
-
-    // Assign pieces in reverse order for the above reason.
-    int puzzleSize = initialState.size(type_);
-    int pieceSize = std::ceil(hexWidth * hexHeight / puzzleSize);
-    int pieceNum = puzzleSize - 1;
-    int count = 0;
-
-    for (auto &hex : allHexes) {
-        tiles_[hex].piece = pieceNum;
-        ++count;
-        if (pieceNum > 0 && count == pieceSize) {
-            --pieceNum;
-            count = 0;
-        }
+    for (int i = 0; i < ssize(pieceNums); ++i) {
+        tiles_[hexesToUse[i]].piece = pieceNums[i];
     }
 }
 

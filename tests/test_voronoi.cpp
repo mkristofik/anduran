@@ -24,6 +24,8 @@
 #include <span>
 #include <vector>
 
+// TODO: git rm this file before merging
+
 template <typename R>
 const auto & random_elem(const R &range) //-> decltype(range.front())
 {

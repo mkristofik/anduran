@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2023 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2025 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -45,7 +45,7 @@ void randomize(C &cont)
 
 
 // Randomize the list of enumerators for a given type.
-template<IterableEnum T>
+template <IterableEnum T>
 EnumSizedArray<T, T> random_enum_array()
 {
     EnumSizedArray<T, T> ary;
@@ -54,6 +54,18 @@ EnumSizedArray<T, T> random_enum_array()
     }
     randomize(ary);
     return ary;
+}
+
+template <typename R>
+double range_variance(const R &range, double mean)
+{
+    double totalVariance = 0.0;
+    for (auto &val : range) {
+        double delta = val - mean;
+        totalVariance += delta * delta;
+    }
+
+    return totalVariance / size(range);
 }
 
 
