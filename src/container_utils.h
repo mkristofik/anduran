@@ -49,7 +49,7 @@ void randomize(C &cont)
 // Randomize the list of enumerators for type E, represented as type T.
 template <typename T, IterableEnum E>
 EnumSizedArray<T, E> random_enum_array()
-    requires std::same_as<T, E> || std::same_as<T, std::underlying_type_t<E>>
+    requires std::same_as<T, E> || std::convertible_to<T, std::underlying_type_t<E>>
 {
     EnumSizedArray<T, E> ary;
     std::iota(begin(ary), end(ary), T{});

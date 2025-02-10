@@ -498,3 +498,4 @@ in the header
     - may not need contains() from container_utils anymore
 - try out the Proj argument to ranges algorithms instead of writing an operator< or
 a lambda
+- can std::views::values replace ValueIterator in FlatMultimap?

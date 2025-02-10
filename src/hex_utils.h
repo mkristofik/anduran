@@ -13,7 +13,11 @@
 #ifndef HEX_UTILS_H
 #define HEX_UTILS_H
 
+#include "RandomRange.h"
+#include "container_utils.h"
 #include "iterable_enum_class.h"
+
+#include <algorithm>
 #include <array>
 #include <compare>
 #include <concepts>
@@ -83,7 +87,8 @@ HexDir oppositeHexDir(HexDir d);
 
 // Divide a set of hexes into N similarly sized clusters, assigning each hex a
 // cluster number 0 to N-1.
-std::vector<int> hexClusters(const std::vector<Hex> &hexes, int numClusters);
+template <typename R>
+std::vector<int> hexClusters(const R &hexes, int numClusters);
 
 
 // Use Concepts to fake a non-templated parameter pack.
@@ -92,6 +97,71 @@ Hex Hex::getNeighbor(HexDir d, std::same_as<HexDir> auto... dirs) const
 {
     Hex hNbr = getNeighbor(d);
     return hNbr.getNeighbor(dirs...);
+}
+
+
+// Other algorithms considered:
+// - https://en.wikipedia.org/wiki/K-means%2B%2B
+// - several naive attempts that performed worse, some comically bad
+template <typename R>
+std::vector<int> hexClusters(const R &hexes, int numClusters)
+{
+    std::vector<int> bestClusters;
+    auto expectedSize = ssize(hexes) / static_cast<double>(numClusters);
+    double bestVariance = 10.0;  // don't consider anything worse than this
+
+    // Dividing the hexes equally into contiguous groups is NP-hard
+    // (https://en.wikipedia.org/wiki/K-means_clustering).  The method
+    // RandomMap.cpp uses to produce a Voronoi diagram doesn't consistently yield
+    // clusters of similar size.  So we'll cheat.  We will produce 100 of
+    // them and pick the best one.
+
+    std::vector<Hex> centers;  // center of mass for each cluster
+    std::vector<int> clusters(size(hexes));
+    std::vector<int> clusterSizes(numClusters, 0);
+    RandomRange randElem(0, ssize(hexes) - 1);
+
+    int i = 0;
+    while (i < 100 || bestClusters.empty()) {
+        // Randomly choose the initial centers of each cluster.  Pick one hex, and
+        // then for each one after that, choose the hex farthest from its nearest
+        // existing center.
+        // source: https://en.wikipedia.org/wiki/Farthest-first_traversal
+        centers.clear();
+        centers.push_back(hexes[randElem.get()]);
+        for (int j = 1; j < numClusters; ++j) {
+            auto distNearest = [&centers] (const Hex &hex) {
+                int nearest = hexClosestIdx(hex, centers);
+                return hexDistance(hex, centers[nearest]);
+            };
+            auto iter = std::ranges::max_element(hexes, {}, distNearest);
+            centers.push_back(*iter);
+        }
+
+        // Assign each hex to its nearest center.
+        std::ranges::fill(clusters, 0);
+        std::ranges::fill(clusterSizes, 0);
+        for (int h = 0; h < ssize(hexes); ++h) {
+            int c = hexClosestIdx(hexes[h], centers);
+            clusters[h] = c;
+            ++clusterSizes[c];
+        }
+
+        // Traditionally, we'd run Lloyd's Algorithm here until it converges
+        // (https://en.wikipedia.org/wiki/Lloyd%27s_algorithm).  But testing
+        // showed that often made the clusters less consistent in size.  Cheating
+        // again, we will test whether the initial setup was good enough.  After
+        // 100 iterations, several of them usually are.
+        double var = range_variance(clusterSizes, expectedSize);
+        if (var < bestVariance) {
+            bestClusters = clusters;
+            bestVariance = var;
+        }
+
+        ++i;
+    }
+
+    return bestClusters;
 }
 
 #endif

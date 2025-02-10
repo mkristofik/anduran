@@ -232,23 +232,17 @@ void PuzzleDisplay::init_tiles()
 // Assign puzzle pieces in random chunks.
 void PuzzleDisplay::init_pieces(const PuzzleState &initialState)
 {
-    // TODO: can I make this a range so it doesn't have to copy to use
-    // hexClusters?  std::views::transform
-    std::vector<Hex> hexesToUse;
-    for (const auto & [hex, _] : tiles_) {
-        hexesToUse.push_back(hex);
-    }
-
+    auto hexView = std::views::keys(tiles_);
     int puzzleSize = initialState.size(type_);
-    auto pieceNums = hexClusters(hexesToUse, puzzleSize);
+    auto pieceNums = hexClusters(hexView, puzzleSize);
 
     // Find the target hex and make it the last piece.
-    auto targetIter = std::ranges::find(hexesToUse, initialState.get_target(type_));
-    auto targetIndex = distance(begin(hexesToUse), targetIter);
+    auto targetIter = std::ranges::find(hexView, initialState.get_target(type_));
+    auto targetIndex = std::distance(hexView.begin(), targetIter);
     swap_pieces(pieceNums, pieceNums[targetIndex], puzzleSize - 1);
 
     for (int i = 0; i < ssize(pieceNums); ++i) {
-        tiles_[hexesToUse[i]].piece = pieceNums[i];
+        tiles_[hexView[i]].piece = pieceNums[i];
     }
 }
 
