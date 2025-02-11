@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2023 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2025 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -17,8 +17,10 @@
 #include "iterable_enum_class.h"
 
 #include <algorithm>
+#include <concepts>
 #include <functional>
 #include <iterator>
+#include <numeric>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -44,16 +46,29 @@ void randomize(C &cont)
 }
 
 
-// Randomize the list of enumerators for a given type.
-template<IterableEnum T>
-EnumSizedArray<T, T> random_enum_array()
+// Randomize the list of enumerators for type E, represented as type T.
+template <typename T, IterableEnum E>
+EnumSizedArray<T, E> random_enum_array()
+    requires std::same_as<T, E> || std::convertible_to<T, std::underlying_type_t<E>>
 {
-    EnumSizedArray<T, T> ary;
-    for (auto t : T()) {
-        ary[t] = t;
-    }
+    EnumSizedArray<T, E> ary;
+    std::iota(begin(ary), end(ary), T{});
     randomize(ary);
+
     return ary;
+}
+
+
+template <typename R>
+double range_variance(const R &range, double mean)
+{
+    double totalVariance = 0.0;
+    for (auto &val : range) {
+        double delta = val - mean;
+        totalVariance += delta * delta;
+    }
+
+    return totalVariance / size(range);
 }
 
 

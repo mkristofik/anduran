@@ -65,6 +65,7 @@ Anduran::Anduran()
     units_("data/units.json"s, win_, images_),
     stateChanged_(true),
     influence_(rmap_.numRegions()),
+    initialPuzzleState_(rmap_),
     curPuzzleView_(),
     puzzleViews_(),
     puzzleXsIds_()
@@ -331,7 +332,7 @@ void Anduran::load_players()
     SDL_assert(numPlayers_ <= enum_size<ChampionType>());
     randomize(castles);
 
-    auto championTypes = random_enum_array<ChampionType>();
+    auto championTypes = random_enum_array<ChampionType, ChampionType>();
 
     // MapDisplay handles building the castle artwork, but we need something so
     // each castle has a unique entity id.
@@ -395,6 +396,9 @@ void Anduran::load_players()
 
 void Anduran::load_objects()
 {
+    // We don't want each obelisk style to always refer to the same puzzle.
+    auto obeliskOrder = random_enum_array<int, PuzzleType>();
+
     for (auto &obj : objConfig_) {
         // TODO: assign wandering monster strengths by region castle distance
         if (obj.type == ObjectType::army) {
@@ -412,9 +416,14 @@ void Anduran::load_objects()
             entity.hex = hex;
             entity.z = ZOrder::object;
 
-            // Assume any sprite sheet with the same number of frames as there
-            // are terrains is intended to use a terrain frame.
-            if (numFrames == enum_size<Terrain>()) {
+            if (obj.type == ObjectType::obelisk) {
+                int tile = rmap_.intFromHex(hex);
+                int frame = obeliskOrder[initialPuzzleState_.obelisk_type(tile)];
+                entity.frame = {0, frame};
+            }
+            else if (numFrames == enum_size<Terrain>()) {
+                // Assume any sprite sheet with the same number of frames as there
+                // are terrains is intended to use a terrain frame.
                 entity.setTerrainFrame(rmap_.getTerrain(hex));
             }
             else {
@@ -506,19 +515,20 @@ void Anduran::load_battle_accents()
 
 void Anduran::init_puzzles()
 {
-    // This assigns each obelisk randomly to each puzzle map, important that we
-    // only create one and then copy it to each player.
-    PuzzleState initialState(rmap_);
     auto xImg = images_.make_texture("puzzle-xs", win_);
 
     for (auto type : PuzzleType()) {
-        initialState.set_target(type, find_artifact_hex());
-        puzzleViews_[type].emplace(win_, rmapView_, puzzleArt_, initialState, type);
+        initialPuzzleState_.set_target(type, find_artifact_hex());
+        puzzleViews_[type].emplace(win_,
+                                   rmapView_,
+                                   puzzleArt_,
+                                   initialPuzzleState_,
+                                   type);
 
         // Create an entity to mark where each artifact is buried, revealed when
         // a player completes the puzzle.
         MapEntity xEntity;
-        xEntity.hex = initialState.get_target(type);
+        xEntity.hex = initialPuzzleState_.get_target(type);
         xEntity.frame = {0, static_cast<int>(type)};
         xEntity.z = ZOrder::floor;
         xEntity.visible = false;
@@ -526,8 +536,10 @@ void Anduran::init_puzzles()
         puzzleXsIds_[type] = rmapView_.addEntity(xImg, xEntity, HexAlign::middle);
     }
 
+    // Initial state assigns each obelisk randomly to each puzzle map, important
+    // that we only create one and then copy it to each player.
     for (auto &player : players_) {
-        player.puzzle.emplace(initialState);
+        player.puzzle.emplace(initialPuzzleState_);
     }
 }
 

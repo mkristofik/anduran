@@ -4,7 +4,7 @@
     * gives puzzle pieces for the Helmet, Sword, and Breastplate
     * different image for each set
         * randomize the order they're assigned
-    - grouped on the map, not scattered randomly
+    * grouped on the map, not scattered randomly
         * but the regions are numbered randomly so it'll be easier to start with
         them scattered
     * in regions with villages only
@@ -495,3 +495,7 @@ in the header
     - std::to_underlying
     - replace boost flat_ containers with std ones
     - static data inside constexpr functions for iterable_enum_class
+    - may not need contains() from container_utils anymore
+- try out the Proj argument to ranges algorithms instead of writing an operator< or
+a lambda
+- can std::views::values replace ValueIterator in FlatMultimap?

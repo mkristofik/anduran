@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2025 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anudran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -12,12 +12,9 @@
 */
 #include "hex_utils.h"
 
-#include <algorithm>
-#include <cassert>
 #include <limits>
 #include <sstream>
 #include <stdexcept>
-#include <tuple>
 
 Hex::Hex()
     : x(std::numeric_limits<int>::min()),
