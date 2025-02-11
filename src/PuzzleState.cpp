@@ -26,6 +26,8 @@ PuzzleState::PuzzleState(RandomMap &rmap)
     // obelisk on each play of the same map.
     auto ordering = random_enum_array<PuzzleType, PuzzleType>();
 
+    // Copying hexes to vector here is required because hexCluster() needs random
+    // access to the elements.
     auto hexView = rmap.getObjectHexes(ObjectType::obelisk);
     std::vector<Hex> hexes(hexView.begin(), hexView.end());
     auto obelisks = hexClusters(hexes, enum_size<PuzzleType>());
