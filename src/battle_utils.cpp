@@ -195,10 +195,7 @@ Battle::Battle(const ArmyState &attacker, const ArmyState &defender)
         units_[2 * i + 1].armyIndex = i;
     }
 
-    std::ranges::stable_sort(units_,
-        [] (const auto &lhs, const auto &rhs) {
-            return lhs.speed() > rhs.speed();
-        });
+    std::ranges::stable_sort(units_, std::greater<>{}, UnitState::speed);
     assert(check_army_slots(units_));
 
     if (units_[0].alive()) {
