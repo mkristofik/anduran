@@ -496,6 +496,11 @@ in the header
     - replace boost flat_ containers with std ones
     - static data inside constexpr functions for iterable_enum_class
     - may not need contains() from container_utils anymore
-- try out the Proj argument to ranges algorithms instead of writing an operator< or
+    - can std::views::values replace ValueIterator in FlatMultimap?
+* try out the Proj argument to ranges algorithms instead of writing an operator< or
 a lambda
-- can std::views::values replace ValueIterator in FlatMultimap?
+- Boost features used, to help determine a minimum version
+    - flat_map and flat_set
+    - MultiIndex container
+    - Boost.Test
+    - noncopyable
