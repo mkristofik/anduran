@@ -45,6 +45,11 @@ PuzzleState::PuzzleState(RandomMap &rmap)
         std::ranges::sort(obeliskVector, {}, [&rmap] (auto &obelisk) {
             return rmap.tileRegionCastleDistance(obelisk.tile);
         });
+
+        // Record which puzzle piece each tile is assigned to.
+        for (int i = 0; i < ssize(obeliskVector); ++i) {
+            obeliskVector[i].index = i;
+        }
     }
 }
 
@@ -75,6 +80,13 @@ bool PuzzleState::obelisk_visited(int tile) const
     auto *obelisk = find(obelisk_type(tile), tile);
     assert(obelisk);
     return obelisk->visited;
+}
+
+int PuzzleState::obelisk_index(int tile) const
+{
+    auto *obelisk = find(obelisk_type(tile), tile);
+    assert(obelisk);
+    return obelisk->index;
 }
 
 bool PuzzleState::index_visited(PuzzleType type, int index) const

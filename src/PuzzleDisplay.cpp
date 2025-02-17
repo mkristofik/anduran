@@ -119,7 +119,9 @@ PuzzleDisplay::PuzzleDisplay(SdlWindow &win,
     title_(SdlTexture::make_sprite_sheet(images_->labels.surface,
                                          *win_,
                                          images_->labels.frames)),
-    tiles_()
+    tiles_(),
+    fadeIn_ms_(0),
+    fadeInPiece_(-1)
 {
     SDL_assert(initialState.size(type_) > 0);
 
@@ -160,8 +162,12 @@ void PuzzleDisplay::update(const PuzzleState &state)
     status_ = PopupStatus::running;
 }
 
-void PuzzleDisplay::draw()
+void PuzzleDisplay::draw(Uint32 elapsed_ms)
 {
+    if (fadeInPiece_ >= 0) {
+        do_fade_in(elapsed_ms);
+    }
+
     // Draw the background and border of the popup window.
     auto *renderer = win_->renderer();
     SDL_SetRenderDrawColor(renderer, 15, 20, 35, SDL_ALPHA_OPAQUE);
@@ -179,6 +185,12 @@ void PuzzleDisplay::draw()
 
     SDL_Point titlePixel = {pixel.x, popupArea_.y + 20};
     title_.draw(titlePixel, Frame{static_cast<int>(type_), 0});
+}
+
+void PuzzleDisplay::fade_in_piece(int piece)
+{
+    fadeIn_ms_ = 0;
+    fadeInPiece_ = piece;
 }
 
 void PuzzleDisplay::handle_key_up(const SDL_Keysym &key)
@@ -358,4 +370,49 @@ void PuzzleDisplay::apply_filters()
 
         edit.set_pixel(i, color);
     }
+}
+
+void PuzzleDisplay::do_fade_in(Uint32 elapsed_ms)
+{
+    // TODO: fading in the most recently revealed piece
+    // add a fade_in_piece() function
+    // - start a fade-in timer
+    // - PuzzleState needs an obelisk_index() function
+    // if fade-in timer is running
+    // - clone surf_
+    // - SDL_SetSurfaceAlphaMod
+    // - draw the shield image over the fade-in piece
+    // - restore alpha channel
+    // - edit texture with cloned surface
+    // if fade-in timer > 2000 ms
+    // - edit texture with surf_
+    // - turn off timer
+
+    SdlEditTexture edit(texture_);
+
+    const int FADE_MS = 1500;  // TODO: magic number
+    fadeIn_ms_ += elapsed_ms;
+    if (fadeIn_ms_ > FADE_MS) {
+        fade_in_piece(-1);
+        edit.update(surf_);
+        return;
+    }
+
+    auto surfToUse = surf_.clone();
+
+    // TODO: use generic fade_out
+    auto frac = static_cast<double>(fadeIn_ms_) / FADE_MS;
+    auto alpha = std::clamp<int>((1 - frac) * SDL_ALPHA_OPAQUE,
+                                 SDL_ALPHA_TRANSPARENT,
+                                 SDL_ALPHA_OPAQUE);
+
+    SDL_SetSurfaceAlphaMod(images_->shield.surface.get(), alpha);
+    for (auto & [_, t] : tiles_) {
+        if (t.piece == fadeInPiece_) {
+            draw_centered(images_->shield, t.pCenter, surfToUse);
+        }
+    }
+    SDL_SetSurfaceAlphaMod(images_->shield.surface.get(), SDL_ALPHA_OPAQUE);
+
+    edit.update(surfToUse);
 }

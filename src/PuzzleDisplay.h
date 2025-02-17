@@ -70,7 +70,10 @@ public:
     void update(const PuzzleState &state);
 
     // Call each frame whenever the popup is shown.
-    void draw();
+    void draw(Uint32 elapsed_ms);
+
+    // Start the process to fade in the given piece with subsequent draw() calls.
+    void fade_in_piece(int piece);
 
     void handle_key_up(const SDL_Keysym &key);
     PopupStatus status() const;
@@ -99,6 +102,8 @@ private:
     void draw_border();
     void apply_filters();
 
+    void do_fade_in(Uint32 elapsed_ms);
+
     SdlWindow *win_;
     const MapDisplay *rmapView_;
     const PuzzleImages *images_;
@@ -112,6 +117,8 @@ private:
     SdlTexture texture_;
     SdlTexture title_;
     boost::container::flat_map<Hex, PuzzleTile> tiles_;
+    Uint32 fadeIn_ms_;
+    int fadeInPiece_;
 };
 
 #endif

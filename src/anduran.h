@@ -81,7 +81,7 @@ private:
     void update_minimap();
     void update_champion_view();
     void update_puzzles();
-    void update_puzzle_view();
+    void update_puzzle_view(Uint32 elapsed_ms);
 
     void handle_lmouse_down() override;
     void handle_lmouse_up() override;

@@ -58,6 +58,7 @@ namespace
         return {0, col};
     }
 
+    // TODO: make this generic
     Uint8 fade_out(Uint32 elapsed_ms)
     {
         auto fadeFrac = static_cast<double>(elapsed_ms) / FADE_MS;

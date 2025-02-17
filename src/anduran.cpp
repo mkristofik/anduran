@@ -109,7 +109,7 @@ void Anduran::update_frame(Uint32 elapsed_ms)
     championView_.draw();
 
     if (anims_.empty() && curPuzzleView_.visible) {
-        update_puzzle_view();
+        update_puzzle_view(elapsed_ms);
     }
 
     win_.update();
@@ -179,11 +179,11 @@ void Anduran::update_puzzles()
     anims_.push(puzzleAnim);
 }
 
-void Anduran::update_puzzle_view()
+void Anduran::update_puzzle_view(Uint32 elapsed_ms)
 {
     auto status = puzzleViews_[curPuzzleView_.type]->status();
     if (status == PopupStatus::running) {
-        puzzleViews_[curPuzzleView_.type]->draw();
+        puzzleViews_[curPuzzleView_.type]->draw(elapsed_ms);
     }
     else if (status == PopupStatus::ok_close) {
         curPuzzleView_.visible = false;
@@ -197,7 +197,7 @@ void Anduran::update_puzzle_view()
         }
 
         puzzleViews_[curPuzzleView_.type]->update(*cur_player().puzzle);
-        puzzleViews_[curPuzzleView_.type]->draw();
+        puzzleViews_[curPuzzleView_.type]->draw(elapsed_ms);
     }
 }
 
@@ -998,17 +998,21 @@ void Anduran::visit_obelisk(const GameObject &visitor)
         return;
     }
 
-    int index = rmap_.intFromHex(visitor.hex);
+    int tile = rmap_.intFromHex(visitor.hex);
     if (visitor.type == ObjectType::champion) {
         auto iter = champions_.find(visitor.entity);
         if (iter != end(champions_)) {
-            iter->second.puzzlePieces.insert(index);
+            iter->second.puzzlePieces.insert(tile);
         }
     }
 
     auto &player = players_[visitor.team];
-    curPuzzleView_.type = player.puzzle->obelisk_type(index);
+    curPuzzleView_.type = player.puzzle->obelisk_type(tile);
     curPuzzleView_.visible = true;
+
+    // TODO: not sure about this
+    int pieceNum = player.puzzle->obelisk_index(tile);
+    puzzleViews_[curPuzzleView_.type]->fade_in_piece(pieceNum);
 }
 
 void Anduran::visit_oasis(const GameObject &visitor)

@@ -28,6 +28,7 @@ ITERABLE_ENUM_CLASS(PuzzleType, helmet, breastplate, sword);
 struct Obelisk
 {
     int tile = -1;
+    int index = -1;
     bool visited = false;
 };
 
@@ -46,6 +47,7 @@ public:
 
     PuzzleType obelisk_type(int tile) const;
     bool obelisk_visited(int tile) const;
+    int obelisk_index(int tile) const;
     bool index_visited(PuzzleType type, int index) const;
     bool all_visited(PuzzleType type) const;
 
