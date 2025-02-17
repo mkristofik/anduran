@@ -332,4 +332,10 @@ private:
     bool animStarted_;
 };
 
+
+// Compute the alpha channel needed to fade to either fully transparent or opaque
+// over the course of 'duration_ms'.
+Uint8 alpha_fade_out(Uint32 elapsed_ms, Uint32 duration_ms);
+Uint8 alpha_fade_in(Uint32 elapsed_ms, Uint32 duration_ms);
+
 #endif

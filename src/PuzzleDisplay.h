@@ -103,7 +103,13 @@ private:
     void apply_filters();
 
     void do_fade_in(Uint32 elapsed_ms);
-    void reset_fade();
+
+    struct FadeEffect
+    {
+        Uint32 time_ms = 0;
+        int piece = -1;
+        bool running = false;
+    };
 
     SdlWindow *win_;
     const MapDisplay *rmapView_;
@@ -119,9 +125,7 @@ private:
     SdlTexture texture_;
     SdlTexture title_;
     boost::container::flat_map<Hex, PuzzleTile> tiles_;
-    bool fadeRunning_;
-    Uint32 fadeIn_ms_;
-    int fadeInPiece_;
+    FadeEffect fade_;
 };
 
 #endif

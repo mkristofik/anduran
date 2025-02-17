@@ -16,6 +16,7 @@
 #include "RandomMap.h"
 #include "RandomRange.h"
 #include "SdlWindow.h"
+#include "anim_utils.h"
 #include "container_utils.h"
 #include "log_utils.h"
 #include "team_color.h"
@@ -122,9 +123,7 @@ PuzzleDisplay::PuzzleDisplay(SdlWindow &win,
                                          *win_,
                                          images_->labels.frames)),
     tiles_(),
-    fadeRunning_(false),
-    fadeIn_ms_(0),
-    fadeInPiece_(-1)
+    fade_()
 {
     SDL_assert(initialState.size(type_) > 0);
 
@@ -167,7 +166,7 @@ void PuzzleDisplay::update(const PuzzleState &state)
 
 void PuzzleDisplay::draw(Uint32 elapsed_ms)
 {
-    if (fadeRunning_) {
+    if (fade_.running) {
         do_fade_in(elapsed_ms);
     }
 
@@ -194,14 +193,14 @@ void PuzzleDisplay::fade_in_piece(int piece)
 {
     SDL_assert(piece >= 0 && piece < numPieces_);
 
-    fadeRunning_ = true;
-    fadeIn_ms_ = 0;
-    fadeInPiece_ = piece;
+    fade_.time_ms = 0;
+    fade_.piece = piece;
+    fade_.running = true;
 }
 
 void PuzzleDisplay::handle_key_up(const SDL_Keysym &key)
 {
-    if (fadeRunning_) {
+    if (fade_.running) {
         return;
     }
 
@@ -386,11 +385,11 @@ void PuzzleDisplay::do_fade_in(Uint32 elapsed_ms)
 {
     SdlEditTexture edit(texture_);
 
-    fadeIn_ms_ += elapsed_ms;
-    if (fadeIn_ms_ > FADE_MS) {
+    fade_.time_ms += elapsed_ms;
+    if (fade_.time_ms > FADE_MS) {
         // We're done, revert back to the base image with the puzzle piece fully
         // revealed.
-        reset_fade();
+        fade_ = {};
         edit.update(surf_);
         return;
     }
@@ -399,27 +398,16 @@ void PuzzleDisplay::do_fade_in(Uint32 elapsed_ms)
     // going to temporarily hide it again so we can fade in the reveal.
     auto surfToUse = surf_.clone();
 
-    // TODO: use generic fade_out
-    auto frac = static_cast<double>(fadeIn_ms_) / FADE_MS;
-    auto alpha = std::clamp<int>((1 - frac) * SDL_ALPHA_OPAQUE,
-                                 SDL_ALPHA_TRANSPARENT,
-                                 SDL_ALPHA_OPAQUE);
+    // Fading in a piece means fading out the image covering it up.
+    auto alpha = alpha_fade_out(fade_.time_ms, FADE_MS);
 
-    // Fading in a piece means fading out the image covering them up.
     SDL_SetSurfaceAlphaMod(images_->shield.surface.get(), alpha);
     for (auto & [_, t] : tiles_) {
-        if (t.piece == fadeInPiece_) {
+        if (t.piece == fade_.piece) {
             draw_centered(images_->shield, t.pCenter, surfToUse);
         }
     }
     SDL_SetSurfaceAlphaMod(images_->shield.surface.get(), SDL_ALPHA_OPAQUE);
 
     edit.update(surfToUse);
-}
-
-void PuzzleDisplay::reset_fade()
-{
-    fadeRunning_ = false;
-    fadeIn_ms_ = 0;
-    fadeInPiece_ = -1;
 }
