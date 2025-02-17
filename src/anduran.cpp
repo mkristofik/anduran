@@ -66,7 +66,8 @@ Anduran::Anduran()
     stateChanged_(true),
     influence_(rmap_.numRegions()),
     initialPuzzleState_(rmap_),
-    curPuzzleView_(),
+    puzzleVisible_(false),
+    curPuzzleType_(PuzzleType::helmet),
     puzzleViews_(),
     puzzleXsIds_()
 {
@@ -108,7 +109,7 @@ void Anduran::update_frame(Uint32 elapsed_ms)
     minimap_.draw();
     championView_.draw();
 
-    if (anims_.empty() && curPuzzleView_.visible) {
+    if (anims_.empty() && puzzleVisible_) {
         update_puzzle_view(elapsed_ms);
     }
 
@@ -181,29 +182,29 @@ void Anduran::update_puzzles()
 
 void Anduran::update_puzzle_view(Uint32 elapsed_ms)
 {
-    auto status = puzzleViews_[curPuzzleView_.type]->status();
+    auto status = puzzleViews_[curPuzzleType_]->status();
     if (status == PopupStatus::running) {
-        puzzleViews_[curPuzzleView_.type]->draw(elapsed_ms);
+        puzzleViews_[curPuzzleType_]->draw(elapsed_ms);
     }
     else if (status == PopupStatus::ok_close) {
-        curPuzzleView_.visible = false;
+        puzzleVisible_ = false;
     }
     else {
         if (status == PopupStatus::left_arrow) {
-            enum_decr(curPuzzleView_.type);
+            enum_decr(curPuzzleType_);
         }
         else if (status == PopupStatus::right_arrow) {
-            enum_incr(curPuzzleView_.type);
+            enum_incr(curPuzzleType_);
         }
 
-        puzzleViews_[curPuzzleView_.type]->update(*cur_player().puzzle);
-        puzzleViews_[curPuzzleView_.type]->draw(elapsed_ms);
+        puzzleViews_[curPuzzleType_]->update(*cur_player().puzzle);
+        puzzleViews_[curPuzzleType_]->draw(elapsed_ms);
     }
 }
 
 void Anduran::handle_lmouse_down()
 {
-    if (curPuzzleView_.visible) {
+    if (puzzleVisible_) {
         return;
     }
 
@@ -212,7 +213,7 @@ void Anduran::handle_lmouse_down()
 
 void Anduran::handle_lmouse_up()
 {
-    if (curPuzzleView_.visible) {
+    if (puzzleVisible_) {
         return;
     }
 
@@ -261,7 +262,7 @@ void Anduran::handle_lmouse_up()
 
 void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
 {
-    if (curPuzzleView_.visible) {
+    if (puzzleVisible_) {
         return;
     }
 
@@ -303,8 +304,8 @@ void Anduran::handle_key_up(const SDL_Keysym &key)
     if (!anims_.empty() || SDL_GetMouseState(nullptr, nullptr) != 0) {
         return;
     }
-    if (curPuzzleView_.visible) {
-        puzzleViews_[curPuzzleView_.type]->handle_key_up(key);
+    if (puzzleVisible_) {
+        puzzleViews_[curPuzzleType_]->handle_key_up(key);
         return;
     }
 
@@ -318,8 +319,8 @@ void Anduran::handle_key_up(const SDL_Keysym &key)
         startNextTurn_ = true;
     }
     else if (key.sym == 'p') {
-        curPuzzleView_.visible = true;
-        puzzleViews_[curPuzzleView_.type]->update(*cur_player().puzzle);
+        puzzleVisible_ = true;
+        puzzleViews_[curPuzzleType_]->update(*cur_player().puzzle);
     }
 }
 
@@ -1007,12 +1008,11 @@ void Anduran::visit_obelisk(const GameObject &visitor)
     }
 
     auto &player = players_[visitor.team];
-    curPuzzleView_.type = player.puzzle->obelisk_type(tile);
-    curPuzzleView_.visible = true;
+    curPuzzleType_ = player.puzzle->obelisk_type(tile);
+    puzzleVisible_ = true;
 
-    // TODO: not sure about this
     int pieceNum = player.puzzle->obelisk_index(tile);
-    puzzleViews_[curPuzzleView_.type]->fade_in_piece(pieceNum);
+    puzzleViews_[curPuzzleType_]->fade_in_piece(pieceNum);
 }
 
 void Anduran::visit_oasis(const GameObject &visitor)
@@ -1350,7 +1350,7 @@ void Anduran::next_turn()
 
     // Always default to the same puzzle type to avoid revealing an obelisk being
     // visited by another player.
-    curPuzzleView_.type = PuzzleType::helmet;
+    curPuzzleType_ = PuzzleType::helmet;
 
     log_info(std::format("It's the {} player's turn.", str_from_Team(nextPlayer.team)));
     stateChanged_ = true;

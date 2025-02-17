@@ -64,13 +64,6 @@ struct Player
 };
 
 
-struct PuzzleViewState
-{
-    bool visible = false;
-    PuzzleType type = PuzzleType::helmet;
-};
-
-
 class Anduran : public SdlApp
 {
 public:
@@ -169,7 +162,8 @@ private:
     bool stateChanged_;
     std::vector<EnumSizedArray<int, Team>> influence_;
     PuzzleState initialPuzzleState_;
-    PuzzleViewState curPuzzleView_;
+    bool puzzleVisible_;
+    PuzzleType curPuzzleType_;
     EnumSizedArray<std::optional<PuzzleDisplay>, PuzzleType> puzzleViews_;
     EnumSizedArray<int, PuzzleType> puzzleXsIds_;
 };
