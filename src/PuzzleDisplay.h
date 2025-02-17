@@ -103,6 +103,7 @@ private:
     void apply_filters();
 
     void do_fade_in(Uint32 elapsed_ms);
+    void reset_fade();
 
     SdlWindow *win_;
     const MapDisplay *rmapView_;
@@ -110,6 +111,7 @@ private:
     SDL_Rect popupArea_;
     PopupStatus status_;
     PuzzleType type_;
+    int numPieces_;
     SDL_Rect hexes_;
     SDL_Point pOrigin_;
     SdlSurface mapLayer_;
@@ -117,6 +119,7 @@ private:
     SdlTexture texture_;
     SdlTexture title_;
     boost::container::flat_map<Hex, PuzzleTile> tiles_;
+    bool fadeRunning_;
     Uint32 fadeIn_ms_;
     int fadeInPiece_;
 };

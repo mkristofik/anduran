@@ -31,6 +31,7 @@ namespace
 {
     const int POPUP_WIDTH = 800;
     const int POPUP_HEIGHT = 680;
+    const Uint32 FADE_MS = 3000;
 
     // Render the popup centered in the main window.
     SDL_Rect popup_window_rect(const SdlWindow &win)
@@ -62,13 +63,13 @@ namespace
     }
 
     // Swap all puzzle pieces assigned to 'p1' with 'p2'.
-    void swap_pieces(std::vector<int> &pieceNums, int p1, int p2)
+    void swap_pieces(std::vector<int> &pieces, int p1, int p2)
     {
         if (p1 == p2) {
             return;
         }
 
-        for (int &num : pieceNums) {
+        for (int &num : pieces) {
             if (num == p1) {
                 num = p2;
             }
@@ -111,6 +112,7 @@ PuzzleDisplay::PuzzleDisplay(SdlWindow &win,
     popupArea_(popup_window_rect(*win_)),
     status_(PopupStatus::running),
     type_(type),
+    numPieces_(0),
     hexes_(hexes_to_draw(initialState.get_target(type_))),
     pOrigin_(rmapView_->mapPixelFromHex(Hex{hexes_.x, hexes_.y})),
     mapLayer_(),
@@ -120,6 +122,7 @@ PuzzleDisplay::PuzzleDisplay(SdlWindow &win,
                                          *win_,
                                          images_->labels.frames)),
     tiles_(),
+    fadeRunning_(false),
     fadeIn_ms_(0),
     fadeInPiece_(-1)
 {
@@ -164,7 +167,7 @@ void PuzzleDisplay::update(const PuzzleState &state)
 
 void PuzzleDisplay::draw(Uint32 elapsed_ms)
 {
-    if (fadeInPiece_ >= 0) {
+    if (fadeRunning_) {
         do_fade_in(elapsed_ms);
     }
 
@@ -189,12 +192,19 @@ void PuzzleDisplay::draw(Uint32 elapsed_ms)
 
 void PuzzleDisplay::fade_in_piece(int piece)
 {
+    SDL_assert(piece >= 0 && piece < numPieces_);
+
+    fadeRunning_ = true;
     fadeIn_ms_ = 0;
     fadeInPiece_ = piece;
 }
 
 void PuzzleDisplay::handle_key_up(const SDL_Keysym &key)
 {
+    if (fadeRunning_) {
+        return;
+    }
+
     if (key.sym == 'p' || key.sym == SDLK_ESCAPE) {
         status_ = PopupStatus::ok_close;
     }
@@ -245,16 +255,16 @@ void PuzzleDisplay::init_tiles()
 void PuzzleDisplay::init_pieces(const PuzzleState &initialState)
 {
     auto hexView = std::views::keys(tiles_);
-    int puzzleSize = initialState.size(type_);
-    auto pieceNums = hexClusters(hexView, puzzleSize);
+    numPieces_ = initialState.size(type_);
+    auto pieces = hexClusters(hexView, numPieces_);
 
     // Find the target hex and make it the last piece.
     auto targetIter = std::ranges::find(hexView, initialState.get_target(type_));
     auto targetIndex = std::distance(hexView.begin(), targetIter);
-    swap_pieces(pieceNums, pieceNums[targetIndex], puzzleSize - 1);
+    swap_pieces(pieces, pieces[targetIndex], numPieces_ - 1);
 
-    for (int i = 0; i < ssize(pieceNums); ++i) {
-        tiles_[hexView[i]].piece = pieceNums[i];
+    for (int i = 0; i < ssize(pieces); ++i) {
+        tiles_[hexView[i]].piece = pieces[i];
     }
 }
 
@@ -374,30 +384,19 @@ void PuzzleDisplay::apply_filters()
 
 void PuzzleDisplay::do_fade_in(Uint32 elapsed_ms)
 {
-    // TODO: fading in the most recently revealed piece
-    // add a fade_in_piece() function
-    // - start a fade-in timer
-    // - PuzzleState needs an obelisk_index() function
-    // if fade-in timer is running
-    // - clone surf_
-    // - SDL_SetSurfaceAlphaMod
-    // - draw the shield image over the fade-in piece
-    // - restore alpha channel
-    // - edit texture with cloned surface
-    // if fade-in timer > 2000 ms
-    // - edit texture with surf_
-    // - turn off timer
-
     SdlEditTexture edit(texture_);
 
-    const int FADE_MS = 1500;  // TODO: magic number
     fadeIn_ms_ += elapsed_ms;
     if (fadeIn_ms_ > FADE_MS) {
-        fade_in_piece(-1);
+        // We're done, revert back to the base image with the puzzle piece fully
+        // revealed.
+        reset_fade();
         edit.update(surf_);
         return;
     }
 
+    // The newly revealed piece was uncovered in the most recent update().  We're
+    // going to temporarily hide it again so we can fade in the reveal.
     auto surfToUse = surf_.clone();
 
     // TODO: use generic fade_out
@@ -406,6 +405,7 @@ void PuzzleDisplay::do_fade_in(Uint32 elapsed_ms)
                                  SDL_ALPHA_TRANSPARENT,
                                  SDL_ALPHA_OPAQUE);
 
+    // Fading in a piece means fading out the image covering them up.
     SDL_SetSurfaceAlphaMod(images_->shield.surface.get(), alpha);
     for (auto & [_, t] : tiles_) {
         if (t.piece == fadeInPiece_) {
@@ -415,4 +415,11 @@ void PuzzleDisplay::do_fade_in(Uint32 elapsed_ms)
     SDL_SetSurfaceAlphaMod(images_->shield.surface.get(), SDL_ALPHA_OPAQUE);
 
     edit.update(surfToUse);
+}
+
+void PuzzleDisplay::reset_fade()
+{
+    fadeRunning_ = false;
+    fadeIn_ms_ = 0;
+    fadeInPiece_ = -1;
 }
