@@ -57,22 +57,6 @@ namespace
                                        ssize(frameList) - 1);
         return {0, col};
     }
-
-    Uint8 fade_out(Uint32 elapsed_ms)
-    {
-        auto fadeFrac = static_cast<double>(elapsed_ms) / FADE_MS;
-        return std::clamp<int>((1 - fadeFrac) * SDL_ALPHA_OPAQUE,
-                               SDL_ALPHA_TRANSPARENT,
-                               SDL_ALPHA_OPAQUE);
-    }
-
-    Uint8 fade_in(Uint32 elapsed_ms)
-    {
-        auto fadeFrac = static_cast<double>(elapsed_ms) / FADE_MS;
-        return std::clamp<int>(fadeFrac * SDL_ALPHA_OPAQUE,
-                               SDL_ALPHA_TRANSPARENT,
-                               SDL_ALPHA_OPAQUE);
-    }
 }
 
 
@@ -473,7 +457,7 @@ void AnimDie::update(Uint32 elapsed_ms)
         obj.frame = get_anim_frame(anim_.timing_ms(), elapsed_ms - startTime_ms_);
     }
     else {
-        obj.alpha = fade_out(elapsed_ms - fadeTime_ms_);
+        obj.alpha = alpha_fade_out(elapsed_ms - fadeTime_ms_, FADE_MS);
     }
     update_entity(obj);
 }
@@ -746,7 +730,7 @@ void AnimEmbark::start()
 void AnimEmbark::update(Uint32 elapsed_ms)
 {
     auto obj = get_entity(entity_);
-    obj.alpha = fade_out(elapsed_ms);
+    obj.alpha = alpha_fade_out(elapsed_ms, FADE_MS);
     update_entity(obj);
 }
 
@@ -800,7 +784,7 @@ void AnimDisembark::start()
 void AnimDisembark::update(Uint32 elapsed_ms)
 {
     auto obj = get_entity(entity_);
-    obj.alpha = fade_in(elapsed_ms);
+    obj.alpha = alpha_fade_in(elapsed_ms, FADE_MS);
 
     if (!animStarted_) {
         obj.visible = true;
@@ -817,4 +801,21 @@ void AnimDisembark::stop()
     auto obj = get_entity(entity_);
     obj.alpha = SDL_ALPHA_OPAQUE;
     update_entity(obj);
+}
+
+
+Uint8 alpha_fade_out(Uint32 elapsed_ms, Uint32 duration_ms)
+{
+    auto fadeFrac = static_cast<double>(elapsed_ms) / duration_ms;
+    return std::clamp<int>((1 - fadeFrac) * SDL_ALPHA_OPAQUE,
+                           SDL_ALPHA_TRANSPARENT,
+                           SDL_ALPHA_OPAQUE);
+}
+
+Uint8 alpha_fade_in(Uint32 elapsed_ms, Uint32 duration_ms)
+{
+    auto fadeFrac = static_cast<double>(elapsed_ms) / duration_ms;
+    return std::clamp<int>(fadeFrac * SDL_ALPHA_OPAQUE,
+                           SDL_ALPHA_TRANSPARENT,
+                           SDL_ALPHA_OPAQUE);
 }

@@ -33,10 +33,10 @@
     * pre-assign each piece to a group of hexes, divided evenly
     * prefer hexes to be contiguous if possible
     * but can randomly assign them to start
-- show puzzle map in a popup window
+* show puzzle map in a popup window
     * different map background for each artifact
     * show the known pieces
-    - fade in the newly revealed piece, if any
+    * fade in the newly revealed piece, if any
     * be able to switch between maps easily
         * handle key_up events, left and right arrow
         * status code to know when to clear it and possibly redraw a different type
