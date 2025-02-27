@@ -1,6 +1,7 @@
 {
     "arch": {
         "name": "Archer",
+        "plural": "Archers",
         "speed": 4,
         "hp": 10,
         "damage": [2, 3],
@@ -12,6 +13,7 @@
     },
     "grunt": {
         "name": "Orc",
+        "plural": "Orcs",
         "speed": 4,
         "hp": 20,
         "damage": [4, 6],
@@ -22,6 +24,7 @@
     },
     "skel": {
         "name": "Skeleton",
+        "plural": "Skeletons",
         "speed": 4,
         "hp": 4,
         "damage": [2, 3],
@@ -32,6 +35,7 @@
     },
     "sword": {
         "name": "Swordsman",
+        "plural": "Swordsmen",
         "speed": 5,
         "hp": 25,
         "damage": [5, 9],

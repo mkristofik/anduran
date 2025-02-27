@@ -1,66 +1,58 @@
-# Obelisks
+# Gameplay
 ----------
-* three sets of obelisks
-    * gives puzzle pieces for the Helmet, Sword, and Breastplate
-    * different image for each set
-        * randomize the order they're assigned
-    * grouped on the map, not scattered randomly
-        * but the regions are numbered randomly so it'll be easier to start with
-        them scattered
-    * in regions with villages only
-- possible simplification
-    - first player to claim a village can get a puzzle piece from a member of the
-    Shadow Guild
-        - forces conflict between champions to get access to puzzle pieces
-        - also a source for rumors?
-        - similar function to H2 Thieves Guild?
-    - but for now it gives us something else to do in each region
-* defeating an enemy champion gives a copy of his puzzle pieces
-* puzzle piece reveals random tile(s) on the map for its corresponding artifact
-* each puzzle map is 13x7
-    * X marks the spot in the center
-    * this means artifacts have to be buried away from the edges of the map
-    * shows terrain, edges, obstacles, and fixed objects without their flags
-        * can we draw it black & white?
-        * requires modifying each pixel
-            * option 1, average RGB values, set them all the same
-            * option 2, set R and B equal to G
-    * when the X has been revealed, show it on the adventure map
-    * require a minimum number of pieces revealed before the center piece could be
-    shown
-    * this would be a problem if more than 91 regions per obelisk type
-* number of pieces = number of regions with that obelisk type
-    * pre-assign each piece to a group of hexes, divided evenly
-    * prefer hexes to be contiguous if possible
-    * but can randomly assign them to start
-* show puzzle map in a popup window
-    * different map background for each artifact
-    * show the known pieces
-    * fade in the newly revealed piece, if any
-    * be able to switch between maps easily
-        * handle key_up events, left and right arrow
-        * status code to know when to clear it and possibly redraw a different type
-            * close_ok, cancel, left_arrow, right_arrow
-    * close window easily
-- rendering popup windows
-    * animations have to finish (e.g., a champion moving into a village) before
-    rendering the popup
-    * need to draw the rest of the underlying window first before drawing the popup
-    * main game window doesn't respond to clicks or anything else while popup is
-    shown
-    - interpolate the popup into position?
-        - start from the hex on the map that caused it
-        - draw the popup background only
-        - go fast, 1000 ms at most
-        - simple mouseovers and dialog boxes shouldn't bother with this
-* digging
-    * press D key
-    * hex must be on land, and empty except for the champion itself
-    * if on the target hex
-        * assign the artifact to the player
-        * replace X with a trapdoor visible to all players
-    * show a hole in the ground for unsuccessful digs (Wesnoth crater image?)
-    * if a player has all three artifacts, they win
+- Creature draft (create-your-own faction)
+    - Buildings at each level have a standard base cost (fibonacci?)
+    - Sort creatures randomly
+    - Each one after the first in the list costs an additional 10% (?)
+    - If one player skips the first creature, second player sees a 10% discount
+        - Simulates paying to move down the list like in Small World
+    - Want 7 levels if army size is 6 (force you to leave one behind)
+- Your castle is walkable, opponents' castles are not
+    - This means no player can be defeated, your castle is a sanctuary
+    - Goal is to assemble the Battle Garb of Anduran, not defeat all enemies
+- Champion attributes
+    - Attack, Defense, Spell Power, Knowledge?
+    - Knowledge determines how many spells you can learn in your spellbook
+        - Mage Guilds should offer more than you have space for (force choices)
+        - Shrine of the Nth Circle needs to offer you a choice
+        - Eagle Eye might steal a spell you don't want
+    - Should there be a limit to number of creatures per stack?
+        - Not until you can have more than one champion
+    - Secondary skills?
+- Magic
+    - Want magic to seem magical
+        - change the weather?
+        - alter the terrain type?
+        - nervous about Dimension Door/Water Walk/Fly/Town Portal
+    - Spells cast by champions are adventure map only
+        - direct damage spells don't scale well
+            - OP in early game, under-powered late game
+            - unless it might damage the caster's army too (e.g., Elemental Storm)
+        - summoning creatures and boats
+            - summon a neutral army that walks around on its own?
+        - haste/slow, bless/curse, other (de-)buffs
+        - counterspells or defensive spells might be awkward to use
+            - but at least need Dispel Magic
+        - Fire Wall and/or Quicksand could be interesting
+        - Haunt/Set Guardian
+        - Forestwalk
+    - Each champion gains 1 mana from the region at the start of turn
+        - grass = Water, dirt = Earth, swamp = Fire, desert = Air
+        - no mana from snow or water?
+        - Knowledge also limits your max mana?
+    - Simplify to all "colorless" mana to start
+    - Should spells cost movement points?
+        - If there were a spell that restored movement, wouldn't want it to be
+        castable after leaving a region
+- Week of X
+    - most of them should mean something, H2 was kinda boring
+        - doesn't have to be every week, occasional "week of the mongoose" is fine
+    - month of creature is fun
+        - month of plague is not
+        - anything that causes you to want to gimmick it (e.g., don't buy to try to
+        hit a 2x, buy out to avoid plague) is no good
+    - Small World Tales and Legends could inspire some ideas
+    - GalCiv2-style mega events
 
 
 # Game display
@@ -97,6 +89,9 @@
 * borders
 - info on currently selected champion
 * data driven config of window elements (main map, minimap, etc.)
+- add plurals to creature names
+    - giving up on i18n for now, gettext is way more work than I want to do
+    - tag places in the code that would need translation
 
 
 # Minimap
@@ -308,6 +303,8 @@ is next to or in front of a castle
     * attacker chooses target
     * no skips or waits
     * few attributes: damage range, hp, speed
+* unit sizes: few, several (5), pack (10), lots (20), horde (50), throng (100),
+swarm (250), zounds (500), legion (1000)
 - idea: Tactics phase before combat
     - two rows of creatures
     - mounted and melee can only attack from the front row to the front row
@@ -320,6 +317,7 @@ is next to or in front of a castle
     - elemental resistances
     - damage types, armor types
     - spells
+        - units should be the primary direct-damage spellcasters
     - limited shots for ranged creatures
     - luck, morale
     - retaliation
@@ -348,6 +346,71 @@ is next to or in front of a castle
     - steadfast trait, unlimited retaliation not needed if no retaliation
     - first strike, ditto
     - trample probably more interesting with Tactics idea
+
+
+# Obelisks
+----------
+* three sets of obelisks
+    * gives puzzle pieces for the Helmet, Sword, and Breastplate
+    * different image for each set
+        * randomize the order they're assigned
+    * grouped on the map, not scattered randomly
+        * but the regions are numbered randomly so it'll be easier to start with
+        them scattered
+    * in regions with villages only
+- possible simplification
+    - first player to claim a village can get a puzzle piece from a member of the
+    Shadow Guild
+        - forces conflict between champions to get access to puzzle pieces
+        - also a source for rumors?
+        - similar function to H2 Thieves Guild?
+    - but for now it gives us something else to do in each region
+* defeating an enemy champion gives a copy of his puzzle pieces
+* puzzle piece reveals random tile(s) on the map for its corresponding artifact
+* each puzzle map is 13x7
+    * X marks the spot in the center
+    * this means artifacts have to be buried away from the edges of the map
+    * shows terrain, edges, obstacles, and fixed objects without their flags
+        * can we draw it black & white?
+        * requires modifying each pixel
+            * option 1, average RGB values, set them all the same
+            * option 2, set R and B equal to G
+    * when the X has been revealed, show it on the adventure map
+    * require a minimum number of pieces revealed before the center piece could be
+    shown
+    * this would be a problem if more than 91 regions per obelisk type
+* number of pieces = number of regions with that obelisk type
+    * pre-assign each piece to a group of hexes, divided evenly
+    * prefer hexes to be contiguous if possible
+    * but can randomly assign them to start
+* show puzzle map in a popup window
+    * different map background for each artifact
+    * show the known pieces
+    * fade in the newly revealed piece, if any
+    * be able to switch between maps easily
+        * handle key_up events, left and right arrow
+        * status code to know when to clear it and possibly redraw a different type
+            * close_ok, cancel, left_arrow, right_arrow
+    * close window easily
+* rendering popup windows
+    * animations have to finish (e.g., a champion moving into a village) before
+    rendering the popup
+    * need to draw the rest of the underlying window first before drawing the popup
+    * main game window doesn't respond to clicks or anything else while popup is
+    shown
+    * interpolate the popup into position?  Nope, don't like it.
+        * start from the hex on the map that caused it
+        * draw the popup background only
+        * go fast, 1000 ms at most
+        * simple mouseovers and dialog boxes shouldn't bother with this
+* digging
+    * press D key
+    * hex must be on land, and empty except for the champion itself
+    * if on the target hex
+        * assign the artifact to the player
+        * replace X with a trapdoor visible to all players
+    * show a hole in the ground for unsuccessful digs (Wesnoth crater image?)
+    * if a player has all three artifacts, they win
 
 
 # Image management
@@ -504,3 +567,4 @@ a lambda
     - MultiIndex container
     - Boost.Test
     - noncopyable
+- rapidjson appears to be abandoned, try out nlohmann

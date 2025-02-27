@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2024 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2025 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -51,6 +51,9 @@ UnitManager::UnitManager(const std::string &configFile,
                 const std::string value = f->value.GetString();
                 if (field == "name") {
                     data.name = value;
+                }
+                else if (field == "plural") {
+                    data.plural = value;
                 }
                 else if (field == "img-idle") {
                     media.images.emplace(ImageType::img_idle, load_image_set(value));

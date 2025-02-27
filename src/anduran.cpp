@@ -757,6 +757,7 @@ bool Anduran::battle_action(int entity, int enemyId)
                                   make_army_state(defender, BattleSide::defender));
     for (const auto &event : result.log) {
         if (event.action == BattleAction::next_round) {
+            // i18n
             anims_.push(AnimLog(rmapView_, "Next round begins"));
             continue;
         }
@@ -899,6 +900,7 @@ void Anduran::dig_action(int entity)
     auto &champion = champions_[thisObj.entity];
 
     if (champion.movesLeft < champion.moves) {
+        // i18n
         anims_.push(AnimLog(rmapView_, "Digging requires a full day's movement."));
         return;
     }
@@ -906,6 +908,7 @@ void Anduran::dig_action(int entity)
     if (rmap_.getTerrain(thisObj.hex) == Terrain::water ||
         game_.num_objects_in_hex(thisObj.hex) > 1)
     {
+        // i18n
         anims_.push(AnimLog(rmapView_, "Try searching on clear ground."));
         return;
     }
@@ -916,6 +919,7 @@ void Anduran::dig_action(int entity)
             continue;
         }
         else if (artifact_found(type)) {
+            // i18n
             auto msg = std::format("You have located the {}, "
                                    "but it looks like others have found it first.",
                                    artifacts[type]);
@@ -927,6 +931,7 @@ void Anduran::dig_action(int entity)
         // TODO: assign the artifact to the champion who found it.
         AnimSet digAnim;
         digAnim.insert(AnimHide(rmapView_, puzzleXsIds_[type]));
+        // i18n
         auto msg = std::format("After spending many hours digging here, "
                                "you have found the {}!",
                                artifacts[type]);
@@ -941,6 +946,7 @@ void Anduran::dig_action(int entity)
         return;
     }
 
+    // i18n
     anims_.push(AnimLog(rmapView_, "Nothing here.  Where could it be?"));
     rmapView_.addEntity(images_.make_texture("puzzle-not-found", win_),
                         thisObj.hex,
@@ -1038,7 +1044,7 @@ std::string Anduran::army_log(const Army &army) const
             continue;
         }
 
-        ostr << units_.get_data(unit.type).name << '(' << unit.num << ") ";
+        ostr << units_.get_data(unit.type).definite_name(unit.num) << ' ';
     }
 
     return ostr.str();
@@ -1069,7 +1075,7 @@ std::string Anduran::battle_result_log(const Army &before,
 
         const int losses = before.units[i].num - (*after)[i].num;
         if (losses > 0) {
-            ostr << units_.get_data(unitType).name << '(' << losses << ") ";
+            ostr << units_.get_data(unitType).definite_name(losses) << ' ';
         }
     }
 
@@ -1078,21 +1084,32 @@ std::string Anduran::battle_result_log(const Army &before,
 
 std::string Anduran::battle_event_log(const BattleEvent &event) const
 {
-    auto &attacker = units_.get_data(event.attackerType).name;
-    auto &defender = units_.get_data(event.defenderType).name;
+    auto &attacker = units_.get_data(event.attackerType);
+    auto &defender = units_.get_data(event.defenderType);
 
     std::ostringstream ostr;
-    ostr << attacker << '(' << event.numAttackers << ") attacks "
-         << defender << '(' << event.numDefenders << ") for "
-         << event.damage << " damage";
-    if (event.losses > 0) {
-        ostr << ", " << event.losses;
-        if (event.losses == 1) {
-            ostr << " perishes";
-        }
-        else {
-            ostr << " perish";
-        }
+    if (event.numAttackers > 1) {
+        // i18n
+        ostr << std::format("{} attack {} for {} damage",
+                            attacker.definite_name(event.numAttackers),
+                            defender.definite_name(event.numDefenders),
+                            event.damage);
+    }
+    else {
+        // i18n
+        ostr << std::format("{} attacks {} for {} damage",
+                            attacker.name,
+                            defender.definite_name(event.numDefenders),
+                            event.damage);
+    }
+
+    if (event.losses > 1) {
+        // i18n
+        ostr << std::format(", {} perish", event.losses);
+    }
+    else if (event.losses == 1) {
+        // i18n
+        ostr << ", 1 perishes";
     }
 
     return ostr.str();
@@ -1352,6 +1369,7 @@ void Anduran::next_turn()
     // visited by another player.
     curPuzzleType_ = PuzzleType::helmet;
 
+    // i18n
     log_info(std::format("It's the {} player's turn.", str_from_Team(nextPlayer.team)));
     stateChanged_ = true;
 }
