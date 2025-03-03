@@ -16,9 +16,19 @@
         - Mage Guilds should offer more than you have space for (force choices)
         - Shrine of the Nth Circle needs to offer you a choice
         - Eagle Eye might steal a spell you don't want
-    - Should there be a limit to number of creatures per stack?
+    - Should there be a limit to number of creatures per stack?  Or total?
+        - Total limit makes it hard to hero chain with low-level champions
+        - Leadership primary skill?
         - Not until you can have more than one champion
     - Secondary skills?
+- Resources
+    - start with just gold
+    - want trading resources to be an ability you claim on the map
+    - but being stuck without the necessary resources for top buildings was basically
+    a loss in H1.  Not fun.
+        - would be ok if you had some alternative like doubling up on another
+        building
+    - resource generating building in castle?
 - Magic
     - Want magic to seem magical
         - change the weather?
@@ -89,9 +99,26 @@
 * borders
 - info on currently selected champion
 * data driven config of window elements (main map, minimap, etc.)
-- add plurals to creature names
-    - giving up on i18n for now, gettext is way more work than I want to do
-    - tag places in the code that would need translation
+* add plurals to creature names
+    * giving up on i18n for now, gettext is way more work than I want to do
+    * tag places in the code that would need translation
+- fonts
+    - OldaniaADFStd
+    - DejaVuSans
+    - get the licenses from the Wesnoth COPYING file in the fonts dir
+    - TTF_Init/TTF_Quit, TTF_OpenFont/TTF_CloseFont
+    - don't use TTF_SetFontSize, open another handle to the same font
+        - switching sizes clears internal glyph cache
+    - TTF_RenderUTF8_Blended_Wrapped, TTF_FontLineSkip, TTF_Error
+    - first project: replace the titles on the puzzle map
+- status bar at the bottom
+    - AnimLog draws here instead of writing to the console
+    - clicking on it expands to show the last ~10 messages
+    - supports arrow keys and scroll wheel (draw something to indicate scrolling)
+        - not trying to invent a GUI scrollbar
+        - number each log message?
+- Message boxes
+    - Some AnimLog messages actually want to be message boxes
 
 
 # Minimap
@@ -187,6 +214,7 @@ destination hex
 - should adjacent water regions be collapsed into a single region?
     - RandomMap would have to assign terrain before building neighbor graphs
     - is it ok if a region became empty?
+        - happens all the time in voronoi(), empty regions get pruned
     - water becomes a shortcut between distant land regions, be careful
         - could change fair castle distance calculation
         - hesitant to enable anything that behaves like Dimension Door
@@ -318,11 +346,14 @@ swarm (250), zounds (500), legion (1000)
     - damage types, armor types
     - spells
         - units should be the primary direct-damage spellcasters
+        - should there be limits?
+        - spellcasting units would need an alternate attack
     - limited shots for ranged creatures
     - luck, morale
-    - retaliation
+    - reach, retaliation
 - additional traits
     - double strike
+        - probably OP without retaliation
     - cursed, defending unit does minimum damage
         - how long would this state stay in effect?
         - how to animate its effect?
@@ -339,6 +370,7 @@ swarm (250), zounds (500), legion (1000)
     - zombify
         - battle_utils has to recompute relative unit sizes
         - AnimHealth needs a color for beyond 100% HP
+        - H2 Ghosts shows how OP this can be
 - KISS principle: he who gets there first with the most, wins
     - none of these ideas matter unless we can render them so the player can see
     their effects
@@ -362,6 +394,8 @@ swarm (250), zounds (500), legion (1000)
     - first player to claim a village can get a puzzle piece from a member of the
     Shadow Guild
         - forces conflict between champions to get access to puzzle pieces
+        - but what happens if a champion is defeated by a wandering army?
+        - don't want to get into an unwinnable state
         - also a source for rumors?
         - similar function to H2 Thieves Guild?
     - but for now it gives us something else to do in each region
@@ -568,3 +602,4 @@ a lambda
     - Boost.Test
     - noncopyable
 - rapidjson appears to be abandoned, try out nlohmann
+    - or switch to YAML because it allows for comments

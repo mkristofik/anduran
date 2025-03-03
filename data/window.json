@@ -1,11 +1,11 @@
 {
-    "window-width": 1280,
-    "window-height": 720,
+    "window-width": 1600,
+    "window-height": 900,
     "top-border-pct": 5,
     "left-border-pct": 1,
     "inner-border-pct": 1,
     "middle-border-pct": 2,
     "right-border-pct": 1,
-    "bottom-border-pct": 2,
+    "bottom-border-pct": 3,
     "minimap-width-pct": 15
 }
