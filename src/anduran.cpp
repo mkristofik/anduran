@@ -30,7 +30,7 @@ namespace
 {
     const int BASE_MOVEMENT = 150;
     const double FULL_MOVEMENT = 200.0;
-    const EnumSizedArray<int, Terrain> terrainCost = {10, 12, 15, 10, 10, 12};
+    const EnumSizedArray<int, Terrain> terrainCost = {10, 15, 17, 10, 10, 15};
 }
 
 
