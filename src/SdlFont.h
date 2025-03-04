@@ -14,11 +14,15 @@
 #define SDL_FONT_H
 
 #include "SdlSurface.h"
+#include "iterable_enum_class.h"
 
 #include "SDL.h"
 #include "SDL_ttf.h"
 #include <memory>
 #include <string>
+
+ITERABLE_ENUM_CLASS(FontType, sans_serif, script);
+
 
 // Wrapper around the SDL TTF_Font structure.
 //
@@ -30,7 +34,7 @@ class SdlFont
 public:
     // TTF_SetFontSize() clears an internal cache of rendered glyphs, so we will
     // create a separate object for each font size.
-    SdlFont(const char *filename, int ptsize);
+    SdlFont(FontType type, int ptsize);
 
     SdlSurface render(const std::string &text, const SDL_Color &color);
 

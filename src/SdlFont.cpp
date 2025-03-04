@@ -15,8 +15,19 @@
 
 #include <format>
 
-SdlFont::SdlFont(const char *filename, int ptsize)
-    : font_(TTF_OpenFont(filename, ptsize), TTF_CloseFont)
+using namespace std::string_literals;
+
+namespace
+{
+    const EnumSizedArray<std::string, FontType> filenames = {
+        "fonts/DejaVuSans.ttf"s,
+        "fonts/OldaniaADFStd-Regular.otf"s
+    };
+}
+
+
+SdlFont::SdlFont(FontType type, int ptsize)
+    : font_(TTF_OpenFont(filenames[type].c_str(), ptsize), TTF_CloseFont)
 {
     if (!font_) {
         log_error(std::format("couldn't load font: {}", TTF_GetError()),

@@ -30,23 +30,13 @@
 #include <ranges>
 #include <vector>
 
+using namespace std::string_literals;
+
 namespace
 {
     const int POPUP_WIDTH = 800;
     const int POPUP_HEIGHT = 680;
     const Uint32 FADE_MS = 3000;
-
-    EnumSizedArray<SdlSurface, PuzzleType> render_labels()
-    {
-        SdlFont titleFont("fonts/OldaniaADFStd-Regular.otf", 48);
-        EnumSizedArray<SdlSurface, PuzzleType> labels = {
-            titleFont.render("Helmet of Anduran", COLOR_LIGHT_GREY),
-            titleFont.render("Breastplate of Anduran", COLOR_LIGHT_GREY),
-            titleFont.render("Sword of Anduran", COLOR_LIGHT_GREY)
-        };
-
-        return labels;
-    }
 
     // Render the popup centered in the main window.
     SDL_Rect popup_window_rect(const SdlWindow &win)
@@ -103,7 +93,7 @@ PuzzleImages::PuzzleImages(const SdlImageManager &imgMgr)
     border(imgMgr.get("hex-team-color")),
     shield(imgMgr.get("puzzle-hidden")),
     xs(imgMgr.get("puzzle-xs")),
-    labels(render_labels())
+    labels()
 {
     for (auto t : Terrain()) {
         terrain[t] = imgMgr.get(get_tile_filename(t));
@@ -113,6 +103,12 @@ PuzzleImages::PuzzleImages(const SdlImageManager &imgMgr)
     for (auto e : EdgeType()) {
         edges[e] = imgMgr.get(get_edge_filename(e));
     }
+
+    SdlFont titleFont(FontType::script, 48);
+    labels[PuzzleType::helmet] = titleFont.render("Helmet of Anduran"s, COLOR_LIGHT_GREY);
+    labels[PuzzleType::breastplate] = titleFont.render("Breastplate of Anduran"s,
+                                                       COLOR_LIGHT_GREY);
+    labels[PuzzleType::sword] = titleFont.render("Sword of Anduran"s, COLOR_LIGHT_GREY);
 }
 
 
