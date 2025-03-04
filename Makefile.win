@@ -1,4 +1,4 @@
-#    Copyright (C) 2016-2021 by Michael Kristofik <kristo605@gmail.com>
+#    Copyright (C) 2016-2025 by Michael Kristofik <kristo605@gmail.com>
 #    Part of the Champions of Anduran project.
 # 
 #    This program is free software; you can redistribute it and/or modify
@@ -19,17 +19,20 @@ MINGW_DIR = c:/mingw
 CPPFLAGS = -I$(LIB_ROOT) \
 	-I$(MINGW_DIR)/include \
 	-I$(LIB_ROOT)/SDL2-2.28.3/x86_64-w64-mingw32/include/SDL2 \
-	-I$(LIB_ROOT)/SDL2_image-2.6.3/x86_64-w64-mingw32/include/SDL2
+	-I$(LIB_ROOT)/SDL2_image-2.6.3/x86_64-w64-mingw32/include/SDL2 \
+	-I$(LIB_ROOT)/SDL2_ttf-2.24.0/x86_64-w64-mingw32/include/SDL2
 
 LDFLAGS = -L$(LIB_ROOT)/SDL2-2.28.3/x86_64-w64-mingw32/lib \
 	-L$(LIB_ROOT)/SDL2_image-2.6.3/x86_64-w64-mingw32/lib \
+	-L$(LIB_ROOT)/SDL2_ttf-2.24.0/x86_64-w64-mingw32/lib \
 	-L$(MINGW_DIR)/lib
 
 LDLIBS = -lmingw32 \
 	 -lSDL2main \
 	 -lSDL2 \
 	 -mwindows \
-	 -lSDL2_image
+	 -lSDL2_image \
+	 -lSDL2_ttf
 
 EXE = .exe
 RM_DIR_CMD = rmdir /q /s

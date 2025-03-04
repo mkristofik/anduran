@@ -1,4 +1,4 @@
-#    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
+#    Copyright (C) 2016-2025 by Michael Kristofik <kristo605@gmail.com>
 #    Part of the Champions of Anduran project.
 # 
 #    This program is free software; you can redistribute it and/or modify
@@ -89,6 +89,7 @@ ANDURAN_SRC = AnimQueue.cpp \
 	RandomMap.cpp \
 	RandomRange.cpp \
 	SdlApp.cpp \
+	SdlFont.cpp \
 	SdlImageManager.cpp \
 	SdlSurface.cpp \
 	SdlTexture.cpp \

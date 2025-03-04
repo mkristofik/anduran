@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2025 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -14,6 +14,7 @@
 #include "log_utils.h"
 
 #include "SDL_image.h"
+#include "SDL_ttf.h"
 #include <format>
 #include <stdexcept>
 
@@ -41,6 +42,14 @@ SdlApp::SdlApp()
         throw std::runtime_error("SDL_image init error");
     }
 
+    if (TTF_Init() < 0) {
+        log_critical(std::format("couldn't initialize SDL_ttf: {}", TTF_GetError()),
+                     LogCategory::system);
+        IMG_Quit();
+        SDL_Quit();
+        throw std::runtime_error("SDL_ttf init error");
+    }
+
     // Allow certain log messages prior to app startup.  Suppress an annoying
     // render log message: https://github.com/libsdl-org/SDL/issues/7959
     SDL_LogSetPriority(SDL_LOG_CATEGORY_VIDEO, SDL_LOG_PRIORITY_VERBOSE);
@@ -49,6 +58,7 @@ SdlApp::SdlApp()
 
 SdlApp::~SdlApp()
 {
+    TTF_Quit();
     IMG_Quit();
     SDL_Quit();
 }

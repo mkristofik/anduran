@@ -103,14 +103,15 @@
     * giving up on i18n for now, gettext is way more work than I want to do
     * tag places in the code that would need translation
 - fonts
-    - OldaniaADFStd
-    - DejaVuSans
-    - get the licenses from the Wesnoth COPYING file in the fonts dir
-    - TTF_Init/TTF_Quit, TTF_OpenFont/TTF_CloseFont
-    - don't use TTF_SetFontSize, open another handle to the same font
-        - switching sizes clears internal glyph cache
-    - TTF_RenderUTF8_Blended_Wrapped, TTF_FontLineSkip, TTF_Error
-    - first project: replace the titles on the puzzle map
+    * OldaniaADFStd
+    * DejaVuSans
+    * get the licenses from the Wesnoth COPYING file in the fonts dir
+    * TTF_Init/TTF_Quit, TTF_OpenFont/TTF_CloseFont
+    * don't use TTF_SetFontSize, open another handle to the same font
+        * switching sizes clears internal glyph cache
+    - TTF_RenderUTF8_Blended(_Wrapped), TTF_FontLineSkip, TTF_Error
+        - note this requires SDL_ttf >= 2.0.18
+    * first project: replace the titles on the puzzle map
 - status bar at the bottom
     - AnimLog draws here instead of writing to the console
     - clicking on it expands to show the last ~10 messages
@@ -603,3 +604,6 @@ a lambda
     - noncopyable
 - rapidjson appears to be abandoned, try out nlohmann
     - or switch to YAML because it allows for comments
+- try SDL_GetTicks64 again now that we're pointing at correct dll version
+    - if it works, note that it requires SDL 2.0.18 or greater
+- start a readme with min versions needed for SDL_, IMG_, and TTF_ functions used
