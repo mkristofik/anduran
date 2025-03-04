@@ -15,10 +15,12 @@
 #include "MapDisplay.h"
 #include "RandomMap.h"
 #include "RandomRange.h"
+#include "SdlFont.h"
 #include "SdlWindow.h"
 #include "anim_utils.h"
 #include "container_utils.h"
 #include "log_utils.h"
+#include "pixel_utils.h"
 #include "team_color.h"
 
 #include "boost/container/flat_set.hpp"
@@ -33,6 +35,18 @@ namespace
     const int POPUP_WIDTH = 800;
     const int POPUP_HEIGHT = 680;
     const Uint32 FADE_MS = 3000;
+
+    EnumSizedArray<SdlSurface, PuzzleType> render_labels()
+    {
+        SdlFont titleFont("fonts/OldaniaADFStd-Regular.otf", 48);
+        EnumSizedArray<SdlSurface, PuzzleType> labels = {
+            titleFont.render("Helmet of Anduran", COLOR_LIGHT_GREY),
+            titleFont.render("Breastplate of Anduran", COLOR_LIGHT_GREY),
+            titleFont.render("Sword of Anduran", COLOR_LIGHT_GREY)
+        };
+
+        return labels;
+    }
 
     // Render the popup centered in the main window.
     SDL_Rect popup_window_rect(const SdlWindow &win)
@@ -89,7 +103,7 @@ PuzzleImages::PuzzleImages(const SdlImageManager &imgMgr)
     border(imgMgr.get("hex-team-color")),
     shield(imgMgr.get("puzzle-hidden")),
     xs(imgMgr.get("puzzle-xs")),
-    labels(imgMgr.get("puzzle-labels"))
+    labels(render_labels())
 {
     for (auto t : Terrain()) {
         terrain[t] = imgMgr.get(get_tile_filename(t));
@@ -119,9 +133,7 @@ PuzzleDisplay::PuzzleDisplay(SdlWindow &win,
     mapLayer_(),
     surf_(),
     texture_(),
-    title_(SdlTexture::make_sprite_sheet(images_->labels.surface,
-                                         *win_,
-                                         images_->labels.frames)),
+    title_(SdlTexture::make_image(images_->labels[type_], *win_)),
     tiles_(),
     fade_()
 {
@@ -186,7 +198,7 @@ void PuzzleDisplay::draw(Uint32 elapsed_ms)
     texture_.draw(pixel);
 
     SDL_Point titlePixel = {pixel.x, popupArea_.y + 20};
-    title_.draw(titlePixel, Frame{static_cast<int>(type_), 0});
+    title_.draw(titlePixel);
 }
 
 void PuzzleDisplay::fade_in_piece(int piece)

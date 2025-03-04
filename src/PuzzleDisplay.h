@@ -44,7 +44,7 @@ struct PuzzleImages
     SdlImageData border;
     SdlImageData shield;
     SdlImageData xs;
-    SdlImageData labels;
+    EnumSizedArray<SdlSurface, PuzzleType> labels;
 
     PuzzleImages(const SdlImageManager &imgMgr);
 };
