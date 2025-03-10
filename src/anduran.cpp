@@ -37,6 +37,7 @@ namespace
 Anduran::Anduran()
     : SdlApp(),
     config_("data/window.json"s),
+    // i18n
     win_(config_.width(), config_.height(), "Champions of Anduran"),
     objConfig_("data/objects.json"s),
     rmap_("test.json", objConfig_),
@@ -889,6 +890,7 @@ void Anduran::local_action(int entity)
 
 void Anduran::dig_action(int entity)
 {
+    // i18n
     static const EnumSizedArray<std::string, PuzzleType> artifacts = {
         "Helmet of Anduran"s,
         "Breastplate of Anduran"s,

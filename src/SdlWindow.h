@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2025 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -57,6 +57,19 @@ public:
 private:
     SDL_Renderer *renderer_;
     SDL_Rect orig_;
+};
+
+
+// RAII helper for setting/restoring the render draw color.
+class SdlWindowColor : private boost::noncopyable
+{
+public:
+    SdlWindowColor(const SdlWindow &win, const SDL_Color &color);
+    ~SdlWindowColor();
+
+private:
+    SDL_Renderer *renderer_;
+    SDL_Color orig_;
 };
 
 #endif

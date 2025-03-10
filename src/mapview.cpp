@@ -59,6 +59,7 @@ private:
 MapViewApp::MapViewApp(const char *filename)
     : SdlApp(),
     config_("data/window.json"s),
+    // i18n
     win_(config_.width(), config_.height(), "Anduran Map Viewer"),
     objs_("data/objects.json"s),
     rmap_(filename, objs_),
