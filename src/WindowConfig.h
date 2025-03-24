@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2024 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2024-2025 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -48,6 +48,7 @@ public:
     const SDL_Rect & map_bounds() const;
     const SDL_Rect & minimap_bounds() const;
     const SDL_Rect & info_block_bounds() const;
+    const SDL_Rect & status_bounds() const;
 
 private:
     int width_;
@@ -55,6 +56,7 @@ private:
     SDL_Rect map_;
     SDL_Rect minimap_;
     SDL_Rect infoBlock_;
+    SDL_Rect status_;
 };
 
 #endif

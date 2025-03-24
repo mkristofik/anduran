@@ -70,7 +70,9 @@ Anduran::Anduran()
     puzzleVisible_(false),
     curPuzzleType_(PuzzleType::helmet),
     puzzleViews_(),
-    puzzleXsIds_()
+    puzzleXsIds_(),
+    messages_(),
+    statusView_(win_, config_.status_bounds())
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
@@ -90,6 +92,7 @@ void Anduran::update_frame(Uint32 elapsed_ms)
     win_.clear();
     anims_.run(elapsed_ms);
     championView_.animate(elapsed_ms);
+    statusView_.update(messages_);
 
     // Wait until animations have finished running before updating things.
     if (anims_.empty()) {
@@ -109,7 +112,16 @@ void Anduran::update_frame(Uint32 elapsed_ms)
     rmapView_.draw();
     minimap_.draw();
     championView_.draw();
+    statusView_.draw();
 
+    // TODO: status bar at the bottom of the screen
+    // always visible, clicking on it expands to show a history
+    // while expanded, it takes over like when puzzleVisible_ is true
+    // keep a running log of messages
+    // going to need an AnimStatus to add messages in time with a battle
+    // this means the normal status bar is always updating, like the championView_
+    // - can't click to expand unless anims are finished
+    // - unless we want that to somehow pause an in-flight animation
     if (anims_.empty() && puzzleVisible_) {
         update_puzzle_view(elapsed_ms);
     }
@@ -759,7 +771,9 @@ bool Anduran::battle_action(int entity, int enemyId)
     for (const auto &event : result.log) {
         if (event.action == BattleAction::next_round) {
             // i18n
-            anims_.push(AnimLog(rmapView_, "Next round begins"));
+            messages_.push_back("Next round begins");
+            // TODO: this wants to be AnimStatus
+            anims_.push(AnimLog(rmapView_, messages_.back()));
             continue;
         }
 
@@ -786,7 +800,8 @@ bool Anduran::battle_action(int entity, int enemyId)
                                   winner->entity,
                                   rmapView_.getEntityImage(winner->entity)));
     endingAnim.insert(AnimHide(rmapView_, loser->entity));
-    endingAnim.insert(AnimLog(rmapView_, battle_result_log(*winningArmy, result)));
+    messages_.push_back(battle_result_log(*winningArmy, result));
+    endingAnim.insert(AnimLog(rmapView_, messages_.back()));
 
     // Restore the defender's ellipse here if they win.  The attacker might be
     // continuing to move to another hex so we skip showing it if they win.
@@ -1143,7 +1158,8 @@ void Anduran::animate(const GameObject &attacker,
     auto attType = units_.get_data(attUnitType).attack;
 
     AnimSet animSet;
-    animSet.insert(AnimLog(rmapView_, battle_event_log(event)));
+    messages_.push_back(battle_event_log(event));
+    animSet.insert(AnimLog(rmapView_, messages_.back()));
     animSet.insert(AnimHealth(rmapView_,
                               hpBarIds_[0],
                               hpBarIds_[1],

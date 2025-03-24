@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2024 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2024-2025 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,8 @@ WindowConfig::WindowConfig(const std::string &configFile)
     height_(720),
     map_{12, 24, 1052, 672},
     minimap_{1076, 24, 192, 192},
-    infoBlock_{1076, 223, 192, 473}
+    infoBlock_{1076, 223, 192, 473},
+    status_{12, 696, 1052, 24}
 {
     if (!std::filesystem::exists(configFile)) {
         log_error("window config file not found: " + configFile +
@@ -93,6 +94,11 @@ WindowConfig::WindowConfig(const std::string &configFile)
     infoBlock_.w = minimap_.w;
     infoBlock_.y = minimap_.y + minimap_.h + middleBorder;
     infoBlock_.h = map_.h - minimap_.h - middleBorder;
+
+    status_.x = map_.x;
+    status_.y = map_.y + map_.h;
+    status_.w = map_.w;
+    status_.h = bottomBorder;
 }
 
 int WindowConfig::width() const
@@ -118,4 +124,9 @@ const SDL_Rect & WindowConfig::minimap_bounds() const
 const SDL_Rect & WindowConfig::info_block_bounds() const
 {
     return infoBlock_;
+}
+
+const SDL_Rect & WindowConfig::status_bounds() const
+{
+    return status_;
 }

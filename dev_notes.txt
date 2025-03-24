@@ -611,7 +611,7 @@ a lambda
     - MultiIndex container
     - Boost.Test
     - noncopyable
-- rapidjson appears to be abandoned, try out nlohmann
+- rapidjson appears to be abandoned, try out Boost.Json
     - or switch to YAML because it allows for comments
 - try SDL_GetTicks64 again now that we're pointing at correct dll version
     - if it works, note that it requires SDL 2.0.18 or greater

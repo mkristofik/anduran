@@ -28,6 +28,7 @@
 #include "SdlImageManager.h"
 #include "SdlTexture.h"
 #include "SdlWindow.h"
+#include "StatusDisplay.h"
 #include "UnitManager.h"
 #include "WindowConfig.h"
 #include "battle_utils.h"
@@ -166,6 +167,8 @@ private:
     PuzzleType curPuzzleType_;
     EnumSizedArray<std::optional<PuzzleDisplay>, PuzzleType> puzzleViews_;
     EnumSizedArray<int, PuzzleType> puzzleXsIds_;
+    std::vector<std::string> messages_;
+    StatusDisplay statusView_;
 };
 
 #endif
