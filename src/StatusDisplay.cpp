@@ -54,9 +54,9 @@ namespace
 StatusDisplay::StatusDisplay(SdlWindow &win, const SDL_Rect &displayRect)
     : win_(&win),
     displayRect_(displayRect),
-    font_(FontType::sans_serif, 12),
+    font_(FontType::sans_serif, 14),
     msgImages_(),
-    curMsg_(0)
+    curMsg_(-1)
 {
 }
 
@@ -78,12 +78,17 @@ void StatusDisplay::show_message(int num)
     curMsg_ = num;
 }
 
+void StatusDisplay::clear()
+{
+    curMsg_ = -1;
+}
+
 void StatusDisplay::draw()
 {
     draw_background(*win_, displayRect_);
     draw_border(*win_, displayRect_);
 
-    if (msgImages_.empty()) {
+    if (msgImages_.empty() || !in_bounds(msgImages_, curMsg_)) {
         return;
     }
 

@@ -542,6 +542,29 @@ void AnimLog::start()
 }
 
 
+AnimStatus::AnimStatus(MapDisplay &display, StatusDisplay &statusBar, int msgNum)
+    : AnimBase(display, 0),
+    status_(&statusBar),
+    msgNum_(msgNum)
+{
+}
+
+AnimStatus AnimStatus::clear(MapDisplay &display, StatusDisplay &statusBar)
+{
+    return {display, statusBar, -1};
+}
+
+void AnimStatus::start()
+{
+    if (msgNum_ >= 0) {
+        status_->show_message(msgNum_);
+    }
+    else {
+        status_->clear();
+    }
+}
+
+
 AnimHealth::AnimHealth(MapDisplay &display,
                        int attackerBar,
                        int defenderBar,

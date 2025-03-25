@@ -31,6 +31,8 @@ public:
     void update(const std::vector<std::string> &messages);
 
     void show_message(int num);
+    void clear();
+
     void draw();
 
 private:

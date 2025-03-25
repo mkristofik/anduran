@@ -772,8 +772,7 @@ bool Anduran::battle_action(int entity, int enemyId)
         if (event.action == BattleAction::next_round) {
             // i18n
             messages_.push_back("Next round begins");
-            // TODO: this wants to be AnimStatus
-            anims_.push(AnimLog(rmapView_, messages_.back()));
+            anims_.push(AnimStatus(rmapView_, statusView_, ssize(messages_) - 1));
             continue;
         }
 
@@ -800,8 +799,8 @@ bool Anduran::battle_action(int entity, int enemyId)
                                   winner->entity,
                                   rmapView_.getEntityImage(winner->entity)));
     endingAnim.insert(AnimHide(rmapView_, loser->entity));
-    messages_.push_back(battle_result_log(*winningArmy, result));
-    endingAnim.insert(AnimLog(rmapView_, messages_.back()));
+    endingAnim.insert(AnimLog(rmapView_, battle_result_log(*winningArmy, result)));
+    endingAnim.insert(AnimStatus::clear(rmapView_, statusView_));
 
     // Restore the defender's ellipse here if they win.  The attacker might be
     // continuing to move to another hex so we skip showing it if they win.
@@ -918,6 +917,8 @@ void Anduran::dig_action(int entity)
 
     if (champion.movesLeft < champion.moves) {
         // i18n
+        // TODO: this wants to be a message box that appears after the movement
+        // animation has finished.
         anims_.push(AnimLog(rmapView_, "Digging requires a full day's movement."));
         return;
     }
@@ -1159,7 +1160,7 @@ void Anduran::animate(const GameObject &attacker,
 
     AnimSet animSet;
     messages_.push_back(battle_event_log(event));
-    animSet.insert(AnimLog(rmapView_, messages_.back()));
+    animSet.insert(AnimStatus(rmapView_, statusView_, ssize(messages_) - 1));
     animSet.insert(AnimHealth(rmapView_,
                               hpBarIds_[0],
                               hpBarIds_[1],

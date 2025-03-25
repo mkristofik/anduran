@@ -15,6 +15,7 @@
 
 #include "MapDisplay.h"
 #include "SdlTexture.h"
+#include "StatusDisplay.h"
 #include "UnitData.h"
 #include "battle_utils.h"
 #include "hex_utils.h"
@@ -253,6 +254,24 @@ private:
     void update(Uint32) override {}
 
     std::string msg_;
+};
+
+
+// Show a message in the status bar.  We want the message to appear in time with
+// other animations, such as during a battle.
+class AnimStatus : public AnimBase
+{
+public:
+    AnimStatus(MapDisplay &display, StatusDisplay &statusBar, int msgNum);
+
+    static AnimStatus clear(MapDisplay &display, StatusDisplay &statusBar);
+
+private:
+    void start() override;
+    void update(Uint32) override {}
+
+    StatusDisplay *status_;
+    int msgNum_;
 };
 
 
