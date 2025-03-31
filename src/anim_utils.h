@@ -15,7 +15,6 @@
 
 #include "MapDisplay.h"
 #include "SdlTexture.h"
-#include "StatusDisplay.h"
 #include "UnitData.h"
 #include "battle_utils.h"
 #include "hex_utils.h"
@@ -27,6 +26,8 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+
+class StatusDisplay;
 
 class AnimBase
 {

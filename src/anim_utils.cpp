@@ -12,6 +12,7 @@
 */
 #include "anim_utils.h"
 
+#include "StatusDisplay.h"
 #include "container_utils.h"
 #include "log_utils.h"
 #include "pixel_utils.h"
