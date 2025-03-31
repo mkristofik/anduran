@@ -37,6 +37,9 @@ public:
     SdlFont(FontType type, int ptsize);
 
     SdlSurface render(const std::string &text, const SDL_Color &color);
+    int line_skip_px() const;
+
+    TTF_Font * get() const;
 
 private:
     std::shared_ptr<TTF_Font> font_;

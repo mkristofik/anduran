@@ -264,8 +264,6 @@ class AnimStatus : public AnimBase
 public:
     AnimStatus(MapDisplay &display, StatusDisplay &statusBar, int msgNum);
 
-    static AnimStatus clear(MapDisplay &display, StatusDisplay &statusBar);
-
 private:
     void start() override;
     void update(Uint32) override {}

@@ -101,6 +101,7 @@ void Anduran::update_frame(Uint32 elapsed_ms)
             next_turn();
         }
         if (stateChanged_) {
+            statusView_.clear();
             update_minimap();
             update_champion_view();
             update_puzzles();
@@ -217,7 +218,7 @@ void Anduran::update_puzzle_view(Uint32 elapsed_ms)
 
 void Anduran::handle_lmouse_down()
 {
-    if (puzzleVisible_) {
+    if (puzzleVisible_ || statusView_.is_expanded()) {
         return;
     }
 
@@ -226,7 +227,7 @@ void Anduran::handle_lmouse_down()
 
 void Anduran::handle_lmouse_up()
 {
-    if (puzzleVisible_) {
+    if (puzzleVisible_ || statusView_.is_expanded()) {
         return;
     }
 
@@ -275,7 +276,7 @@ void Anduran::handle_lmouse_up()
 
 void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
 {
-    if (puzzleVisible_) {
+    if (puzzleVisible_ || statusView_.is_expanded()) {
         return;
     }
 
@@ -319,6 +320,9 @@ void Anduran::handle_key_up(const SDL_Keysym &key)
     }
     if (puzzleVisible_) {
         puzzleViews_[curPuzzleType_]->handle_key_up(key);
+        return;
+    }
+    if (statusView_.handle_key_up(key) || statusView_.is_expanded()) {
         return;
     }
 
@@ -800,7 +804,6 @@ bool Anduran::battle_action(int entity, int enemyId)
                                   rmapView_.getEntityImage(winner->entity)));
     endingAnim.insert(AnimHide(rmapView_, loser->entity));
     endingAnim.insert(AnimLog(rmapView_, battle_result_log(*winningArmy, result)));
-    endingAnim.insert(AnimStatus::clear(rmapView_, statusView_));
 
     // Restore the defender's ellipse here if they win.  The attacker might be
     // continuing to move to another hex so we skip showing it if they win.

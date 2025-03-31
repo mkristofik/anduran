@@ -37,11 +37,21 @@ SdlFont::SdlFont(FontType type, int ptsize)
 
 SdlSurface SdlFont::render(const std::string &text, const SDL_Color &color)
 {
-    SdlSurface surf = TTF_RenderUTF8_Blended(font_.get(), text.c_str(), color);
+    SdlSurface surf = TTF_RenderUTF8_Blended(get(), text.c_str(), color);
     if (!surf) {
         log_warn(std::format("couldn't render text: {}", TTF_GetError()),
                  LogCategory::video);
     }
 
     return surf;
+}
+
+int SdlFont::line_skip_px() const
+{
+    return TTF_FontLineSkip(get());
+}
+
+TTF_Font * SdlFont::get() const
+{
+    return font_.get();
 }

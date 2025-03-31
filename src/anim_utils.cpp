@@ -549,11 +549,6 @@ AnimStatus::AnimStatus(MapDisplay &display, StatusDisplay &statusBar, int msgNum
 {
 }
 
-AnimStatus AnimStatus::clear(MapDisplay &display, StatusDisplay &statusBar)
-{
-    return {display, statusBar, -1};
-}
-
 void AnimStatus::start()
 {
     if (msgNum_ >= 0) {

@@ -17,10 +17,15 @@
 #include "log_utils.h"
 #include "pixel_utils.h"
 
+#include <algorithm>
 #include <format>
 
 namespace
 {
+    const int TOP_MARGIN = 5;
+    const int LEFT_MARGIN = 10;
+    const int EXPANDED_MESSAGES = 10;
+
     void draw_background(SdlWindow &win, const SDL_Rect &area)
     {
         SdlWindowColor drawColor(win, COLOR_INDIGO);
@@ -54,6 +59,7 @@ namespace
 StatusDisplay::StatusDisplay(SdlWindow &win, const SDL_Rect &displayRect)
     : win_(&win),
     displayRect_(displayRect),
+    smallRect_(displayRect_),
     font_(FontType::sans_serif, 14),
     msgImages_(),
     curMsg_(-1)
@@ -88,15 +94,69 @@ void StatusDisplay::draw()
     draw_background(*win_, displayRect_);
     draw_border(*win_, displayRect_);
 
-    if (msgImages_.empty() || !in_bounds(msgImages_, curMsg_)) {
+    if (msgImages_.empty()) {
         return;
     }
 
-    // Center the message vertically inside the display area.
-    auto &img = msgImages_[curMsg_];
-    SDL_Point pos = {
-        displayRect_.x + 10,
-        displayRect_.y + (displayRect_.h - img.height()) / 2
-    };
-    img.draw(pos);
+    if (isExpanded_) {
+        int numToShow = messages_to_show();
+        int startIndex = ssize(msgImages_) - numToShow;
+        SDL_Point pos = {displayRect_.x + LEFT_MARGIN, displayRect_.y + TOP_MARGIN};
+        for (int i = startIndex; i < startIndex + numToShow; ++i) {
+            msgImages_[i].draw(pos);
+            pos.y += msgImages_[i].height() + font_.line_skip_px();
+        }
+    }
+    else {
+        if (!in_bounds(msgImages_, curMsg_)) {
+            return;
+        }
+
+        // Center the message vertically inside the display area.
+        auto &img = msgImages_[curMsg_];
+        SDL_Point pos = {
+            displayRect_.x + LEFT_MARGIN,
+            displayRect_.y + (displayRect_.h - img.height()) / 2
+        };
+        img.draw(pos);
+    }
+}
+
+bool StatusDisplay::is_expanded() const
+{
+    return isExpanded_;
+}
+
+bool StatusDisplay::handle_key_up(const SDL_Keysym &key)
+{
+    if (key.sym != '/') {
+        return false;
+    }
+
+    if (isExpanded_) {
+        displayRect_ = smallRect_;
+        isExpanded_ = false;
+        return true;
+    }
+    else if (!msgImages_.empty()) {
+        int numToShow = messages_to_show();
+        auto totalHeight = numToShow * msgImages_[0].height() +
+            (numToShow - 1) * font_.line_skip_px() + TOP_MARGIN * 2;
+
+        auto dh = totalHeight - displayRect_.h;
+        displayRect_.y -= dh;
+        displayRect_.h += dh;
+        isExpanded_ = true;
+        return true;
+    }
+    // TODO: status bar consumes key events if expanded (just like puzzle)
+    // - up/down arrows scroll.
+    // - esc/enter exits?  same keys as puzzle popup
+
+    return false;
+}
+
+int StatusDisplay::messages_to_show() const
+{
+    return std::min<int>(ssize(msgImages_), EXPANDED_MESSAGES);
 }
