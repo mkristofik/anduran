@@ -22,6 +22,14 @@
 
 class SdlWindow;
 
+struct ScrollbarLines
+{
+    int total = 0;
+    int first = 0;
+    int numVisible = 0;
+};
+
+
 class StatusDisplay
 {
 public:
@@ -40,15 +48,13 @@ public:
     bool handle_key_up(const SDL_Keysym &key);
 
 private:
-    int messages_to_show() const;
-
     SdlWindow *win_;
     SDL_Rect displayRect_;
     SDL_Rect smallRect_;  // default size, when not expanded
     SdlFont font_;
     std::vector<SdlTexture> msgImages_;
     int curMsg_;
-    bool isExpanded_;
+    ScrollbarLines expandedLines_;
 };
 
 #endif

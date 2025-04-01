@@ -101,6 +101,8 @@ void Anduran::update_frame(Uint32 elapsed_ms)
             next_turn();
         }
         if (stateChanged_) {
+            // TODO: messages for picking up resources, before/after battle, new
+            // day, etc.  Probably don't want to clear those right away.
             statusView_.clear();
             update_minimap();
             update_champion_view();
@@ -115,14 +117,6 @@ void Anduran::update_frame(Uint32 elapsed_ms)
     championView_.draw();
     statusView_.draw();
 
-    // TODO: status bar at the bottom of the screen
-    // always visible, clicking on it expands to show a history
-    // while expanded, it takes over like when puzzleVisible_ is true
-    // keep a running log of messages
-    // going to need an AnimStatus to add messages in time with a battle
-    // this means the normal status bar is always updating, like the championView_
-    // - can't click to expand unless anims are finished
-    // - unless we want that to somehow pause an in-flight animation
     if (anims_.empty() && puzzleVisible_) {
         update_puzzle_view(elapsed_ms);
     }
