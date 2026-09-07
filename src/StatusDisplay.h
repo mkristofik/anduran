@@ -53,8 +53,7 @@ private:
     SDL_Rect smallRect_;  // default size, when not expanded
     SdlFont font_;
     std::vector<SdlTexture> msgImages_;
-    int curMsg_;
-    ScrollbarLines expandedLines_;
+    ScrollbarLines lines_;
 };
 
 #endif

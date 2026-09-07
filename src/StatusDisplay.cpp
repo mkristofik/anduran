@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2025 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2025-2026 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -83,6 +83,13 @@ namespace
                      LogCategory::video);
         }
     }
+
+    // Standard line skip is for wrapped text in the same paragraph.  We want each
+    // line to be more separated.
+    int get_line_skip_px(const SdlFont &font)
+    {
+        return 1.5 * font.line_skip_px();
+    }
 }
 
 
@@ -92,8 +99,7 @@ StatusDisplay::StatusDisplay(SdlWindow &win, const SDL_Rect &displayRect)
     smallRect_(displayRect_),
     font_(FontType::sans_serif, 14),
     msgImages_(),
-    curMsg_(-1),
-    expandedLines_()
+    lines_()
 {
 }
 
@@ -106,19 +112,20 @@ void StatusDisplay::update(const std::vector<std::string> &messages)
     for (int i = ssize(msgImages_); i < ssize(messages); ++i) {
         auto surf = font_.render(messages[i], COLOR_LIGHT_GREY);
         msgImages_.push_back(SdlTexture::make_image(surf, *win_));
-        ++expandedLines_.total;
+        ++lines_.total;
     }
 }
 
 void StatusDisplay::show_message(int num)
 {
     SDL_assert(in_bounds(msgImages_, num));
-    curMsg_ = num;
+    lines_.first = num;
+    lines_.numVisible = 1;
 }
 
 void StatusDisplay::clear()
 {
-    curMsg_ = -1;
+    lines_.numVisible = 0;
 }
 
 void StatusDisplay::draw()
@@ -131,26 +138,26 @@ void StatusDisplay::draw()
     }
 
     if (is_expanded()) {
-        draw_scrollbar(*win_, displayRect_, expandedLines_);
+        draw_scrollbar(*win_, displayRect_, lines_);
 
-        int lastIndex = expandedLines_.first + expandedLines_.numVisible;
+        int lastIndex = lines_.first + lines_.numVisible;
         SDL_Point pos = {
             displayRect_.x + BORDER + SCROLLBAR_WIDTH + LEFT_MARGIN,
             displayRect_.y + BORDER + TOP_MARGIN
         };
 
-        for (int i = expandedLines_.first; i < lastIndex; ++i) {
+        for (int i = lines_.first; i < lastIndex; ++i) {
             msgImages_[i].draw(pos);
-            pos.y += msgImages_[i].height() + font_.line_skip_px();
+            pos.y += get_line_skip_px(font_);
         }
     }
     else {
-        if (!in_bounds(msgImages_, curMsg_)) {
+        if (lines_.numVisible < 1 || !in_bounds(msgImages_, lines_.first)) {
             return;
         }
 
         // Center the message vertically inside the display area.
-        auto &img = msgImages_[curMsg_];
+        auto &img = msgImages_[lines_.first];
         SDL_Point pos = {
             displayRect_.x + LEFT_MARGIN,
             displayRect_.y + (displayRect_.h - img.height()) / 2
@@ -161,7 +168,7 @@ void StatusDisplay::draw()
 
 bool StatusDisplay::is_expanded() const
 {
-    return expandedLines_.numVisible > 1;
+    return lines_.numVisible > 1;
 }
 
 bool StatusDisplay::handle_key_up(const SDL_Keysym &key)
@@ -169,25 +176,25 @@ bool StatusDisplay::handle_key_up(const SDL_Keysym &key)
     if (is_expanded()) {
         if (key.sym == '/' || key.sym == SDLK_ESCAPE) {
             displayRect_ = smallRect_;
-            expandedLines_.numVisible = 1;
+            lines_.numVisible = 1;
             return true;
         }
         else if (key.sym == SDLK_UP) {
-            expandedLines_.first = std::max(expandedLines_.first - 1, 0);
+            lines_.first = std::max(lines_.first - 1, 0);
             return true;
         }
         else if (key.sym == SDLK_DOWN) {
-            expandedLines_.first = std::min(expandedLines_.first + 1,
-                expandedLines_.total - expandedLines_.numVisible);
+            lines_.first = std::min(lines_.first + 1,
+                lines_.total - lines_.numVisible);
             return true;
         }
     }
     else if (!msgImages_.empty() && key.sym == '/') {
-        expandedLines_.numVisible = std::min<int>(expandedLines_.total, EXPANDED_MESSAGES);
-        expandedLines_.first = expandedLines_.total - expandedLines_.numVisible;
+        lines_.numVisible = std::min<int>(lines_.total, EXPANDED_MESSAGES);
+        lines_.first = lines_.total - lines_.numVisible;
 
-        auto totalHeight = expandedLines_.numVisible * msgImages_[0].height() +
-            (expandedLines_.numVisible - 1) * font_.line_skip_px() +
+        auto totalHeight = msgImages_[0].height() +
+            (lines_.numVisible - 1) * get_line_skip_px(font_) +
             TOP_MARGIN * 2 +
             BORDER * 2;
 

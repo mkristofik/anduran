@@ -109,15 +109,16 @@
     * TTF_Init/TTF_Quit, TTF_OpenFont/TTF_CloseFont
     * don't use TTF_SetFontSize, open another handle to the same font
         * switching sizes clears internal glyph cache
-    - TTF_RenderUTF8_Blended(_Wrapped), TTF_FontLineSkip, TTF_Error
+    * TTF_RenderUTF8_Blended(_Wrapped), TTF_FontLineSkip, TTF_Error
         - note this requires SDL_ttf >= 2.0.18
     * first project: replace the titles on the puzzle map
 - status bar at the bottom
-    - AnimLog draws here instead of writing to the console
-    - clicking on it expands to show the last ~10 messages
-    - supports arrow keys and scroll wheel (draw something to indicate scrolling)
-        - not trying to invent a GUI scrollbar
-        - number each log message?
+    * AnimLog draws here instead of writing to the console
+    * clicking on it expands to show the last ~10 messages
+    * supports arrow keys and scroll wheel (draw something to indicate scrolling)
+    - line numbers?
+    - end of battle summary of losses
+    - report start of turns, new days
 - Message boxes
     - Some AnimLog messages actually want to be message boxes
     - update_puzzle_view() is the model for how to handle popups

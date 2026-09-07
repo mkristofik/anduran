@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2025 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2025-2026 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -48,6 +48,10 @@ SdlSurface SdlFont::render(const std::string &text, const SDL_Color &color)
 
 int SdlFont::line_skip_px() const
 {
+    // TODO: the MS Word default is 1.15x the line skip between lines, with a
+    // blank line between each paragraph.  Use TTF_SetFontLineSkip if we ever
+    // want to change this so that it will take effect for rendered multi-line
+    // text.
     return TTF_FontLineSkip(get());
 }
 
