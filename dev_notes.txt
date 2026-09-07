@@ -117,10 +117,10 @@
     * clicking on it expands to show the last ~10 messages
     * supports arrow keys and scroll wheel (draw something to indicate scrolling)
     - line numbers?
-    - end of battle summary of losses
-    - report start of turns, new days
+    * end of battle summary of losses
+    * report start of turns, new days
 - Message boxes
-    - Some AnimLog messages actually want to be message boxes
+    - All remaining AnimLog messages actually want to be message boxes
     - update_puzzle_view() is the model for how to handle popups
 - right-click on object shows a message box
     - if multiple objects in hex, pick the first one the Object Manager has data for

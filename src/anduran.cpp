@@ -90,9 +90,9 @@ Anduran::Anduran()
 void Anduran::update_frame(Uint32 elapsed_ms)
 {
     win_.clear();
+    statusView_.update(messages_);
     anims_.run(elapsed_ms);
     championView_.animate(elapsed_ms);
-    statusView_.update(messages_);
 
     // Wait until animations have finished running before updating things.
     if (anims_.empty()) {
@@ -841,8 +841,8 @@ void Anduran::battle_plunder(GameObject &winner, GameObject &loser)
     winnerPuzzle.merge(loserIter->second.puzzlePieces);
     int numPieces = ssize(winnerPuzzle) - sizeBefore;
     if (numPieces > 0) {
-        auto msg = std::format("{} puzzle pieces plundered", numPieces);
-        anims_.push(AnimLog(rmapView_, msg));
+        // i18n
+        anims_.push(log_message(std::format("{} puzzle pieces plundered", numPieces)));
     }
 }
 
@@ -1391,7 +1391,9 @@ void Anduran::next_turn()
     curPuzzleType_ = PuzzleType::helmet;
 
     // i18n
-    log_info(std::format("It's the {} player's turn.", str_from_Team(nextPlayer.team)));
+    auto nextTurnMsg = std::format("It's the {} player's turn.",
+                                   str_from_Team(nextPlayer.team));
+    anims_.push(log_message(nextTurnMsg));
     stateChanged_ = true;
 }
 
