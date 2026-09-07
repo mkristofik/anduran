@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2025 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2026 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -37,6 +37,7 @@ namespace
 Anduran::Anduran()
     : SdlApp(),
     config_("data/window.json"s),
+    // i18n
     win_(config_.width(), config_.height(), "Champions of Anduran"),
     objConfig_("data/objects.json"s),
     rmap_("test.json", objConfig_),
@@ -69,7 +70,9 @@ Anduran::Anduran()
     puzzleVisible_(false),
     curPuzzleType_(PuzzleType::helmet),
     puzzleViews_(),
-    puzzleXsIds_()
+    puzzleXsIds_(),
+    messages_(),
+    statusView_(win_, config_.status_bounds())
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
@@ -87,6 +90,7 @@ Anduran::Anduran()
 void Anduran::update_frame(Uint32 elapsed_ms)
 {
     win_.clear();
+    statusView_.update(messages_);
     anims_.run(elapsed_ms);
     championView_.animate(elapsed_ms);
 
@@ -97,6 +101,8 @@ void Anduran::update_frame(Uint32 elapsed_ms)
             next_turn();
         }
         if (stateChanged_) {
+            // TODO: messages for picking up resources, before/after battle, new
+            // day, etc.
             update_minimap();
             update_champion_view();
             update_puzzles();
@@ -108,6 +114,7 @@ void Anduran::update_frame(Uint32 elapsed_ms)
     rmapView_.draw();
     minimap_.draw();
     championView_.draw();
+    statusView_.draw();
 
     if (anims_.empty() && puzzleVisible_) {
         update_puzzle_view(elapsed_ms);
@@ -204,7 +211,7 @@ void Anduran::update_puzzle_view(Uint32 elapsed_ms)
 
 void Anduran::handle_lmouse_down()
 {
-    if (puzzleVisible_) {
+    if (puzzleVisible_ || statusView_.is_expanded()) {
         return;
     }
 
@@ -213,7 +220,7 @@ void Anduran::handle_lmouse_down()
 
 void Anduran::handle_lmouse_up()
 {
-    if (puzzleVisible_) {
+    if (puzzleVisible_ || statusView_.is_expanded()) {
         return;
     }
 
@@ -262,7 +269,7 @@ void Anduran::handle_lmouse_up()
 
 void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
 {
-    if (puzzleVisible_) {
+    if (puzzleVisible_ || statusView_.is_expanded()) {
         return;
     }
 
@@ -306,6 +313,9 @@ void Anduran::handle_key_up(const SDL_Keysym &key)
     }
     if (puzzleVisible_) {
         puzzleViews_[curPuzzleType_]->handle_key_up(key);
+        return;
+    }
+    if (statusView_.handle_key_up(key) || statusView_.is_expanded()) {
         return;
     }
 
@@ -747,7 +757,7 @@ bool Anduran::battle_action(int entity, int enemyId)
     auto enemyObj = game_.get_object(enemyId);
     auto defender = game_.get_army(enemyId);
 
-    log_info(army_log(attacker) + "\n    vs.\n" + army_log(defender));
+    log_info(army_debug_log(attacker) + "\n    vs.\n" + army_debug_log(defender));
     show_boat_floor(thisObj.hex, enemyObj.hex);
     if (enemyObj.secondary >= 0) {
         anims_.push(AnimHide(rmapView_, enemyObj.secondary));
@@ -758,7 +768,7 @@ bool Anduran::battle_action(int entity, int enemyId)
     for (const auto &event : result.log) {
         if (event.action == BattleAction::next_round) {
             // i18n
-            anims_.push(AnimLog(rmapView_, "Next round begins"));
+            anims_.push(log_message("Next round begins"));
             continue;
         }
 
@@ -785,7 +795,7 @@ bool Anduran::battle_action(int entity, int enemyId)
                                   winner->entity,
                                   rmapView_.getEntityImage(winner->entity)));
     endingAnim.insert(AnimHide(rmapView_, loser->entity));
-    endingAnim.insert(AnimLog(rmapView_, battle_result_log(*winningArmy, result)));
+    endingAnim.insert(log_battle_result(*winningArmy, result));
 
     // Restore the defender's ellipse here if they win.  The attacker might be
     // continuing to move to another hex so we skip showing it if they win.
@@ -831,8 +841,8 @@ void Anduran::battle_plunder(GameObject &winner, GameObject &loser)
     winnerPuzzle.merge(loserIter->second.puzzlePieces);
     int numPieces = ssize(winnerPuzzle) - sizeBefore;
     if (numPieces > 0) {
-        auto msg = std::format("{} puzzle pieces plundered", numPieces);
-        anims_.push(AnimLog(rmapView_, msg));
+        // i18n
+        anims_.push(log_message(std::format("{} puzzle pieces plundered", numPieces)));
     }
 }
 
@@ -889,6 +899,7 @@ void Anduran::local_action(int entity)
 
 void Anduran::dig_action(int entity)
 {
+    // i18n
     static const EnumSizedArray<std::string, PuzzleType> artifacts = {
         "Helmet of Anduran"s,
         "Breastplate of Anduran"s,
@@ -901,6 +912,8 @@ void Anduran::dig_action(int entity)
 
     if (champion.movesLeft < champion.moves) {
         // i18n
+        // TODO: this wants to be a message box that appears after the movement
+        // animation has finished.
         anims_.push(AnimLog(rmapView_, "Digging requires a full day's movement."));
         return;
     }
@@ -1036,7 +1049,7 @@ void Anduran::visit_oasis(const GameObject &visitor)
     }
 }
 
-std::string Anduran::army_log(const Army &army) const
+std::string Anduran::army_debug_log(const Army &army) const
 {
     std::ostringstream ostr;
     for (auto &unit : army.units) {
@@ -1050,8 +1063,16 @@ std::string Anduran::army_log(const Army &army) const
     return ostr.str();
 }
 
-std::string Anduran::battle_result_log(const Army &before,
-                                       const BattleResult &result) const
+AnimStatus Anduran::log_message(const std::string &msg)
+{
+    // TODO: not sure I like this, we're modifying internal state and returning a
+    // new value in the same function.
+    messages_.push_back(msg);
+    return AnimStatus(rmapView_, statusView_, ssize(messages_) - 1);
+}
+
+AnimStatus Anduran::log_battle_result(const Army &before,
+                                       const BattleResult &result)
 {
     std::ostringstream ostr;
 
@@ -1079,10 +1100,10 @@ std::string Anduran::battle_result_log(const Army &before,
         }
     }
 
-    return ostr.str();
+    return log_message(ostr.str());
 }
 
-std::string Anduran::battle_event_log(const BattleEvent &event) const
+AnimStatus Anduran::log_battle_event(const BattleEvent &event)
 {
     auto &attacker = units_.get_data(event.attackerType);
     auto &defender = units_.get_data(event.defenderType);
@@ -1112,7 +1133,7 @@ std::string Anduran::battle_event_log(const BattleEvent &event) const
         ostr << ", 1 perishes";
     }
 
-    return ostr.str();
+    return log_message(ostr.str());
 }
 
 ArmyState Anduran::make_army_state(const Army &army, BattleSide side) const
@@ -1141,7 +1162,7 @@ void Anduran::animate(const GameObject &attacker,
     auto attType = units_.get_data(attUnitType).attack;
 
     AnimSet animSet;
-    animSet.insert(AnimLog(rmapView_, battle_event_log(event)));
+    animSet.insert(log_battle_event(event));
     animSet.insert(AnimHealth(rmapView_,
                               hpBarIds_[0],
                               hpBarIds_[1],
@@ -1370,7 +1391,9 @@ void Anduran::next_turn()
     curPuzzleType_ = PuzzleType::helmet;
 
     // i18n
-    log_info(std::format("It's the {} player's turn.", str_from_Team(nextPlayer.team)));
+    auto nextTurnMsg = std::format("It's the {} player's turn.",
+                                   str_from_Team(nextPlayer.team));
+    anims_.push(log_message(nextTurnMsg));
     stateChanged_ = true;
 }
 

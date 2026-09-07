@@ -109,17 +109,25 @@
     * TTF_Init/TTF_Quit, TTF_OpenFont/TTF_CloseFont
     * don't use TTF_SetFontSize, open another handle to the same font
         * switching sizes clears internal glyph cache
-    - TTF_RenderUTF8_Blended(_Wrapped), TTF_FontLineSkip, TTF_Error
+    * TTF_RenderUTF8_Blended(_Wrapped), TTF_FontLineSkip, TTF_Error
         - note this requires SDL_ttf >= 2.0.18
     * first project: replace the titles on the puzzle map
 - status bar at the bottom
-    - AnimLog draws here instead of writing to the console
-    - clicking on it expands to show the last ~10 messages
-    - supports arrow keys and scroll wheel (draw something to indicate scrolling)
-        - not trying to invent a GUI scrollbar
-        - number each log message?
+    * AnimLog draws here instead of writing to the console
+    * clicking on it expands to show the last ~10 messages
+    * supports arrow keys and scroll wheel (draw something to indicate scrolling)
+    - line numbers?
+    * end of battle summary of losses
+    * report start of turns, new days
 - Message boxes
-    - Some AnimLog messages actually want to be message boxes
+    - All remaining AnimLog messages actually want to be message boxes
+    - update_puzzle_view() is the model for how to handle popups
+- right-click on object shows a message box
+    - if multiple objects in hex, pick the first one the Object Manager has data for
+    - show the object's name
+    - if can be visited, show (visited)
+    - if can be flagged, show owner's flag if there is one
+    - must be big enough by default to have room for these extras
 
 
 # Minimap
@@ -247,6 +255,8 @@ destination hex
 * unified logging interface that supports both SDL logging and std::cerr
 - log failures to start the app to a file
     - SDL takes over the console, can't log errors that happen before SDL starts
+    - these are only errors that happen prior to the SdlApp constructor
+    - SDL_LogSetOutputFunction
 
 
 # Improving edge transitions
@@ -602,8 +612,9 @@ a lambda
     - MultiIndex container
     - Boost.Test
     - noncopyable
-- rapidjson appears to be abandoned, try out nlohmann
+- rapidjson appears to be abandoned, try out Boost.Json
     - or switch to YAML because it allows for comments
 - try SDL_GetTicks64 again now that we're pointing at correct dll version
     - if it works, note that it requires SDL 2.0.18 or greater
 - start a readme with min versions needed for SDL_, IMG_, and TTF_ functions used
+    - grep -oh "SDL_[^ (]*(" *.cpp

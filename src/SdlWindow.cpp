@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2025 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -108,4 +108,18 @@ SdlWindowClip::~SdlWindowClip()
     else {
         SDL_RenderSetClipRect(renderer_, nullptr);
     }
+}
+
+
+SdlWindowColor::SdlWindowColor(const SdlWindow &win, const SDL_Color &color)
+    : renderer_(win.renderer()),
+    orig_()
+{
+    SDL_GetRenderDrawColor(renderer_, &orig_.r, &orig_.g, &orig_.b, &orig_.a);
+    SDL_SetRenderDrawColor(renderer_, color.r, color.g, color.b, color.a);
+}
+
+SdlWindowColor::~SdlWindowColor()
+{
+    SDL_SetRenderDrawColor(renderer_, orig_.r, orig_.g, orig_.b, orig_.a);
 }

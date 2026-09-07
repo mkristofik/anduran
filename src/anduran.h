@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2022-2025 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2022-2026 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -28,6 +28,7 @@
 #include "SdlImageManager.h"
 #include "SdlTexture.h"
 #include "SdlWindow.h"
+#include "StatusDisplay.h"
 #include "UnitManager.h"
 #include "WindowConfig.h"
 #include "battle_utils.h"
@@ -103,9 +104,10 @@ private:
     void visit_obelisk(const GameObject &visitor);
     void visit_oasis(const GameObject &visitor);
 
-    std::string army_log(const Army &army) const;
-    std::string battle_result_log(const Army &before, const BattleResult &result) const;
-    std::string battle_event_log(const BattleEvent &event) const;
+    std::string army_debug_log(const Army &army) const;
+    AnimStatus log_message(const std::string &msg);
+    AnimStatus log_battle_result(const Army &before, const BattleResult &result);
+    AnimStatus log_battle_event(const BattleEvent &event);
     ArmyState make_army_state(const Army &army, BattleSide side) const;
     void animate(const GameObject &attacker,
                  const GameObject &defender,
@@ -166,6 +168,8 @@ private:
     PuzzleType curPuzzleType_;
     EnumSizedArray<std::optional<PuzzleDisplay>, PuzzleType> puzzleViews_;
     EnumSizedArray<int, PuzzleType> puzzleXsIds_;
+    std::vector<std::string> messages_;
+    StatusDisplay statusView_;
 };
 
 #endif

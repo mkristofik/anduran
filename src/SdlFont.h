@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2025 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2025-2026 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -37,6 +37,11 @@ public:
     SdlFont(FontType type, int ptsize);
 
     SdlSurface render(const std::string &text, const SDL_Color &color);
+
+    // Distance between top pixel of consecutive lines in the same paragraph.
+    int line_skip_px() const;
+
+    TTF_Font * get() const;
 
 private:
     std::shared_ptr<TTF_Font> font_;

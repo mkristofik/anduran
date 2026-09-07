@@ -27,6 +27,8 @@
 #include <utility>
 #include <vector>
 
+class StatusDisplay;
+
 class AnimBase
 {
 public:
@@ -253,6 +255,22 @@ private:
     void update(Uint32) override {}
 
     std::string msg_;
+};
+
+
+// Show a message in the status bar.  We want the message to appear in time with
+// other animations, such as during a battle.
+class AnimStatus : public AnimBase
+{
+public:
+    AnimStatus(MapDisplay &display, StatusDisplay &statusBar, int msgNum);
+
+private:
+    void start() override;
+    void update(Uint32) override {}
+
+    StatusDisplay *status_;
+    int msgNum_;
 };
 
 

@@ -95,6 +95,7 @@ ANDURAN_SRC = AnimQueue.cpp \
 	SdlTexture.cpp \
 	SdlTimer.cpp \
 	SdlWindow.cpp \
+	StatusDisplay.cpp \
 	UnitData.cpp \
 	UnitManager.cpp \
 	WindowConfig.cpp \

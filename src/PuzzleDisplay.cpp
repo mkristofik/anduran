@@ -25,6 +25,7 @@
 
 #include "boost/container/flat_set.hpp"
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <format>
 #include <ranges>
@@ -54,6 +55,38 @@ namespace
                 target.y - PuzzleDisplay::hexHeight / 2,
                 PuzzleDisplay::hexWidth,
                 PuzzleDisplay::hexHeight};
+    }
+
+    void draw_popup_background(SdlWindow &win,
+                               const SDL_Rect &area,
+                               const SDL_Color &color)
+    {
+        SdlWindowColor drawColor(win, color);
+
+        if (SDL_RenderFillRect(win.renderer(), &area) < 0) {
+            log_warn(std::format("couldn't draw puzzle background: {}", SDL_GetError()),
+                     LogCategory::video);
+        }
+    }
+
+    void draw_popup_border(SdlWindow &win,
+                           const SDL_Rect &area,
+                           int width,
+                           const SDL_Color &color)
+    {
+        SdlWindowColor drawColor(win, color);
+
+        std::array<SDL_Rect, 4> edges = {
+            SDL_Rect{area.x, area.y, area.w, width},  // top
+            SDL_Rect{area.x, area.y + area.h - width, area.w, width},  // bottom
+            SDL_Rect{area.x, area.y, width, area.h},  // left
+            SDL_Rect{area.x + area.w - width, area.y, width, area.h}  // right
+        };
+
+        if (SDL_RenderFillRects(win.renderer(), edges.data(), edges.size()) < 0) {
+            log_warn(std::format("couldn't draw puzzle border: {}", SDL_GetError()),
+                     LogCategory::video);
+        }
     }
 
     // Get the portion of the source image denoted by 'frame'.
@@ -105,9 +138,12 @@ PuzzleImages::PuzzleImages(const SdlImageManager &imgMgr)
     }
 
     SdlFont titleFont(FontType::script, 48);
+    // i18n
     labels[PuzzleType::helmet] = titleFont.render("Helmet of Anduran"s, COLOR_LIGHT_GREY);
+    // i18n
     labels[PuzzleType::breastplate] = titleFont.render("Breastplate of Anduran"s,
                                                        COLOR_LIGHT_GREY);
+    // i18n
     labels[PuzzleType::sword] = titleFont.render("Sword of Anduran"s, COLOR_LIGHT_GREY);
 }
 
@@ -174,17 +210,12 @@ void PuzzleDisplay::update(const PuzzleState &state)
 
 void PuzzleDisplay::draw(Uint32 elapsed_ms)
 {
+    draw_popup_background(*win_, popupArea_, COLOR_INDIGO);
+    draw_popup_border(*win_, popupArea_, 2, COLOR_BROWN);
+
     if (fade_.running) {
         do_fade_in(elapsed_ms);
     }
-
-    // Draw the background and border of the popup window.
-    auto *renderer = win_->renderer();
-    SDL_SetRenderDrawColor(renderer, 15, 20, 35, SDL_ALPHA_OPAQUE);
-    SDL_RenderFillRect(renderer, &popupArea_);
-    SDL_SetRenderDrawColor(renderer, 60, 50, 40, SDL_ALPHA_OPAQUE);
-    SDL_RenderDrawRect(renderer, &popupArea_);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
 
     // Center the puzzle map inside the popup window, leaving enough room for the
     // title.

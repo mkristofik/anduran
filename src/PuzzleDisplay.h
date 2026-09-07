@@ -57,6 +57,13 @@ struct PuzzleTile
 };
 
 
+// TODO: do we want a Popup base class?
+// - common elements: window, display area, draw background/border
+// - return a status code
+//     - if still running, just call draw()
+//     - if not, what to do depends on the popup and status returned
+// - be able to change display size
+// - each popup's handling of keyboard/mouse events is likely different
 class PuzzleDisplay
 {
 public:

@@ -12,6 +12,7 @@
 */
 #include "anim_utils.h"
 
+#include "StatusDisplay.h"
 #include "container_utils.h"
 #include "log_utils.h"
 #include "pixel_utils.h"
@@ -539,6 +540,24 @@ AnimLog::AnimLog(MapDisplay &display, std::string_view message)
 void AnimLog::start()
 {
     log_info(msg_);
+}
+
+
+AnimStatus::AnimStatus(MapDisplay &display, StatusDisplay &statusBar, int msgNum)
+    : AnimBase(display, 0),
+    status_(&statusBar),
+    msgNum_(msgNum)
+{
+}
+
+void AnimStatus::start()
+{
+    if (msgNum_ >= 0) {
+        status_->show_message(msgNum_);
+    }
+    else {
+        status_->clear();
+    }
 }
 
 

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2025 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -17,7 +17,9 @@
 
 // Color names based on what MS Paint calls them.
 constexpr SDL_Color COLOR_BLACK = {0, 0, 0, SDL_ALPHA_OPAQUE};
+constexpr SDL_Color COLOR_INDIGO = {15, 20, 35, SDL_ALPHA_OPAQUE};
 constexpr SDL_Color COLOR_DARK_GREEN = {35, 225, 0, SDL_ALPHA_OPAQUE};
+constexpr SDL_Color COLOR_BROWN = {60, 50, 40, SDL_ALPHA_OPAQUE};
 constexpr SDL_Color COLOR_LIME_GREEN = {170, 255, 0, SDL_ALPHA_OPAQUE};
 constexpr SDL_Color COLOR_LIGHT_GREY = {215, 215, 215, SDL_ALPHA_OPAQUE};
 constexpr SDL_Color COLOR_ORANGE = {255, 155, 0, SDL_ALPHA_OPAQUE};
