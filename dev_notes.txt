@@ -600,10 +600,10 @@ in the header
     * could eliminate the xtype wrapper functions each type has to provide
     * require iterable enum for this?  extension of it?
 - C++23
-    - std::to_underlying
+    * std::to_underlying
     - replace boost flat_ containers with std ones
-    - static data inside constexpr functions for iterable_enum_class
-    - may not need contains() from container_utils anymore
+    * static data inside constexpr functions for iterable_enum_class
+    * may not need contains() from container_utils anymore
     - can std::views::values replace ValueIterator in FlatMultimap?
 * try out the Proj argument to ranges algorithms instead of writing an operator< or
 a lambda
@@ -611,6 +611,7 @@ a lambda
     - flat_map and flat_set
     - MultiIndex container
     - Boost.Test
+    - Boost.Preprocessor
     - noncopyable
 - rapidjson appears to be abandoned, try out Boost.Json
     - or switch to YAML because it allows for comments

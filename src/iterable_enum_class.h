@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2026 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anudran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -56,6 +56,7 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <utility>
 
 #define DATA_name(T) T ## _secretData
 
@@ -68,7 +69,7 @@
 // Create an array to hold the string representation of each enumerator.  We have
 // to create a tuple so all the enumerators appear as a single argument.
 #define MAKE_secret_array(T, ...) \
-    constexpr std::array<std::string, BOOST_PP_VARIADIC_SIZE(__VA_ARGS__)> \
+    static constexpr std::array<std::string, BOOST_PP_VARIADIC_SIZE(__VA_ARGS__)> \
     DATA_name(T) = { \
         BOOST_PP_REPEAT( \
             BOOST_PP_VARIADIC_SIZE(__VA_ARGS__), \
@@ -82,16 +83,15 @@
     enum class T {__VA_ARGS__, _last, _first = 0}; \
     constexpr T & operator++(T &t) \
     { \
-        using U = std::underlying_type_t<T>; \
-        return t = static_cast<T>(U(t) + 1); \
+        return t = static_cast<T>(std::to_underlying(t) + 1); \
     } \
     constexpr T operator*(T t) { return t; } \
     constexpr T begin(T) { return T::_first; } \
     constexpr T end(T) { return T::_last; } \
     template <> struct IsIterableEnumClass<T> : std::true_type {}; \
-    MAKE_secret_array(T, __VA_ARGS__); \
     constexpr std::optional<T> T ## _from_str (std::string_view sv) \
     { \
+        MAKE_secret_array(T, __VA_ARGS__); \
         auto iter = std::ranges::find(DATA_name(T), sv); \
         if (iter == end(DATA_name(T))) { \
             return {}; \
@@ -101,8 +101,8 @@
     } \
     constexpr std::string_view str_from_ ## T (T t) \
     { \
-        using U = std::underlying_type_t<T>; \
-        return DATA_name(T)[U(t)]; \
+        MAKE_secret_array(T, __VA_ARGS__); \
+        return DATA_name(T)[std::to_underlying(t)]; \
     }
 
 
@@ -121,8 +121,7 @@ concept IterableEnum = IsIterableEnumClass<T>::value;
 template <IterableEnum T>
 constexpr int enum_size()
 {
-    using U = typename std::underlying_type_t<T>;
-    return U(T::_last) - U(T::_first);
+    return std::to_underlying(T::_last) - std::to_underlying(T::_first);
 }
 
 // Circular increment and decrement within the enum values.
@@ -140,11 +139,9 @@ constexpr T & enum_incr(T &t)
 template <IterableEnum T>
 constexpr T & enum_decr(T &t)
 {
-    using U = std::underlying_type_t<T>;
-
-    auto value = static_cast<U>(t);
+    auto value = std::to_underlying(t);
     if (t == T::_first) {
-        value = U(T::_last) - 1;
+        value = std::to_underlying(T::_last) - 1;
     }
     else {
         --value;

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2023 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2026 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -134,7 +134,7 @@ Neighbors<int> Pathfinder::get_neighbors(int index) const
             // Skip neighbors of the hex we came from.  It would have been faster
             // to go directly there than via the current hex.
             auto prevNbrs = rmap_->hexFromInt(iPrev).getAllNeighbors();
-            if (contains(prevNbrs, hNbrs[i])) {
+            if (std::ranges::contains(prevNbrs, hNbrs[i])) {
                 iNbrs[i] = RandomMap::invalidIndex;
                 continue;
             }

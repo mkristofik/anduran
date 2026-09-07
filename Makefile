@@ -1,4 +1,4 @@
-#    Copyright (C) 2016-2025 by Michael Kristofik <kristo605@gmail.com>
+#    Copyright (C) 2016-2026 by Michael Kristofik <kristo605@gmail.com>
 #    Part of the Champions of Anduran project.
 # 
 #    This program is free software; you can redistribute it and/or modify
@@ -21,8 +21,7 @@ endif
 
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror -O3
-# TODO: newer gcc than 13.2 needed for C++23 support
-CXXFLAGS = -g -Wall -Wextra -Werror -std=c++20 -fconcepts-diagnostics-depth=3
+CXXFLAGS = -g -Wall -Wextra -Werror -std=c++23 -fconcepts-diagnostics-depth=3
 
 BUILD_DIR = build
 SRC_DIR = src

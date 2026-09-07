@@ -1,4 +1,4 @@
-#    Copyright (C) 2016-2025 by Michael Kristofik <kristo605@gmail.com>
+#    Copyright (C) 2016-2026 by Michael Kristofik <kristo605@gmail.com>
 #    Part of the Champions of Anduran project.
 # 
 #    This program is free software; you can redistribute it and/or modify
@@ -18,12 +18,12 @@ MINGW_DIR = c:/mingw
 
 CPPFLAGS = -I$(LIB_ROOT) \
 	-I$(MINGW_DIR)/include \
-	-I$(LIB_ROOT)/SDL2-2.28.3/x86_64-w64-mingw32/include/SDL2 \
-	-I$(LIB_ROOT)/SDL2_image-2.6.3/x86_64-w64-mingw32/include/SDL2 \
+	-I$(LIB_ROOT)/SDL2-2.32.8/x86_64-w64-mingw32/include/SDL2 \
+	-I$(LIB_ROOT)/SDL2_image-2.8.12/x86_64-w64-mingw32/include/SDL2 \
 	-I$(LIB_ROOT)/SDL2_ttf-2.24.0/x86_64-w64-mingw32/include/SDL2
 
-LDFLAGS = -L$(LIB_ROOT)/SDL2-2.28.3/x86_64-w64-mingw32/lib \
-	-L$(LIB_ROOT)/SDL2_image-2.6.3/x86_64-w64-mingw32/lib \
+LDFLAGS = -L$(LIB_ROOT)/SDL2-2.32.8/x86_64-w64-mingw32/lib \
+	-L$(LIB_ROOT)/SDL2_image-2.8.12/x86_64-w64-mingw32/lib \
 	-L$(LIB_ROOT)/SDL2_ttf-2.24.0/x86_64-w64-mingw32/lib \
 	-L$(MINGW_DIR)/lib
 

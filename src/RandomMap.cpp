@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2026 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -794,12 +794,14 @@ Hex RandomMap::findCastleSpot(int startTile)
 
 bool RandomMap::isCastleRegionValid(int region)
 {
-    if (regionTerrain_[region] == Terrain::water || contains(castleRegions_, region)) {
+    if (regionTerrain_[region] == Terrain::water ||
+        std::ranges::contains(castleRegions_, region))
+    {
         return false;
     }
 
     for (auto nbrRegion : regionNeighbors_.find(region)) {
-        if (contains(castleRegions_, nbrRegion)) {
+        if (std::ranges::contains(castleRegions_, nbrRegion)) {
             return false;
         }
     }
@@ -812,7 +814,7 @@ void RandomMap::computeCastleDistance()
     regionCastleDistance_.resize(numRegions_);
     for (int r = 0; r < numRegions_; ++r) {
         int distance = 0;
-        if (!contains(castleRegions_, r)) {
+        if (!std::ranges::contains(castleRegions_, r)) {
             distance = computeCastleDistance(r);
         }
 
@@ -835,7 +837,7 @@ int RandomMap::computeCastleDistance(int region)
             if (nbr == region || cameFrom.find(nbr) != std::cend(cameFrom)) {
                 continue;
             }
-            else if (!contains(castleRegions_, nbr)) {
+            else if (!std::ranges::contains(castleRegions_, nbr)) {
                 bfsQ.push(nbr);
                 cameFrom.emplace(nbr, r);
             }
@@ -980,7 +982,7 @@ int RandomMap::numObjectsAllowed(const MapObject &obj, int region) const
     }
 
     int maxAllowed = obj.numPerRegion;
-    if (contains(castleRegions_, region)) {
+    if (std::ranges::contains(castleRegions_, region)) {
         maxAllowed = obj.numPerCastle;
     }
 
@@ -1129,7 +1131,9 @@ void RandomMap::placeArmies()
         if (placed.contains({region, nbrRegion})) {
             continue;
         }
-        if (contains(castleRegions_, region) || contains(castleRegions_, nbrRegion)) {
+        if (std::ranges::contains(castleRegions_, region) ||
+            std::ranges::contains(castleRegions_, nbrRegion))
+        {
             continue;
         }
 

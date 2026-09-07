@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2025 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2026 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -29,13 +29,6 @@ template <typename C>
 constexpr bool in_bounds(const C &cont, int index)
 {
     return index >= 0 && index < ssize(cont);
-}
-
-
-template <typename C, typename T>
-constexpr bool contains(const C &cont, const T &val)
-{
-    return std::ranges::find(cont, val) != std::ranges::cend(cont);
 }
 
 

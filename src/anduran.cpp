@@ -571,7 +571,7 @@ Hex Anduran::find_artifact_hex() const
         if (rmap_.getTerrain(hex) != Terrain::water &&
             !rmap_.getOccupied(hex) &&
             rmap_.getWalkable(hex) &&
-            !contains(castleRegions, rmap_.getRegion(hex)))
+            !std::ranges::contains(castleRegions, rmap_.getRegion(hex)))
         {
             return hex;
         }
