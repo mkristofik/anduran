@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2025 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2026 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -102,8 +102,7 @@ void Anduran::update_frame(Uint32 elapsed_ms)
         }
         if (stateChanged_) {
             // TODO: messages for picking up resources, before/after battle, new
-            // day, etc.  Probably don't want to clear those right away.
-            statusView_.clear();
+            // day, etc.
             update_minimap();
             update_champion_view();
             update_puzzles();
@@ -758,7 +757,7 @@ bool Anduran::battle_action(int entity, int enemyId)
     auto enemyObj = game_.get_object(enemyId);
     auto defender = game_.get_army(enemyId);
 
-    log_info(army_log(attacker) + "\n    vs.\n" + army_log(defender));
+    log_info(army_debug_log(attacker) + "\n    vs.\n" + army_debug_log(defender));
     show_boat_floor(thisObj.hex, enemyObj.hex);
     if (enemyObj.secondary >= 0) {
         anims_.push(AnimHide(rmapView_, enemyObj.secondary));
@@ -769,8 +768,7 @@ bool Anduran::battle_action(int entity, int enemyId)
     for (const auto &event : result.log) {
         if (event.action == BattleAction::next_round) {
             // i18n
-            messages_.push_back("Next round begins");
-            anims_.push(AnimStatus(rmapView_, statusView_, ssize(messages_) - 1));
+            anims_.push(log_message("Next round begins"));
             continue;
         }
 
@@ -797,7 +795,7 @@ bool Anduran::battle_action(int entity, int enemyId)
                                   winner->entity,
                                   rmapView_.getEntityImage(winner->entity)));
     endingAnim.insert(AnimHide(rmapView_, loser->entity));
-    endingAnim.insert(AnimLog(rmapView_, battle_result_log(*winningArmy, result)));
+    endingAnim.insert(log_battle_result(*winningArmy, result));
 
     // Restore the defender's ellipse here if they win.  The attacker might be
     // continuing to move to another hex so we skip showing it if they win.
@@ -1051,7 +1049,7 @@ void Anduran::visit_oasis(const GameObject &visitor)
     }
 }
 
-std::string Anduran::army_log(const Army &army) const
+std::string Anduran::army_debug_log(const Army &army) const
 {
     std::ostringstream ostr;
     for (auto &unit : army.units) {
@@ -1065,8 +1063,16 @@ std::string Anduran::army_log(const Army &army) const
     return ostr.str();
 }
 
-std::string Anduran::battle_result_log(const Army &before,
-                                       const BattleResult &result) const
+AnimStatus Anduran::log_message(const std::string &msg)
+{
+    // TODO: not sure I like this, we're modifying internal state and returning a
+    // new value in the same function.
+    messages_.push_back(msg);
+    return AnimStatus(rmapView_, statusView_, ssize(messages_) - 1);
+}
+
+AnimStatus Anduran::log_battle_result(const Army &before,
+                                       const BattleResult &result)
 {
     std::ostringstream ostr;
 
@@ -1094,10 +1100,10 @@ std::string Anduran::battle_result_log(const Army &before,
         }
     }
 
-    return ostr.str();
+    return log_message(ostr.str());
 }
 
-std::string Anduran::battle_event_log(const BattleEvent &event) const
+AnimStatus Anduran::log_battle_event(const BattleEvent &event)
 {
     auto &attacker = units_.get_data(event.attackerType);
     auto &defender = units_.get_data(event.defenderType);
@@ -1127,7 +1133,7 @@ std::string Anduran::battle_event_log(const BattleEvent &event) const
         ostr << ", 1 perishes";
     }
 
-    return ostr.str();
+    return log_message(ostr.str());
 }
 
 ArmyState Anduran::make_army_state(const Army &army, BattleSide side) const
@@ -1156,8 +1162,7 @@ void Anduran::animate(const GameObject &attacker,
     auto attType = units_.get_data(attUnitType).attack;
 
     AnimSet animSet;
-    messages_.push_back(battle_event_log(event));
-    animSet.insert(AnimStatus(rmapView_, statusView_, ssize(messages_) - 1));
+    animSet.insert(log_battle_event(event));
     animSet.insert(AnimHealth(rmapView_,
                               hpBarIds_[0],
                               hpBarIds_[1],
