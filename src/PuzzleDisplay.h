@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2024-2025 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2024-2026 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -22,7 +22,7 @@
 #include "terrain.h"
 
 #include "SDL.h"
-#include "boost/container/flat_map.hpp"
+#include <flat_map>
 
 class MapDisplay;
 class SdlWindow;
@@ -131,7 +131,7 @@ private:
     SdlSurface surf_;
     SdlTexture texture_;
     SdlTexture title_;
-    boost::container::flat_map<Hex, PuzzleTile> tiles_;
+    std::flat_map<Hex, PuzzleTile> tiles_;
     FadeEffect fade_;
 };
 

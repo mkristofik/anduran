@@ -16,14 +16,14 @@
 #include "json_utils.h"
 #include "open-simplex-noise.h"
 
-#include "boost/container/flat_map.hpp"
-#include "boost/container/flat_set.hpp"
 #include "rapidjson/document.h"
 
 #include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <ctime>
+#include <flat_map>
+#include <flat_set>
 #include <functional>
 #include <iterator>
 #include <memory>
@@ -665,7 +665,7 @@ void RandomMap::connectIsolatedTiles(int startTile,
 {
     const int region = tileRegions_[startTile];
     std::queue<int> bfsQ;
-    boost::container::flat_map<int, int> cameFrom;
+    std::flat_map<int, int> cameFrom;
     int pathStart = invalidIndex;
 
     // Search for the nearest visited walkable tile in the same region.  Clear a
@@ -686,7 +686,7 @@ void RandomMap::connectIsolatedTiles(int startTile,
                 pathStart = nbr;
                 break;
             }
-            else if (cameFrom.find(nbr) == std::cend(cameFrom)) {
+            else if (!cameFrom.contains(nbr)) {
                 // Haven't visited this tile yet. Make sure the path doesn't
                 // include a castle tile or other object.
                 if (tileWalkable_[nbr] || tileObstacles_[nbr]) {
@@ -705,7 +705,7 @@ void RandomMap::connectIsolatedTiles(int startTile,
     int t = pathStart;
     while (!offGrid(t)) {
         clearObstacle(t);
-        assert(cameFrom.find(t) != std::cend(cameFrom));
+        assert(cameFrom.contains(t));
         t = cameFrom[t];
     }
 }
@@ -824,7 +824,7 @@ void RandomMap::computeCastleDistance()
 
 int RandomMap::computeCastleDistance(int region)
 {
-    boost::container::flat_map<int, int> cameFrom;
+    std::flat_map<int, int> cameFrom;
     std::queue<int> bfsQ;
 
     // Breadth-first search for the nearest castle region.
@@ -834,7 +834,7 @@ int RandomMap::computeCastleDistance(int region)
         bfsQ.pop();
 
         for (auto nbr : regionNeighbors_.find(r)) {
-            if (nbr == region || cameFrom.find(nbr) != std::cend(cameFrom)) {
+            if (nbr == region || cameFrom.contains(nbr)) {
                 continue;
             }
             else if (!std::ranges::contains(castleRegions_, nbr)) {
@@ -943,7 +943,7 @@ int RandomMap::findObjectSpot(int startTile, int region)
     assert(!offGrid(startTile));
 
     std::queue<int> bfsQ;
-    boost::container::flat_set<int> visited;
+    std::flat_set<int> visited;
 
     // Breadth-first search to find a suitable location.
     bfsQ.push(startTile);
@@ -964,7 +964,7 @@ int RandomMap::findObjectSpot(int startTile, int region)
         }
 
         for (const auto &nbr : tileNeighbors_.find(tile)) {
-            if (visited.find(nbr) == std::cend(visited)) {
+            if (!visited.contains(nbr)) {
                 bfsQ.push(nbr);
             }
         }
@@ -1107,10 +1107,10 @@ void RandomMap::placeObject(ObjectType type, int tile)
 void RandomMap::placeArmies()
 {
     // Place a random army on the border between each pair of adjacent regions.
-    boost::container::flat_set<std::pair<int, int>> placed;
+    std::flat_set<std::pair<int, int>> placed;
 
     // Avoid placing an army such that zones of control overlap.
-    boost::container::flat_set<int> controlled;
+    std::flat_set<int> controlled;
 
     for (auto [tile, nbr] : borderTiles_) {
         if (tileOccupied_[tile] || !tileWalkable_[tile] || !tileWalkable_[nbr]) {

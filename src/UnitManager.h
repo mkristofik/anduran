@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2023 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2026 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 #include "container_utils.h"
 #include "team_color.h"
 
-#include "boost/container/flat_map.hpp"
+#include <flat_map>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -36,7 +36,7 @@ enum class ImageType {img_idle,
 
 struct UnitMedia
 {
-    boost::container::flat_map<ImageType, TeamColoredTextures> images;
+    std::flat_map<ImageType, TeamColoredTextures> images;
     SdlTexture projectile;
 };
 

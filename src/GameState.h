@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2019-2025 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2019-2026 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -19,12 +19,12 @@
 #include "iterable_enum_class.h"
 #include "team_color.h"
 
-#include "boost/container/flat_map.hpp"
 #include "boost/multi_index_container.hpp"
 #include "boost/multi_index/member.hpp"
 #include "boost/multi_index/ordered_index.hpp"
 #include "boost/multi_index/tag.hpp"
 
+#include <flat_map>
 #include <optional>
 #include <ranges>
 #include <vector>
@@ -109,7 +109,7 @@ private:
     > objects_;
 
     std::vector<Army> armies_;
-    boost::container::flat_map<Hex, int> zoc_;
+    std::flat_map<Hex, int> zoc_;
     const RandomMap *rmap_;
     const ObjectManager *objConfig_;
 };

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2023-2024 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2023-2026 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -21,7 +21,7 @@
 #include "team_color.h"
 
 #include "SDL.h"
-#include "boost/container/flat_map.hpp"
+#include <flat_map>
 
 class SdlImageManager;
 class SdlWindow;
@@ -83,7 +83,7 @@ private:
     TeamColoredSurfaces regionBorders_;
     TeamColoredSurfaces ownerTiles_;
     SDL_Rect box_;  // relative to the texture
-    boost::container::flat_map<int, Team> tileOwners_;
+    std::flat_map<int, Team> tileOwners_;
     std::vector<Team> regionOwners_;
     bool isMouseClicked_;
     bool isDirty_;

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2024-2025 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2024-2026 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -16,7 +16,7 @@
 #include "hex_utils.h"
 #include "iterable_enum_class.h"
 
-#include "boost/container/flat_map.hpp"
+#include <flat_map>
 #include <vector>
 
 class RandomMap;
@@ -59,7 +59,7 @@ private:
 
     EnumSizedArray<Hex, PuzzleType> targetHexes_;
     EnumSizedArray<std::vector<Obelisk>, PuzzleType> visited_;
-    boost::container::flat_map<int, PuzzleType> tileTypes_;
+    std::flat_map<int, PuzzleType> tileTypes_;
 };
 
 #endif

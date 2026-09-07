@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2026 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -19,8 +19,8 @@
 #include "container_utils.h"
 #include "pixel_utils.h"
 
-#include "boost/container/flat_map.hpp"
 #include <algorithm>
+#include <flat_map>
 #include <string>
 
 using namespace std::string_literals;
@@ -484,7 +484,7 @@ void MapDisplay::computeTileEdges()
 {
     // Map all hexes, including those on the outside border, to their location in
     // the tile list.
-    boost::container::flat_map<Hex, int> hexmap;
+    std::flat_map<Hex, int> hexmap;
     for (int i = 0; i < ssize(tiles_); ++i) {
         hexmap.emplace(tiles_[i].hex, i);
     }

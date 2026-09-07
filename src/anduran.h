@@ -37,9 +37,8 @@
 #include "iterable_enum_class.h"
 #include "team_color.h"
 
-#include "boost/container/flat_map.hpp"
-#include "boost/container/flat_set.hpp"
-
+#include <flat_map>
+#include <flat_set>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -50,7 +49,7 @@ struct Champion
     int entity = -1;
     int moves = 0;
     int movesLeft = 0;
-    boost::container::flat_set<int> puzzlePieces;
+    std::flat_set<int> puzzlePieces;
 };
 
 
@@ -150,7 +149,7 @@ private:
     int numPlayers_;
     int curPlayerIndex_;
     bool startNextTurn_;
-    boost::container::flat_map<int, Champion> champions_;
+    std::flat_map<int, Champion> champions_;
     int curChampion_;
     int pendingDefeat_;  // defeated champion not yet removed from sidebar
     Path curPath_;

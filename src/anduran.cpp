@@ -838,7 +838,7 @@ void Anduran::battle_plunder(GameObject &winner, GameObject &loser)
     // Copy puzzle pieces to the winning champion.
     auto &winnerPuzzle = winnerIter->second.puzzlePieces;
     int sizeBefore = ssize(winnerPuzzle);
-    winnerPuzzle.merge(loserIter->second.puzzlePieces);
+    winnerPuzzle.insert_range(loserIter->second.puzzlePieces);
     int numPieces = ssize(winnerPuzzle) - sizeBefore;
     if (numPieces > 0) {
         // i18n

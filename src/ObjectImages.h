@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2024 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2024-2026 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 #include "iterable_enum_class.h"
 #include "team_color.h"
 
-#include "boost/container/flat_map.hpp"
+#include <flat_map>
 
 class ObjectManager;
 class SdlImageManager;
@@ -46,9 +46,9 @@ public:
     SdlTexture get_flag(Team team) const;
 
 private:
-    boost::container::flat_map<ObjectType, SdlTexture> objs_;
-    boost::container::flat_map<ObjectType, SdlTexture> visited_;
-    boost::container::flat_map<ObjectType, TeamColoredTextures> teamColored_;
+    std::flat_map<ObjectType, SdlTexture> objs_;
+    std::flat_map<ObjectType, SdlTexture> visited_;
+    std::flat_map<ObjectType, TeamColoredTextures> teamColored_;
     EnumSizedArray<TeamColoredTextures, ChampionType> champions_;
     TeamColoredTextures ellipses_;
     TeamColoredTextures flags_;

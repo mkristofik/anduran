@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2023-2024 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2023-2026 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -234,7 +234,7 @@ void Minimap::update_influence()
         draw_scaled(*shade, influenceLayer_, i);
     }
 
-    for (auto & [index, team] : tileOwners_) {
+    for (const auto & [index, team] : tileOwners_) {
         draw_scaled(ownerTiles_[team], influenceLayer_, index);
     }
 }

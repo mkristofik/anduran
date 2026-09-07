@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2020 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2026 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
  
     This program is free software; you can redistribute it and/or modify
@@ -18,7 +18,7 @@
 #include "hex_utils.h"
 #include "team_color.h"
 
-#include "boost/container/flat_map.hpp"
+#include <flat_map>
 
 class RandomMap;
 
@@ -43,8 +43,8 @@ private:
     Neighbors<int> get_neighbors(int index) const;
     bool is_reachable(int index) const;
 
-    boost::container::flat_map<int, int> cameFrom_;
-    boost::container::flat_map<int, int> costSoFar_;
+    std::flat_map<int, int> cameFrom_;
+    std::flat_map<int, int> costSoFar_;
     PriorityQueue<EstimatedPathCost> frontier_;
     const RandomMap *rmap_;
     const GameState *game_;

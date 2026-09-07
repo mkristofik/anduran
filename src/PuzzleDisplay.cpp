@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2024-2025 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2024-2026 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -23,7 +23,6 @@
 #include "pixel_utils.h"
 #include "team_color.h"
 
-#include "boost/container/flat_set.hpp"
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -189,7 +188,7 @@ void PuzzleDisplay::update(const PuzzleState &state)
     }
 
     // Cover the tiles for puzzle pieces not revealed yet.
-    for (auto & [_, t] : tiles_) {
+    for (const auto & [_, t] : tiles_) {
         if (!state.index_visited(type_, t.piece)) {
             draw_centered(images_->shield, t.pCenter, surf_);
         }
@@ -356,7 +355,7 @@ void PuzzleDisplay::draw_tiles()
 {
     mapLayer_.fill(getRefColor(ColorShade::normal));
 
-    for (auto & [hex, t] : tiles_) {
+    for (const auto & [hex, t] : tiles_) {
         auto &tileView = rmapView_->get_tile(hex);
         draw_centered(images_->terrain[tileView.terrain],
                       Frame{0, tileView.terrainFrame},
@@ -441,7 +440,7 @@ void PuzzleDisplay::do_fade_in(Uint32 elapsed_ms)
     auto alpha = alpha_fade_out(fade_.time_ms, FADE_MS);
 
     SDL_SetSurfaceAlphaMod(images_->shield.surface.get(), alpha);
-    for (auto & [_, t] : tiles_) {
+    for (const auto & [_, t] : tiles_) {
         if (t.piece == fade_.piece) {
             draw_centered(images_->shield, t.pCenter, surfToUse);
         }
