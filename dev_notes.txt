@@ -599,16 +599,16 @@ in the header
     - std::type_index(typeid(E)) can be used to store a typename in a map
     * could eliminate the xtype wrapper functions each type has to provide
     * require iterable enum for this?  extension of it?
-- C++23
+* C++23
     * std::to_underlying
-    - replace boost flat_ containers with std ones
+    * replace boost flat_ containers with std ones
     * static data inside constexpr functions for iterable_enum_class
     * may not need contains() from container_utils anymore
-    - can std::views::values replace ValueIterator in FlatMultimap?
+    * can std::views::values replace ValueIterator in FlatMultimap?
+        * KeyValue has to become std::pair and we'd lose 'key' and 'value' names
 * try out the Proj argument to ranges algorithms instead of writing an operator< or
 a lambda
 - Boost features used, to help determine a minimum version
-    - flat_map and flat_set
     - MultiIndex container
     - Boost.Test
     - Boost.Preprocessor

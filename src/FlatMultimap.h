@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2024 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2026 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -15,8 +15,8 @@
 
 #include <algorithm>
 #include <compare>
+#include <functional>
 #include <ranges>
-#include <tuple>
 #include <vector>
 
 // Implementation of a multimap on top of contiguous storage. Performs best if all
@@ -176,8 +176,10 @@ typename FlatMultimap<K, V>::ValueRange FlatMultimap<K, V>::find(const T &key)
 {
     sortAndPrune();
 
-    const auto range = equal_range(cbegin(data_), cend(data_), key);
-    return {ValueIterator(range.first), ValueIterator(range.second)};
+    // std::less with no type specified triggers transparent comparisons for when
+    // T and K aren't the same type.
+    const auto range = std::ranges::equal_range(data_, key, std::less{});
+    return {ValueIterator(range.begin()), ValueIterator(range.end())};
 }
 
 template <typename K, typename V>
