@@ -134,9 +134,9 @@
     - line numbers?
     * end of battle summary of losses
     * report start of turns, new days
-- Message boxes
-    - All remaining AnimLog messages actually want to be message boxes
-    - update_puzzle_view() is the model for how to handle popups
+8 Message boxes
+    * All remaining AnimLog messages actually want to be message boxes
+    * update_puzzle_view() is the model for how to handle popups
 - right-click on object shows a message box
     - if multiple objects in hex, pick the first one the Object Manager has data for
     - show the object's name

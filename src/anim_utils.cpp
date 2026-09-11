@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2025 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2026 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -528,18 +528,6 @@ void AnimProjectile::stop()
     obj = baseState_;
     obj.visible = false;
     update_entity(obj);
-}
-
-
-AnimLog::AnimLog(MapDisplay &display, std::string_view message)
-    : AnimBase(display, 0),
-    msg_(message.data(), message.size())
-{
-}
-
-void AnimLog::start()
-{
-    log_info(msg_);
 }
 
 

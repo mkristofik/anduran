@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2016-2025 by Michael Kristofik <kristo605@gmail.com>
+    Copyright (C) 2016-2026 by Michael Kristofik <kristo605@gmail.com>
     Part of the Champions of Anduran project.
 
     This program is free software; you can redistribute it and/or modify
@@ -240,21 +240,6 @@ private:
     Hex hStart_;
     HexDir angle_;  // determines projectile frame to draw
     PartialPixel pDistToMove_;
-};
-
-
-// Output a log message to the console.  We want the message to appear in time
-// with other animations, such as during a battle.
-class AnimLog : public AnimBase
-{
-public:
-    AnimLog(MapDisplay &display, std::string_view message);
-
-private:
-    void start() override;
-    void update(Uint32) override {}
-
-    std::string msg_;
 };
 
 
