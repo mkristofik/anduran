@@ -72,7 +72,9 @@ Anduran::Anduran()
     puzzleViews_(),
     puzzleXsIds_(),
     messages_(),
-    statusView_(win_, config_.status_bounds())
+    statusView_(win_, config_.status_bounds()),
+    messageVisible_(false),
+    messageView_(win_)
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
@@ -116,8 +118,13 @@ void Anduran::update_frame(Uint32 elapsed_ms)
     championView_.draw();
     statusView_.draw();
 
-    if (anims_.empty() && puzzleVisible_) {
-        update_puzzle_view(elapsed_ms);
+    if (anims_.empty()) {
+        if (puzzleVisible_) {
+            update_puzzle_view(elapsed_ms);
+        }
+        else if (messageVisible_) {
+            update_message_view(elapsed_ms);
+        }
     }
 
     win_.update();
@@ -209,9 +216,20 @@ void Anduran::update_puzzle_view(Uint32 elapsed_ms)
     }
 }
 
+void Anduran::update_message_view(Uint32 elapsed_ms)
+{
+    auto status = messageView_.status();
+    if (status == PopupStatus::running) {
+        messageView_.draw(elapsed_ms);
+    }
+    else if (status == PopupStatus::ok_close) {
+        messageVisible_ = false;
+    }
+}
+
 void Anduran::handle_lmouse_down()
 {
-    if (puzzleVisible_ || statusView_.is_expanded()) {
+    if (puzzleVisible_ || messageVisible_ || statusView_.is_expanded()) {
         return;
     }
 
@@ -220,7 +238,7 @@ void Anduran::handle_lmouse_down()
 
 void Anduran::handle_lmouse_up()
 {
-    if (puzzleVisible_ || statusView_.is_expanded()) {
+    if (puzzleVisible_ || messageVisible_ || statusView_.is_expanded()) {
         return;
     }
 
@@ -269,7 +287,7 @@ void Anduran::handle_lmouse_up()
 
 void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
 {
-    if (puzzleVisible_ || statusView_.is_expanded()) {
+    if (puzzleVisible_ || messageVisible_ || statusView_.is_expanded()) {
         return;
     }
 
@@ -313,6 +331,10 @@ void Anduran::handle_key_up(const SDL_Keysym &key)
     }
     if (puzzleVisible_) {
         puzzleViews_[curPuzzleType_]->handle_key_up(key);
+        return;
+    }
+    if (messageVisible_) {
+        messageView_.handle_key_up(key);
         return;
     }
     if (statusView_.handle_key_up(key) || statusView_.is_expanded()) {
@@ -912,9 +934,8 @@ void Anduran::dig_action(int entity)
 
     if (champion.movesLeft < champion.moves) {
         // i18n
-        // TODO: this wants to be a message box that appears after the movement
-        // animation has finished.
-        anims_.push(AnimLog(rmapView_, "Digging requires a full day's movement."));
+        messageView_.set_message("Digging requires a full day's movement.");
+        messageVisible_ = true;
         return;
     }
 
@@ -922,7 +943,8 @@ void Anduran::dig_action(int entity)
         game_.num_objects_in_hex(thisObj.hex) > 1)
     {
         // i18n
-        anims_.push(AnimLog(rmapView_, "Try searching on clear ground."));
+        messageView_.set_message("Try searching on clear ground.");
+        messageVisible_ = true;
         return;
     }
 
@@ -936,20 +958,20 @@ void Anduran::dig_action(int entity)
             auto msg = std::format("You have located the {}, "
                                    "but it looks like others have found it first.",
                                    artifacts[type]);
-            anims_.push(AnimLog(rmapView_, msg));
+            messageView_.set_message(msg);
+            messageVisible_ = true;
             return;
         }
 
         // Found it, hide the X and show the artifact found image.
         // TODO: assign the artifact to the champion who found it.
-        AnimSet digAnim;
-        digAnim.insert(AnimHide(rmapView_, puzzleXsIds_[type]));
+        anims_.push(AnimHide(rmapView_, puzzleXsIds_[type]));
         // i18n
         auto msg = std::format("After spending many hours digging here, "
                                "you have found the {}!",
                                artifacts[type]);
-        digAnim.insert(AnimLog(rmapView_, msg));
-        anims_.push(digAnim);
+        messageView_.set_message(msg);
+        messageVisible_ = true;
 
         rmapView_.addEntity(images_.make_texture("puzzle-found", win_),
                             thisObj.hex,
@@ -960,7 +982,8 @@ void Anduran::dig_action(int entity)
     }
 
     // i18n
-    anims_.push(AnimLog(rmapView_, "Nothing here.  Where could it be?"));
+    messageView_.set_message("Nothing here.  Where could it be?");
+    messageVisible_ = true;
     rmapView_.addEntity(images_.make_texture("puzzle-not-found", win_),
                         thisObj.hex,
                         ZOrder::object);
@@ -1071,8 +1094,7 @@ AnimStatus Anduran::log_message(const std::string &msg)
     return AnimStatus(rmapView_, statusView_, ssize(messages_) - 1);
 }
 
-AnimStatus Anduran::log_battle_result(const Army &before,
-                                       const BattleResult &result)
+AnimStatus Anduran::log_battle_result(const Army &before, const BattleResult &result)
 {
     std::ostringstream ostr;
 

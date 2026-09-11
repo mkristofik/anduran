@@ -13,6 +13,7 @@
 #ifndef PUZZLE_DISPLAY_H
 #define PUZZLE_DISPLAY_H
 
+#include "PopupDisplay.h"
 #include "PuzzleState.h"
 #include "SdlImageManager.h"
 #include "SdlSurface.h"
@@ -26,15 +27,6 @@
 
 class MapDisplay;
 class SdlWindow;
-
-enum class PopupStatus {
-    running = -1,
-    ok_close,
-    cancel,
-    left_arrow,
-    right_arrow
-};
-
 
 struct PuzzleImages
 {
@@ -118,11 +110,11 @@ private:
         bool running = false;
     };
 
-    SdlWindow *win_;
+    SdlWindow *win_;  // TODO - move to base class
     const MapDisplay *rmapView_;
     const PuzzleImages *images_;
-    SDL_Rect popupArea_;
-    PopupStatus status_;
+    SDL_Rect popupArea_;  // TODO - move to base class
+    PopupStatus status_;  // TODO - move to base class
     PuzzleType type_;
     int numPieces_;
     SDL_Rect hexes_;

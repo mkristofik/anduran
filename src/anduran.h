@@ -17,6 +17,7 @@
 #include "ChampionDisplay.h"
 #include "GameState.h"
 #include "MapDisplay.h"
+#include "MessageDisplay.h"
 #include "Minimap.h"
 #include "ObjectImages.h"
 #include "ObjectManager.h"
@@ -75,6 +76,7 @@ private:
     void update_champion_view();
     void update_puzzles();
     void update_puzzle_view(Uint32 elapsed_ms);
+    void update_message_view(Uint32 elapsed_ms);
 
     void handle_lmouse_down() override;
     void handle_lmouse_up() override;
@@ -169,6 +171,8 @@ private:
     EnumSizedArray<int, PuzzleType> puzzleXsIds_;
     std::vector<std::string> messages_;
     StatusDisplay statusView_;
+    bool messageVisible_;
+    MessageDisplay messageView_;
 };
 
 #endif

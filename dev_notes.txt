@@ -12,10 +12,13 @@
     - Goal is to assemble the Battle Garb of Anduran, not defeat all enemies
 - Champion attributes
     - Attack, Defense, Spell Power, Knowledge?
+        - resist adding these until we really need them
     - Knowledge determines how many spells you can learn in your spellbook
         - Mage Guilds should offer more than you have space for (force choices)
         - Shrine of the Nth Circle needs to offer you a choice
         - Eagle Eye might steal a spell you don't want
+        - should all spells be scrolls that can be traded?  or lost in combat?
+        - limit number of casts per day?
     - Should there be a limit to number of creatures per stack?  Or total?
         - Total limit makes it hard to hero chain with low-level champions
         - Leadership primary skill?
@@ -34,6 +37,7 @@
         - change the weather?
         - alter the terrain type?
         - nervous about Dimension Door/Water Walk/Fly/Town Portal
+            - no spell can violate the 1-region-per-turn rule
     - Spells cast by champions are adventure map only
         - direct damage spells don't scale well
             - OP in early game, under-powered late game
@@ -41,19 +45,30 @@
         - summoning creatures and boats
             - summon a neutral army that walks around on its own?
         - haste/slow, bless/curse, other (de-)buffs
+            - should all these be "mass" spells?
+            - if not, pick the best target automatically
         - counterspells or defensive spells might be awkward to use
             - but at least need Dispel Magic
         - Fire Wall and/or Quicksand could be interesting
         - Haunt/Set Guardian
         - Forestwalk
+        - get other ideas from H1-4, Olden Era, Songs of Conquest, Disciples 2
     - Each champion gains 1 mana from the region at the start of turn
-        - grass = Water, dirt = Earth, swamp = Fire, desert = Air
-        - no mana from snow or water?
+        - grass = Water, dirt = Earth, swamp = Fire, snow = Air
+        - no mana from desert or water?
         - Knowledge also limits your max mana?
+        - Mysticism increases this beyond 1 mana per turn?
     - Simplify to all "colorless" mana to start
+        - but the best spells could cost multiple types of mana
     - Should spells cost movement points?
-        - If there were a spell that restored movement, wouldn't want it to be
-        castable after leaving a region
+    - Must balance magic against might
+        - Necromancy is hard to balance, even if limited to your own losses
+        - healing spells would only affect top creature in a stack
+            healer units instead?
+        - does damage persist between combats?  between turns?
+    - Spells offered should bias toward the current terrain
+        - avoid offering spells difficult or impossible to cast given the map
+        (e.g., Summon Boat on a map with no water)
 - Week of X
     - most of them should mean something, H2 was kinda boring
         - doesn't have to be every week, occasional "week of the mongoose" is fine
