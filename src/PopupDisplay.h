@@ -36,7 +36,9 @@ public:
     virtual void draw(Uint32 elapsed_ms) = 0;
     PopupStatus status() const;
 
+    // Pressing Esc or clicking outside the popup region will close it.
     virtual bool handle_key_up(const SDL_Keysym &key);
+    virtual void handle_lmouse_up();
 
 protected:
     void center_in_window(int width, int height);

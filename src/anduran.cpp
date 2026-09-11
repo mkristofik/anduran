@@ -238,7 +238,11 @@ void Anduran::handle_lmouse_down()
 
 void Anduran::handle_lmouse_up()
 {
-    if (puzzleVisible_ || messageVisible_ || statusView_.is_expanded()) {
+    if (puzzleVisible_ || statusView_.is_expanded()) {
+        return;
+    }
+    if (messageVisible_) {
+        messageView_.handle_lmouse_up();
         return;
     }
 
@@ -344,6 +348,7 @@ void Anduran::handle_key_up(const SDL_Keysym &key)
     if (key.sym == 'd') {
         if (curChampion_ >= 0) {
             dig_action(curChampion_);
+            deselect_champion();
             stateChanged_ = true;
         }
     }

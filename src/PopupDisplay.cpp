@@ -53,6 +53,13 @@ bool PopupDisplay::handle_key_up(const SDL_Keysym &key)
     return false;
 }
 
+void PopupDisplay::handle_lmouse_up()
+{
+    if (!mouse_in_rect(displayArea_)) {
+        status_ = PopupStatus::ok_close;
+    }
+}
+
 void PopupDisplay::center_in_window(int width, int height)
 {
     auto winSize = win_->get_bounds();
