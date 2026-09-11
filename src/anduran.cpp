@@ -960,10 +960,9 @@ void Anduran::dig_action(int entity)
         }
         else if (artifact_found(type)) {
             // i18n
-            auto msg = std::format("You have located the {}, "
-                                   "but it looks like others have found it first.",
-                                   artifacts[type]);
-            messageView_.set_message(msg);
+            messageView_.set_message("You have located the {}, "
+                                     "but it looks like others have found it first.",
+                                     artifacts[type]);
             messageVisible_ = true;
             return;
         }
@@ -972,10 +971,9 @@ void Anduran::dig_action(int entity)
         // TODO: assign the artifact to the champion who found it.
         anims_.push(AnimHide(rmapView_, puzzleXsIds_[type]));
         // i18n
-        auto msg = std::format("After spending many hours digging here, "
-                               "you have found the {}!",
-                               artifacts[type]);
-        messageView_.set_message(msg);
+        messageView_.set_message("After spending many hours digging here, "
+                                 "you have found the {}!",
+                                 artifacts[type]);
         messageVisible_ = true;
 
         rmapView_.addEntity(images_.make_texture("puzzle-found", win_),

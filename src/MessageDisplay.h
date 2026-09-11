@@ -18,6 +18,7 @@
 #include "SdlTexture.h"
 
 #include "SDL.h"
+#include <format>
 #include <string>
 
 class SdlWindow;
@@ -27,19 +28,25 @@ class MessageDisplay : public PopupDisplay
 public:
     explicit MessageDisplay(SdlWindow &win);
 
-    // TODO: accept variable args like std::format
     void set_message(const std::string &msg);
+    template <typename... Args>
+    void set_message(std::format_string<Args...> fmt, Args&&... args);
 
     void draw(Uint32 elapsed_ms) override;
 
-    // TODO: handle esc key to close the popup
-    // left-click outside of the display area will also close it
-    // later we'll want to handle held right-click to display a message, release
-    // to close it.  that may also include "(visited)" and/or owner flag(s)
+    // TODO: handle held right-click to display a message, release to close it.
+    // that may also include "(visited)" and/or owner flag(s)
 
 private:
     SdlFont font_;
     SdlTexture message_;
 };
+
+
+template <typename... Args>
+void MessageDisplay::set_message(std::format_string<Args...> fmt, Args&&... args)
+{
+    set_message(std::format(fmt, std::forward<Args>(args)...));
+}
 
 #endif
