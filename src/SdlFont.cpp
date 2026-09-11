@@ -46,6 +46,19 @@ SdlSurface SdlFont::render(const std::string &text, const SDL_Color &color)
     return surf;
 }
 
+SdlSurface SdlFont::render_wrapped(const std::string &text,
+                                   const SDL_Color &color,
+                                   Uint32 width)
+{
+    SdlSurface surf = TTF_RenderUTF8_Blended_Wrapped(get(), text.c_str(), color, width);
+    if (!surf) {
+        log_warn(std::format("couldn't render wrapped text: {}", TTF_GetError()),
+                 LogCategory::video);
+    }
+
+    return surf;
+}
+
 int SdlFont::line_skip_px() const
 {
     // TODO: the MS Word default is 1.15x the line skip between lines, with a

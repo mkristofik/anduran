@@ -37,6 +37,9 @@ public:
     SdlFont(FontType type, int ptsize);
 
     SdlSurface render(const std::string &text, const SDL_Color &color);
+    SdlSurface render_wrapped(const std::string &text,
+                              const SDL_Color &color,
+                              Uint32 width);
 
     // Distance between top pixel of consecutive lines in the same paragraph.
     int line_skip_px() const;
