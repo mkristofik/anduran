@@ -13,6 +13,7 @@
 #ifndef STATUS_DISPLAY_H
 #define STATUS_DISPLAY_H
 
+#include "PopupDisplay.h"
 #include "SdlFont.h"
 #include "SdlTexture.h"
 
@@ -30,7 +31,9 @@ struct ScrollbarLines
 };
 
 
-class StatusDisplay
+// This is a special case of popup window that's always visible.  We're mostly
+// taking advantage of standardized drawing routines.
+class StatusDisplay : public PopupDisplay
 {
 public:
     StatusDisplay(SdlWindow &win, const SDL_Rect &displayRect);
@@ -40,16 +43,14 @@ public:
 
     void show_message(int num);
     void clear();
+    void draw(Uint32 elapsed_ms) override;
 
-    void draw();
     bool is_expanded() const;
 
-    // Return true if keypress was handled.
-    bool handle_key_up(const SDL_Keysym &key);
+    bool handle_key_up(const SDL_Keysym &key) override;
+    void handle_lmouse_up() override;
 
 private:
-    SdlWindow *win_;
-    SDL_Rect displayRect_;
     SDL_Rect smallRect_;  // default size, when not expanded
     SdlFont font_;
     std::vector<SdlTexture> msgImages_;

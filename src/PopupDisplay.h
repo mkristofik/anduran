@@ -40,6 +40,7 @@ public:
     bool is_running() const;
 
     // Pressing Esc or clicking outside the popup region will close it.
+    // Return true if keypress was handled.
     virtual bool handle_key_up(const SDL_Keysym &key);
     virtual void handle_lmouse_up();
 

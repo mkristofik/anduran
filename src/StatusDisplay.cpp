@@ -28,35 +28,6 @@ namespace
     const int LEFT_MARGIN = 10;
     const int EXPANDED_MESSAGES = 10;
 
-    // These draw_* functions are generic, expect to refactor them to a dialog box
-    // helper class eventually.
-    void draw_background(SdlWindow &win, const SDL_Rect &area)
-    {
-        SdlWindowColor drawColor(win, COLOR_INDIGO);
-
-        if (SDL_RenderFillRect(win.renderer(), &area) < 0) {
-            log_warn(std::format("couldn't draw status background: {}", SDL_GetError()),
-                     LogCategory::video);
-        }
-    }
-
-    void draw_border(SdlWindow &win, const SDL_Rect &area)
-    {
-        SdlWindowColor drawColor(win, COLOR_BROWN);
-
-        std::array<SDL_Rect, 4> edges = {
-            SDL_Rect{area.x, area.y, area.w, BORDER},  // top
-            SDL_Rect{area.x, area.y + area.h - BORDER, area.w, BORDER},  // bottom
-            SDL_Rect{area.x, area.y, BORDER, area.h},  // left
-            SDL_Rect{area.x + area.w - BORDER, area.y, BORDER, area.h}  // right
-        };
-
-        if (SDL_RenderFillRects(win.renderer(), edges.data(), edges.size()) < 0) {
-            log_warn(std::format("couldn't draw status border: {}", SDL_GetError()),
-                     LogCategory::video);
-        }
-    }
-
     void draw_scrollbar(SdlWindow &win, const SDL_Rect &area, const ScrollbarLines &lines)
     {
         SdlWindowColor drawColor(win, COLOR_BROWN);
@@ -94,13 +65,14 @@ namespace
 
 
 StatusDisplay::StatusDisplay(SdlWindow &win, const SDL_Rect &displayRect)
-    : win_(&win),
-    displayRect_(displayRect),
-    smallRect_(displayRect_),
+    : PopupDisplay(win),
+    smallRect_(displayRect),
     font_(FontType::sans_serif, 14),
     msgImages_(),
     lines_()
 {
+    displayArea_ = smallRect_;
+    status_ = PopupStatus::running;
 }
 
 void StatusDisplay::update(const std::vector<std::string> &messages)
@@ -128,22 +100,22 @@ void StatusDisplay::clear()
     lines_.numVisible = 0;
 }
 
-void StatusDisplay::draw()
+void StatusDisplay::draw(Uint32)
 {
-    draw_background(*win_, displayRect_);
-    draw_border(*win_, displayRect_);
+    draw_background();
+    draw_border();
 
     if (msgImages_.empty()) {
         return;
     }
 
     if (is_expanded()) {
-        draw_scrollbar(*win_, displayRect_, lines_);
+        draw_scrollbar(*win_, displayArea_, lines_);
 
         int lastIndex = lines_.first + lines_.numVisible;
         SDL_Point pos = {
-            displayRect_.x + BORDER + SCROLLBAR_WIDTH + LEFT_MARGIN,
-            displayRect_.y + BORDER + TOP_MARGIN
+            displayArea_.x + BORDER + SCROLLBAR_WIDTH + LEFT_MARGIN,
+            displayArea_.y + BORDER + TOP_MARGIN
         };
 
         for (int i = lines_.first; i < lastIndex; ++i) {
@@ -159,8 +131,8 @@ void StatusDisplay::draw()
         // Center the message vertically inside the display area.
         auto &img = msgImages_[lines_.first];
         SDL_Point pos = {
-            displayRect_.x + LEFT_MARGIN,
-            displayRect_.y + (displayRect_.h - img.height()) / 2
+            displayArea_.x + LEFT_MARGIN,
+            displayArea_.y + (displayArea_.h - img.height()) / 2
         };
         img.draw(pos);
     }
@@ -175,8 +147,8 @@ bool StatusDisplay::handle_key_up(const SDL_Keysym &key)
 {
     if (is_expanded()) {
         if (key.sym == '/' || key.sym == SDLK_ESCAPE) {
-            displayRect_ = smallRect_;
-            lines_.numVisible = 1;
+            displayArea_ = smallRect_;
+            show_message(lines_.total - 1);
             return true;
         }
         else if (key.sym == SDLK_UP) {
@@ -198,11 +170,23 @@ bool StatusDisplay::handle_key_up(const SDL_Keysym &key)
             TOP_MARGIN * 2 +
             BORDER * 2;
 
-        auto dh = totalHeight - displayRect_.h;
-        displayRect_.y -= dh;
-        displayRect_.h += dh;
+        auto dh = totalHeight - displayArea_.h;
+        displayArea_.y -= dh;
+        displayArea_.h += dh;
         return true;
     }
 
+    // Not calling base class here, we don't want to ever close this.
     return false;
+}
+
+void StatusDisplay::handle_lmouse_up()
+{
+    // Same behavior as clicking outside of a message box, shrink back to a
+    // single line.
+    if (is_expanded() && !mouse_in_rect(displayArea_)) {
+        SDL_Keysym esc;
+        esc.sym = SDLK_ESCAPE;
+        handle_key_up(esc);
+    }
 }

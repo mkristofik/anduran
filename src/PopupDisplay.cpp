@@ -51,7 +51,7 @@ bool PopupDisplay::is_running() const
 
 bool PopupDisplay::handle_key_up(const SDL_Keysym &key)
 {
-    if (status_ != PopupStatus::running) {
+    if (!is_running()) {
         return false;
     }
 

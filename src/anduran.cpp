@@ -115,7 +115,7 @@ void Anduran::update_frame(Uint32 elapsed_ms)
     rmapView_.draw();
     minimap_.draw();
     championView_.draw();
-    statusView_.draw();
+    statusView_.draw(elapsed_ms);
 
     if (anims_.empty()) {
         if (curPopup_->is_running()) {
@@ -233,6 +233,7 @@ void Anduran::handle_lmouse_down()
 void Anduran::handle_lmouse_up()
 {
     if (statusView_.is_expanded()) {
+        statusView_.handle_lmouse_up();
         return;
     }
     if (curPopup_->is_running()) {
@@ -331,7 +332,6 @@ void Anduran::handle_key_up(const SDL_Keysym &key)
         curPopup_->handle_key_up(key);
         return;
     }
-    // TODO: the status bar is a popup that it always running
     if (statusView_.handle_key_up(key) || statusView_.is_expanded()) {
         return;
     }
