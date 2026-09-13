@@ -34,9 +34,19 @@ PopupDisplay::PopupDisplay(SdlWindow &win)
 {
 }
 
+void PopupDisplay::show()
+{
+    status_ = PopupStatus::running;
+}
+
 PopupStatus PopupDisplay::status() const
 {
     return status_;
+}
+
+bool PopupDisplay::is_running() const
+{
+    return status_ != PopupStatus::ok_close && status_ != PopupStatus::cancel;
 }
 
 bool PopupDisplay::handle_key_up(const SDL_Keysym &key)

@@ -67,13 +67,11 @@ Anduran::Anduran()
     stateChanged_(true),
     influence_(rmap_.numRegions()),
     initialPuzzleState_(rmap_),
-    puzzleVisible_(false),
     curPuzzleType_(PuzzleType::helmet),
     puzzleViews_(),
     puzzleXsIds_(),
     messages_(),
     statusView_(win_, config_.status_bounds()),
-    messageVisible_(false),
     messageView_(win_)
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
@@ -119,13 +117,13 @@ void Anduran::update_frame(Uint32 elapsed_ms)
     statusView_.draw();
 
     if (anims_.empty()) {
-        // TODO: popups need an is_running() and a show()
         // TODO: curPopup_ and a show_popup() function
-        if (puzzleVisible_) {
-            update_puzzle_view(elapsed_ms);
+        if (puzzleViews_[curPuzzleType_]->is_running()) {
+            update_puzzle_view();
+            puzzleViews_[curPuzzleType_]->draw(elapsed_ms);
         }
-        else if (messageVisible_) {
-            update_message_view(elapsed_ms);
+        else if (messageView_.is_running()) {
+            messageView_.draw(elapsed_ms);
         }
     }
 
@@ -196,45 +194,33 @@ void Anduran::update_puzzles()
     anims_.push(puzzleAnim);
 }
 
-void Anduran::update_puzzle_view(Uint32 elapsed_ms)
+void Anduran::update_puzzle_view()
 {
+    // Do we need to change which puzzle is shown?
     auto status = puzzleViews_[curPuzzleType_]->status();
     if (status == PopupStatus::running) {
-        puzzleViews_[curPuzzleType_]->draw(elapsed_ms);
+        return;
     }
-    else if (status == PopupStatus::ok_close) {
-        puzzleVisible_ = false;
-    }
-    else /*if (status != PopupStatus::ok_close)*/ {
-        // TODO: if we can manage all three puzzles within a single object, then
-        // this bit can be handled by the popup object itself.  Updating a popup
-        // window then reduces to "if it's running, call draw()."
-        if (status == PopupStatus::left_arrow) {
-            enum_decr(curPuzzleType_);
-        }
-        else if (status == PopupStatus::right_arrow) {
-            enum_incr(curPuzzleType_);
-        }
 
-        puzzleViews_[curPuzzleType_]->update(*cur_player().puzzle);
-        puzzleViews_[curPuzzleType_]->draw(elapsed_ms);
+    // TODO: if we can manage all three puzzles within a single object, then
+    // this bit can be handled by the popup object itself.  Updating a popup
+    // window then reduces to "if it's running, call draw()."
+    if (status == PopupStatus::left_arrow) {
+        enum_decr(curPuzzleType_);
     }
-}
+    else if (status == PopupStatus::right_arrow) {
+        enum_incr(curPuzzleType_);
+    }
 
-void Anduran::update_message_view(Uint32 elapsed_ms)
-{
-    auto status = messageView_.status();
-    if (status == PopupStatus::running) {
-        messageView_.draw(elapsed_ms);
-    }
-    else if (status == PopupStatus::ok_close) {
-        messageVisible_ = false;
-    }
+    puzzleViews_[curPuzzleType_]->update(*cur_player().puzzle);
+    puzzleViews_[curPuzzleType_]->show();
 }
 
 void Anduran::handle_lmouse_down()
 {
-    if (puzzleVisible_ || messageVisible_ || statusView_.is_expanded()) {
+    if (puzzleViews_[curPuzzleType_]->is_running() || messageView_.is_running() ||
+        statusView_.is_expanded())
+    {
         return;
     }
 
@@ -246,11 +232,11 @@ void Anduran::handle_lmouse_up()
     if (statusView_.is_expanded()) {
         return;
     }
-    if (messageVisible_) {
+    if (messageView_.is_running()) {
         messageView_.handle_lmouse_up();
         return;
     }
-    if (puzzleVisible_) {
+    if (puzzleViews_[curPuzzleType_]->is_running()) {
         puzzleViews_[curPuzzleType_]->handle_lmouse_up();
         return;
     }
@@ -300,7 +286,9 @@ void Anduran::handle_lmouse_up()
 
 void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
 {
-    if (puzzleVisible_ || messageVisible_ || statusView_.is_expanded()) {
+    if (puzzleViews_[curPuzzleType_]->is_running() || messageView_.is_running() ||
+        statusView_.is_expanded())
+    {
         return;
     }
 
@@ -342,11 +330,11 @@ void Anduran::handle_key_up(const SDL_Keysym &key)
     if (!anims_.empty() || SDL_GetMouseState(nullptr, nullptr) != 0) {
         return;
     }
-    if (puzzleVisible_) {
+    if (puzzleViews_[curPuzzleType_]->is_running()) {
         puzzleViews_[curPuzzleType_]->handle_key_up(key);
         return;
     }
-    if (messageVisible_) {
+    if (messageView_.is_running()) {
         messageView_.handle_key_up(key);
         return;
     }
@@ -366,8 +354,8 @@ void Anduran::handle_key_up(const SDL_Keysym &key)
         startNextTurn_ = true;
     }
     else if (key.sym == 'p') {
-        puzzleVisible_ = true;
         puzzleViews_[curPuzzleType_]->update(*cur_player().puzzle);
+        puzzleViews_[curPuzzleType_]->show();
     }
 }
 
@@ -952,7 +940,7 @@ void Anduran::dig_action(int entity)
     if (champion.movesLeft < champion.moves) {
         // i18n
         messageView_.set_message("Digging requires a full day's movement.");
-        messageVisible_ = true;
+        messageView_.show();
         return;
     }
 
@@ -961,7 +949,7 @@ void Anduran::dig_action(int entity)
     {
         // i18n
         messageView_.set_message("Try searching on clear ground.");
-        messageVisible_ = true;
+        messageView_.show();
         return;
     }
 
@@ -975,7 +963,7 @@ void Anduran::dig_action(int entity)
             messageView_.set_message("You have located the {}, "
                                      "but it looks like others have found it first.",
                                      artifacts[type]);
-            messageVisible_ = true;
+            messageView_.show();
             return;
         }
 
@@ -986,7 +974,7 @@ void Anduran::dig_action(int entity)
         messageView_.set_message("After spending many hours digging here, "
                                  "you have found the {}!",
                                  artifacts[type]);
-        messageVisible_ = true;
+        messageView_.show();
 
         rmapView_.addEntity(images_.make_texture("puzzle-found", win_),
                             thisObj.hex,
@@ -998,7 +986,7 @@ void Anduran::dig_action(int entity)
 
     // i18n
     messageView_.set_message("Nothing here.  Where could it be?");
-    messageVisible_ = true;
+    messageView_.show();
     rmapView_.addEntity(images_.make_texture("puzzle-not-found", win_),
                         thisObj.hex,
                         ZOrder::object);
@@ -1065,10 +1053,10 @@ void Anduran::visit_obelisk(const GameObject &visitor)
     }
 
     auto &player = players_[visitor.team];
-    curPuzzleType_ = player.puzzle->obelisk_type(tile);
-    puzzleVisible_ = true;
-
     int pieceNum = player.puzzle->obelisk_index(tile);
+    curPuzzleType_ = player.puzzle->obelisk_type(tile);
+
+    puzzleViews_[curPuzzleType_]->show();
     puzzleViews_[curPuzzleType_]->fade_in_piece(pieceNum);
 }
 
@@ -1398,6 +1386,7 @@ Player & Anduran::cur_player()
 void Anduran::deselect_champion()
 {
     rmapView_.clearHighlight();
+    rmapView_.clearPath();
     curChampion_ = -1;
 }
 

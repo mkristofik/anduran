@@ -161,7 +161,6 @@ void PuzzleDisplay::update(const PuzzleState &state)
 
     SdlEditTexture edit(texture_);
     edit.update(surf_);
-    status_ = PopupStatus::running;
 }
 
 void PuzzleDisplay::draw(Uint32 elapsed_ms)

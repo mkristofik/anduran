@@ -75,8 +75,7 @@ private:
     void update_minimap();
     void update_champion_view();
     void update_puzzles();
-    void update_puzzle_view(Uint32 elapsed_ms);
-    void update_message_view(Uint32 elapsed_ms);
+    void update_puzzle_view();
 
     void handle_lmouse_down() override;
     void handle_lmouse_up() override;
@@ -165,13 +164,11 @@ private:
     bool stateChanged_;
     std::vector<EnumSizedArray<int, Team>> influence_;
     PuzzleState initialPuzzleState_;
-    bool puzzleVisible_;
     PuzzleType curPuzzleType_;
     EnumSizedArray<std::optional<PuzzleDisplay>, PuzzleType> puzzleViews_;
     EnumSizedArray<int, PuzzleType> puzzleXsIds_;
     std::vector<std::string> messages_;
     StatusDisplay statusView_;
-    bool messageVisible_;
     MessageDisplay messageView_;
 };
 

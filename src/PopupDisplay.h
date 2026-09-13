@@ -34,7 +34,10 @@ public:
     virtual ~PopupDisplay() = default;
 
     virtual void draw(Uint32 elapsed_ms) = 0;
+
+    void show();
     PopupStatus status() const;
+    bool is_running() const;
 
     // Pressing Esc or clicking outside the popup region will close it.
     virtual bool handle_key_up(const SDL_Keysym &key);

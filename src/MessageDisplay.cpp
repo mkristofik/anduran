@@ -34,7 +34,6 @@ void MessageDisplay::set_message(const std::string &msg)
     auto surf = font_.render_wrapped(msg, COLOR_LIGHT_GREY, MAX_WIDTH);
     message_ = SdlTexture::make_image(surf, *win_);
     center_in_window(message_.width() + MARGIN_X * 2, message_.height() + MARGIN_Y * 2);
-    status_ = PopupStatus::running;
 }
 
 void MessageDisplay::draw(Uint32)
