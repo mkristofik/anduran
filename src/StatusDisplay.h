@@ -34,6 +34,7 @@ public:
     void update(const std::vector<std::string> &messages);
 
     void show_message(int num);
+    void show_latest();
     void clear();
     void draw(Uint32 elapsed_ms) override;
 
@@ -45,17 +46,11 @@ public:
 private:
     void draw_scrollbar();
 
-    struct ScrollbarLines
-    {
-        int total = 0;
-        int first = 0;
-        int numVisible = 0;
-    };
-
     SDL_Rect smallRect_;  // default size, when not expanded
     SdlFont font_;
     std::vector<SdlTexture> msgImages_;
-    ScrollbarLines lines_;
+    int firstVisible_;
+    int numVisible_;
 };
 
 #endif

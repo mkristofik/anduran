@@ -42,7 +42,8 @@ StatusDisplay::StatusDisplay(SdlWindow &win, const SDL_Rect &displayRect)
     smallRect_(displayRect),
     font_(FontType::sans_serif, 14),
     msgImages_(),
-    lines_()
+    firstVisible_(0),
+    numVisible_(0)
 {
     displayArea_ = smallRect_;
     status_ = PopupStatus::running;
@@ -57,20 +58,24 @@ void StatusDisplay::update(const std::vector<std::string> &messages)
     for (int i = ssize(msgImages_); i < ssize(messages); ++i) {
         auto surf = font_.render(messages[i], COLOR_LIGHT_GREY);
         msgImages_.push_back(SdlTexture::make_image(surf, *win_));
-        ++lines_.total;
     }
 }
 
 void StatusDisplay::show_message(int num)
 {
     SDL_assert(in_bounds(msgImages_, num));
-    lines_.first = num;
-    lines_.numVisible = 1;
+    firstVisible_ = num;
+    numVisible_ = 1;
+}
+
+void StatusDisplay::show_latest()
+{
+    show_message(ssize(msgImages_) - 1);
 }
 
 void StatusDisplay::clear()
 {
-    lines_.numVisible = 0;
+    numVisible_ = 0;
 }
 
 void StatusDisplay::draw(Uint32)
@@ -85,24 +90,24 @@ void StatusDisplay::draw(Uint32)
     if (is_expanded()) {
         draw_scrollbar();
 
-        int lastIndex = lines_.first + lines_.numVisible;
+        int lastIndex = firstVisible_ + numVisible_;
         SDL_Point pos = {
             displayArea_.x + BORDER + SCROLLBAR_WIDTH + LEFT_MARGIN,
             displayArea_.y + BORDER + TOP_MARGIN
         };
 
-        for (int i = lines_.first; i < lastIndex; ++i) {
+        for (int i = firstVisible_; i < lastIndex; ++i) {
             msgImages_[i].draw(pos);
             pos.y += get_line_skip_px(font_);
         }
     }
     else {
-        if (lines_.numVisible < 1 || !in_bounds(msgImages_, lines_.first)) {
+        if (numVisible_ < 1 || !in_bounds(msgImages_, firstVisible_)) {
             return;
         }
 
         // Center the message vertically inside the display area.
-        auto &img = msgImages_[lines_.first];
+        auto &img = msgImages_[firstVisible_];
         SDL_Point pos = {
             displayArea_.x + LEFT_MARGIN,
             displayArea_.y + (displayArea_.h - img.height()) / 2
@@ -113,33 +118,35 @@ void StatusDisplay::draw(Uint32)
 
 bool StatusDisplay::is_expanded() const
 {
-    return lines_.numVisible > 1;
+    return numVisible_ > 1;
 }
 
 bool StatusDisplay::handle_key_up(const SDL_Keysym &key)
 {
+    int totalLines = ssize(msgImages_);
+
     if (is_expanded()) {
         if (key.sym == '/' || key.sym == SDLK_ESCAPE) {
             displayArea_ = smallRect_;
-            show_message(lines_.total - 1);
+            show_latest();
             return true;
         }
         else if (key.sym == SDLK_UP) {
-            lines_.first = std::max(lines_.first - 1, 0);
+            firstVisible_ = std::max(firstVisible_ - 1, 0);
             return true;
         }
         else if (key.sym == SDLK_DOWN) {
-            lines_.first = std::min(lines_.first + 1,
-                lines_.total - lines_.numVisible);
+            firstVisible_ = std::min(firstVisible_ + 1,
+                                    totalLines - numVisible_);
             return true;
         }
     }
     else if (!msgImages_.empty() && key.sym == '/') {
-        lines_.numVisible = std::min<int>(lines_.total, EXPANDED_MESSAGES);
-        lines_.first = lines_.total - lines_.numVisible;
+        numVisible_ = std::min<int>(totalLines, EXPANDED_MESSAGES);
+        firstVisible_ = totalLines - numVisible_;
 
         auto totalHeight = msgImages_[0].height() +
-            (lines_.numVisible - 1) * get_line_skip_px(font_) +
+            (numVisible_ - 1) * get_line_skip_px(font_) +
             TOP_MARGIN * 2 +
             BORDER * 2;
 
@@ -166,16 +173,21 @@ void StatusDisplay::handle_lmouse_up()
 
 void StatusDisplay::draw_scrollbar()
 {
+    int totalLines = ssize(msgImages_);
+    if (totalLines == 0) {
+        return;
+    }
+
     SdlWindowColor drawColor(*win_, COLOR_BROWN);
 
-    auto frac = static_cast<double>(lines_.numVisible) / lines_.total;
+    auto frac = static_cast<double>(numVisible_) / totalLines;
     int usableHeight = displayArea_.h - BORDER * 2;
     int barHeight = static_cast<int>(frac * usableHeight);
 
     // Ensure the bar aligns with the bottom if the last line is visible.
-    auto startFrac = static_cast<double>(lines_.first) / lines_.total;
+    auto startFrac = static_cast<double>(firstVisible_) / totalLines;
     int barStart = static_cast<int>(startFrac * usableHeight);
-    if (lines_.first + lines_.numVisible == lines_.total) {
+    if (firstVisible_ + numVisible_ == totalLines) {
         barStart = usableHeight - barHeight;
     }
 
