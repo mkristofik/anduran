@@ -22,6 +22,7 @@
 #include "ObjectImages.h"
 #include "ObjectManager.h"
 #include "Pathfinder.h"
+#include "PopupDisplay.h"
 #include "PuzzleDisplay.h"
 #include "PuzzleState.h"
 #include "RandomMap.h"
@@ -76,6 +77,7 @@ private:
     void update_champion_view();
     void update_puzzles();
     void update_puzzle_view();
+    void show_popup(PopupDisplay &popup);
 
     void handle_lmouse_down() override;
     void handle_lmouse_up() override;
@@ -170,6 +172,7 @@ private:
     std::vector<std::string> messages_;
     StatusDisplay statusView_;
     MessageDisplay messageView_;
+    PopupDisplay *curPopup_;  // modify this with show_popup()
 };
 
 #endif
