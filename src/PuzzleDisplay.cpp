@@ -38,54 +38,12 @@ namespace
     const int POPUP_HEIGHT = 680;
     const Uint32 FADE_MS = 3000;
 
-    // Render the popup centered in the main window.
-    SDL_Rect popup_window_rect(const SdlWindow &win)
-    {
-        auto winSize = win.get_bounds();
-        return {(winSize.w - POPUP_WIDTH) / 2,
-                (winSize.h - POPUP_HEIGHT) / 2,
-                POPUP_WIDTH,
-                POPUP_HEIGHT};
-    }
-
     SDL_Rect hexes_to_draw(const Hex &target)
     {
         return {target.x - PuzzleDisplay::hexWidth / 2,
                 target.y - PuzzleDisplay::hexHeight / 2,
                 PuzzleDisplay::hexWidth,
                 PuzzleDisplay::hexHeight};
-    }
-
-    void draw_popup_background(SdlWindow &win,
-                               const SDL_Rect &area,
-                               const SDL_Color &color)
-    {
-        SdlWindowColor drawColor(win, color);
-
-        if (SDL_RenderFillRect(win.renderer(), &area) < 0) {
-            log_warn(std::format("couldn't draw puzzle background: {}", SDL_GetError()),
-                     LogCategory::video);
-        }
-    }
-
-    void draw_popup_border(SdlWindow &win,
-                           const SDL_Rect &area,
-                           int width,
-                           const SDL_Color &color)
-    {
-        SdlWindowColor drawColor(win, color);
-
-        std::array<SDL_Rect, 4> edges = {
-            SDL_Rect{area.x, area.y, area.w, width},  // top
-            SDL_Rect{area.x, area.y + area.h - width, area.w, width},  // bottom
-            SDL_Rect{area.x, area.y, width, area.h},  // left
-            SDL_Rect{area.x + area.w - width, area.y, width, area.h}  // right
-        };
-
-        if (SDL_RenderFillRects(win.renderer(), edges.data(), edges.size()) < 0) {
-            log_warn(std::format("couldn't draw puzzle border: {}", SDL_GetError()),
-                     LogCategory::video);
-        }
     }
 
     // Get the portion of the source image denoted by 'frame'.
@@ -152,11 +110,9 @@ PuzzleDisplay::PuzzleDisplay(SdlWindow &win,
                              const PuzzleImages &artwork,
                              const PuzzleState &initialState,
                              PuzzleType type)
-    : win_(&win),
+    : PopupDisplay(win),
     rmapView_(&mapView),
     images_(&artwork),
-    popupArea_(popup_window_rect(*win_)),
-    status_(PopupStatus::running),
     type_(type),
     numPieces_(0),
     hexes_(hexes_to_draw(initialState.get_target(type_))),
@@ -174,8 +130,9 @@ PuzzleDisplay::PuzzleDisplay(SdlWindow &win,
     init_tiles();
     init_pieces(initialState);
 
+    center_in_window(POPUP_WIDTH, POPUP_HEIGHT);
     draw_tiles();
-    draw_border();
+    draw_puzzle_border();
     apply_filters();
 }
 
@@ -204,13 +161,12 @@ void PuzzleDisplay::update(const PuzzleState &state)
 
     SdlEditTexture edit(texture_);
     edit.update(surf_);
-    status_ = PopupStatus::running;
 }
 
 void PuzzleDisplay::draw(Uint32 elapsed_ms)
 {
-    draw_popup_background(*win_, popupArea_, COLOR_INDIGO);
-    draw_popup_border(*win_, popupArea_, 2, COLOR_BROWN);
+    draw_background();
+    draw_border();
 
     if (fade_.running) {
         do_fade_in(elapsed_ms);
@@ -218,12 +174,12 @@ void PuzzleDisplay::draw(Uint32 elapsed_ms)
 
     // Center the puzzle map inside the popup window, leaving enough room for the
     // title.
-    SDL_Point pixel = {popupArea_.x + (popupArea_.w - surf_->w) / 2,
-                       popupArea_.y + (popupArea_.h - surf_->h) / 2};
+    SDL_Point pixel = {displayArea_.x + (displayArea_.w - surf_->w) / 2,
+                       displayArea_.y + (displayArea_.h - surf_->h) / 2};
     pixel.y += title_.frame_height() / 2;
     texture_.draw(pixel);
 
-    SDL_Point titlePixel = {pixel.x, popupArea_.y + 20};
+    SDL_Point titlePixel = {pixel.x, displayArea_.y + 20};
     title_.draw(titlePixel);
 }
 
@@ -236,26 +192,26 @@ void PuzzleDisplay::fade_in_piece(int piece)
     fade_.running = true;
 }
 
-void PuzzleDisplay::handle_key_up(const SDL_Keysym &key)
+bool PuzzleDisplay::handle_key_up(const SDL_Keysym &key)
 {
     if (fade_.running) {
-        return;
+        return true;
     }
 
-    if (key.sym == 'p' || key.sym == SDLK_ESCAPE) {
+    if (key.sym == 'p') {
         status_ = PopupStatus::ok_close;
+        return true;
     }
     else if (key.sym == SDLK_LEFT) {
         status_ = PopupStatus::left_arrow;
+        return true;
     }
     else if (key.sym == SDLK_RIGHT) {
         status_ = PopupStatus::right_arrow;
+        return true;
     }
-}
 
-PopupStatus PuzzleDisplay::status() const
-{
-    return status_;
+    return PopupDisplay::handle_key_up(key);
 }
 
 void PuzzleDisplay::init_texture()
@@ -384,7 +340,7 @@ void PuzzleDisplay::draw_tiles()
 }
 
 // Ensure obstacle artwork isn't visible outside the puzzle map.
-void PuzzleDisplay::draw_border()
+void PuzzleDisplay::draw_puzzle_border()
 {
     for (int hx = hexes_.x - 1; hx < hexes_.x + hexes_.w + 1; ++hx) {
         for (int hy = hexes_.y - 1; hy < hexes_.y + hexes_.h + 1; ++hy) {

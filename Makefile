@@ -79,10 +79,12 @@ ANDURAN_SRC = AnimQueue.cpp \
 	ChampionDisplay.cpp \
 	GameState.cpp \
 	MapDisplay.cpp \
+	MessageDisplay.cpp \
 	Minimap.cpp \
 	ObjectImages.cpp \
 	ObjectManager.cpp \
 	Pathfinder.cpp \
+	PopupDisplay.cpp \
 	PuzzleDisplay.cpp \
 	PuzzleState.cpp \
 	RandomMap.cpp \

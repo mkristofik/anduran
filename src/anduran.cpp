@@ -67,12 +67,13 @@ Anduran::Anduran()
     stateChanged_(true),
     influence_(rmap_.numRegions()),
     initialPuzzleState_(rmap_),
-    puzzleVisible_(false),
     curPuzzleType_(PuzzleType::helmet),
     puzzleViews_(),
     puzzleXsIds_(),
     messages_(),
-    statusView_(win_, config_.status_bounds())
+    statusView_(win_, config_.status_bounds()),
+    messageView_(win_),
+    curPopup_(&messageView_)
 {
     SDL_LogSetAllPriority(SDL_LOG_PRIORITY_VERBOSE);
 
@@ -114,10 +115,15 @@ void Anduran::update_frame(Uint32 elapsed_ms)
     rmapView_.draw();
     minimap_.draw();
     championView_.draw();
-    statusView_.draw();
+    statusView_.draw(elapsed_ms);
 
-    if (anims_.empty() && puzzleVisible_) {
-        update_puzzle_view(elapsed_ms);
+    if (anims_.empty()) {
+        if (curPopup_->is_running()) {
+            if (dynamic_cast<PuzzleDisplay *>(curPopup_)) {
+                update_puzzle_view();
+            }
+            curPopup_->draw(elapsed_ms);
+        }
     }
 
     win_.update();
@@ -187,31 +193,37 @@ void Anduran::update_puzzles()
     anims_.push(puzzleAnim);
 }
 
-void Anduran::update_puzzle_view(Uint32 elapsed_ms)
+void Anduran::update_puzzle_view()
 {
+    // Do we need to change which puzzle is shown?
     auto status = puzzleViews_[curPuzzleType_]->status();
     if (status == PopupStatus::running) {
-        puzzleViews_[curPuzzleType_]->draw(elapsed_ms);
+        return;
     }
-    else if (status == PopupStatus::ok_close) {
-        puzzleVisible_ = false;
-    }
-    else {
-        if (status == PopupStatus::left_arrow) {
-            enum_decr(curPuzzleType_);
-        }
-        else if (status == PopupStatus::right_arrow) {
-            enum_incr(curPuzzleType_);
-        }
 
-        puzzleViews_[curPuzzleType_]->update(*cur_player().puzzle);
-        puzzleViews_[curPuzzleType_]->draw(elapsed_ms);
+    // TODO: if we can manage all three puzzles within a single object, then
+    // this bit can be handled by the popup object itself.  Updating a popup
+    // window then reduces to "if it's running, call draw()."
+    if (status == PopupStatus::left_arrow) {
+        enum_decr(curPuzzleType_);
     }
+    else if (status == PopupStatus::right_arrow) {
+        enum_incr(curPuzzleType_);
+    }
+
+    puzzleViews_[curPuzzleType_]->update(*cur_player().puzzle);
+    show_popup(*puzzleViews_[curPuzzleType_]);
+}
+
+void Anduran::show_popup(PopupDisplay &popup)
+{
+    curPopup_ = &popup;
+    curPopup_->show();
 }
 
 void Anduran::handle_lmouse_down()
 {
-    if (puzzleVisible_ || statusView_.is_expanded()) {
+    if (curPopup_->is_running() || statusView_.is_expanded()) {
         return;
     }
 
@@ -220,7 +232,12 @@ void Anduran::handle_lmouse_down()
 
 void Anduran::handle_lmouse_up()
 {
-    if (puzzleVisible_ || statusView_.is_expanded()) {
+    if (statusView_.is_expanded()) {
+        statusView_.handle_lmouse_up();
+        return;
+    }
+    if (curPopup_->is_running()) {
+        curPopup_->handle_lmouse_up();
         return;
     }
 
@@ -269,7 +286,7 @@ void Anduran::handle_lmouse_up()
 
 void Anduran::handle_mouse_pos(Uint32 elapsed_ms)
 {
-    if (puzzleVisible_ || statusView_.is_expanded()) {
+    if (curPopup_->is_running() || statusView_.is_expanded()) {
         return;
     }
 
@@ -311,8 +328,8 @@ void Anduran::handle_key_up(const SDL_Keysym &key)
     if (!anims_.empty() || SDL_GetMouseState(nullptr, nullptr) != 0) {
         return;
     }
-    if (puzzleVisible_) {
-        puzzleViews_[curPuzzleType_]->handle_key_up(key);
+    if (curPopup_->is_running()) {
+        curPopup_->handle_key_up(key);
         return;
     }
     if (statusView_.handle_key_up(key) || statusView_.is_expanded()) {
@@ -322,6 +339,7 @@ void Anduran::handle_key_up(const SDL_Keysym &key)
     if (key.sym == 'd') {
         if (curChampion_ >= 0) {
             dig_action(curChampion_);
+            deselect_champion();
             stateChanged_ = true;
         }
     }
@@ -329,8 +347,8 @@ void Anduran::handle_key_up(const SDL_Keysym &key)
         startNextTurn_ = true;
     }
     else if (key.sym == 'p') {
-        puzzleVisible_ = true;
         puzzleViews_[curPuzzleType_]->update(*cur_player().puzzle);
+        show_popup(*puzzleViews_[curPuzzleType_]);
     }
 }
 
@@ -558,6 +576,8 @@ Hex Anduran::find_artifact_hex() const
 {
     // Avoid choosing a hex too close to the edge of the map so the puzzle
     // doesn't have to render map edges.
+    // TODO: this could become a static function of PuzzleDisplay that takes the
+    // map width and returns an SDL_Rect of valid hexes to use.
     RandomRange xRange(PuzzleDisplay::hexWidth / 2 + 1,
                        rmap_.width() - PuzzleDisplay::hexWidth / 2 - 2);
     RandomRange yRange(PuzzleDisplay::hexHeight / 2 + 1,
@@ -768,7 +788,8 @@ bool Anduran::battle_action(int entity, int enemyId)
     for (const auto &event : result.log) {
         if (event.action == BattleAction::next_round) {
             // i18n
-            anims_.push(log_message("Next round begins"));
+            messages_.push_back("Next round begins");
+            anims_.push(AnimStatus(rmapView_, statusView_));
             continue;
         }
 
@@ -795,7 +816,8 @@ bool Anduran::battle_action(int entity, int enemyId)
                                   winner->entity,
                                   rmapView_.getEntityImage(winner->entity)));
     endingAnim.insert(AnimHide(rmapView_, loser->entity));
-    endingAnim.insert(log_battle_result(*winningArmy, result));
+    messages_.push_back(log_battle_result(*winningArmy, result));
+    endingAnim.insert(AnimStatus(rmapView_, statusView_));
 
     // Restore the defender's ellipse here if they win.  The attacker might be
     // continuing to move to another hex so we skip showing it if they win.
@@ -842,7 +864,8 @@ void Anduran::battle_plunder(GameObject &winner, GameObject &loser)
     int numPieces = ssize(winnerPuzzle) - sizeBefore;
     if (numPieces > 0) {
         // i18n
-        anims_.push(log_message(std::format("{} puzzle pieces plundered", numPieces)));
+        messages_.push_back(std::format("{} puzzle pieces plundered", numPieces));
+        anims_.push(AnimStatus(rmapView_, statusView_));
     }
 }
 
@@ -912,9 +935,8 @@ void Anduran::dig_action(int entity)
 
     if (champion.movesLeft < champion.moves) {
         // i18n
-        // TODO: this wants to be a message box that appears after the movement
-        // animation has finished.
-        anims_.push(AnimLog(rmapView_, "Digging requires a full day's movement."));
+        messageView_.set_message("Digging requires a full day's movement.");
+        show_popup(messageView_);
         return;
     }
 
@@ -922,7 +944,8 @@ void Anduran::dig_action(int entity)
         game_.num_objects_in_hex(thisObj.hex) > 1)
     {
         // i18n
-        anims_.push(AnimLog(rmapView_, "Try searching on clear ground."));
+        messageView_.set_message("Try searching on clear ground.");
+        show_popup(messageView_);
         return;
     }
 
@@ -933,23 +956,21 @@ void Anduran::dig_action(int entity)
         }
         else if (artifact_found(type)) {
             // i18n
-            auto msg = std::format("You have located the {}, "
-                                   "but it looks like others have found it first.",
-                                   artifacts[type]);
-            anims_.push(AnimLog(rmapView_, msg));
+            messageView_.set_message("You have located the {}, "
+                                     "but it looks like others have found it first.",
+                                     artifacts[type]);
+            show_popup(messageView_);
             return;
         }
 
         // Found it, hide the X and show the artifact found image.
         // TODO: assign the artifact to the champion who found it.
-        AnimSet digAnim;
-        digAnim.insert(AnimHide(rmapView_, puzzleXsIds_[type]));
+        anims_.push(AnimHide(rmapView_, puzzleXsIds_[type]));
         // i18n
-        auto msg = std::format("After spending many hours digging here, "
-                               "you have found the {}!",
-                               artifacts[type]);
-        digAnim.insert(AnimLog(rmapView_, msg));
-        anims_.push(digAnim);
+        messageView_.set_message("After spending many hours digging here, "
+                                 "you have found the {}!",
+                                 artifacts[type]);
+        show_popup(messageView_);
 
         rmapView_.addEntity(images_.make_texture("puzzle-found", win_),
                             thisObj.hex,
@@ -960,7 +981,8 @@ void Anduran::dig_action(int entity)
     }
 
     // i18n
-    anims_.push(AnimLog(rmapView_, "Nothing here.  Where could it be?"));
+    messageView_.set_message("Nothing here.  Where could it be?");
+    show_popup(messageView_);
     rmapView_.addEntity(images_.make_texture("puzzle-not-found", win_),
                         thisObj.hex,
                         ZOrder::object);
@@ -1027,10 +1049,10 @@ void Anduran::visit_obelisk(const GameObject &visitor)
     }
 
     auto &player = players_[visitor.team];
-    curPuzzleType_ = player.puzzle->obelisk_type(tile);
-    puzzleVisible_ = true;
-
     int pieceNum = player.puzzle->obelisk_index(tile);
+    curPuzzleType_ = player.puzzle->obelisk_type(tile);
+
+    show_popup(*puzzleViews_[curPuzzleType_]);
     puzzleViews_[curPuzzleType_]->fade_in_piece(pieceNum);
 }
 
@@ -1063,16 +1085,7 @@ std::string Anduran::army_debug_log(const Army &army) const
     return ostr.str();
 }
 
-AnimStatus Anduran::log_message(const std::string &msg)
-{
-    // TODO: not sure I like this, we're modifying internal state and returning a
-    // new value in the same function.
-    messages_.push_back(msg);
-    return AnimStatus(rmapView_, statusView_, ssize(messages_) - 1);
-}
-
-AnimStatus Anduran::log_battle_result(const Army &before,
-                                       const BattleResult &result)
+std::string Anduran::log_battle_result(const Army &before, const BattleResult &result)
 {
     std::ostringstream ostr;
 
@@ -1100,10 +1113,10 @@ AnimStatus Anduran::log_battle_result(const Army &before,
         }
     }
 
-    return log_message(ostr.str());
+    return ostr.str();
 }
 
-AnimStatus Anduran::log_battle_event(const BattleEvent &event)
+std::string Anduran::log_battle_event(const BattleEvent &event)
 {
     auto &attacker = units_.get_data(event.attackerType);
     auto &defender = units_.get_data(event.defenderType);
@@ -1133,7 +1146,7 @@ AnimStatus Anduran::log_battle_event(const BattleEvent &event)
         ostr << ", 1 perishes";
     }
 
-    return log_message(ostr.str());
+    return ostr.str();
 }
 
 ArmyState Anduran::make_army_state(const Army &army, BattleSide side) const
@@ -1161,8 +1174,9 @@ void Anduran::animate(const GameObject &attacker,
     auto attIdle = units_.get_image(attUnitType, ImageType::img_idle, attTeam);
     auto attType = units_.get_data(attUnitType).attack;
 
+    messages_.push_back(log_battle_event(event));
     AnimSet animSet;
-    animSet.insert(log_battle_event(event));
+    animSet.insert(AnimStatus(rmapView_, statusView_));
     animSet.insert(AnimHealth(rmapView_,
                               hpBarIds_[0],
                               hpBarIds_[1],
@@ -1361,6 +1375,7 @@ Player & Anduran::cur_player()
 void Anduran::deselect_champion()
 {
     rmapView_.clearHighlight();
+    rmapView_.clearPath();
     curChampion_ = -1;
 }
 
@@ -1393,7 +1408,8 @@ void Anduran::next_turn()
     // i18n
     auto nextTurnMsg = std::format("It's the {} player's turn.",
                                    str_from_Team(nextPlayer.team));
-    anims_.push(log_message(nextTurnMsg));
+    messages_.push_back(nextTurnMsg);
+    anims_.push(AnimStatus(rmapView_, statusView_));
     stateChanged_ = true;
 }
 

@@ -13,6 +13,7 @@
 #ifndef PUZZLE_DISPLAY_H
 #define PUZZLE_DISPLAY_H
 
+#include "PopupDisplay.h"
 #include "PuzzleState.h"
 #include "SdlImageManager.h"
 #include "SdlSurface.h"
@@ -26,15 +27,6 @@
 
 class MapDisplay;
 class SdlWindow;
-
-enum class PopupStatus {
-    running = -1,
-    ok_close,
-    cancel,
-    left_arrow,
-    right_arrow
-};
-
 
 struct PuzzleImages
 {
@@ -57,14 +49,7 @@ struct PuzzleTile
 };
 
 
-// TODO: do we want a Popup base class?
-// - common elements: window, display area, draw background/border
-// - return a status code
-//     - if still running, just call draw()
-//     - if not, what to do depends on the popup and status returned
-// - be able to change display size
-// - each popup's handling of keyboard/mouse events is likely different
-class PuzzleDisplay
+class PuzzleDisplay : public PopupDisplay
 {
 public:
     PuzzleDisplay(SdlWindow &win,
@@ -77,13 +62,12 @@ public:
     void update(const PuzzleState &state);
 
     // Call each frame whenever the popup is shown.
-    void draw(Uint32 elapsed_ms);
+    void draw(Uint32 elapsed_ms) override;
 
     // Start the process to fade in the given piece with subsequent draw() calls.
     void fade_in_piece(int piece);
 
-    void handle_key_up(const SDL_Keysym &key);
-    PopupStatus status() const;
+    bool handle_key_up(const SDL_Keysym &key) override;
 
     static constexpr int hexWidth = 13;
     static constexpr int hexHeight = 7;
@@ -106,7 +90,7 @@ private:
                        SdlSurface &dest);
 
     void draw_tiles();
-    void draw_border();
+    void draw_puzzle_border();
     void apply_filters();
 
     void do_fade_in(Uint32 elapsed_ms);
@@ -118,11 +102,10 @@ private:
         bool running = false;
     };
 
-    SdlWindow *win_;
     const MapDisplay *rmapView_;
     const PuzzleImages *images_;
-    SDL_Rect popupArea_;
-    PopupStatus status_;
+    // TODO: break these out into their own struct so we can manage all 3 puzzle
+    // types within a single popup window.
     PuzzleType type_;
     int numPieces_;
     SDL_Rect hexes_;

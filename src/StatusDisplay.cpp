@@ -28,62 +28,6 @@ namespace
     const int LEFT_MARGIN = 10;
     const int EXPANDED_MESSAGES = 10;
 
-    // These draw_* functions are generic, expect to refactor them to a dialog box
-    // helper class eventually.
-    void draw_background(SdlWindow &win, const SDL_Rect &area)
-    {
-        SdlWindowColor drawColor(win, COLOR_INDIGO);
-
-        if (SDL_RenderFillRect(win.renderer(), &area) < 0) {
-            log_warn(std::format("couldn't draw status background: {}", SDL_GetError()),
-                     LogCategory::video);
-        }
-    }
-
-    void draw_border(SdlWindow &win, const SDL_Rect &area)
-    {
-        SdlWindowColor drawColor(win, COLOR_BROWN);
-
-        std::array<SDL_Rect, 4> edges = {
-            SDL_Rect{area.x, area.y, area.w, BORDER},  // top
-            SDL_Rect{area.x, area.y + area.h - BORDER, area.w, BORDER},  // bottom
-            SDL_Rect{area.x, area.y, BORDER, area.h},  // left
-            SDL_Rect{area.x + area.w - BORDER, area.y, BORDER, area.h}  // right
-        };
-
-        if (SDL_RenderFillRects(win.renderer(), edges.data(), edges.size()) < 0) {
-            log_warn(std::format("couldn't draw status border: {}", SDL_GetError()),
-                     LogCategory::video);
-        }
-    }
-
-    void draw_scrollbar(SdlWindow &win, const SDL_Rect &area, const ScrollbarLines &lines)
-    {
-        SdlWindowColor drawColor(win, COLOR_BROWN);
-
-        auto frac = static_cast<double>(lines.numVisible) / lines.total;
-        int usableHeight = area.h - BORDER * 2;
-        int barHeight = static_cast<int>(frac * usableHeight);
-
-        // Ensure the bar aligns with the bottom if the last line is visible.
-        auto startFrac = static_cast<double>(lines.first) / lines.total;
-        int barStart = static_cast<int>(startFrac * usableHeight);
-        if (lines.first + lines.numVisible == lines.total) {
-            barStart = usableHeight - barHeight;
-        }
-
-        SDL_Rect scrollBar = {
-            area.x + BORDER,
-            area.y + BORDER + barStart,
-            SCROLLBAR_WIDTH,
-            barHeight
-        };
-        if (SDL_RenderFillRect(win.renderer(), &scrollBar) < 0) {
-            log_warn(std::format("couldn't draw status scrollbar: {}", SDL_GetError()),
-                     LogCategory::video);
-        }
-    }
-
     // Standard line skip is for wrapped text in the same paragraph.  We want each
     // line to be more separated.
     int get_line_skip_px(const SdlFont &font)
@@ -94,13 +38,15 @@ namespace
 
 
 StatusDisplay::StatusDisplay(SdlWindow &win, const SDL_Rect &displayRect)
-    : win_(&win),
-    displayRect_(displayRect),
-    smallRect_(displayRect_),
+    : PopupDisplay(win),
+    smallRect_(displayRect),
     font_(FontType::sans_serif, 14),
     msgImages_(),
-    lines_()
+    firstVisible_(0),
+    numVisible_(0)
 {
+    displayArea_ = smallRect_;
+    status_ = PopupStatus::running;
 }
 
 void StatusDisplay::update(const std::vector<std::string> &messages)
@@ -112,55 +58,59 @@ void StatusDisplay::update(const std::vector<std::string> &messages)
     for (int i = ssize(msgImages_); i < ssize(messages); ++i) {
         auto surf = font_.render(messages[i], COLOR_LIGHT_GREY);
         msgImages_.push_back(SdlTexture::make_image(surf, *win_));
-        ++lines_.total;
     }
 }
 
 void StatusDisplay::show_message(int num)
 {
     SDL_assert(in_bounds(msgImages_, num));
-    lines_.first = num;
-    lines_.numVisible = 1;
+    firstVisible_ = num;
+    numVisible_ = 1;
+}
+
+void StatusDisplay::show_latest()
+{
+    show_message(ssize(msgImages_) - 1);
 }
 
 void StatusDisplay::clear()
 {
-    lines_.numVisible = 0;
+    numVisible_ = 0;
 }
 
-void StatusDisplay::draw()
+void StatusDisplay::draw(Uint32)
 {
-    draw_background(*win_, displayRect_);
-    draw_border(*win_, displayRect_);
+    draw_background();
+    draw_border();
 
     if (msgImages_.empty()) {
         return;
     }
 
     if (is_expanded()) {
-        draw_scrollbar(*win_, displayRect_, lines_);
+        draw_scrollbar();
 
-        int lastIndex = lines_.first + lines_.numVisible;
+        int lastIndex = firstVisible_ + numVisible_;
         SDL_Point pos = {
-            displayRect_.x + BORDER + SCROLLBAR_WIDTH + LEFT_MARGIN,
-            displayRect_.y + BORDER + TOP_MARGIN
+            displayArea_.x + BORDER + SCROLLBAR_WIDTH + LEFT_MARGIN,
+            displayArea_.y + BORDER + TOP_MARGIN
         };
 
-        for (int i = lines_.first; i < lastIndex; ++i) {
+        for (int i = firstVisible_; i < lastIndex; ++i) {
             msgImages_[i].draw(pos);
             pos.y += get_line_skip_px(font_);
         }
     }
     else {
-        if (lines_.numVisible < 1 || !in_bounds(msgImages_, lines_.first)) {
+        if (numVisible_ < 1 || !in_bounds(msgImages_, firstVisible_)) {
             return;
         }
 
         // Center the message vertically inside the display area.
-        auto &img = msgImages_[lines_.first];
+        auto &img = msgImages_[firstVisible_];
         SDL_Point pos = {
-            displayRect_.x + LEFT_MARGIN,
-            displayRect_.y + (displayRect_.h - img.height()) / 2
+            displayArea_.x + LEFT_MARGIN,
+            displayArea_.y + (displayArea_.h - img.height()) / 2
         };
         img.draw(pos);
     }
@@ -168,41 +118,87 @@ void StatusDisplay::draw()
 
 bool StatusDisplay::is_expanded() const
 {
-    return lines_.numVisible > 1;
+    return numVisible_ > 1;
 }
 
 bool StatusDisplay::handle_key_up(const SDL_Keysym &key)
 {
+    int totalLines = ssize(msgImages_);
+
     if (is_expanded()) {
         if (key.sym == '/' || key.sym == SDLK_ESCAPE) {
-            displayRect_ = smallRect_;
-            lines_.numVisible = 1;
+            displayArea_ = smallRect_;
+            show_latest();
             return true;
         }
         else if (key.sym == SDLK_UP) {
-            lines_.first = std::max(lines_.first - 1, 0);
+            firstVisible_ = std::max(firstVisible_ - 1, 0);
             return true;
         }
         else if (key.sym == SDLK_DOWN) {
-            lines_.first = std::min(lines_.first + 1,
-                lines_.total - lines_.numVisible);
+            firstVisible_ = std::min(firstVisible_ + 1,
+                                    totalLines - numVisible_);
             return true;
         }
     }
     else if (!msgImages_.empty() && key.sym == '/') {
-        lines_.numVisible = std::min<int>(lines_.total, EXPANDED_MESSAGES);
-        lines_.first = lines_.total - lines_.numVisible;
+        numVisible_ = std::min<int>(totalLines, EXPANDED_MESSAGES);
+        firstVisible_ = totalLines - numVisible_;
 
         auto totalHeight = msgImages_[0].height() +
-            (lines_.numVisible - 1) * get_line_skip_px(font_) +
+            (numVisible_ - 1) * get_line_skip_px(font_) +
             TOP_MARGIN * 2 +
             BORDER * 2;
 
-        auto dh = totalHeight - displayRect_.h;
-        displayRect_.y -= dh;
-        displayRect_.h += dh;
+        auto dh = totalHeight - displayArea_.h;
+        displayArea_.y -= dh;
+        displayArea_.h += dh;
         return true;
     }
 
+    // Not calling base class here, we don't want to ever close this.
     return false;
+}
+
+void StatusDisplay::handle_lmouse_up()
+{
+    // Same behavior as clicking outside of a message box, shrink back to a
+    // single line.
+    if (is_expanded() && !mouse_in_rect(displayArea_)) {
+        SDL_Keysym esc;
+        esc.sym = SDLK_ESCAPE;
+        handle_key_up(esc);
+    }
+}
+
+void StatusDisplay::draw_scrollbar()
+{
+    int totalLines = ssize(msgImages_);
+    if (totalLines == 0) {
+        return;
+    }
+
+    SdlWindowColor drawColor(*win_, COLOR_BROWN);
+
+    auto frac = static_cast<double>(numVisible_) / totalLines;
+    int usableHeight = displayArea_.h - BORDER * 2;
+    int barHeight = static_cast<int>(frac * usableHeight);
+
+    // Ensure the bar aligns with the bottom if the last line is visible.
+    auto startFrac = static_cast<double>(firstVisible_) / totalLines;
+    int barStart = static_cast<int>(startFrac * usableHeight);
+    if (firstVisible_ + numVisible_ == totalLines) {
+        barStart = usableHeight - barHeight;
+    }
+
+    SDL_Rect scrollBar = {
+        displayArea_.x + BORDER,
+        displayArea_.y + BORDER + barStart,
+        SCROLLBAR_WIDTH,
+        barHeight
+    };
+    if (SDL_RenderFillRect(win_->renderer(), &scrollBar) < 0) {
+        log_warn(std::format("couldn't draw status scrollbar: {}", SDL_GetError()),
+                 LogCategory::video);
+    }
 }
