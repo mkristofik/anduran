@@ -119,6 +119,8 @@ void Anduran::update_frame(Uint32 elapsed_ms)
     statusView_.draw();
 
     if (anims_.empty()) {
+        // TODO: popups need an is_running() and a show()
+        // TODO: curPopup_ and a show_popup() function
         if (puzzleVisible_) {
             update_puzzle_view(elapsed_ms);
         }
@@ -203,7 +205,10 @@ void Anduran::update_puzzle_view(Uint32 elapsed_ms)
     else if (status == PopupStatus::ok_close) {
         puzzleVisible_ = false;
     }
-    else {
+    else /*if (status != PopupStatus::ok_close)*/ {
+        // TODO: if we can manage all three puzzles within a single object, then
+        // this bit can be handled by the popup object itself.  Updating a popup
+        // window then reduces to "if it's running, call draw()."
         if (status == PopupStatus::left_arrow) {
             enum_decr(curPuzzleType_);
         }
@@ -238,11 +243,15 @@ void Anduran::handle_lmouse_down()
 
 void Anduran::handle_lmouse_up()
 {
-    if (puzzleVisible_ || statusView_.is_expanded()) {
+    if (statusView_.is_expanded()) {
         return;
     }
     if (messageVisible_) {
         messageView_.handle_lmouse_up();
+        return;
+    }
+    if (puzzleVisible_) {
+        puzzleViews_[curPuzzleType_]->handle_lmouse_up();
         return;
     }
 
@@ -341,6 +350,7 @@ void Anduran::handle_key_up(const SDL_Keysym &key)
         messageView_.handle_key_up(key);
         return;
     }
+    // TODO: the status bar is a popup that it always running
     if (statusView_.handle_key_up(key) || statusView_.is_expanded()) {
         return;
     }
@@ -585,6 +595,8 @@ Hex Anduran::find_artifact_hex() const
 {
     // Avoid choosing a hex too close to the edge of the map so the puzzle
     // doesn't have to render map edges.
+    // TODO: this could become a static function of PuzzleDisplay that takes the
+    // map width and returns an SDL_Rect of valid hexes to use.
     RandomRange xRange(PuzzleDisplay::hexWidth / 2 + 1,
                        rmap_.width() - PuzzleDisplay::hexWidth / 2 - 2);
     RandomRange yRange(PuzzleDisplay::hexHeight / 2 + 1,
