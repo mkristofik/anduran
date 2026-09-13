@@ -248,14 +248,13 @@ private:
 class AnimStatus : public AnimBase
 {
 public:
-    AnimStatus(MapDisplay &display, StatusDisplay &statusBar, int msgNum);
+    AnimStatus(MapDisplay &display, StatusDisplay &statusBar);
 
 private:
     void start() override;
     void update(Uint32) override {}
 
     StatusDisplay *status_;
-    int msgNum_;
 };
 
 

@@ -107,9 +107,8 @@ private:
     void visit_oasis(const GameObject &visitor);
 
     std::string army_debug_log(const Army &army) const;
-    AnimStatus log_message(const std::string &msg);
-    AnimStatus log_battle_result(const Army &before, const BattleResult &result);
-    AnimStatus log_battle_event(const BattleEvent &event);
+    std::string log_battle_result(const Army &before, const BattleResult &result);
+    std::string log_battle_event(const BattleEvent &event);
     ArmyState make_army_state(const Army &army, BattleSide side) const;
     void animate(const GameObject &attacker,
                  const GameObject &defender,

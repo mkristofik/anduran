@@ -788,7 +788,8 @@ bool Anduran::battle_action(int entity, int enemyId)
     for (const auto &event : result.log) {
         if (event.action == BattleAction::next_round) {
             // i18n
-            anims_.push(log_message("Next round begins"));
+            messages_.push_back("Next round begins");
+            anims_.push(AnimStatus(rmapView_, statusView_));
             continue;
         }
 
@@ -815,7 +816,8 @@ bool Anduran::battle_action(int entity, int enemyId)
                                   winner->entity,
                                   rmapView_.getEntityImage(winner->entity)));
     endingAnim.insert(AnimHide(rmapView_, loser->entity));
-    endingAnim.insert(log_battle_result(*winningArmy, result));
+    messages_.push_back(log_battle_result(*winningArmy, result));
+    endingAnim.insert(AnimStatus(rmapView_, statusView_));
 
     // Restore the defender's ellipse here if they win.  The attacker might be
     // continuing to move to another hex so we skip showing it if they win.
@@ -862,7 +864,8 @@ void Anduran::battle_plunder(GameObject &winner, GameObject &loser)
     int numPieces = ssize(winnerPuzzle) - sizeBefore;
     if (numPieces > 0) {
         // i18n
-        anims_.push(log_message(std::format("{} puzzle pieces plundered", numPieces)));
+        messages_.push_back(std::format("{} puzzle pieces plundered", numPieces));
+        anims_.push(AnimStatus(rmapView_, statusView_));
     }
 }
 
@@ -1082,15 +1085,7 @@ std::string Anduran::army_debug_log(const Army &army) const
     return ostr.str();
 }
 
-AnimStatus Anduran::log_message(const std::string &msg)
-{
-    // TODO: not sure I like this, we're modifying internal state and returning a
-    // new value in the same function.
-    messages_.push_back(msg);
-    return AnimStatus(rmapView_, statusView_, ssize(messages_) - 1);
-}
-
-AnimStatus Anduran::log_battle_result(const Army &before, const BattleResult &result)
+std::string Anduran::log_battle_result(const Army &before, const BattleResult &result)
 {
     std::ostringstream ostr;
 
@@ -1118,10 +1113,10 @@ AnimStatus Anduran::log_battle_result(const Army &before, const BattleResult &re
         }
     }
 
-    return log_message(ostr.str());
+    return ostr.str();
 }
 
-AnimStatus Anduran::log_battle_event(const BattleEvent &event)
+std::string Anduran::log_battle_event(const BattleEvent &event)
 {
     auto &attacker = units_.get_data(event.attackerType);
     auto &defender = units_.get_data(event.defenderType);
@@ -1151,7 +1146,7 @@ AnimStatus Anduran::log_battle_event(const BattleEvent &event)
         ostr << ", 1 perishes";
     }
 
-    return log_message(ostr.str());
+    return ostr.str();
 }
 
 ArmyState Anduran::make_army_state(const Army &army, BattleSide side) const
@@ -1179,8 +1174,9 @@ void Anduran::animate(const GameObject &attacker,
     auto attIdle = units_.get_image(attUnitType, ImageType::img_idle, attTeam);
     auto attType = units_.get_data(attUnitType).attack;
 
+    messages_.push_back(log_battle_event(event));
     AnimSet animSet;
-    animSet.insert(log_battle_event(event));
+    animSet.insert(AnimStatus(rmapView_, statusView_));
     animSet.insert(AnimHealth(rmapView_,
                               hpBarIds_[0],
                               hpBarIds_[1],
@@ -1412,7 +1408,8 @@ void Anduran::next_turn()
     // i18n
     auto nextTurnMsg = std::format("It's the {} player's turn.",
                                    str_from_Team(nextPlayer.team));
-    anims_.push(log_message(nextTurnMsg));
+    messages_.push_back(nextTurnMsg);
+    anims_.push(AnimStatus(rmapView_, statusView_));
     stateChanged_ = true;
 }
 

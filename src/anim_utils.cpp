@@ -531,21 +531,15 @@ void AnimProjectile::stop()
 }
 
 
-AnimStatus::AnimStatus(MapDisplay &display, StatusDisplay &statusBar, int msgNum)
+AnimStatus::AnimStatus(MapDisplay &display, StatusDisplay &statusBar)
     : AnimBase(display, 0),
-    status_(&statusBar),
-    msgNum_(msgNum)
+    status_(&statusBar)
 {
 }
 
 void AnimStatus::start()
 {
-    if (msgNum_ >= 0) {
-        status_->show_message(msgNum_);
-    }
-    else {
-        status_->clear();
-    }
+    status_->show_latest();
 }
 
 
