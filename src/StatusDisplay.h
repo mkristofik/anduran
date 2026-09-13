@@ -23,14 +23,6 @@
 
 class SdlWindow;
 
-struct ScrollbarLines
-{
-    int total = 0;
-    int first = 0;
-    int numVisible = 0;
-};
-
-
 // This is a special case of popup window that's always visible.  We're mostly
 // taking advantage of standardized drawing routines.
 class StatusDisplay : public PopupDisplay
@@ -51,6 +43,15 @@ public:
     void handle_lmouse_up() override;
 
 private:
+    void draw_scrollbar();
+
+    struct ScrollbarLines
+    {
+        int total = 0;
+        int first = 0;
+        int numVisible = 0;
+    };
+
     SDL_Rect smallRect_;  // default size, when not expanded
     SdlFont font_;
     std::vector<SdlTexture> msgImages_;

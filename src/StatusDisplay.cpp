@@ -28,33 +28,6 @@ namespace
     const int LEFT_MARGIN = 10;
     const int EXPANDED_MESSAGES = 10;
 
-    void draw_scrollbar(SdlWindow &win, const SDL_Rect &area, const ScrollbarLines &lines)
-    {
-        SdlWindowColor drawColor(win, COLOR_BROWN);
-
-        auto frac = static_cast<double>(lines.numVisible) / lines.total;
-        int usableHeight = area.h - BORDER * 2;
-        int barHeight = static_cast<int>(frac * usableHeight);
-
-        // Ensure the bar aligns with the bottom if the last line is visible.
-        auto startFrac = static_cast<double>(lines.first) / lines.total;
-        int barStart = static_cast<int>(startFrac * usableHeight);
-        if (lines.first + lines.numVisible == lines.total) {
-            barStart = usableHeight - barHeight;
-        }
-
-        SDL_Rect scrollBar = {
-            area.x + BORDER,
-            area.y + BORDER + barStart,
-            SCROLLBAR_WIDTH,
-            barHeight
-        };
-        if (SDL_RenderFillRect(win.renderer(), &scrollBar) < 0) {
-            log_warn(std::format("couldn't draw status scrollbar: {}", SDL_GetError()),
-                     LogCategory::video);
-        }
-    }
-
     // Standard line skip is for wrapped text in the same paragraph.  We want each
     // line to be more separated.
     int get_line_skip_px(const SdlFont &font)
@@ -110,7 +83,7 @@ void StatusDisplay::draw(Uint32)
     }
 
     if (is_expanded()) {
-        draw_scrollbar(*win_, displayArea_, lines_);
+        draw_scrollbar();
 
         int lastIndex = lines_.first + lines_.numVisible;
         SDL_Point pos = {
@@ -188,5 +161,32 @@ void StatusDisplay::handle_lmouse_up()
         SDL_Keysym esc;
         esc.sym = SDLK_ESCAPE;
         handle_key_up(esc);
+    }
+}
+
+void StatusDisplay::draw_scrollbar()
+{
+    SdlWindowColor drawColor(*win_, COLOR_BROWN);
+
+    auto frac = static_cast<double>(lines_.numVisible) / lines_.total;
+    int usableHeight = displayArea_.h - BORDER * 2;
+    int barHeight = static_cast<int>(frac * usableHeight);
+
+    // Ensure the bar aligns with the bottom if the last line is visible.
+    auto startFrac = static_cast<double>(lines_.first) / lines_.total;
+    int barStart = static_cast<int>(startFrac * usableHeight);
+    if (lines_.first + lines_.numVisible == lines_.total) {
+        barStart = usableHeight - barHeight;
+    }
+
+    SDL_Rect scrollBar = {
+        displayArea_.x + BORDER,
+        displayArea_.y + BORDER + barStart,
+        SCROLLBAR_WIDTH,
+        barHeight
+    };
+    if (SDL_RenderFillRect(win_->renderer(), &scrollBar) < 0) {
+        log_warn(std::format("couldn't draw status scrollbar: {}", SDL_GetError()),
+                 LogCategory::video);
     }
 }
